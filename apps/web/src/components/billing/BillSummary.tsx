@@ -1,8 +1,8 @@
 import { addDays, format } from "date-fns";
-import { Banknote, CalendarClock, Printer, TrendingUp } from "lucide-react";
+import { Banknote, CalendarClock, Printer, TrendingDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatSigned } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { billTotals, useBill } from "@/store/bill";
 
@@ -26,6 +26,7 @@ export function BillSummary() {
   const t = billTotals(lines);
   const empty = lines.length === 0;
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
+  const loss = t.margin < 0;
 
   return (
     <div className="flex flex-col gap-3 overflow-auto rounded-lg border p-4">
@@ -40,13 +41,20 @@ export function BillSummary() {
         <span className="text-2xl font-semibold tabular-nums">{formatPaise(t.grand)}</span>
       </div>
 
-      <div className="flex items-center justify-between rounded-md bg-emerald-500/10 px-3 py-2 text-emerald-700 dark:text-emerald-400">
+      <div
+        className={cn(
+          "flex items-center justify-between rounded-md px-3 py-2",
+          loss
+            ? "bg-destructive/10 text-destructive"
+            : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+        )}
+      >
         <span className="flex items-center gap-1.5 text-sm font-medium">
-          <TrendingUp className="size-4" />
-          Est. earnings
+          {loss ? <TrendingDown className="size-4" /> : <TrendingUp className="size-4" />}
+          {loss ? "Est. loss" : "Est. earnings"}
         </span>
         <span className="text-right">
-          <span className="font-semibold tabular-nums">{formatPaise(t.margin)}</span>
+          <span className="font-semibold tabular-nums">{formatSigned(t.margin)}</span>
           <span className="ml-1.5 text-xs tabular-nums opacity-80">{marginPct}%</span>
         </span>
       </div>

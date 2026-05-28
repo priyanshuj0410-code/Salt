@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronsUpDown, Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,9 +11,10 @@ import {
 } from "@/components/ui/table";
 import { ScheduleBadge } from "./ScheduleBadge";
 import { BatchPicker } from "./BatchPicker";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatSigned } from "@/lib/currency";
 import { lineDiscount, lineGross, lineMargin, lineNet } from "@/lib/billing";
 import { catalog } from "@/data/catalog";
+import { cn } from "@/lib/utils";
 import type { BillLine } from "@/lib/types";
 import { useBill } from "@/store/bill";
 
@@ -30,6 +31,42 @@ export function BillTable() {
   const setDiscount = useBill((s) => s.setDiscount);
   const removeLine = useBill((s) => s.removeLine);
   const [pickerLine, setPickerLine] = useState<BillLine | null>(null);
+  const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+
+  function focusRow(i: number) {
+    const clamped = Math.max(0, Math.min(lines.length - 1, i));
+    rowRefs.current[clamped]?.focus();
+  }
+
+  function onRowKey(e: React.KeyboardEvent<HTMLTableRowElement>, i: number, l: BillLine) {
+    // Only act when the row itself is focused, not its inner inputs/buttons.
+    if (e.target !== e.currentTarget) return;
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        focusRow(i + 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        focusRow(i - 1);
+        break;
+      case "=":
+      case "+":
+        e.preventDefault();
+        setQty(l.key, l.qty + 1);
+        break;
+      case "-":
+        e.preventDefault();
+        setQty(l.key, Math.max(1, l.qty - 1));
+        break;
+      case "Delete":
+      case "Backspace":
+        e.preventDefault();
+        removeLine(l.key);
+        focusRow(i);
+        break;
+    }
+  }
 
   if (lines.length === 0) {
     return (
@@ -56,9 +93,19 @@ export function BillTable() {
         <TableBody>
           {lines.map((l, i) => {
             const discount = lineDiscount(l);
+            const margin = lineMargin(l);
             const count = batchCount(l.itemId);
             return (
-              <TableRow key={l.key}>
+              <TableRow
+                key={l.key}
+                ref={(el) => {
+                  rowRefs.current[i] = el;
+                }}
+                tabIndex={0}
+                data-bill-row
+                onKeyDown={(e) => onRowKey(e, i, l)}
+                className="outline-none focus-within:bg-primary/5 focus:bg-primary/10"
+              >
                 <TableCell className="align-top text-muted-foreground">{i + 1}</TableCell>
                 <TableCell className="align-top">
                   <div className="flex items-center gap-2">
@@ -150,8 +197,15 @@ export function BillTable() {
                       {formatPaise(lineGross(l))}
                     </div>
                   )}
-                  <div className="text-xs text-emerald-600 dark:text-emerald-500">
-                    +{formatPaise(lineMargin(l))}
+                  <div
+                    className={cn(
+                      "text-xs",
+                      margin < 0
+                        ? "text-destructive"
+                        : "text-emerald-600 dark:text-emerald-500",
+                    )}
+                  >
+                    {formatSigned(margin)}
                   </div>
                 </TableCell>
                 <TableCell className="align-top">

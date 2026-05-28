@@ -10,6 +10,14 @@ export function formatPaise(paise: number): string {
 }
 
 /**
+ * Format a signed amount: "+₹5.00" for gains, "-₹5.00" for losses (the minus
+ * comes from the currency formatter), "₹0.00" for zero.
+ */
+export function formatSigned(paise: number): string {
+  return paise > 0 ? `+${formatPaise(paise)}` : formatPaise(paise);
+}
+
+/**
  * Split a GST-inclusive gross amount into taxable value and GST component.
  * MRP is inclusive of GST in Indian pharma retail, so we back it out.
  */

@@ -46,6 +46,10 @@ export function ItemSearch() {
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
+      if (results.length === 0) {
+        (document.querySelector("[data-bill-row]") as HTMLElement | null)?.focus();
+        return;
+      }
       setHighlight((h) => Math.min(results.length - 1, h + 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
@@ -91,8 +95,8 @@ export function ItemSearch() {
                 onMouseEnter={() => setHighlight(i)}
                 onClick={() => (inStock ? add(item) : sub && add(sub))}
                 className={cn(
-                  "flex cursor-pointer items-center gap-3 px-3 py-2 text-sm",
-                  i === highlight && "bg-muted",
+                  "flex cursor-pointer items-center gap-3 border-l-2 border-transparent px-3 py-2 text-sm",
+                  i === highlight && "border-l-primary bg-primary/10",
                   !inStock && "opacity-70",
                 )}
               >

@@ -7,14 +7,15 @@ import {
 } from "@/components/ui/dialog";
 
 const shortcuts: [string, string][] = [
-  ["Type", "Search items by name, salt, manufacturer, HSN or barcode"],
+  ["Type", "Search by name, salt, manufacturer, HSN or barcode"],
   ["↑ / ↓", "Move between search results"],
-  ["Enter", "Add the highlighted item (qty 1) at its FEFO batch"],
+  ["Enter", "Add the highlighted item at its FEFO batch"],
   ["Esc", "Clear the search box"],
-  ["Tab", "Move into a line's quantity / discount fields"],
-  ["Type", "Edit quantity or discount directly once focused"],
-  ["+ / −", "Adjust quantity on a bill line"],
-  ["Batch", "Click the batch line to switch batch / see purchase price"],
+  ["↓", "From an empty search, jump into the bill"],
+  ["↑ / ↓", "Move between bill rows (when a row is focused)"],
+  ["= / −", "Increase / decrease quantity on the focused row"],
+  ["Del", "Remove the focused row"],
+  ["Tab", "Move into a row's quantity / discount fields"],
   ["?", "Open this shortcut reference"],
 ];
 
