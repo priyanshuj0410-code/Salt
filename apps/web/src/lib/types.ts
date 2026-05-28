@@ -7,6 +7,8 @@ export interface Batch {
   qty: number;
   /** MRP per pack in paise, inclusive of GST (Indian pharma convention). */
   mrpPaise: number;
+  /** Price to retailer per pack in paise — what the shop paid (landed cost). */
+  ptrPaise: number;
 }
 
 export interface Item {
@@ -25,6 +27,8 @@ export interface Item {
   batches: Batch[];
 }
 
+export type DiscountType = "pct" | "flat";
+
 export interface BillLine {
   /** Stable line key: itemId + batchNo (different batches are separate lines). */
   key: string;
@@ -37,5 +41,17 @@ export interface BillLine {
   batchNo: string;
   expiry: string;
   mrpPaise: number;
+  ptrPaise: number;
   qty: number;
+  /** "pct" = percentage of line gross; "flat" = rupees off the line, in paise. */
+  discountType: DiscountType;
+  discountValue: number;
+}
+
+export type PaymentMethod = "cash" | "credit";
+
+export interface Payment {
+  method: PaymentMethod;
+  /** Repayment window in days, used when method is "credit". */
+  creditDays: number;
 }

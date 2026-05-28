@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Input } from "@/components/ui/input";
 import { ScheduleBadge } from "./ScheduleBadge";
 import { catalog } from "@/data/catalog";
 import { formatPaise } from "@/lib/currency";
@@ -21,6 +20,7 @@ export function ItemSearch() {
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   const results = useMemo(
     () => searchCatalog(query, catalog).slice(0, MAX_RESULTS),
@@ -29,10 +29,17 @@ export function ItemSearch() {
 
   useEffect(() => inputRef.current?.focus(), []);
 
+  // Keep the highlighted row scrolled into view.
+  useEffect(() => {
+    const el = listRef.current?.children[highlight] as HTMLElement | undefined;
+    el?.scrollIntoView({ block: "nearest" });
+  }, [highlight]);
+
   function add(item: Item) {
     if (itemStock(item) <= 0) return;
     addItem(item);
     setQuery("");
+    setHighlight(0);
     inputRef.current?.focus();
   }
 
@@ -46,7 +53,8 @@ export function ItemSearch() {
     } else if (e.key === "Enter") {
       e.preventDefault();
       const item = results[highlight];
-      if (item) add(item);
+      if (!item) return;
+      add(itemStock(item) > 0 ? item : (substituteFor(item) ?? item));
     } else if (e.key === "Escape") {
       setQuery("");
     }
@@ -54,7 +62,7 @@ export function ItemSearch() {
 
   return (
     <div className="relative">
-      <Input
+      <input
         ref={inputRef}
         value={query}
         onChange={(e) => {
@@ -63,16 +71,20 @@ export function ItemSearch() {
         }}
         onKeyDown={onKeyDown}
         placeholder="Search by name, salt, manufacturer, HSN or barcode…"
-        className="h-11 text-base"
         aria-label="Item search"
+        className="h-11 w-full rounded-lg border border-input bg-background px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
       />
 
       {results.length > 0 && (
-        <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border bg-popover shadow-md">
+        <ul
+          ref={listRef}
+          className="absolute z-20 mt-1 max-h-80 w-full overflow-auto rounded-lg border bg-popover shadow-md"
+        >
           {results.map((item, i) => {
             const stock = itemStock(item);
             const inStock = stock > 0;
             const sub = inStock ? undefined : substituteFor(item);
+            const price = item.batches[0]?.mrpPaise ?? sub?.batches[0]?.mrpPaise ?? 0;
             return (
               <li
                 key={item.id}
@@ -88,6 +100,11 @@ export function ItemSearch() {
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{item.name}</span>
                     <ScheduleBadge schedule={item.schedule} />
+                    {item.batches.length > 1 && (
+                      <span className="text-xs text-muted-foreground">
+                        {item.batches.length} batches
+                      </span>
+                    )}
                   </div>
                   <div className="truncate text-xs text-muted-foreground">
                     {item.salt} · {item.manufacturer} · {item.pack}
@@ -99,7 +116,7 @@ export function ItemSearch() {
                   )}
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="font-medium">{formatPaise(item.batches[0]?.mrpPaise ?? sub?.batches[0]?.mrpPaise ?? 0)}</div>
+                  <div className="font-medium">{formatPaise(price)}</div>
                   <div className={cn("text-xs", inStock ? "text-muted-foreground" : "text-destructive")}>
                     {inStock ? `${stock} in stock` : "Out of stock"}
                   </div>

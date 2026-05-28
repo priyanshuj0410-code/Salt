@@ -11,7 +11,10 @@ const shortcuts: [string, string][] = [
   ["↑ / ↓", "Move between search results"],
   ["Enter", "Add the highlighted item (qty 1) at its FEFO batch"],
   ["Esc", "Clear the search box"],
+  ["Tab", "Move into a line's quantity / discount fields"],
+  ["Type", "Edit quantity or discount directly once focused"],
   ["+ / −", "Adjust quantity on a bill line"],
+  ["Batch", "Click the batch line to switch batch / see purchase price"],
   ["?", "Open this shortcut reference"],
 ];
 

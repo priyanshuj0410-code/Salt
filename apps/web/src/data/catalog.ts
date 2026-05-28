@@ -15,8 +15,8 @@ export const catalog: Item[] = [
     barcode: "8901234500017",
     velocity: 98,
     batches: [
-      { batchNo: "DL2411", expiry: "2027-03", qty: 240, mrpPaise: rupees(31.5) },
-      { batchNo: "DL2502", expiry: "2027-09", qty: 180, mrpPaise: rupees(31.5) },
+      { batchNo: "DL2411", expiry: "2027-03", qty: 240, mrpPaise: rupees(31.5), ptrPaise: rupees(25.2) },
+      { batchNo: "DL2502", expiry: "2027-09", qty: 180, mrpPaise: rupees(31.5), ptrPaise: rupees(24.8) },
     ],
   },
   {
@@ -29,7 +29,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "OTC",
     velocity: 71,
-    batches: [{ batchNo: "CR2410", expiry: "2026-12", qty: 90, mrpPaise: rupees(28) }],
+    batches: [{ batchNo: "CR2410", expiry: "2026-12", qty: 90, mrpPaise: rupees(28), ptrPaise: rupees(22.4) }],
   },
   {
     id: "augmentin-625",
@@ -41,7 +41,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "H",
     velocity: 64,
-    batches: [{ batchNo: "AG2501", expiry: "2026-08", qty: 60, mrpPaise: rupees(223.4) }],
+    batches: [{ batchNo: "AG2501", expiry: "2026-08", qty: 60, mrpPaise: rupees(223.4), ptrPaise: rupees(187.7) }],
   },
   {
     id: "azithral-500",
@@ -53,7 +53,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "H",
     velocity: 58,
-    batches: [{ batchNo: "AZ2412", expiry: "2026-10", qty: 75, mrpPaise: rupees(132.6) }],
+    batches: [{ batchNo: "AZ2412", expiry: "2026-10", qty: 75, mrpPaise: rupees(132.6), ptrPaise: rupees(111.4) }],
   },
   {
     id: "pan-40",
@@ -66,8 +66,8 @@ export const catalog: Item[] = [
     schedule: "H",
     velocity: 82,
     batches: [
-      { batchNo: "PN2503", expiry: "2026-06", qty: 30, mrpPaise: rupees(168) },
-      { batchNo: "PN2508", expiry: "2027-04", qty: 120, mrpPaise: rupees(168) },
+      { batchNo: "PN2503", expiry: "2026-06", qty: 30, mrpPaise: rupees(168), ptrPaise: rupees(134.4) },
+      { batchNo: "PN2508", expiry: "2027-04", qty: 120, mrpPaise: rupees(168), ptrPaise: rupees(132.0) },
     ],
   },
   {
@@ -92,7 +92,7 @@ export const catalog: Item[] = [
     gstRate: 5,
     schedule: "H",
     velocity: 67,
-    batches: [{ batchNo: "TM2502", expiry: "2027-01", qty: 150, mrpPaise: rupees(151.5) }],
+    batches: [{ batchNo: "TM2502", expiry: "2027-01", qty: 150, mrpPaise: rupees(151.5), ptrPaise: rupees(121.2) }],
   },
   {
     id: "ecosprin-75",
@@ -104,7 +104,7 @@ export const catalog: Item[] = [
     gstRate: 5,
     schedule: "OTC",
     velocity: 55,
-    batches: [{ batchNo: "EC2411", expiry: "2026-11", qty: 200, mrpPaise: rupees(11.4) }],
+    batches: [{ batchNo: "EC2411", expiry: "2026-11", qty: 200, mrpPaise: rupees(11.4), ptrPaise: rupees(9.1) }],
   },
   {
     id: "thyronorm-100",
@@ -116,7 +116,7 @@ export const catalog: Item[] = [
     gstRate: 5,
     schedule: "H",
     velocity: 73,
-    batches: [{ batchNo: "TH2501", expiry: "2027-02", qty: 48, mrpPaise: rupees(195) }],
+    batches: [{ batchNo: "TH2501", expiry: "2027-02", qty: 48, mrpPaise: rupees(195), ptrPaise: rupees(165.75) }],
   },
   {
     id: "glycomet-500",
@@ -128,7 +128,7 @@ export const catalog: Item[] = [
     gstRate: 5,
     schedule: "H",
     velocity: 69,
-    batches: [{ batchNo: "GM2504", expiry: "2027-05", qty: 160, mrpPaise: rupees(24.6) }],
+    batches: [{ batchNo: "GM2504", expiry: "2027-05", qty: 160, mrpPaise: rupees(24.6), ptrPaise: rupees(19.7) }],
   },
   {
     id: "allegra-120",
@@ -140,7 +140,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "H",
     velocity: 51,
-    batches: [{ batchNo: "AL2502", expiry: "2026-09", qty: 80, mrpPaise: rupees(218.6) }],
+    batches: [{ batchNo: "AL2502", expiry: "2026-09", qty: 80, mrpPaise: rupees(218.6), ptrPaise: rupees(183.6) }],
   },
   {
     id: "montair-lc",
@@ -152,7 +152,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "H",
     velocity: 60,
-    batches: [{ batchNo: "MN2503", expiry: "2027-03", qty: 110, mrpPaise: rupees(189.5) }],
+    batches: [{ batchNo: "MN2503", expiry: "2027-03", qty: 110, mrpPaise: rupees(189.5), ptrPaise: rupees(151.6) }],
   },
   {
     id: "shelcal-500",
@@ -164,7 +164,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "OTC",
     velocity: 44,
-    batches: [{ batchNo: "SH2412", expiry: "2026-12", qty: 95, mrpPaise: rupees(127) }],
+    batches: [{ batchNo: "SH2412", expiry: "2026-12", qty: 95, mrpPaise: rupees(127), ptrPaise: rupees(101.6) }],
   },
   {
     id: "zincovit",
@@ -176,7 +176,7 @@ export const catalog: Item[] = [
     gstRate: 18,
     schedule: "OTC",
     velocity: 47,
-    batches: [{ batchNo: "ZV2501", expiry: "2027-06", qty: 130, mrpPaise: rupees(110) }],
+    batches: [{ batchNo: "ZV2501", expiry: "2027-06", qty: 130, mrpPaise: rupees(110), ptrPaise: rupees(85.8) }],
   },
   {
     id: "volini-gel",
@@ -188,7 +188,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "OTC",
     velocity: 39,
-    batches: [{ batchNo: "VL2410", expiry: "2026-10", qty: 64, mrpPaise: rupees(135) }],
+    batches: [{ batchNo: "VL2410", expiry: "2026-10", qty: 64, mrpPaise: rupees(135), ptrPaise: rupees(105.3) }],
   },
   {
     id: "betadine-100",
@@ -200,7 +200,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "OTC",
     velocity: 33,
-    batches: [{ batchNo: "BT2501", expiry: "2027-07", qty: 40, mrpPaise: rupees(165) }],
+    batches: [{ batchNo: "BT2501", expiry: "2027-07", qty: 40, mrpPaise: rupees(165), ptrPaise: rupees(128.7) }],
   },
   {
     id: "alprax-025",
@@ -212,7 +212,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "H1",
     velocity: 28,
-    batches: [{ batchNo: "AP2502", expiry: "2026-07", qty: 45, mrpPaise: rupees(43.2) }],
+    batches: [{ batchNo: "AP2502", expiry: "2026-07", qty: 45, mrpPaise: rupees(43.2), ptrPaise: rupees(34.56) }],
   },
   {
     id: "ascoril-ls",
@@ -224,7 +224,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "H",
     velocity: 41,
-    batches: [{ batchNo: "AS2412", expiry: "2026-05", qty: 22, mrpPaise: rupees(118) }],
+    batches: [{ batchNo: "AS2412", expiry: "2026-05", qty: 22, mrpPaise: rupees(118), ptrPaise: rupees(94.4) }],
   },
   {
     id: "liv-52",
@@ -236,7 +236,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "OTC",
     velocity: 52,
-    batches: [{ batchNo: "LV2501", expiry: "2027-08", qty: 70, mrpPaise: rupees(165) }],
+    batches: [{ batchNo: "LV2501", expiry: "2027-08", qty: 70, mrpPaise: rupees(165), ptrPaise: rupees(125.4) }],
   },
   {
     id: "ashwagandha",
@@ -248,7 +248,7 @@ export const catalog: Item[] = [
     gstRate: 18,
     schedule: "OTC",
     velocity: 36,
-    batches: [{ batchNo: "AW2502", expiry: "2027-04", qty: 85, mrpPaise: rupees(225) }],
+    batches: [{ batchNo: "AW2502", expiry: "2027-04", qty: 85, mrpPaise: rupees(225), ptrPaise: rupees(168.75) }],
   },
   {
     id: "cotton-roll",
@@ -260,7 +260,7 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "OTC",
     velocity: 24,
-    batches: [{ batchNo: "CT2501", expiry: "2029-01", qty: 50, mrpPaise: rupees(178) }],
+    batches: [{ batchNo: "CT2501", expiry: "2029-01", qty: 50, mrpPaise: rupees(178), ptrPaise: rupees(133.5) }],
   },
   {
     id: "surgical-gloves",
@@ -272,6 +272,6 @@ export const catalog: Item[] = [
     gstRate: 12,
     schedule: "OTC",
     velocity: 19,
-    batches: [{ batchNo: "SG2412", expiry: "2028-06", qty: 30, mrpPaise: rupees(312) }],
+    batches: [{ batchNo: "SG2412", expiry: "2028-06", qty: 30, mrpPaise: rupees(312), ptrPaise: rupees(234) }],
   },
 ];
