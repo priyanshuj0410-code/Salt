@@ -1,0 +1,59 @@
+export type Schedule = "OTC" | "H" | "H1" | "X";
+
+export interface Batch {
+  batchNo: string;
+  /** YYYY-MM; FEFO picks the earliest-expiring batch with stock. */
+  expiry: string;
+  qty: number;
+  /** MRP per pack in paise, inclusive of GST (Indian pharma convention). */
+  mrpPaise: number;
+  /** Price to retailer per pack in paise — what the shop paid (landed cost). */
+  ptrPaise: number;
+}
+
+export interface Item {
+  id: string;
+  name: string;
+  salt: string;
+  manufacturer: string;
+  pack: string;
+  hsn: string;
+  /** GST rate as a percentage, e.g. 5, 12, 18. */
+  gstRate: number;
+  schedule: Schedule;
+  barcode?: string;
+  /** Relative sales velocity for this shop; used as a ranking tie-breaker. */
+  velocity: number;
+  batches: Batch[];
+}
+
+export type DiscountType = "pct" | "flat";
+
+export interface BillLine {
+  /** Stable line key: itemId + batchNo (different batches are separate lines). */
+  key: string;
+  itemId: string;
+  name: string;
+  salt: string;
+  pack: string;
+  schedule: Schedule;
+  gstRate: number;
+  batchNo: string;
+  expiry: string;
+  mrpPaise: number;
+  ptrPaise: number;
+  /** Total available stock for the item across all batches — the per-item cap. */
+  stock: number;
+  qty: number;
+  /** "pct" = percentage of line gross; "flat" = rupees off the line, in paise. */
+  discountType: DiscountType;
+  discountValue: number;
+}
+
+export type PaymentMethod = "cash" | "credit";
+
+export interface Payment {
+  method: PaymentMethod;
+  /** Repayment window in days, used when method is "credit". */
+  creditDays: number;
+}
