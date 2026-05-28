@@ -7,10 +7,10 @@ export function ProtectedRoute({
   allowedRoles,
 }: {
   children: ReactNode;
-  /** If set, the user's profile role must be one of these. */
+  /** If set, the user's membership role must be one of these. */
   allowedRoles?: UserRole[];
 }) {
-  const { session, profile, loading } = useAuth();
+  const { session, membership, loading } = useAuth();
 
   if (loading) {
     return (
@@ -22,7 +22,10 @@ export function ProtectedRoute({
 
   if (!session) return <Navigate to="/login" replace />;
 
-  if (allowedRoles && (!profile || !allowedRoles.includes(profile.role))) {
+  // Signed in but no org yet → onboarding.
+  if (!membership) return <Navigate to="/onboarding" replace />;
+
+  if (allowedRoles && !allowedRoles.includes(membership.role)) {
     return <Navigate to="/" replace />;
   }
 

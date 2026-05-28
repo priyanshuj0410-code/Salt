@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -10,18 +11,19 @@ import { supabase } from "./supabase";
 
 export type UserRole = "cashier" | "owner";
 
-export interface Profile {
-  id: string;
-  email: string | null;
-  full_name: string | null;
+export interface Membership {
+  orgId: string;
+  orgName: string;
   role: UserRole;
 }
 
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
-  profile: Profile | null;
+  /** The user's org + role, or null if they haven't joined/created an org yet. */
+  membership: Membership | null;
   loading: boolean;
+  refresh: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -29,9 +31,25 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  // Start "loading" only when Supabase is configured; otherwise nothing to wait for.
+  const [membership, setMembership] = useState<Membership | null>(null);
   const [loading, setLoading] = useState(supabase != null);
+
+  const loadMembership = useCallback(async (userId: string) => {
+    if (!supabase) return;
+    const { data } = await supabase
+      .from("memberships")
+      .select("role, org_id, orgs(name)")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+    if (data) {
+      const org = data.orgs as { name: string } | { name: string }[] | null;
+      const orgName = Array.isArray(org) ? (org[0]?.name ?? "") : (org?.name ?? "");
+      setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole });
+    } else {
+      setMembership(null);
+    }
+  }, []);
 
   // Bootstrap the session and subscribe to auth changes.
   useEffect(() => {
@@ -41,7 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
       setSession(data.session);
-      // Keep loading while a session's profile is fetched; otherwise we're done.
       setLoading(Boolean(data.session));
     });
 
@@ -50,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (next) {
         setLoading(true);
       } else {
-        setProfile(null);
+        setMembership(null);
         setLoading(false);
       }
     });
@@ -61,25 +78,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Load the role profile whenever the signed-in user changes.
+  // Load membership whenever the signed-in user changes.
   useEffect(() => {
     const userId = session?.user.id;
     if (!supabase || !userId) return;
     let active = true;
-    supabase
-      .from("profiles")
-      .select("id, email, full_name, role")
-      .eq("id", userId)
-      .single()
-      .then(({ data }) => {
-        if (!active) return;
-        setProfile((data as Profile | null) ?? null);
-        setLoading(false);
-      });
+    (async () => {
+      await loadMembership(userId);
+      if (active) setLoading(false);
+    })();
     return () => {
       active = false;
     };
-  }, [session?.user.id]);
+  }, [session?.user.id, loadMembership]);
+
+  const refresh = useCallback(async () => {
+    const userId = session?.user.id;
+    if (userId) await loadMembership(userId);
+  }, [session?.user.id, loadMembership]);
 
   async function signOut() {
     await supabase?.auth.signOut();
@@ -87,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, profile, loading, signOut }}
+      value={{ session, user: session?.user ?? null, membership, loading, refresh, signOut }}
     >
       {children}
     </AuthContext.Provider>

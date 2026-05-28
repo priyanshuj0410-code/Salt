@@ -5,19 +5,22 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth";
 
 export function UserMenu() {
-  const { user, profile, signOut } = useAuth();
+  const { user, membership, signOut } = useAuth();
 
   return (
     <div className="flex items-center gap-2.5">
-      {profile?.role === "owner" && (
+      {membership?.role === "owner" && (
         <Link to="/owner" className="text-xs font-medium text-primary hover:underline">
           Owner view
         </Link>
       )}
-      <span className="hidden text-xs text-muted-foreground sm:inline">{user?.email}</span>
-      {profile && (
-        <Badge variant={profile.role === "owner" ? "default" : "secondary"}>
-          {profile.role}
+      {membership && (
+        <span className="hidden text-xs text-muted-foreground sm:inline">{membership.orgName}</span>
+      )}
+      <span className="hidden text-xs text-muted-foreground md:inline">{user?.email}</span>
+      {membership && (
+        <Badge variant={membership.role === "owner" ? "default" : "secondary"}>
+          {membership.role}
         </Badge>
       )}
       <Button variant="ghost" size="icon-sm" aria-label="Sign out" onClick={() => signOut()}>
