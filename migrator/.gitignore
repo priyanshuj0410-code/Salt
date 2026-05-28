@@ -1,0 +1,5 @@
+# Compiled binaries
+/migrator
+/salt-migrator
+*.exe
+/dist/
