@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Papa from "papaparse";
-import { Download, FileUp, Upload } from "lucide-react";
+import { Download, FileUp, KeyRound, Upload } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,20 @@ export function ImportPage() {
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ items: number; batches: number } | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [tokenBusy, setTokenBusy] = useState(false);
+
+  async function generateToken() {
+    if (!supabase) return;
+    setTokenBusy(true);
+    try {
+      const { data, error: err } = await supabase.rpc("create_migration_token");
+      if (err) setError(err.message);
+      else setToken(data as string);
+    } finally {
+      setTokenBusy(false);
+    }
+  }
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -188,6 +202,39 @@ export function ImportPage() {
             </div>
           </div>
         )}
+
+        <div className="mt-6 rounded-lg border p-4">
+          <h2 className="text-sm font-medium">Bring data from Marg (migrator)</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Generate a one-time token and paste it into the Salt Migrator on your Marg PC. It is
+            scoped to this org and expires in 24 hours.
+          </p>
+          <div className="mt-3">
+            <Button variant="outline" onClick={generateToken} disabled={tokenBusy}>
+              <KeyRound />
+              {tokenBusy ? "Generating…" : "Generate upload token"}
+            </Button>
+          </div>
+          {token && (
+            <div className="mt-3">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={token}
+                  onFocus={(e) => e.currentTarget.select()}
+                  className="h-8 flex-1 rounded-md border bg-muted px-2 font-mono text-xs"
+                  aria-label="Migration token"
+                />
+                <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(token)}>
+                  Copy
+                </Button>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                One-time use · expires in 24h · treat it like a password.
+              </p>
+            </div>
+          )}
+        </div>
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
       </main>
