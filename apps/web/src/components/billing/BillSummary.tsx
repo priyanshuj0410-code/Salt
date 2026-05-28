@@ -31,7 +31,11 @@ export function BillSummary() {
   return (
     <div className="flex flex-col gap-3 overflow-auto rounded-lg border p-4">
       <Row label="Gross (MRP)" value={formatPaise(t.gross)} muted />
-      {t.discount > 0 && <Row label="Discount" value={`− ${formatPaise(t.discount)}`} muted />}
+      <Row
+        label="Discount"
+        value={t.discount > 0 ? `− ${formatPaise(t.discount)}` : formatPaise(0)}
+        muted
+      />
       <Row label="Taxable value" value={formatPaise(t.taxable)} muted />
       <Row label="CGST" value={formatPaise(Math.round(t.gst / 2))} muted />
       <Row label="SGST" value={formatPaise(t.gst - Math.round(t.gst / 2))} muted />

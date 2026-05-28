@@ -31,6 +31,7 @@ function makeLine(item: Item, batch: Batch): BillLine {
     expiry: batch.expiry,
     mrpPaise: batch.mrpPaise,
     ptrPaise: batch.ptrPaise,
+    stock: batch.qty,
     qty: 1,
     discountType: "pct",
     discountValue: 0,
@@ -67,7 +68,7 @@ export const useBill = create<BillState>((set) => ({
       if (existing) {
         return {
           lines: state.lines.map((l) =>
-            l.key === key ? { ...l, qty: l.qty + 1 } : l,
+            l.key === key ? { ...l, qty: Math.min(l.qty + 1, l.stock) } : l,
           ),
         };
       }
@@ -77,7 +78,9 @@ export const useBill = create<BillState>((set) => ({
   setQty: (key, qty) =>
     set((state) => ({
       lines: state.lines
-        .map((l) => (l.key === key ? { ...l, qty: Math.floor(qty) } : l))
+        .map((l) =>
+          l.key === key ? { ...l, qty: Math.min(Math.floor(qty), l.stock) } : l,
+        )
         .filter((l) => l.qty > 0),
     })),
 
@@ -102,7 +105,9 @@ export const useBill = create<BillState>((set) => ({
           lines: state.lines
             .filter((l) => l.key !== key)
             .map((l) =>
-              l.key === newKey ? { ...l, qty: l.qty + line.qty } : l,
+              l.key === newKey
+                ? { ...l, qty: Math.min(l.qty + line.qty, l.stock) }
+                : l,
             ),
         };
       }
@@ -116,6 +121,8 @@ export const useBill = create<BillState>((set) => ({
                 expiry: batch.expiry,
                 mrpPaise: batch.mrpPaise,
                 ptrPaise: batch.ptrPaise,
+                stock: batch.qty,
+                qty: Math.min(l.qty, batch.qty),
               }
             : l,
         ),

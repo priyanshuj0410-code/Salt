@@ -60,9 +60,9 @@ export function BatchPicker({
                   ) : (
                     <span className="size-3.5" />
                   )}
-                  <span>
+                  <span className="flex flex-col leading-tight">
                     <span className="font-medium">{b.batchNo}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">Exp {b.expiry}</span>
+                    <span className="text-xs text-muted-foreground">Exp {b.expiry}</span>
                   </span>
                 </span>
                 <span className="text-right tabular-nums text-muted-foreground">{b.qty}</span>

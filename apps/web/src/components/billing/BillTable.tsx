@@ -12,7 +12,7 @@ import {
 import { ScheduleBadge } from "./ScheduleBadge";
 import { BatchPicker } from "./BatchPicker";
 import { formatPaise, formatSigned } from "@/lib/currency";
-import { lineDiscount, lineGross, lineMargin, lineNet } from "@/lib/billing";
+import { lineMargin, lineNet } from "@/lib/billing";
 import { catalog } from "@/data/catalog";
 import { cn } from "@/lib/utils";
 import type { BillLine } from "@/lib/types";
@@ -92,7 +92,6 @@ export function BillTable() {
         </TableHeader>
         <TableBody>
           {lines.map((l, i) => {
-            const discount = lineDiscount(l);
             const margin = lineMargin(l);
             const count = batchCount(l.itemId);
             return (
@@ -144,6 +143,7 @@ export function BillTable() {
                     <input
                       type="number"
                       min={1}
+                      max={l.stock}
                       value={l.qty}
                       onChange={(e) => setQty(l.key, Math.max(1, Number(e.target.value) || 1))}
                       aria-label={`Quantity for ${l.name}`}
@@ -153,10 +153,14 @@ export function BillTable() {
                       variant="outline"
                       size="icon-xs"
                       aria-label="Increase quantity"
+                      disabled={l.qty >= l.stock}
                       onClick={() => setQty(l.key, l.qty + 1)}
                     >
                       <Plus />
                     </Button>
+                  </div>
+                  <div className="mt-0.5 text-center text-[11px] text-muted-foreground">
+                    {l.qty >= l.stock ? "max" : `of ${l.stock}`}
                   </div>
                 </TableCell>
                 <TableCell className="align-top">
@@ -192,15 +196,6 @@ export function BillTable() {
                 </TableCell>
                 <TableCell className="text-right align-top tabular-nums">
                   <div className="font-medium">{formatPaise(lineNet(l))}</div>
-                  <div
-                    className={cn(
-                      "text-xs text-muted-foreground line-through",
-                      discount === 0 && "invisible",
-                    )}
-                    aria-hidden={discount === 0}
-                  >
-                    {formatPaise(lineGross(l))}
-                  </div>
                   <div
                     className={cn(
                       "text-xs",
