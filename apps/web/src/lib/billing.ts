@@ -28,3 +28,18 @@ export function lineCost(l: BillLine): number {
 export function lineMargin(l: BillLine): number {
   return lineNet(l) - lineCost(l);
 }
+
+/** Total quantity of an item already on the bill, optionally excluding some line keys. */
+export function sumItemQty(lines: BillLine[], itemId: string, excludeKeys: string[] = []): number {
+  return lines
+    .filter((l) => l.itemId === itemId && !excludeKeys.includes(l.key))
+    .reduce((sum, l) => sum + l.qty, 0);
+}
+
+/**
+ * Max quantity this line can hold: the item's total stock (line.stock) minus
+ * what other lines of the same item already use. Caps per item, not per batch.
+ */
+export function lineMaxQty(lines: BillLine[], line: BillLine): number {
+  return line.stock - sumItemQty(lines, line.itemId, [line.key]);
+}

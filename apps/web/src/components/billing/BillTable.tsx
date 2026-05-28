@@ -12,7 +12,7 @@ import {
 import { ScheduleBadge } from "./ScheduleBadge";
 import { BatchPicker } from "./BatchPicker";
 import { formatPaise, formatSigned } from "@/lib/currency";
-import { lineMargin, lineNet } from "@/lib/billing";
+import { lineMargin, lineMaxQty, lineNet } from "@/lib/billing";
 import { catalog } from "@/data/catalog";
 import { cn } from "@/lib/utils";
 import type { BillLine } from "@/lib/types";
@@ -94,6 +94,7 @@ export function BillTable() {
           {lines.map((l, i) => {
             const margin = lineMargin(l);
             const count = batchCount(l.itemId);
+            const cap = lineMaxQty(lines, l);
             return (
               <TableRow
                 key={l.key}
@@ -143,7 +144,7 @@ export function BillTable() {
                     <input
                       type="number"
                       min={1}
-                      max={l.stock}
+                      max={cap}
                       value={l.qty}
                       onChange={(e) => setQty(l.key, Math.max(1, Number(e.target.value) || 1))}
                       aria-label={`Quantity for ${l.name}`}
@@ -153,14 +154,14 @@ export function BillTable() {
                       variant="outline"
                       size="icon-xs"
                       aria-label="Increase quantity"
-                      disabled={l.qty >= l.stock}
+                      disabled={l.qty >= cap}
                       onClick={() => setQty(l.key, l.qty + 1)}
                     >
                       <Plus />
                     </Button>
                   </div>
                   <div className="mt-0.5 text-center text-[11px] text-muted-foreground">
-                    {l.qty >= l.stock ? "max" : `of ${l.stock}`}
+                    {l.qty >= cap ? "max" : `of ${l.stock}`}
                   </div>
                 </TableCell>
                 <TableCell className="align-top">

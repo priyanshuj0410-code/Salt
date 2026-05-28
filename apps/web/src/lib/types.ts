@@ -42,7 +42,7 @@ export interface BillLine {
   expiry: string;
   mrpPaise: number;
   ptrPaise: number;
-  /** Available stock for the selected batch — the max sellable quantity. */
+  /** Total available stock for the item across all batches — the per-item cap. */
   stock: number;
   qty: number;
   /** "pct" = percentage of line gross; "flat" = rupees off the line, in paise. */

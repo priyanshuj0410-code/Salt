@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import type { Batch, BillLine, DiscountType, Item, Payment, PaymentMethod } from "@/lib/types";
 import { splitInclusiveGst } from "@/lib/currency";
-import { lineCost, lineDiscount, lineGross, lineNet } from "@/lib/billing";
-import { fefoBatch } from "@/lib/search";
+import { lineCost, lineDiscount, lineGross, lineNet, sumItemQty } from "@/lib/billing";
+import { fefoBatch, itemStock } from "@/lib/search";
 
 export interface BillTotals {
   items: number;
@@ -31,7 +31,7 @@ function makeLine(item: Item, batch: Batch): BillLine {
     expiry: batch.expiry,
     mrpPaise: batch.mrpPaise,
     ptrPaise: batch.ptrPaise,
-    stock: batch.qty,
+    stock: itemStock(item),
     qty: 1,
     discountType: "pct",
     discountValue: 0,
@@ -66,23 +66,29 @@ export const useBill = create<BillState>((set) => ({
       const key = lineKey(item.id, batch.batchNo);
       const existing = state.lines.find((l) => l.key === key);
       if (existing) {
+        const cap = existing.stock - sumItemQty(state.lines, item.id, [existing.key]);
         return {
           lines: state.lines.map((l) =>
-            l.key === key ? { ...l, qty: Math.min(l.qty + 1, l.stock) } : l,
+            l.key === key ? { ...l, qty: Math.min(l.qty + 1, cap) } : l,
           ),
         };
       }
+      // No availability left across all batches of this item.
+      if (itemStock(item) - sumItemQty(state.lines, item.id) < 1) return state;
       return { lines: [...state.lines, makeLine(item, batch)] };
     }),
 
   setQty: (key, qty) =>
-    set((state) => ({
-      lines: state.lines
-        .map((l) =>
-          l.key === key ? { ...l, qty: Math.min(Math.floor(qty), l.stock) } : l,
-        )
-        .filter((l) => l.qty > 0),
-    })),
+    set((state) => {
+      const target = state.lines.find((l) => l.key === key);
+      if (!target) return state;
+      const cap = target.stock - sumItemQty(state.lines, target.itemId, [key]);
+      return {
+        lines: state.lines
+          .map((l) => (l.key === key ? { ...l, qty: Math.min(Math.floor(qty), cap) } : l))
+          .filter((l) => l.qty > 0),
+      };
+    }),
 
   setDiscount: (key, type, value) =>
     set((state) => ({
@@ -101,13 +107,12 @@ export const useBill = create<BillState>((set) => ({
       const target = state.lines.find((l) => l.key === newKey);
       if (target) {
         // Merge into the existing line for that batch, drop the old one.
+        const cap = target.stock - sumItemQty(state.lines, item.id, [newKey, key]);
         return {
           lines: state.lines
             .filter((l) => l.key !== key)
             .map((l) =>
-              l.key === newKey
-                ? { ...l, qty: Math.min(l.qty + line.qty, l.stock) }
-                : l,
+              l.key === newKey ? { ...l, qty: Math.min(l.qty + line.qty, cap) } : l,
             ),
         };
       }
@@ -121,8 +126,6 @@ export const useBill = create<BillState>((set) => ({
                 expiry: batch.expiry,
                 mrpPaise: batch.mrpPaise,
                 ptrPaise: batch.ptrPaise,
-                stock: batch.qty,
-                qty: Math.min(l.qty, batch.qty),
               }
             : l,
         ),
