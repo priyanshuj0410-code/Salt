@@ -204,36 +204,64 @@ export function ImportPage() {
         )}
 
         <div className="mt-6 rounded-lg border p-4">
-          <h2 className="text-sm font-medium">Bring data from Marg (migrator)</h2>
+          <h2 className="text-sm font-medium">Migrate from Marg</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Generate a one-time token and paste it into the Salt Migrator on your Marg PC. It is
-            scoped to this org and expires in 24 hours.
+            Run the Salt Migrator on the PC that holds your Marg data. It reads Marg read-only and
+            uploads straight into this org.
           </p>
-          <div className="mt-3">
-            <Button variant="outline" onClick={generateToken} disabled={tokenBusy}>
-              <KeyRound />
-              {tokenBusy ? "Generating…" : "Generate upload token"}
-            </Button>
-          </div>
-          {token && (
-            <div className="mt-3">
-              <div className="flex items-center gap-2">
-                <input
-                  readOnly
-                  value={token}
-                  onFocus={(e) => e.currentTarget.select()}
-                  className="h-8 flex-1 rounded-md border bg-muted px-2 font-mono text-xs"
-                  aria-label="Migration token"
-                />
-                <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(token)}>
-                  Copy
+
+          <ol className="mt-4 space-y-4 text-sm">
+            <li>
+              <span className="font-medium">1. Download the migrator</span>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                <a download href="/downloads/salt-migrator-windows-x64.exe" className={cn(buttonVariants({ variant: "outline" }))}>
+                  <Download />
+                  Windows 64-bit
+                </a>
+                <a download href="/downloads/salt-migrator-windows-x86.exe" className={cn(buttonVariants({ variant: "outline" }))}>
+                  <Download />
+                  Windows 32-bit
+                </a>
+              </div>
+            </li>
+
+            <li>
+              <span className="font-medium">2. Generate an upload token</span>
+              <p className="text-xs text-muted-foreground">Scoped to this org · one-time · expires in 24h.</p>
+              <div className="mt-1.5">
+                <Button variant="outline" onClick={generateToken} disabled={tokenBusy}>
+                  <KeyRound />
+                  {tokenBusy ? "Generating…" : "Generate upload token"}
                 </Button>
               </div>
+              {token && (
+                <div className="mt-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={token}
+                      onFocus={(e) => e.currentTarget.select()}
+                      className="h-8 flex-1 rounded-md border bg-muted px-2 font-mono text-xs"
+                      aria-label="Migration token"
+                    />
+                    <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(token)}>
+                      Copy
+                    </Button>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">Treat it like a password.</p>
+                </div>
+              )}
+            </li>
+
+            <li>
+              <span className="font-medium">3. Run it on your Marg PC</span>
+              <p className="mt-1 text-xs text-muted-foreground">In a command prompt, from where you saved it:</p>
+              <pre className="mt-1.5 overflow-auto rounded-md bg-muted p-2 font-mono text-xs">salt-migrator-windows-x64.exe --dbf "C:\Marg\items.dbf" --upload --token YOUR_TOKEN</pre>
               <p className="mt-1 text-xs text-muted-foreground">
-                One-time use · expires in 24h · treat it like a password.
+                It previews what it found, asks you to confirm, then uploads. Items then appear in billing.
               </p>
-            </div>
-          )}
+            </li>
+          </ol>
         </div>
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
