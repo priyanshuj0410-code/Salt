@@ -4,6 +4,7 @@ import { ItemSearch } from "./ItemSearch";
 import { BillTable } from "./BillTable";
 import { BillSummary } from "./BillSummary";
 import { ShortcutHelp } from "./ShortcutHelp";
+import { UserMenu } from "@/components/auth/UserMenu";
 
 function Hint({ keys, label }: { keys: string; label: string }) {
   return (
@@ -40,6 +41,7 @@ export function BillingScreen() {
           <span className="rounded-md bg-secondary px-2.5 py-1 text-xs font-medium">
             Walk-in Customer
           </span>
+          <UserMenu />
         </div>
       </header>
 
