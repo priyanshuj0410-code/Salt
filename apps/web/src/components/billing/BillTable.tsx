@@ -78,15 +78,15 @@ export function BillTable() {
 
   return (
     <div className="flex-1 overflow-auto rounded-lg border">
-      <Table>
+      <Table className="table-fixed">
         <TableHeader className="sticky top-0 z-10 bg-background">
           <TableRow>
             <TableHead className="w-8">#</TableHead>
             <TableHead>Item</TableHead>
-            <TableHead className="text-right">MRP</TableHead>
-            <TableHead className="text-center">Qty</TableHead>
-            <TableHead className="text-center">Discount</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead className="w-24 text-right">MRP</TableHead>
+            <TableHead className="w-32 text-center">Qty</TableHead>
+            <TableHead className="w-28 text-center">Discount</TableHead>
+            <TableHead className="w-32 text-right">Amount</TableHead>
             <TableHead className="w-10" />
           </TableRow>
         </TableHeader>
@@ -112,7 +112,7 @@ export function BillTable() {
                     <span className="font-medium">{l.name}</span>
                     <ScheduleBadge schedule={l.schedule} />
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="truncate text-xs text-muted-foreground">
                     {l.salt} · {l.pack} · GST {l.gstRate}%
                   </div>
                   <button
@@ -192,11 +192,15 @@ export function BillTable() {
                 </TableCell>
                 <TableCell className="text-right align-top tabular-nums">
                   <div className="font-medium">{formatPaise(lineNet(l))}</div>
-                  {discount > 0 && (
-                    <div className="text-xs text-muted-foreground line-through">
-                      {formatPaise(lineGross(l))}
-                    </div>
-                  )}
+                  <div
+                    className={cn(
+                      "text-xs text-muted-foreground line-through",
+                      discount === 0 && "invisible",
+                    )}
+                    aria-hidden={discount === 0}
+                  >
+                    {formatPaise(lineGross(l))}
+                  </div>
                   <div
                     className={cn(
                       "text-xs",

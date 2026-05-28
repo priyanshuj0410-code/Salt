@@ -25,7 +25,7 @@ export function BatchPicker({
 
   return (
     <Dialog open={!!line} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>{item?.name} — select batch</DialogTitle>
           <DialogDescription>
@@ -33,7 +33,7 @@ export function BatchPicker({
           </DialogDescription>
         </DialogHeader>
         <div className="overflow-hidden rounded-lg border">
-          <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-x-4 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+          <div className="grid grid-cols-[1fr_3rem_5.5rem_5.5rem_5.5rem] gap-x-4 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
             <span>Batch / Expiry</span>
             <span className="text-right">Stock</span>
             <span className="text-right">Purchase</span>
@@ -50,7 +50,7 @@ export function BatchPicker({
                   onOpenChange(false);
                 }}
                 className={cn(
-                  "grid w-full grid-cols-[1fr_auto_auto_auto_auto] items-center gap-x-4 px-3 py-2 text-left text-sm hover:bg-muted",
+                  "grid w-full grid-cols-[1fr_3rem_5.5rem_5.5rem_5.5rem] items-center gap-x-4 px-3 py-2 text-left text-sm hover:bg-muted",
                   selected && "bg-muted",
                 )}
               >
