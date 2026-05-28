@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Salt Design System v0.1</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ============ COLOR TOKENS ============ */
+    /* Neutrals — the foundation. Zinc-based per shadcn defaults. */
+    --color-background: #ffffff;
+    --color-surface: #fafafa;        /* zinc-50 — secondary surface */
+    --color-surface-2: #f4f4f5;      /* zinc-100 — tertiary surface */
+    --color-border: #e4e4e7;         /* zinc-200 — default borders */
+    --color-border-strong: #d4d4d8;  /* zinc-300 — emphasized borders */
+    --color-divider: #f4f4f5;        /* zinc-100 — within-card dividers */
+
+    --color-text-primary: #18181b;    /* zinc-900 — primary text */
+    --color-text-secondary: #52525b;  /* zinc-600 — secondary text */
+    --color-text-tertiary: #71717a;   /* zinc-500 — tertiary/captions */
+    --color-text-disabled: #a1a1aa;   /* zinc-400 — disabled, placeholders */
+    --color-text-inverse: #fafafa;    /* on dark backgrounds */
+
+    /* Action — primary, secondary, destructive */
+    --color-action-primary: #18181b;       /* zinc-900 — buttons, links */
+    --color-action-primary-hover: #27272a; /* zinc-800 */
+    --color-action-primary-text: #ffffff;
+    --color-action-secondary: #f4f4f5;     /* zinc-100 */
+    --color-action-secondary-hover: #e4e4e7;
+    --color-action-secondary-text: #18181b;
+
+    /* Semantic — for STATE, not decoration */
+    --color-success: #166534;              /* emerald-800 */
+    --color-success-bg: #f0fdf4;           /* emerald-50 */
+    --color-success-border: #bbf7d0;       /* emerald-200 */
+    --color-warning: #b45309;              /* amber-700 */
+    --color-warning-bg: #fffbeb;           /* amber-50 */
+    --color-warning-border: #fde68a;       /* amber-200 */
+    --color-danger: #b91c1c;               /* red-700 */
+    --color-danger-bg: #fef2f2;            /* red-50 */
+    --color-danger-border: #fecaca;        /* red-200 */
+    --color-info: #1e40af;                 /* blue-800 — used sparingly */
+    --color-info-bg: #eff6ff;
+    --color-info-border: #bfdbfe;
+
+    /* On-dark semantic shades — for fills/dots/borders on dark surfaces */
+    --color-success-on-dark: #4ade80;      /* emerald-400 */
+    --color-warning-on-dark: #fbbf24;      /* amber-400 */
+    --color-danger-on-dark: #f87171;       /* red-400 */
+
+    /* Focus ring — single source of truth */
+    --color-focus-ring: rgba(24, 24, 27, 0.15);
+    --color-focus-ring-strong: rgba(24, 24, 27, 0.3);
+
+    /* ============ SPACING SCALE ============ */
+    /* Based on 4px base unit. Counter UI uses 1-3; comfort UI uses 3-6 */
+    --space-0: 0;
+    --space-1: 0.25rem;   /* 4px  — atomic, icons-to-text */
+    --space-2: 0.5rem;    /* 8px  — within compact components */
+    --space-3: 0.75rem;   /* 12px — between related elements */
+    --space-4: 1rem;      /* 16px — standard padding */
+    --space-5: 1.25rem;   /* 20px — card padding (comfort) */
+    --space-6: 1.5rem;    /* 24px — section spacing */
+    --space-8: 2rem;      /* 32px — between sections */
+    --space-12: 3rem;     /* 48px — page-level spacing */
+
+    /* ============ TYPE TOKENS ============ */
+    --font-sans: "Geist", "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+    --font-display: "Fraunces", Georgia, serif;
+
+    /* Sizes — five steps, no improvisation */
+    --text-xs: 0.6875rem;    /* 11px — labels, captions, kbd */
+    --text-sm: 0.8125rem;    /* 13px — counter UI body, dense tables */
+    --text-base: 0.9375rem;  /* 15px — comfort UI body */
+    --text-lg: 1.0625rem;    /* 17px — section heads */
+    --text-xl: 1.375rem;     /* 22px — page titles */
+    --text-2xl: 1.75rem;     /* 28px — KPI numbers, hero stats */
+
+    --leading-tight: 1.2;
+    --leading-normal: 1.45;
+    --leading-relaxed: 1.6;
+
+    --tracking-tight: -0.015em;
+    --tracking-normal: 0;
+    --tracking-wide: 0.05em;       /* uppercase labels */
+
+    --font-regular: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+
+    /* ============ RADII ============ */
+    --radius-none: 0;
+    --radius-sm: 0.25rem;   /* 4px  — small chips, kbd */
+    --radius-md: 0.375rem;  /* 6px  — buttons, inputs, badges */
+    --radius-lg: 0.5rem;    /* 8px  — cards, modals */
+    --radius-xl: 0.75rem;   /* 12px — large cards */
+    --radius-full: 9999px;  /* pills, avatars */
+
+    /* ============ SHADOWS ============ */
+    /* Sparingly used. Most surfaces use borders, not shadows. */
+    --shadow-xs: 0 1px 0 0 rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 12px 32px -8px rgba(0, 0, 0, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.06);
+    --shadow-modal: 0 24px 48px -12px rgba(0, 0, 0, 0.18);
+
+    /* ============ MOTION ============ */
+    --duration-instant: 50ms;   /* opacity, micro */
+    --duration-fast: 120ms;     /* hover, focus */
+    --duration-medium: 200ms;   /* expand, slide */
+    --duration-slow: 320ms;     /* modal enter */
+
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ============ Z-INDEX SCALE ============ */
+    --z-base: 0;
+    --z-sticky: 10;
+    --z-dropdown: 20;
+    --z-overlay: 30;
+    --z-modal: 40;
+    --z-toast: 50;
+
+    /* ============ DENSITY ============ */
+    /* Counter (cashier) uses compact; Owner uses default */
+    --row-height-compact: 36px;
+    --row-height-default: 44px;
+    --input-height-compact: 32px;
+    --input-height-default: 36px;
+  }
+
+  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body {
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    color: var(--color-text-primary);
+    background: var(--color-background);
+    margin: 0;
+    line-height: var(--leading-normal);
+  }
+  code, .mono { font-family: var(--font-mono); }
+  pre {
+    font-family: var(--font-mono);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-xs);
+    overflow-x: auto;
+    color: var(--color-text-primary);
+  }
+  pre code { background: transparent; padding: 0; border: 0; }
+  code:not(pre code) {
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    padding: 1px 5px;
+    border-radius: var(--radius-sm);
+    font-size: 0.85em;
+  }
+  .display { font-family: var(--font-display); font-feature-settings: "ss01", "ss02"; }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* ============ NAV ============ */
+  .docs-nav {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 240px;
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    overflow-y: auto;
+    padding: var(--space-6) var(--space-4);
+    z-index: var(--z-sticky);
+  }
+  .docs-main {
+    margin-left: 240px;
+    padding: var(--space-8) var(--space-12);
+    max-width: 1080px;
+  }
+  .docs-nav-section {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-tertiary);
+    margin: var(--space-5) 0 var(--space-2);
+  }
+  .docs-nav-link {
+    display: block;
+    padding: 4px 8px;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: all var(--duration-fast) var(--ease-out);
+  }
+  .docs-nav-link:hover { background: var(--color-surface-2); color: var(--color-text-primary); }
+  .docs-nav-link.active { background: var(--color-text-primary); color: var(--color-text-inverse); }
+
+  .doc-section { margin-bottom: var(--space-12); }
+  .doc-h1 {
+    font-family: var(--font-display);
+    font-size: 2.25rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--space-2);
+    color: var(--color-text-primary);
+  }
+  .doc-h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-semibold);
+    letter-spacing: var(--tracking-tight);
+    margin: var(--space-8) 0 var(--space-3);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .doc-h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    margin: var(--space-6) 0 var(--space-2);
+  }
+  .doc-h4 {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-text-tertiary);
+    margin: var(--space-4) 0 var(--space-2);
+  }
+  .doc-p {
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--space-3);
+    max-width: 65ch;
+  }
+  .doc-rule {
+    background: var(--color-warning-bg);
+    border-left: 3px solid var(--color-warning);
+    padding: var(--space-3) var(--space-4);
+    margin: var(--space-4) 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+  .doc-rule strong { color: var(--color-warning); }
+  .doc-good { color: var(--color-success); font-weight: var(--font-semibold); }
+  .doc-bad { color: var(--color-danger); font-weight: var(--font-semibold); }
+
+  /* Demo panel — a panel showing the rendered component */
+  .demo {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin: var(--space-3) 0;
+  }
+  .demo-render {
+    padding: var(--space-6);
+    background: var(--color-background);
+    background-image:
+      linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+  .demo-code {
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-3) var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-text-secondary);
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+
+  /* ============ TOKEN VIZ ============ */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-3);
+    margin: var(--space-3) 0;
+  }
+  .swatch {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: white;
+  }
+  .swatch-color { height: 64px; border-bottom: 1px solid var(--color-border); }
+  .swatch-info { padding: var(--space-2) var(--space-3); font-size: var(--text-xs); }
+  .swatch-name { font-weight: var(--font-medium); color: var(--color-text-primary); }
+  .swatch-value { font-family: var(--font-mono); color: var(--color-text-tertiary); font-size: 10px; }
+
+  .scale-row {
+    display: grid;
+    grid-template-columns: 100px 80px 60px 1fr;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-divider);
+    font-size: var(--text-sm);
+  }
+  .scale-row:last-child { border-bottom: 0; }
+  .scale-row .name { font-weight: var(--font-medium); }
+  .scale-row .value { font-family: var(--font-mono); color: var(--color-text-tertiary); font-size: var(--text-xs); }
+
+  /* ============ ALL PRIMITIVES ============ */
+  /* Button */
+  .btn {
+    display: inline-flex; align-items: center; gap: var(--space-2);
+    border-radius: var(--radius-md);
+    font-family: var(--font-sans);
+    font-weight: var(--font-medium);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+    line-height: 1;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-focus-ring-strong);
+  }
+
+  /* Button sizes */
+  .btn-sm { height: 28px; padding: 0 10px; font-size: var(--text-xs); gap: 6px; }
+  .btn-md { height: 34px; padding: 0 14px; font-size: var(--text-sm); }
+  .btn-lg { height: 40px; padding: 0 18px; font-size: var(--text-base); }
+
+  /* Button variants */
+  .btn-primary { background: var(--color-action-primary); color: var(--color-action-primary-text); }
+  .btn-primary:hover { background: var(--color-action-primary-hover); }
+  .btn-secondary { background: var(--color-action-secondary); color: var(--color-action-secondary-text); border-color: var(--color-border); }
+  .btn-secondary:hover { background: var(--color-action-secondary-hover); }
+  .btn-ghost { background: transparent; color: var(--color-text-secondary); }
+  .btn-ghost:hover { background: var(--color-surface-2); color: var(--color-text-primary); }
+  .btn-danger { background: var(--color-danger); color: white; }
+  .btn-danger:hover { background: #991b1b; }
+
+  /* Input */
+  .input {
+    height: var(--input-height-default);
+    padding: 0 var(--space-3);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-text-primary);
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    width: 100%;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+  }
+  .input::placeholder { color: var(--color-text-disabled); }
+  .input:hover { border-color: var(--color-border-strong); }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-action-primary);
+    box-shadow: 0 0 0 3px var(--color-focus-ring);
+  }
+  .input-compact { height: var(--input-height-compact); padding: 0 10px; font-size: var(--text-sm); }
+
+  /* Badge */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 7px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+  }
+  .badge-neutral { background: var(--color-surface-2); color: var(--color-text-secondary); }
+  .badge-success { background: var(--color-success-bg); color: var(--color-success); }
+  .badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+  .badge-danger { background: var(--color-danger-bg); color: var(--color-danger); }
+  .badge-strong { background: var(--color-text-primary); color: var(--color-text-inverse); }
+
+  /* Kbd */
+  .kbd {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: var(--font-medium);
+    color: var(--color-text-secondary);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-sm);
+    line-height: 1;
+  }
+
+  /* Card */
+  .card {
+    background: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .card-header {
+    padding: var(--space-3) var(--space-5);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-background);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-body { padding: var(--space-5); }
+  .card-footer {
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* Stat */
+  .stat-label {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-tertiary);
+  }
+  .stat-value {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-bold);
+    letter-spacing: var(--tracking-tight);
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .stat-delta { font-size: var(--text-xs); font-weight: var(--font-medium); }
+
+  /* Data table */
+  .table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-sm); }
+  .table thead th {
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-tertiary);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky; top: 0;
+  }
+  .table tbody td {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-divider);
+    vertical-align: middle;
+  }
+  .table tbody tr:hover { background: var(--color-surface); }
+  .table tbody tr:last-child td { border-bottom: 0; }
+  .table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .table-compact tbody td { padding: 6px var(--space-3); }
+
+  /* Status dot */
+  .dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-success { background: var(--color-success); }
+  .dot-warning { background: var(--color-warning); }
+  .dot-danger { background: var(--color-danger); }
+  .dot-neutral { background: var(--color-text-disabled); }
+  .dot-strong { background: var(--color-text-primary); }
+  .dot-pulse { animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.4); }
+  }
+
+  /* Empty state */
+  .empty {
+    padding: var(--space-12) var(--space-6);
+    text-align: center;
+    color: var(--color-text-tertiary);
+  }
+  .empty-icon {
+    width: 48px; height: 48px;
+    margin: 0 auto var(--space-3);
+    background: var(--color-surface-2);
+    border-radius: var(--radius-full);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--color-text-disabled);
+  }
+  .empty-title { font-size: var(--text-sm); font-weight: var(--font-medium); color: var(--color-text-secondary); margin-bottom: 4px; }
+  .empty-hint { font-size: var(--text-xs); color: var(--color-text-tertiary); }
+
+  /* Inline labels (form rows) */
+  .label {
+    display: block;
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-tertiary);
+    margin-bottom: 4px;
+  }
+
+  /* Page header */
+  .page-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: var(--space-3) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-background);
+    height: 56px;
+  }
+  .page-title {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-primary);
+    letter-spacing: var(--tracking-tight);
+    line-height: 1.2;
+  }
+  .page-subtitle { font-size: var(--text-xs); color: var(--color-text-tertiary); margin-top: 2px; }
+
+  /* Toast */
+  .toast {
+    display: flex; align-items: flex-start; gap: var(--space-3);
+    background: var(--color-text-primary);
+    color: var(--color-text-inverse);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--text-sm);
+    max-width: 380px;
+    border-left: 3px solid var(--color-text-secondary);
+  }
+  .toast-success { border-left-color: var(--color-success-on-dark); }
+  .toast-warning { border-left-color: var(--color-warning-on-dark); }
+  .toast-danger  { border-left-color: var(--color-danger-on-dark); }
+  /* Dots inside toasts use on-dark (brighter) shades for contrast */
+  .toast .dot-success { background: var(--color-success-on-dark); }
+  .toast .dot-warning { background: var(--color-warning-on-dark); }
+  .toast .dot-danger  { background: var(--color-danger-on-dark); }
+
+  /* Brand mark */
+  .salt-logo {
+    width: 28px; height: 28px; border-radius: var(--radius-md);
+    background: var(--color-text-primary);
+    color: white;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-display);
+    font-weight: var(--font-bold);
+    font-size: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  /* Salt-crystal logo */
+  .salt-crystal {
+    width: 24px; height: 24px;
+    display: inline-block; position: relative;
+  }
+  .salt-crystal svg { display: block; }
+</style>
+</head>
+<body>
+
+<nav class="docs-nav">
+  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-5);">
+    <div class="salt-logo">S</div>
+    <div>
+      <div style="font-size: var(--text-sm); font-weight: var(--font-semibold);">Salt Design</div>
+      <div style="font-size: 10px; color: var(--color-text-tertiary); margin-top: -1px;">v0.1 · May 2026</div>
+    </div>
+  </div>
+
+  <div class="docs-nav-section">Foundation</div>
+  <a class="docs-nav-link" href="#principles">Principles</a>
+  <a class="docs-nav-link" href="#brand">Brand</a>
+
+  <div class="docs-nav-section">Tokens</div>
+  <a class="docs-nav-link" href="#color">Color</a>
+  <a class="docs-nav-link" href="#typography">Typography</a>
+  <a class="docs-nav-link" href="#spacing">Spacing</a>
+  <a class="docs-nav-link" href="#radii">Radii & shadows</a>
+  <a class="docs-nav-link" href="#motion">Motion</a>
+  <a class="docs-nav-link" href="#density">Density</a>
+
+  <div class="docs-nav-section">Primitives</div>
+  <a class="docs-nav-link" href="#buttons">Buttons</a>
+  <a class="docs-nav-link" href="#inputs">Inputs</a>
+  <a class="docs-nav-link" href="#badges">Badges & status</a>
+  <a class="docs-nav-link" href="#kbd">Kbd hints</a>
+  <a class="docs-nav-link" href="#cards">Cards</a>
+
+  <div class="docs-nav-section">Patterns</div>
+  <a class="docs-nav-link" href="#data-table">Data tables</a>
+  <a class="docs-nav-link" href="#stat-card">Stat cards</a>
+  <a class="docs-nav-link" href="#page-header">Page headers</a>
+  <a class="docs-nav-link" href="#empty">Empty states</a>
+  <a class="docs-nav-link" href="#form-rows">Form rows</a>
+  <a class="docs-nav-link" href="#toasts">Toasts & feedback</a>
+
+  <div class="docs-nav-section">Reference</div>
+  <a class="docs-nav-link" href="#accessibility">Accessibility</a>
+  <a class="docs-nav-link" href="#anti">Anti-patterns</a>
+</nav>
+
+<main class="docs-main">
+
+<!-- ============ HEADER ============ -->
+<section class="doc-section">
+  <div style="display: flex; align-items: baseline; gap: var(--space-3); margin-bottom: var(--space-2);">
+    <h1 class="doc-h1">Salt Design System</h1>
+    <span class="badge badge-neutral">v0.1</span>
+  </div>
+  <p class="doc-p" style="max-width: 72ch; font-size: var(--text-base);">
+    The design foundation for Salt — a modern ERP for Indian medical retail.
+    This document defines the tokens, primitives, and patterns that every screen in Salt is built from.
+    If a screen breaks one of these rules, the screen is wrong, not the rule.
+  </p>
+  <p class="doc-p" style="max-width: 72ch;">
+    Read top-to-bottom on your first pass. Reference by section after that. Code snippets are
+    copy-pasteable Tailwind + CSS-variable patterns that work directly with shadcn/ui.
+  </p>
+</section>
+
+<!-- ============ PRINCIPLES ============ -->
+<section id="principles" class="doc-section">
+  <h2 class="doc-h2">Principles</h2>
+  <p class="doc-p">
+    The six rules every design decision in Salt is checked against. When in conflict, earlier rules win.
+  </p>
+
+  <h3 class="doc-h3">1. Speed before delight</h3>
+  <p class="doc-p">
+    Salt is operated by cashiers on 12-hour shifts. Animation, illustration, and ornament cost cognitive
+    cycles and create reaction-time penalties. We invest visual budget in <em>information density</em> and
+    <em>clarity of state</em>, not in motion or decoration.
+  </p>
+
+  <h3 class="doc-h3">2. Keyboard is the primary input</h3>
+  <p class="doc-p">
+    Every action reachable by mouse must also be reachable by keyboard with a visible shortcut hint.
+    Focus states are not an afterthought — they are how power users see what they're doing.
+  </p>
+
+  <h3 class="doc-h3">3. Trust through precision</h3>
+  <p class="doc-p">
+    This is financial software in a regulated category. Numbers align to the right with tabular figures.
+    States are explicit (saved / saving / failed, never ambiguous). Audit cues are visible, not hidden.
+  </p>
+
+  <h3 class="doc-h3">4. Quiet by default, loud only when needed</h3>
+  <p class="doc-p">
+    Default surfaces are near-white. Color is reserved for state (red = danger, amber = warning,
+    emerald = success). Decoration is forbidden. If everything is highlighted, nothing is.
+  </p>
+
+  <h3 class="doc-h3">5. Two densities, one system</h3>
+  <p class="doc-p">
+    Counter mode is compact (cashier needs to see 20 line items without scrolling). Owner mode is
+    default density (reading reports without eyestrain). Both modes use the same tokens and the same
+    primitives — only spacing and row height change. <strong>Never two design languages.</strong>
+  </p>
+
+  <h3 class="doc-h3">6. Indian-first, never Indian-only</h3>
+  <p class="doc-p">
+    Indian Rupees in <code>en-IN</code> formatting (₹1,00,000 not ₹100,000). Hindi/English bilingual
+    where it matters. But avoid heavy cultural ornamentation — the customer doesn't want a "desi"
+    product, they want a serious product that respects them.
+  </p>
+</section>
+
+<!-- ============ BRAND ============ -->
+<section id="brand" class="doc-section">
+  <h2 class="doc-h2">Brand</h2>
+  <p class="doc-p">
+    Salt's brand expression is restrained on purpose. The product is the brand — what's on screen
+    matters far more than what's on the marketing site.
+  </p>
+
+  <h3 class="doc-h3">Wordmark</h3>
+  <p class="doc-p">The wordmark uses Fraunces (display serif) for the letter S only, set on a black square.</p>
+  <div class="demo">
+    <div class="demo-render" style="display: flex; gap: var(--space-6); align-items: center;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="salt-logo">S</div>
+        <span class="display" style="font-size: 22px; font-weight: 600; letter-spacing: -0.02em;">Salt</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="salt-logo" style="width: 40px; height: 40px; font-size: 22px; border-radius: var(--radius-lg);">S</div>
+        <span class="display" style="font-size: 32px; font-weight: 600; letter-spacing: -0.02em;">Salt</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="salt-logo" style="width: 56px; height: 56px; font-size: 30px; border-radius: 10px;">S</div>
+        <span class="display" style="font-size: 44px; font-weight: 600; letter-spacing: -0.025em;">Salt</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="doc-h3">Voice</h3>
+  <ul style="font-size: var(--text-sm); color: var(--color-text-secondary); padding-left: 20px; max-width: 65ch;">
+    <li><strong>Direct.</strong> "Bill saved" not "Your bill has been saved successfully."</li>
+    <li><strong>Operational.</strong> "Pay & Print" not "Complete transaction"</li>
+    <li><strong>Calm.</strong> No marketing exclamation marks. No emojis in product UI.</li>
+    <li><strong>Bilingual where it matters.</strong> "Crocin 500" / "हिंदी" coexist; we don't translate "Pay" to "भुगतान करें" because cashiers prefer the short English form.</li>
+  </ul>
+</section>
+
+<!-- ============ COLOR ============ -->
+<section id="color" class="doc-section">
+  <h2 class="doc-h2">Color</h2>
+  <p class="doc-p">
+    Pure zinc neutrals plus four semantic colors. <strong>No brand color in the product UI.</strong>
+    Black is the brand color; everything else is functional.
+  </p>
+
+  <h3 class="doc-h3">Neutrals</h3>
+  <div class="swatch-grid">
+    <div class="swatch">
+      <div class="swatch-color" style="background: #ffffff; border-bottom: 1px solid var(--color-border);"></div>
+      <div class="swatch-info"><div class="swatch-name">background</div><div class="swatch-value">#ffffff</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #fafafa;"></div>
+      <div class="swatch-info"><div class="swatch-name">surface</div><div class="swatch-value">#fafafa · zinc-50</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #f4f4f5;"></div>
+      <div class="swatch-info"><div class="swatch-name">surface-2</div><div class="swatch-value">#f4f4f5 · zinc-100</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #e4e4e7;"></div>
+      <div class="swatch-info"><div class="swatch-name">border</div><div class="swatch-value">#e4e4e7 · zinc-200</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #a1a1aa;"></div>
+      <div class="swatch-info"><div class="swatch-name">text-disabled</div><div class="swatch-value">#a1a1aa · zinc-400</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #71717a;"></div>
+      <div class="swatch-info"><div class="swatch-name">text-tertiary</div><div class="swatch-value">#71717a · zinc-500</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #52525b;"></div>
+      <div class="swatch-info"><div class="swatch-name">text-secondary</div><div class="swatch-value">#52525b · zinc-600</div></div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background: #18181b;"></div>
+      <div class="swatch-info"><div class="swatch-name">text-primary</div><div class="swatch-value">#18181b · zinc-900</div></div>
+    </div>
+  </div>
+
+  <h3 class="doc-h3">Semantic — for state, not decoration</h3>
+  <p class="doc-p">
+    Each semantic color has a foreground (text on white), a background tint, and a border.
+    Use only for the meaning, never to differentiate categories.
+  </p>
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: var(--space-3); margin: var(--space-3) 0;">
+    <div style="background: var(--color-success-bg); border: 1px solid var(--color-success-border); border-radius: var(--radius-md); padding: var(--space-3);">
+      <div style="font-weight: 600; color: var(--color-success); font-size: var(--text-sm);">Success</div>
+      <div style="font-size: var(--text-xs); color: var(--color-text-secondary); margin-top: 4px;">Saved, paid, in stock, on track</div>
+    </div>
+    <div style="background: var(--color-warning-bg); border: 1px solid var(--color-warning-border); border-radius: var(--radius-md); padding: var(--space-3);">
+      <div style="font-weight: 600; color: var(--color-warning); font-size: var(--text-sm);">Warning</div>
+      <div style="font-size: var(--text-xs); color: var(--color-text-secondary); margin-top: 4px;">Near expiry, low stock, credit due</div>
+    </div>
+    <div style="background: var(--color-danger-bg); border: 1px solid var(--color-danger-border); border-radius: var(--radius-md); padding: var(--space-3);">
+      <div style="font-weight: 600; color: var(--color-danger); font-size: var(--text-sm);">Danger</div>
+      <div style="font-size: var(--text-xs); color: var(--color-text-secondary); margin-top: 4px;">Out of stock, expired, overdue</div>
+    </div>
+    <div style="background: var(--color-info-bg); border: 1px solid var(--color-info-border); border-radius: var(--radius-md); padding: var(--space-3);">
+      <div style="font-weight: 600; color: var(--color-info); font-size: var(--text-sm);">Info</div>
+      <div style="font-size: var(--text-xs); color: var(--color-text-secondary); margin-top: 4px;">Sparingly. Hints, syncing, neutral notices</div>
+    </div>
+  </div>
+
+  <div class="doc-rule">
+    <strong>Rule.</strong> Never use semantic colors to differentiate categories or types.
+    Salesperson A is not "green" and salesperson B "blue." Categories use shape, position, or label.
+  </div>
+
+  <h3 class="doc-h3">On-light vs on-dark semantic shades</h3>
+  <p class="doc-p">
+    The semantic foreground tokens (e.g. <code>--color-warning</code> = #b45309) are tuned to be readable
+    <em>as text on a white background</em>, so they are deliberately dark. They must <strong>not</strong> be
+    used as fills on dark surfaces or as whole-panel backgrounds — a dark amber fill reads as muddy rust,
+    not warning. On dark surfaces (toasts, the inverse stat card), use the lighter -400 shades:
+  </p>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin: var(--space-3) 0;">
+    <div style="background: var(--color-text-primary); border-radius: var(--radius-md); padding: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+      <span class="dot" style="background: #4ade80;"></span>
+      <span style="color: white; font-size: var(--text-sm);">success on-dark</span>
+      <span style="color: rgba(255,255,255,0.5); font-size: 10px; font-family: var(--font-mono); margin-left: auto;">#4ade80</span>
+    </div>
+    <div style="background: var(--color-text-primary); border-radius: var(--radius-md); padding: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+      <span class="dot" style="background: #fbbf24;"></span>
+      <span style="color: white; font-size: var(--text-sm);">warning on-dark</span>
+      <span style="color: rgba(255,255,255,0.5); font-size: 10px; font-family: var(--font-mono); margin-left: auto;">#fbbf24</span>
+    </div>
+    <div style="background: var(--color-text-primary); border-radius: var(--radius-md); padding: var(--space-3); display: flex; align-items: center; gap: var(--space-2);">
+      <span class="dot" style="background: #f87171;"></span>
+      <span style="color: white; font-size: var(--text-sm);">danger on-dark</span>
+      <span style="color: rgba(255,255,255,0.5); font-size: 10px; font-family: var(--font-mono); margin-left: auto;">#f87171</span>
+    </div>
+  </div>
+  <div class="doc-rule">
+    <strong>The original bug.</strong> v0.1 filled a warning toast with <code>--color-warning</code> as the
+    background. Because that token is a dark on-light foreground value, the toast rendered as a broken-looking
+    brown panel. Fix: all toasts share the dark surface; semantic meaning comes from the dot + a 3px left
+    border using the on-dark -400 shades.
+  </div>
+</section>
+
+<!-- ============ TYPOGRAPHY ============ -->
+<section id="typography" class="doc-section">
+  <h2 class="doc-h2">Typography</h2>
+  <p class="doc-p">
+    Three families with one job each. <strong>Geist</strong> for everything in the UI. <strong>Geist Mono</strong>
+    for code, batch numbers, invoice IDs, anything tabular-by-meaning. <strong>Fraunces</strong> reserved
+    for the wordmark and editorial moments only — never in the product UI itself.
+  </p>
+
+  <h3 class="doc-h3">Type scale</h3>
+  <div class="card">
+    <div style="padding: var(--space-3) var(--space-5);">
+      <div class="scale-row">
+        <span class="name">2xl</span>
+        <span class="value">28px / 1.1</span>
+        <span class="value">700</span>
+        <span style="font-size: 28px; font-weight: 700; line-height: 1.1; letter-spacing: -0.02em;" class="tabular">₹1,24,580</span>
+      </div>
+      <div class="scale-row">
+        <span class="name">xl</span>
+        <span class="value">22px / 1.2</span>
+        <span class="value">600</span>
+        <span style="font-size: 22px; font-weight: 600; line-height: 1.2; letter-spacing: -0.015em;">Counter Billing</span>
+      </div>
+      <div class="scale-row">
+        <span class="name">lg</span>
+        <span class="value">17px / 1.3</span>
+        <span class="value">600</span>
+        <span style="font-size: 17px; font-weight: 600; line-height: 1.3;">Pricing Rules</span>
+      </div>
+      <div class="scale-row">
+        <span class="name">base</span>
+        <span class="value">15px / 1.5</span>
+        <span class="value">400/500</span>
+        <span style="font-size: 15px;">Default body. Owner-mode reading text.</span>
+      </div>
+      <div class="scale-row">
+        <span class="name">sm</span>
+        <span class="value">13px / 1.5</span>
+        <span class="value">400/500</span>
+        <span style="font-size: 13px;">Counter-mode body, dense tables, sidebar nav</span>
+      </div>
+      <div class="scale-row">
+        <span class="name">xs</span>
+        <span class="value">11px / 1.4</span>
+        <span class="value">500/600</span>
+        <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: var(--color-text-tertiary);">UPPERCASE LABEL · 11PX</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="doc-h3">Tabular figures everywhere money lives</h3>
+  <p class="doc-p">
+    Any column that contains money, quantity, percentages, or counts must use <code>font-variant-numeric: tabular-nums</code>.
+    This makes columns of numbers align without manual padding.
+  </p>
+  <div class="demo">
+    <div class="demo-render">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-6); font-size: var(--text-sm);">
+        <div>
+          <div class="label">Without tabular</div>
+          <div style="text-align: right; font-size: var(--text-sm);">
+            <div>₹1,234.50</div>
+            <div>₹12,000.00</div>
+            <div>₹487.25</div>
+            <div>₹99.99</div>
+          </div>
+        </div>
+        <div>
+          <div class="label">With tabular ✓</div>
+          <div class="tabular" style="text-align: right; font-size: var(--text-sm);">
+            <div>₹1,234.50</div>
+            <div>₹12,000.00</div>
+            <div>₹487.25</div>
+            <div>₹99.99</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-code">font-variant-numeric: tabular-nums; /* utility: .tabular or Tailwind tabular-nums */</div>
+  </div>
+
+  <h3 class="doc-h3">Indian Rupee formatting</h3>
+  <p class="doc-p">
+    Always use <code>en-IN</code> locale: ₹1,00,000 (one lakh), ₹10,00,000 (ten lakh), ₹1,00,00,000 (one crore).
+    The Indian grouping (2-2-3) is non-negotiable — formatting Rs as 100,000 looks foreign and breaks trust.
+  </p>
+  <pre><code>const formatINR = (n) =&gt; new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  maximumFractionDigits: 2,
+}).format(n);
+
+formatINR(1248750)  // → ₹12,48,750.00
+formatINR(487.25)   // → ₹487.25</code></pre>
+</section>
+
+<!-- ============ SPACING ============ -->
+<section id="spacing" class="doc-section">
+  <h2 class="doc-h2">Spacing</h2>
+  <p class="doc-p">
+    Eight steps, 4px base. Use the smaller steps (1–3) inside compact components; the larger steps (4–8)
+    for between sections. Never invent values.
+  </p>
+  <div class="card">
+    <div style="padding: var(--space-3) var(--space-5);">
+      <div class="scale-row" style="grid-template-columns: 80px 100px 1fr;">
+        <span class="name">space-1</span>
+        <span class="value">4px</span>
+        <div style="background: var(--color-text-primary); height: 16px; width: 4px;"></div>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 80px 100px 1fr;">
+        <span class="name">space-2</span>
+        <span class="value">8px</span>
+        <div style="background: var(--color-text-primary); height: 16px; width: 8px;"></div>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 80px 100px 1fr;">
+        <span class="name">space-3</span>
+        <span class="value">12px</span>
+        <div style="background: var(--color-text-primary); height: 16px; width: 12px;"></div>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 80px 100px 1fr;">
+        <span class="name">space-4</span>
+        <span class="value">16px</span>
+        <div style="background: var(--color-text-primary); height: 16px; width: 16px;"></div>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 80px 100px 1fr;">
+        <span class="name">space-5</span>
+        <span class="value">20px</span>
+        <div style="background: var(--color-text-primary); height: 16px; width: 20px;"></div>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 80px 100px 1fr;">
+        <span class="name">space-6</span>
+        <span class="value">24px</span>
+        <div style="background: var(--color-text-primary); height: 16px; width: 24px;"></div>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 80px 100px 1fr;">
+        <span class="name">space-8</span>
+        <span class="value">32px</span>
+        <div style="background: var(--color-text-primary); height: 16px; width: 32px;"></div>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 80px 100px 1fr;">
+        <span class="name">space-12</span>
+        <span class="value">48px</span>
+        <div style="background: var(--color-text-primary); height: 16px; width: 48px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="doc-h3">Where to use what</h3>
+  <ul style="font-size: var(--text-sm); color: var(--color-text-secondary); padding-left: 20px; max-width: 65ch;">
+    <li><code>space-1</code> — icon to text inside a button, dot-to-label</li>
+    <li><code>space-2</code> — between adjacent badges, within a kbd cluster</li>
+    <li><code>space-3</code> — input internal padding (vertical), card divider padding</li>
+    <li><code>space-4</code> — between form rows, card body small padding</li>
+    <li><code>space-5</code> — card body default padding (owner mode)</li>
+    <li><code>space-6</code> — page section spacing, header padding</li>
+    <li><code>space-8</code> — between unrelated sections</li>
+    <li><code>space-12</code> — page-level top/bottom whitespace, empty-state padding</li>
+  </ul>
+</section>
+
+<!-- ============ RADII ============ -->
+<section id="radii" class="doc-section">
+  <h2 class="doc-h2">Radii & Shadows</h2>
+
+  <h3 class="doc-h3">Radii</h3>
+  <p class="doc-p">Five steps. Hard rules below.</p>
+  <div style="display: flex; gap: var(--space-3); align-items: flex-end; margin: var(--space-3) 0;">
+    <div style="text-align: center; font-size: var(--text-xs);">
+      <div style="width: 60px; height: 60px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-none); margin-bottom: 6px;"></div>
+      <code>none</code>
+    </div>
+    <div style="text-align: center; font-size: var(--text-xs);">
+      <div style="width: 60px; height: 60px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-sm); margin-bottom: 6px;"></div>
+      <code>sm · 4px</code>
+    </div>
+    <div style="text-align: center; font-size: var(--text-xs);">
+      <div style="width: 60px; height: 60px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: 6px;"></div>
+      <code>md · 6px</code>
+    </div>
+    <div style="text-align: center; font-size: var(--text-xs);">
+      <div style="width: 60px; height: 60px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-lg); margin-bottom: 6px;"></div>
+      <code>lg · 8px</code>
+    </div>
+    <div style="text-align: center; font-size: var(--text-xs);">
+      <div style="width: 60px; height: 60px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-xl); margin-bottom: 6px;"></div>
+      <code>xl · 12px</code>
+    </div>
+    <div style="text-align: center; font-size: var(--text-xs);">
+      <div style="width: 60px; height: 60px; background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: var(--radius-full); margin-bottom: 6px;"></div>
+      <code>full</code>
+    </div>
+  </div>
+  <ul style="font-size: var(--text-sm); color: var(--color-text-secondary); padding-left: 20px; max-width: 65ch;">
+    <li><code>sm</code> — badges, kbd, small chips</li>
+    <li><code>md</code> — buttons, inputs, dropdowns. The workhorse.</li>
+    <li><code>lg</code> — cards, modals, popovers</li>
+    <li><code>xl</code> — rarely. Hero cards only.</li>
+    <li><code>full</code> — avatars, dot indicators</li>
+  </ul>
+
+  <h3 class="doc-h3">Shadows</h3>
+  <p class="doc-p">
+    Borders are the primary edge treatment. Shadows are reserved for elevation —
+    only modals, dropdowns, and toasts use them.
+  </p>
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin: var(--space-3) 0;">
+    <div style="background: white; padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-xs); font-size: var(--text-xs);">
+      <div style="font-weight: 600;">xs</div>
+      <div style="color: var(--color-text-tertiary);">Subtle button lift</div>
+    </div>
+    <div style="background: white; padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); font-size: var(--text-xs);">
+      <div style="font-weight: 600;">sm</div>
+      <div style="color: var(--color-text-tertiary);">Active state cards</div>
+    </div>
+    <div style="background: white; padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-md); font-size: var(--text-xs);">
+      <div style="font-weight: 600;">md</div>
+      <div style="color: var(--color-text-tertiary);">Dropdowns, popovers</div>
+    </div>
+    <div style="background: white; padding: var(--space-4); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); font-size: var(--text-xs);">
+      <div style="font-weight: 600;">lg</div>
+      <div style="color: var(--color-text-tertiary);">Modals, toasts</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MOTION ============ -->
+<section id="motion" class="doc-section">
+  <h2 class="doc-h2">Motion</h2>
+  <p class="doc-p">
+    Motion is functional, not decorative. Four durations, two easings. Always honor
+    <code>prefers-reduced-motion</code>. Never animate in a way that delays the cashier seeing the result of their action.
+  </p>
+  <div class="card">
+    <div style="padding: var(--space-3) var(--space-5);">
+      <div class="scale-row" style="grid-template-columns: 120px 80px 1fr;">
+        <span class="name">instant</span>
+        <span class="value">50ms</span>
+        <span style="font-size: var(--text-sm); color: var(--color-text-secondary);">Opacity-only micro-changes</span>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 120px 80px 1fr;">
+        <span class="name">fast</span>
+        <span class="value">120ms</span>
+        <span style="font-size: var(--text-sm); color: var(--color-text-secondary);">Hover, focus, button press</span>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 120px 80px 1fr;">
+        <span class="name">medium</span>
+        <span class="value">200ms</span>
+        <span style="font-size: var(--text-sm); color: var(--color-text-secondary);">Dropdown open, slide-in</span>
+      </div>
+      <div class="scale-row" style="grid-template-columns: 120px 80px 1fr;">
+        <span class="name">slow</span>
+        <span class="value">320ms</span>
+        <span style="font-size: var(--text-sm); color: var(--color-text-secondary);">Modal enter, full-screen transitions</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="doc-rule">
+    <strong>Hard rule.</strong> Save & Print never animates exit. The bill must clear instantly so the
+    cashier can start the next sale. Animation here is a productivity tax measured in real money.
+  </div>
+</section>
+
+<!-- ============ DENSITY ============ -->
+<section id="density" class="doc-section">
+  <h2 class="doc-h2">Density</h2>
+  <p class="doc-p">
+    Salt has two density modes. Same tokens, same primitives — only spacing and row height change.
+    Toggle via <code>data-density="compact"</code> on the screen container.
+  </p>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin: var(--space-3) 0;">
+    <div class="card">
+      <div class="card-header"><span style="font-weight: 600; font-size: var(--text-sm);">Counter mode (compact)</span><span class="badge badge-neutral">cashier</span></div>
+      <table class="table table-compact">
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          <tr><td>Crocin 500mg</td><td class="num tabular">2</td><td class="num tabular">₹64.00</td></tr>
+          <tr><td>Pan 40mg</td><td class="num tabular">1</td><td class="num tabular">₹156.40</td></tr>
+          <tr><td>Cetirizine 10mg</td><td class="num tabular">3</td><td class="num tabular">₹55.50</td></tr>
+          <tr><td>Volini Gel 30g</td><td class="num tabular">1</td><td class="num tabular">₹165.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-header"><span style="font-weight: 600; font-size: var(--text-sm);">Owner mode (default)</span><span class="badge badge-neutral">owner</span></div>
+      <table class="table">
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Total</th></tr></thead>
+        <tbody>
+          <tr><td>Crocin 500mg</td><td class="num tabular">2</td><td class="num tabular">₹64.00</td></tr>
+          <tr><td>Pan 40mg</td><td class="num tabular">1</td><td class="num tabular">₹156.40</td></tr>
+          <tr><td>Cetirizine 10mg</td><td class="num tabular">3</td><td class="num tabular">₹55.50</td></tr>
+          <tr><td>Volini Gel 30g</td><td class="num tabular">1</td><td class="num tabular">₹165.00</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <ul style="font-size: var(--text-sm); color: var(--color-text-secondary); padding-left: 20px;">
+    <li><strong>Counter mode:</strong> 36px rows, 32px inputs, 13px body, tight padding. Fits ~22 line items in a viewport.</li>
+    <li><strong>Owner mode:</strong> 44px rows, 36px inputs, 15px body, generous padding. Fits ~16 line items, easier scanning.</li>
+  </ul>
+</section>
+
+<!-- ============ BUTTONS ============ -->
+<section id="buttons" class="doc-section">
+  <h2 class="doc-h2">Buttons</h2>
+  <p class="doc-p">
+    Three variants × three sizes. Use sparingly — a screen with five primary buttons has no primary action.
+    Only one <code>primary</code> per surface for the main action.
+  </p>
+
+  <h3 class="doc-h3">Variants</h3>
+  <div class="demo">
+    <div class="demo-render" style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+      <button class="btn btn-md btn-primary">Save & Print</button>
+      <button class="btn btn-md btn-secondary">Cancel</button>
+      <button class="btn btn-md btn-ghost">Skip for now</button>
+      <button class="btn btn-md btn-danger">Delete bill</button>
+    </div>
+    <div class="demo-code">&lt;button class="btn btn-md btn-primary"&gt;Save &amp; Print&lt;/button&gt;</div>
+  </div>
+
+  <h3 class="doc-h3">Sizes</h3>
+  <div class="demo">
+    <div class="demo-render" style="display: flex; gap: var(--space-3); align-items: center;">
+      <button class="btn btn-sm btn-primary">Small · 28px</button>
+      <button class="btn btn-md btn-primary">Medium · 34px</button>
+      <button class="btn btn-lg btn-primary">Large · 40px</button>
+    </div>
+  </div>
+
+  <h3 class="doc-h3">With keyboard hint</h3>
+  <p class="doc-p">Primary actions on power-user screens show their shortcut inline.</p>
+  <div class="demo">
+    <div class="demo-render" style="display: flex; gap: var(--space-3); align-items: center;">
+      <button class="btn btn-md btn-primary">Save & Print <span class="kbd" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.8);">F12</span></button>
+      <button class="btn btn-md btn-secondary">Park bill <span class="kbd">⌃P</span></button>
+    </div>
+  </div>
+
+  <div class="doc-rule">
+    <strong>Rule.</strong> Buttons never have icons larger than 14px. Icons sit at the left of the label
+    for actions ("add", "save"), right of the label for navigation ("next", "view all").
+  </div>
+</section>
+
+<!-- ============ INPUTS ============ -->
+<section id="inputs" class="doc-section">
+  <h2 class="doc-h2">Inputs</h2>
+  <p class="doc-p">Two heights mapping to the density modes. Single focus treatment everywhere.</p>
+
+  <div class="demo">
+    <div class="demo-render" style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); max-width: 600px;">
+      <div>
+        <label class="label">Customer name</label>
+        <input class="input" placeholder="Rajesh Kumar" />
+      </div>
+      <div>
+        <label class="label">Phone</label>
+        <input class="input input-compact" placeholder="9876543210" />
+      </div>
+    </div>
+    <div class="demo-code">&lt;input class="input" placeholder="..." /&gt; (default · 36px)
+&lt;input class="input input-compact" placeholder="..." /&gt; (counter · 32px)</div>
+  </div>
+
+  <h3 class="doc-h3">Focus state</h3>
+  <p class="doc-p">
+    Border darkens to <code>action-primary</code>; a 3px focus ring at 15% opacity surrounds.
+    No glow, no animation other than 120ms color crossfade. Visible on keyboard focus (<code>:focus-visible</code>) only.
+  </p>
+  <div class="demo">
+    <div class="demo-render" style="max-width: 320px;">
+      <input class="input" placeholder="Tab to me to see focus" autofocus />
+    </div>
+  </div>
+
+  <h3 class="doc-h3">Inline editable values (table cells)</h3>
+  <p class="doc-p">
+    For inline-edit fields inside tables (qty, discount %, batch picker), use a transparent input
+    with a bottom border that darkens on focus. No box. Saves horizontal space.
+  </p>
+  <div class="demo">
+    <div class="demo-render">
+      <div style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm);">
+        <span>Qty</span>
+        <input style="width: 50px; text-align: center; background: transparent; border: 0; border-bottom: 1px solid var(--color-border); padding: 4px 2px; font-size: var(--text-sm); outline: none;" value="3" onfocus="this.style.borderBottomColor='var(--color-action-primary)'" onblur="this.style.borderBottomColor='var(--color-border)'" />
+        <span style="color: var(--color-text-tertiary); margin-left: var(--space-3);">Discount</span>
+        <input style="width: 50px; text-align: center; background: transparent; border: 0; border-bottom: 1px solid var(--color-border); padding: 4px 2px; font-size: var(--text-sm); outline: none;" value="8" onfocus="this.style.borderBottomColor='var(--color-action-primary)'" onblur="this.style.borderBottomColor='var(--color-border)'" />
+        <span style="color: var(--color-text-tertiary);">%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BADGES ============ -->
+<section id="badges" class="doc-section">
+  <h2 class="doc-h2">Badges & Status</h2>
+  <p class="doc-p">
+    Tiny chips, used for status, count, label. Two visual treatments: subtle (tinted background)
+    and strong (solid background for emphasis).
+  </p>
+
+  <div class="demo">
+    <div class="demo-render" style="display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center;">
+      <span class="badge badge-neutral">Default</span>
+      <span class="badge badge-success">In stock</span>
+      <span class="badge badge-warning">Near expiry</span>
+      <span class="badge badge-danger">Out of stock</span>
+      <span class="badge badge-danger">Sch H1</span>
+      <span class="badge badge-strong">DOCTOR</span>
+      <span class="badge badge-neutral"><span class="dot dot-strong"></span> 3 counters</span>
+    </div>
+  </div>
+
+  <h3 class="doc-h3">Status dots</h3>
+  <p class="doc-p">
+    Single-pixel indicator next to a label. Pulse animation reserved for "live" — connection
+    active, presence broadcast.
+  </p>
+  <div class="demo">
+    <div class="demo-render" style="display: flex; gap: var(--space-4); font-size: var(--text-sm); flex-wrap: wrap;">
+      <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="dot dot-success"></span> Synced</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="dot dot-warning"></span> Sync pending</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="dot dot-danger"></span> Offline</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px;"><span class="dot dot-strong dot-pulse"></span> Live</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ KBD ============ -->
+<section id="kbd" class="doc-section">
+  <h2 class="doc-h2">Kbd hints</h2>
+  <p class="doc-p">
+    Salt is keyboard-first. Every shortcut is visible inline, not hidden in a tooltip or "help" panel.
+    Kbd elements are 20px tall, slightly recessed (bottom border), monospace.
+  </p>
+  <div class="demo">
+    <div class="demo-render" style="display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: var(--text-sm); color: var(--color-text-secondary); align-items: center;">
+      <span>Open command palette <span class="kbd">⌘K</span></span>
+      <span>Park bill <span class="kbd">⌃</span><span class="kbd">P</span></span>
+      <span>Save & Print <span class="kbd">F12</span></span>
+      <span>Navigate <span class="kbd">↑</span><span class="kbd">↓</span></span>
+      <span>Confirm <span class="kbd">↵</span></span>
+    </div>
+  </div>
+
+  <div class="doc-rule">
+    <strong>Rule.</strong> Every interactive element with a shortcut shows the kbd hint inline at all times.
+    Hidden shortcuts are technical debt — staff never discover them and complain the app is "slow."
+  </div>
+</section>
+
+<!-- ============ CARDS ============ -->
+<section id="cards" class="doc-section">
+  <h2 class="doc-h2">Cards</h2>
+  <p class="doc-p">
+    Three-part structure: <code>card-header</code>, <code>card-body</code>, <code>card-footer</code>.
+    Either part is optional. Card is 1px border + 8px radius — no shadow by default.
+  </p>
+  <div class="demo">
+    <div class="demo-render" style="max-width: 480px;">
+      <div class="card">
+        <div class="card-header">
+          <span style="font-weight: 600; font-size: var(--text-sm);">GSTR-1</span>
+          <span class="badge badge-success">Ready to file</span>
+        </div>
+        <div class="card-body">
+          <div style="font-size: var(--text-xs); color: var(--color-text-tertiary); margin-bottom: 4px;">Outward supplies · May 2026</div>
+          <div class="stat-value">₹1,24,580</div>
+          <div style="height: 6px; background: var(--color-surface-2); border-radius: 999px; margin-top: var(--space-3); overflow: hidden;">
+            <div style="height: 100%; width: 100%; background: var(--color-text-primary);"></div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span style="font-size: var(--text-xs); color: var(--color-text-tertiary);">Due 11 Jun 2026</span>
+          <button class="btn btn-sm btn-secondary">View details →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DATA TABLE ============ -->
+<section id="data-table" class="doc-section">
+  <h2 class="doc-h2">Data Tables</h2>
+  <p class="doc-p">
+    The most-used pattern in Salt. Rules:
+  </p>
+  <ul style="font-size: var(--text-sm); color: var(--color-text-secondary); padding-left: 20px; max-width: 65ch;">
+    <li>Header row sticky to viewport top while scrolling</li>
+    <li>Header text uppercase 11px tracking-wide</li>
+    <li>Tabular numerals on every numeric column (right-aligned)</li>
+    <li>Hairline divider between rows, hover row tints to surface-50</li>
+    <li>Status badges sit in a dedicated rightmost column where applicable</li>
+    <li>Empty state replaces the table body, not the entire card</li>
+  </ul>
+  <div class="demo">
+    <div class="demo-render" style="padding: 0;">
+      <div class="card" style="border-radius: 0; border-left: 0; border-right: 0; border-top: 0;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Salt</th>
+              <th class="num">Stock</th>
+              <th>Expiry</th>
+              <th class="num">MRP</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div style="font-weight: 500;">Crocin 500mg</div><div style="font-size: var(--text-xs); color: var(--color-text-tertiary);">Strip of 15 · GSK</div></td>
+              <td>Paracetamol</td>
+              <td class="num tabular">142</td>
+              <td><span class="tabular">2026-08</span></td>
+              <td class="num tabular">₹32.00</td>
+              <td><span class="badge badge-success">Healthy</span></td>
+            </tr>
+            <tr>
+              <td><div style="font-weight: 500;">Metformin 500mg</div><div style="font-size: var(--text-xs); color: var(--color-text-tertiary);">Strip of 10 · Sun Pharma</div></td>
+              <td>Metformin</td>
+              <td class="num tabular" style="color: var(--color-warning); font-weight: 500;">8</td>
+              <td><span class="tabular">2025-08</span></td>
+              <td class="num tabular">₹24.30</td>
+              <td><span class="badge badge-warning">Low · Near exp</span></td>
+            </tr>
+            <tr>
+              <td><div style="font-weight: 500;">Calpol 500mg</div><div style="font-size: var(--text-xs); color: var(--color-text-tertiary);">Strip of 15 · GSK</div></td>
+              <td>Paracetamol</td>
+              <td class="num tabular" style="color: var(--color-danger); font-weight: 500;">0</td>
+              <td>—</td>
+              <td class="num tabular">₹28.50</td>
+              <td><span class="badge badge-danger">Out</span></td>
+            </tr>
+            <tr>
+              <td><div style="font-weight: 500;">Azithral 500mg</div><div style="font-size: var(--text-xs); color: var(--color-text-tertiary);">Strip of 5 · Alembic</div></td>
+              <td>Azithromycin</td>
+              <td class="num tabular">34</td>
+              <td><span class="tabular">2026-06</span></td>
+              <td class="num tabular">₹124.50</td>
+              <td><span class="badge badge-danger" style="background: var(--color-danger-bg);">Sch H</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STAT CARD ============ -->
+<section id="stat-card" class="doc-section">
+  <h2 class="doc-h2">Stat cards</h2>
+  <p class="doc-p">
+    For KPIs and dashboard tiles. Three sizes: tile, panel, hero. All share the same structure:
+    label (xs uppercase), value (2xl bold tabular), delta or hint (xs muted).
+  </p>
+  <div class="demo">
+    <div class="demo-render">
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3);">
+        <div class="card" style="padding: var(--space-4);">
+          <div class="stat-label">Today's Sales</div>
+          <div class="stat-value" style="margin-top: 6px;">₹48,230</div>
+          <div class="stat-delta" style="color: var(--color-success); margin-top: 6px;">↗ 12% vs yesterday</div>
+        </div>
+        <div class="card" style="padding: var(--space-4);">
+          <div class="stat-label">Bills</div>
+          <div class="stat-value" style="margin-top: 6px;">87</div>
+          <div class="stat-delta" style="color: var(--color-text-tertiary); margin-top: 6px;">Avg ₹554</div>
+        </div>
+        <div class="card" style="padding: var(--space-4);">
+          <div class="stat-label">Near Expiry</div>
+          <div class="stat-value" style="margin-top: 6px; color: var(--color-warning);">23</div>
+          <div class="stat-delta" style="color: var(--color-text-tertiary); margin-top: 6px;">≤ 6 months</div>
+        </div>
+        <div class="card" style="padding: var(--space-4); background: var(--color-text-primary); color: var(--color-text-inverse); border-color: var(--color-text-primary);">
+          <div class="stat-label" style="color: rgba(255,255,255,0.6);">GST Liability</div>
+          <div class="stat-value" style="margin-top: 6px; color: white;">₹47,510</div>
+          <div class="stat-delta" style="color: rgba(255,255,255,0.6); margin-top: 6px;">Due 20 Jun</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="doc-rule">
+    <strong>Rule.</strong> Inverse (black bg) stat cards are reserved for headline numbers only —
+    typically one per screen. Used to anchor the eye and signal the most important number.
+  </div>
+</section>
+
+<!-- ============ PAGE HEADER ============ -->
+<section id="page-header" class="doc-section">
+  <h2 class="doc-h2">Page headers</h2>
+  <p class="doc-p">
+    Fixed 56px height. Title + subtitle on the left, actions on the right. Never two rows.
+    The brand mark sits in the sidebar, not the header — counter staff don't need to see the logo to bill faster.
+  </p>
+  <div class="demo">
+    <div class="demo-render" style="padding: 0;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Counter Billing</div>
+          <div class="page-subtitle">Counter 1 · Rahul Sharma · <span class="dot dot-success dot-pulse" style="margin: 0 2px;"></span> Online</div>
+        </div>
+        <div style="display: flex; gap: var(--space-2); align-items: center;">
+          <button class="btn btn-sm btn-ghost">Shortcuts <span class="kbd">?</span></button>
+          <div style="height: 16px; width: 1px; background: var(--color-border);"></div>
+          <div style="font-size: var(--text-xs); color: var(--color-text-tertiary);">Today: <strong class="tabular" style="color: var(--color-text-primary);">₹48,230</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EMPTY STATES ============ -->
+<section id="empty" class="doc-section">
+  <h2 class="doc-h2">Empty states</h2>
+  <p class="doc-p">
+    Three lines: icon, title, hint. Never overdesign. The fastest empty-to-content transition is silent
+    success ("no items added yet" → user adds an item → table appears).
+  </p>
+  <div class="demo">
+    <div class="demo-render">
+      <div class="card">
+        <div class="empty">
+          <div class="empty-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.7 2.7c-.6.6-.2 1.6.7 1.6H17M17 17a2 2 0 100 4 2 2 0 000-4zM9 17a2 2 0 100 4 2 2 0 000-4z"/></svg>
+          </div>
+          <div class="empty-title">No items added yet</div>
+          <div class="empty-hint">Search above or scan a barcode to begin</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FORM ROWS ============ -->
+<section id="form-rows" class="doc-section">
+  <h2 class="doc-h2">Form rows</h2>
+  <p class="doc-p">
+    Labels are uppercase 11px above the input. Helper text below, muted. Errors replace helper text in danger color.
+  </p>
+  <div class="demo">
+    <div class="demo-render" style="max-width: 480px;">
+      <div style="display: grid; gap: var(--space-3);">
+        <div>
+          <label class="label">GSTIN</label>
+          <input class="input" value="09ABCDE1234F1Z5" />
+          <div style="font-size: var(--text-xs); color: var(--color-text-tertiary); margin-top: 4px;">15-character GST identification number</div>
+        </div>
+        <div>
+          <label class="label">Drug license</label>
+          <input class="input" />
+          <div style="font-size: var(--text-xs); color: var(--color-danger); margin-top: 4px;">Required for medical retail</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TOASTS ============ -->
+<section id="toasts" class="doc-section">
+  <h2 class="doc-h2">Toasts & feedback</h2>
+  <p class="doc-p">
+    Inline feedback wins for primary actions (a checkmark next to the line item, "Saved" appearing
+    next to the input). Toasts are for background events the user didn't initiate or isn't watching.
+  </p>
+  <p class="doc-p">
+    <strong>All toasts share one dark surface.</strong> The semantic meaning is carried by the status
+    dot and a thin left accent border — never by flooding the whole background with a semantic color.
+    Flooding the background produces muddy, broken-looking panels (a dark amber fill reads as rust, not warning)
+    and breaks visual consistency between toast types.
+  </p>
+  <div class="demo">
+    <div class="demo-render" style="display: flex; gap: var(--space-3); flex-direction: column; max-width: 460px;">
+      <div class="toast toast-success">
+        <span class="dot dot-success" style="margin-top: 5px;"></span>
+        <div>
+          <div style="font-weight: 500;">Bill #INV-2026-04827 saved</div>
+          <div style="font-size: var(--text-xs); color: rgba(255,255,255,0.55); margin-top: 2px;">Synced to cloud · ₹487.50 collected</div>
+        </div>
+      </div>
+      <div class="toast toast-warning">
+        <span class="dot dot-warning" style="margin-top: 5px;"></span>
+        <div>
+          <div style="font-weight: 500;">Stock changed during sale</div>
+          <div style="font-size: var(--text-xs); color: rgba(255,255,255,0.55); margin-top: 2px;">Counter 2 sold the last unit of Crocin 500mg. Pick another batch.</div>
+        </div>
+      </div>
+      <div class="toast toast-danger">
+        <span class="dot dot-danger" style="margin-top: 5px;"></span>
+        <div>
+          <div style="font-weight: 500;">Sync failed — working offline</div>
+          <div style="font-size: var(--text-xs); color: rgba(255,255,255,0.55); margin-top: 2px;">Changes saved locally. Will sync when connection returns.</div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-code">&lt;div class="toast toast-warning"&gt;
+  &lt;span class="dot dot-warning"&gt;&lt;/span&gt;
+  &lt;div&gt;...&lt;/div&gt;
+&lt;/div&gt;
+/* All toasts: same dark surface. Accent = dot + 3px left border. */
+</section>
+
+<!-- ============ ACCESSIBILITY ============ -->
+<section id="accessibility" class="doc-section">
+  <h2 class="doc-h2">Accessibility</h2>
+  <p class="doc-p">All checks must pass before any screen ships.</p>
+  <ul style="font-size: var(--text-sm); color: var(--color-text-secondary); padding-left: 20px; max-width: 65ch;">
+    <li><strong>Contrast.</strong> Body text on white meets WCAG AA (4.5:1). Tertiary text only on white, never on surface-2.</li>
+    <li><strong>Focus.</strong> Every interactive element shows the focus ring on <code>:focus-visible</code>. Never override browser focus without replacing.</li>
+    <li><strong>Keyboard.</strong> Tab order matches visual order. No keyboard traps. Esc closes any overlay.</li>
+    <li><strong>Semantic HTML.</strong> Tables are tables, buttons are buttons, headings are sequential.</li>
+    <li><strong>Color independence.</strong> Status is never communicated by color alone — always paired with text or icon.</li>
+    <li><strong>Reduced motion.</strong> Honor <code>prefers-reduced-motion</code>: replace transforms with opacity, kill the pulse.</li>
+    <li><strong>Zoom.</strong> All surfaces tested at 100/125/150% browser zoom — counter PCs are often zoomed.</li>
+  </ul>
+</section>
+
+<!-- ============ ANTI-PATTERNS ============ -->
+<section id="anti" class="doc-section">
+  <h2 class="doc-h2">Anti-patterns</h2>
+  <p class="doc-p">Things you'll be tempted to do. Don't.</p>
+
+  <div style="display: grid; gap: var(--space-3); margin: var(--space-3) 0;">
+    <div class="card" style="padding: var(--space-4);">
+      <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Color-coded counter staff</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">Avatars in red/blue/green to identify cashiers. Use initials and zinc shades instead — color is reserved for state.</div>
+    </div>
+    <div class="card" style="padding: var(--space-4);">
+      <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Decorative icons in stat cards</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">A money bag next to "₹48,230" adds nothing. The number is the icon.</div>
+    </div>
+    <div class="card" style="padding: var(--space-4);">
+      <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Animated celebrations on bill save</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">The cashier bills 200x/day. A confetti burst is a productivity tax.</div>
+    </div>
+    <div class="card" style="padding: var(--space-4);">
+      <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Tooltip-only keyboard shortcuts</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">If a shortcut isn't discoverable inline, it doesn't exist. Show the kbd.</div>
+    </div>
+    <div class="card" style="padding: var(--space-4);">
+      <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Modal-on-modal flows</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">A batch picker inside a payment dialog inside a bill is too deep. Inline-expand on the main canvas.</div>
+    </div>
+    <div class="card" style="padding: var(--space-4);">
+      <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Toast for primary action confirmation</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">"Item added to bill" as a toast that disappears in 3s — the cashier already moved on. Use inline feedback next to the row.</div>
+    </div>
+    <div class="card" style="padding: var(--space-4);">
+      <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Decorative dividers</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">Horizontal rules with shadows, gradients, or ornaments. Use a 1px <code>color-border</code> line. Stop there.</div>
+    </div>
+    <div class="card" style="padding: var(--space-4);">
+      <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Inventing a new component</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">If you need a "card with a chart inside" — that's <code>Card</code> with a chart inside. Don't make a <code>ChartCard</code> primitive.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer style="margin: var(--space-12) 0 var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--color-border); font-size: var(--text-xs); color: var(--color-text-tertiary);">
+  <div>Salt Design System · v0.1 · Living document</div>
+  <div style="margin-top: 4px;">Changes require a PR with rationale. Tokens are versioned semantically. Primitives are documented before use.</div>
+</footer>
+
+</main>
+
+<script>
+  // Scroll-spy navigation highlight
+  const sections = document.querySelectorAll('section.doc-section[id]');
+  const links = document.querySelectorAll('.docs-nav-link');
+  const onScroll = () => {
+    let current = '';
+    sections.forEach(sec => {
+      const top = sec.getBoundingClientRect().top;
+      if (top < 120) current = sec.id;
+    });
+    links.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Smooth scroll
+  links.forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(link.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+
+</body>
+</html>

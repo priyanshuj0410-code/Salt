@@ -1,0 +1,19 @@
+{
+  "name": "salt",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.4"
+  },
+  "packageManager": "pnpm@11.4.0",
+  "engines": {
+    "node": ">=20"
+  }
+}

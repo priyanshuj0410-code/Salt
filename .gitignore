@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor
+.DS_Store
+.vscode/settings.json
+*.swp
+
+# Turbo
+.turbo/
+
+# Vercel
+.vercel/
+
+# Claude Code
+.claude/settings.local.json
