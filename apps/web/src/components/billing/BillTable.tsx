@@ -19,7 +19,7 @@ import type { BillLine } from "@/lib/types";
 import { useBill } from "@/store/bill";
 
 const cellInput =
-  "h-7 w-14 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50";
+  "h-7 w-16 shrink-0 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
 function batchCount(itemId: string): number {
   return (catalog.find((c) => c.id === itemId)?.batches ?? []).filter((b) => b.qty > 0).length;
@@ -84,8 +84,8 @@ export function BillTable() {
             <TableHead className="w-8">#</TableHead>
             <TableHead>Item</TableHead>
             <TableHead className="w-24 text-right">MRP</TableHead>
-            <TableHead className="w-32 text-center">Qty</TableHead>
-            <TableHead className="w-28 text-center">Discount</TableHead>
+            <TableHead className="w-36 text-center">Qty</TableHead>
+            <TableHead className="w-32 text-center">Discount</TableHead>
             <TableHead className="w-32 text-right">Amount</TableHead>
             <TableHead className="w-10" />
           </TableRow>
@@ -148,7 +148,7 @@ export function BillTable() {
                       value={l.qty}
                       onChange={(e) => setQty(l.key, Math.max(1, Number(e.target.value) || 1))}
                       aria-label={`Quantity for ${l.name}`}
-                      className={`${cellInput} w-12 text-center`}
+                      className={cn(cellInput, "text-center")}
                     />
                     <Button
                       variant="outline"
