@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { ItemSearch } from "./ItemSearch";
 import { BillTable } from "./BillTable";
 import { BillSummary } from "./BillSummary";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { useAuth } from "@/lib/auth";
+import { useCatalog } from "@/store/catalog";
 
 function Hint({ keys, label }: { keys: string; label: string }) {
   return (
@@ -17,6 +19,12 @@ function Hint({ keys, label }: { keys: string; label: string }) {
 
 export function BillingScreen() {
   const [helpOpen, setHelpOpen] = useState(false);
+  const orgId = useAuth().membership?.orgId;
+  const loadCatalog = useCatalog((s) => s.load);
+
+  useEffect(() => {
+    if (orgId) loadCatalog(orgId);
+  }, [orgId, loadCatalog]);
 
   useHotkeys(
     "shift+/",

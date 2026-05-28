@@ -13,25 +13,25 @@ import { ScheduleBadge } from "./ScheduleBadge";
 import { BatchPicker } from "./BatchPicker";
 import { formatPaise, formatSigned } from "@/lib/currency";
 import { lineMargin, lineMaxQty, lineNet } from "@/lib/billing";
-import { catalog } from "@/data/catalog";
 import { cn } from "@/lib/utils";
 import type { BillLine } from "@/lib/types";
 import { useBill } from "@/store/bill";
+import { useCatalog } from "@/store/catalog";
 
 const cellInput =
   "h-7 w-16 shrink-0 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
-
-function batchCount(itemId: string): number {
-  return (catalog.find((c) => c.id === itemId)?.batches ?? []).filter((b) => b.qty > 0).length;
-}
 
 export function BillTable() {
   const lines = useBill((s) => s.lines);
   const setQty = useBill((s) => s.setQty);
   const setDiscount = useBill((s) => s.setDiscount);
   const removeLine = useBill((s) => s.removeLine);
+  const catalog = useCatalog((s) => s.items);
   const [pickerLine, setPickerLine] = useState<BillLine | null>(null);
   const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
+
+  const batchCount = (itemId: string): number =>
+    (catalog.find((c) => c.id === itemId)?.batches ?? []).filter((b) => b.qty > 0).length;
 
   function focusRow(i: number) {
     const clamped = Math.max(0, Math.min(lines.length - 1, i));

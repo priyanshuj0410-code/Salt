@@ -10,9 +10,14 @@ export function UserMenu() {
   return (
     <div className="flex items-center gap-2.5">
       {membership?.role === "owner" && (
-        <Link to="/owner" className="text-xs font-medium text-primary hover:underline">
-          Owner view
-        </Link>
+        <>
+          <Link to="/import" className="text-xs font-medium text-primary hover:underline">
+            Import
+          </Link>
+          <Link to="/owner" className="text-xs font-medium text-primary hover:underline">
+            Owner view
+          </Link>
+        </>
       )}
       {membership && (
         <span className="hidden text-xs text-muted-foreground sm:inline">{membership.orgName}</span>
