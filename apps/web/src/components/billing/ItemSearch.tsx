@@ -1,30 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleBadge } from "./ScheduleBadge";
-import { catalog } from "@/data/catalog";
 import { formatPaise } from "@/lib/currency";
 import { itemStock, searchCatalog } from "@/lib/search";
 import type { Item } from "@/lib/types";
 import { useBill } from "@/store/bill";
+import { useCatalog } from "@/store/catalog";
 import { cn } from "@/lib/utils";
 
 const MAX_RESULTS = 8;
 
-function substituteFor(item: Item): Item | undefined {
-  return catalog.find(
-    (c) => c.id !== item.id && c.salt === item.salt && itemStock(c) > 0,
-  );
-}
-
 export function ItemSearch() {
   const addItem = useBill((s) => s.addItem);
+  const catalog = useCatalog((s) => s.items);
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
+  const substituteFor = (item: Item): Item | undefined =>
+    catalog.find((c) => c.id !== item.id && c.salt === item.salt && itemStock(c) > 0);
+
   const results = useMemo(
     () => searchCatalog(query, catalog).slice(0, MAX_RESULTS),
-    [query],
+    [query, catalog],
   );
 
   useEffect(() => inputRef.current?.focus(), []);

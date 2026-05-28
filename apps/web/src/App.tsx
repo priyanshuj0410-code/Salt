@@ -3,6 +3,7 @@ import { BillingScreen } from "@/components/billing/BillingScreen";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { OnboardingPage } from "@/components/auth/OnboardingPage";
 import { OwnerHome } from "@/components/owner/OwnerHome";
+import { ImportPage } from "@/components/import/ImportPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 function App() {
@@ -23,6 +24,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <OwnerHome />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ImportPage />
           </ProtectedRoute>
         }
       />

@@ -6,11 +6,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { catalog } from "@/data/catalog";
 import { formatPaise } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import type { BillLine } from "@/lib/types";
 import { useBill } from "@/store/bill";
+import { useCatalog } from "@/store/catalog";
 
 export function BatchPicker({
   line,
@@ -20,6 +20,7 @@ export function BatchPicker({
   onOpenChange: (open: boolean) => void;
 }) {
   const setBatch = useBill((s) => s.setBatch);
+  const catalog = useCatalog((s) => s.items);
   const item = line ? catalog.find((c) => c.id === line.itemId) : undefined;
   const batches = (item?.batches ?? []).filter((b) => b.qty > 0);
 
