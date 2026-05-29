@@ -39,7 +39,7 @@ due = ledgers.opening_balance_paise                         (imported starting p
 
 - **Billing screen** — pick the customer (default Walk-in, `Ctrl+K`), compose, Save (`F9`) → `place_order`.
 - **Bills history** (`/bills`) — every saved sale, newest first; click to see its lines.
-- **Party profile** (`/parties/:id`, upcoming PR) — that party's order history + amount due.
+- **Party profile** (`/parties/:id`) — editable details, the **amount-due** summary, that party's order history, and the imported open bills. "New sale" binds the customer and jumps to billing; the saved order links back via `party_id`.
 
 ## Stock guard
 

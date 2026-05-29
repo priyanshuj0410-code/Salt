@@ -16,6 +16,8 @@ All routes are declared in `apps/web/src/App.tsx`. The router is react-router-do
 | `/` | `BillingScreen` | `ProtectedRoute` (any role) | Core counter; accessible to cashier and owner |
 | `/owner` | `OwnerHome` | `ProtectedRoute` (owner only) | Cashier invite management |
 | `/parties` | `PartiesPage` | `ProtectedRoute` (owner only) | Party ledger management + merge |
+| `/parties/:id` | `PartyProfilePage` | `ProtectedRoute` (owner only) | Party profile: details, amount due, orders, open bills, New sale |
+| `/bills` | `BillHistoryPage` | `ProtectedRoute` (owner only) | Saved sales (bills) history + line detail |
 | `/import` | `ImportPage` | `ProtectedRoute` (owner only) | CSV / Go migrator / Smart Importer entry |
 | `/import/smart` | `SmartImportPage` | `ProtectedRoute` (owner only) | Cascade stepper (lazy-loaded) |
 | `*` | `Navigate → /` | — | Catch-all redirect |
