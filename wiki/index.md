@@ -24,6 +24,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/design-system](architecture/design-system.md) — `design.md` principles + tokens; the as-built-vs-spec gap.
 - [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale.
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, FEFO, stock cap, billTotals.
+- [architecture/information-architecture](architecture/information-architecture.md) — full navigation tree, screen inventory, keyboard shortcut system, 7 key user journeys, role-based access, URL structure.
 
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.

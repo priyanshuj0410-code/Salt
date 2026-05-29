@@ -40,6 +40,9 @@ Created this wiki. Ingested `salt-prd-v0.3.md`, `design.md` (and referenced the 
 ## [2026-05-29] fix | Link imported bills to ledgers by explicit UUID
 Bills were linked by index-aligning the `RETURNING` result of a multi-row `INSERT`, which Postgres does not guarantee. Now generates each ledger's UUID client-side (`crypto.randomUUID()`), supplies it in the `INSERT`, and links `ledger_bills` by the same id. Correct-by-construction. Verified: 475 unique UUIDs, 4,344 bills, 0 orphans. → [decisions/0007](decisions/0007-client-side-uuid-generation.md) · PR #14.
 
+## [2026-05-29] ingest | Information architecture
+Navigation tree (8 primary modules + Catalogue + Settings), screen inventory (25 screens), full keyboard shortcut system (G+letter go-to, N/E/Esc/Ctrl+S universal, billing F9/Ctrl+K), 7 user journey flows (morning review, GRN, billing, customer payment, expiry return, monthly GST, drug inspector), role matrix, URL structure. → [architecture/information-architecture](architecture/information-architecture.md)
+
 ## [2026-05-29] ingest | Product module map
 Defined 21 modules across 4 tiers derived from PRD, market research, and persona. Tier 1 (Core): Catalogue, Counter/Billing, Purchase/GRN, Inventory, Customers, Vendors. Tier 2 (Complete): Payments, Returns, GST/Compliance, Reports. Tier 3 (Differentiate): Expiry Management, H1/X Compliance, GSTR-2B Reconciliation, WhatsApp, Drug License Alerts, Salesman. Tier 4 (Enterprise): Multi-store, B2B Portal, Purchase OCR, ABHA, ONDC. Critical unlock: sales persistence + GRN tables. → [product/product-modules](product/product-modules.md)
 
