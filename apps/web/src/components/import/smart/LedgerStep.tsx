@@ -66,30 +66,30 @@ export function LedgerStep({
       let billCount = 0;
       for (let i = 0; i < report.ledgers.length; i += CHUNK) {
         const slice = report.ledgers.slice(i, i + CHUNK);
-        const payload = slice.map((l) => ({
+        // Generate each ledger's UUID client-side so bills link by explicit id,
+        // never by relying on the order Postgres returns inserted rows in.
+        const withId = slice.map((l) => ({ ledger: l, id: crypto.randomUUID() }));
+        const payload = withId.map(({ ledger: l, id }) => ({
+          id,
           org_id: orgId,
           name: l.name,
           type: types.get(l.name) ?? "customer",
           opening_balance_paise: l.openingBalancePaise,
           phone: l.phone || null,
         }));
-        // .select() returns inserted rows in request order → align bills by index.
-        const { data, error: lerr } = await supabase.from("ledgers").insert(payload).select("id");
+        const { error: lerr } = await supabase.from("ledgers").insert(payload);
         if (lerr) {
           setError(lerr.message);
           return;
         }
-        const ids = (data as { id: string }[]) ?? [];
-        ledgerCount += ids.length;
+        ledgerCount += payload.length;
 
         const bills: Record<string, unknown>[] = [];
-        slice.forEach((l, idx) => {
-          const ledgerId = ids[idx]?.id;
-          if (!ledgerId) return;
+        withId.forEach(({ ledger: l, id }) => {
           for (const b of l.bills) {
             bills.push({
               org_id: orgId,
-              ledger_id: ledgerId,
+              ledger_id: id,
               ref_no: b.refNo || null,
               bill_date: b.billDate,
               amount_paise: b.amountPaise,
