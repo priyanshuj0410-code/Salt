@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Papa from "papaparse";
-import { Download, FileUp, KeyRound, Upload } from "lucide-react";
+import { Download, FileUp, KeyRound, Upload, Wand2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { cn } from "@/lib/utils";
@@ -137,13 +137,30 @@ export function ImportPage() {
 
       <main className="mx-auto w-full max-w-2xl flex-1 p-6">
         <h1 className="text-xl font-semibold">Import your catalogue</h1>
+
+        <Link
+          to="/import/smart"
+          className="mt-4 flex items-start gap-3 rounded-lg border border-primary/40 bg-primary/5 p-4 hover:bg-primary/10"
+        >
+          <Wand2 className="mt-0.5 size-5 shrink-0 text-primary" />
+          <div className="flex-1">
+            <p className="text-sm font-medium">Smart import (recommended)</p>
+            <p className="text-sm text-muted-foreground">
+              Drag in your raw Marg/Tally Excel or CSV — it auto-maps the columns and quarantines
+              only the rows that need a fix. Handles ledgers, items, and stock in order.
+            </p>
+          </div>
+          <span className="self-center text-primary">→</span>
+        </Link>
+
+        <h2 className="mt-6 border-t pt-5 text-sm font-medium">Or use a fixed CSV template</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Upload a CSV of your items and stock. Only <code className="rounded bg-muted px-1">name</code>,{" "}
+          Only <code className="rounded bg-muted px-1">name</code>,{" "}
           <code className="rounded bg-muted px-1">qty</code> and <code className="rounded bg-muted px-1">mrp</code>{" "}
           are required — everything else is optional. One row per batch.
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        <div className="mt-4 flex flex-wrap gap-3">
           <Button variant="outline" onClick={downloadTemplate}>
             <Download />
             Download template
