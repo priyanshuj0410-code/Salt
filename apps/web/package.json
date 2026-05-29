@@ -33,6 +33,7 @@
     "recharts": "^3.8.1",
     "shadcn": "^4.8.1",
     "tailwind-merge": "^3.6.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.4.3",
     "zustand": "^5.0.13"
   },
