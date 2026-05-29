@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { ENTITIES, type EntityKey } from "@/lib/smartImport";
 import { cn } from "@/lib/utils";
 import { EntityStep } from "./EntityStep";
+import { LedgerStep } from "./LedgerStep";
 
 export function SmartImportPage() {
   const orgId = useAuth().membership?.orgId;
@@ -71,15 +72,22 @@ export function SmartImportPage() {
               </Link>
             </div>
           ) : (
-            <EntityStep
-              key={ENTITIES[active].key}
-              entity={ENTITIES[active]}
-              orgId={orgId}
-              onComplete={() => {
+            (() => {
+              const advance = () => {
                 setCompleted((prev) => new Set(prev).add(ENTITIES[active].key));
                 setActive((i) => Math.min(ENTITIES.length - 1, i + 1));
-              }}
-            />
+              };
+              return ENTITIES[active].key === "ledgers" ? (
+                <LedgerStep key="ledgers" orgId={orgId} onComplete={advance} />
+              ) : (
+                <EntityStep
+                  key={ENTITIES[active].key}
+                  entity={ENTITIES[active]}
+                  orgId={orgId}
+                  onComplete={advance}
+                />
+              );
+            })()
           )}
         </div>
 
