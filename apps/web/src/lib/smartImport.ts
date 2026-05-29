@@ -27,7 +27,7 @@ export const ENTITIES: EntityConfig[] = [
     description: "Your parties — customers and suppliers/distributors. Import these first.",
     tip: "GSTIN is checked but never blocks the import; Type defaults to customer when blank.",
     fields: [
-      { key: "name", label: "Name", required: true, aliases: ["party", "ledger", "account", "customer", "supplier", "vendor", "party name"] },
+      { key: "name", label: "Name", required: true, aliases: ["party", "ledger", "account", "customer", "supplier", "vendor", "party name", "particulars"] },
       { key: "type", label: "Type", aliases: ["category", "group", "account group"] },
       { key: "phone", label: "Phone", aliases: ["mobile", "contact", "phone no", "mobile no"] },
       { key: "gstin", label: "GSTIN", aliases: ["gst", "gst no", "gst number", "tax id"] },
@@ -128,6 +128,98 @@ export function autoMap(headers: string[], fields: FieldDef[], threshold = 0.72)
     map[field.key] = bestHeader;
   }
   return map;
+}
+
+// ---- Report-aware table extraction --------------------------------------
+
+export interface Table {
+  headers: string[];
+  rows: Record<string, string>[];
+}
+
+const isNumericCell = (v: string) => {
+  const s = v.replace(/[,₹\s]/g, "");
+  return s !== "" && Number.isFinite(Number(s));
+};
+
+function rowAliasScore(cells: string[], fields: FieldDef[]): number {
+  let score = 0;
+  for (const cell of cells) {
+    if (cell && fields.some((f) => fieldScore(f, cell) >= 0.85)) score++;
+  }
+  return score;
+}
+
+/**
+ * Turn a raw sheet matrix into a clean {headers, rows} table, tolerating
+ * accounting-report layouts (Marg/Saral/Tally): a title block, a header row,
+ * real records (a name + at least one numeric/balance cell), interleaved
+ * single-cell transaction/sub-rows, and a footer. Record rows are kept; the
+ * rest is dropped. A trailing "Ph.:" sub-row becomes the record's phone, and a
+ * Dr/Cr column is mapped to a customer/supplier Type.
+ */
+export function extractTable(matrix: string[][], fields: FieldDef[]): Table {
+  const grid = matrix.map((r) => r.map((c) => (c ?? "").toString().trim()));
+  const SUMMARY = /^(grand total|total|sub ?total|opening balance|closing balance)\s*:?\s*$/i;
+  const isRecord = (cells: string[]) => {
+    const c0 = cells[0] ?? "";
+    return c0 !== "" && !SUMMARY.test(c0) && cells.filter(Boolean).length >= 2 && cells.some(isNumericCell);
+  };
+
+  const firstRecord = grid.findIndex(isRecord);
+
+  // Plain table (no balance-style records): header is the first non-empty row.
+  if (firstRecord === -1) {
+    const hIdx = grid.findIndex((r) => r.some(Boolean));
+    if (hIdx === -1) return { headers: [], rows: [] };
+    const headers = grid[hIdx].map((c, i) => c || `Column ${i + 1}`);
+    const rows = grid
+      .slice(hIdx + 1)
+      .filter((r) => r.some(Boolean))
+      .map((r) => Object.fromEntries(headers.map((h, i) => [h, r[i] ?? ""])));
+    return { headers, rows };
+  }
+
+  // Header = best alias-matching row above the first record.
+  let headerIdx = -1;
+  let best = 0;
+  for (let i = 0; i < firstRecord; i++) {
+    const s = rowAliasScore(grid[i], fields);
+    if (s > best) {
+      best = s;
+      headerIdx = i;
+    }
+  }
+  const width = Math.max(...grid.slice(firstRecord, firstRecord + 50).map((r) => r.length), 1);
+  const headers = (headerIdx >= 0 ? grid[headerIdx] : []).map((c, i) => c || `Column ${i + 1}`);
+  while (headers.length < width) headers.push(`Column ${headers.length + 1}`);
+
+  const TYPE = "Type (Dr/Cr)";
+  const PHONE = "Phone";
+  headers.push(TYPE, PHONE);
+
+  const rows: Record<string, string>[] = [];
+  let last: Record<string, string> | null = null;
+  for (let r = firstRecord; r < grid.length; r++) {
+    const cells = grid[r];
+    if (isRecord(cells)) {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, i) => {
+        if (i < cells.length) obj[h] = cells[i] ?? "";
+      });
+      const nature = cells.find((c) => /^(dr|cr)$/i.test(c)) ?? "";
+      obj[TYPE] = /cr/i.test(nature) ? "supplier" : nature ? "customer" : "";
+      obj[PHONE] = "";
+      rows.push(obj);
+      last = obj;
+    } else {
+      const ne = cells.filter(Boolean);
+      if (ne.length === 1 && /^ph/i.test(ne[0]) && last) {
+        last[PHONE] = ne[0].replace(/^ph\.?:?\s*/i, "");
+      }
+    }
+  }
+  return { headers, rows };
 }
 
 /** Closest candidate by Levenshtein (for "did you mean" item suggestions). */
