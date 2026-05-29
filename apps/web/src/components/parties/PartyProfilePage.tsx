@@ -178,7 +178,7 @@ export function PartyProfilePage() {
             <ShoppingCart /> New sale
           </Button>
         ) : (
-          <Button variant="outline" disabled title="Purchase entry — coming next">
+          <Button onClick={() => navigate(`/parties/${ledger.id}/purchase`)}>
             <ShoppingCart /> New purchase
           </Button>
         )}

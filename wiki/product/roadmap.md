@@ -11,7 +11,7 @@ The PRD (§7) sequences four phases over 9–12 months. This page tracks what th
 
 - ✅ Auth, users, orgs, roles (owner/cashier; PRD wants 5 roles)
 - ✅ Customer/party master (via trial-balance import → `ledgers`)
-- 🟡 Item master + GRN — `items`/`batches` tables + importers exist; **no GRN screen**, no seeded national drug DB
+- 🟡 Item master + GRN — `items`/`batches` + importers exist; a **GRN-lite purchase entry** (vendor profile → adds stock via `place_order`) now exists; still no full GRN (schemes, new-item creation, PO match) or seeded national drug DB
 - 🟡 Billing screen — built, keyboard-driven, customer-bound (picker, default Walk-in), and **now persists sales** via `place_order` (0010) with stock decrement + a `/bills` history. Still missing: real print, returns, per-org invoice series.
 - ⬜ ElectricSQL sync, shop-local server, Yjs self-host POC — **none started** (the offline/real-time substrate, the PRD's core wedge)
 - ⬜ Daily sales report

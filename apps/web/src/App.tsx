@@ -6,6 +6,7 @@ import { OnboardingPage } from "@/components/auth/OnboardingPage";
 import { OwnerHome } from "@/components/owner/OwnerHome";
 import { PartiesPage } from "@/components/parties/PartiesPage";
 import { PartyProfilePage } from "@/components/parties/PartyProfilePage";
+import { PurchaseEntryPage } from "@/components/parties/PurchaseEntryPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -50,6 +51,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <PartyProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/parties/:id/purchase"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PurchaseEntryPage />
           </ProtectedRoute>
         }
       />
