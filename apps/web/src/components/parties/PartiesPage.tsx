@@ -1,0 +1,358 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { GitMerge, Save, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth";
+import { suggestMerges, type MergeGroup } from "@/lib/mergeSuggest";
+
+interface LedgerRow {
+  id: string;
+  name: string;
+  type: string;
+  phone: string | null;
+  gstin: string | null;
+  opening_balance_paise: number;
+}
+
+interface Party extends LedgerRow {
+  billRefs: string[];
+  billCount: number;
+}
+
+const rupees = (paise: number) =>
+  (Math.abs(paise) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+function Balance({ paise }: { paise: number }) {
+  if (paise === 0) return <span className="text-muted-foreground">₹0</span>;
+  const dr = paise > 0;
+  return (
+    <span className={dr ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+      ₹{rupees(paise)} {dr ? "Dr" : "Cr"}
+    </span>
+  );
+}
+
+const REASON_LABEL: Record<MergeGroup["reason"], string> = {
+  gstin: "same GSTIN",
+  "invoice-set": "identical bills",
+  name: "same name",
+};
+
+export function PartiesPage() {
+  const orgId = useAuth().membership?.orgId;
+  const [rows, setRows] = useState<Party[]>([]);
+  const [dirty, setDirty] = useState<Set<string>>(new Set());
+  const [survivors, setSurvivors] = useState<Record<string, string>>({});
+  const [filter, setFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (!supabase || !orgId) return;
+    let active = true;
+    Promise.all([
+      supabase.from("ledgers").select("id,name,type,phone,gstin,opening_balance_paise").eq("org_id", orgId).order("name"),
+      supabase.from("ledger_bills").select("ledger_id,ref_no").eq("org_id", orgId),
+    ]).then(([ledgersRes, billsRes]) => {
+      if (!active) return;
+      const refsByLedger = new Map<string, string[]>();
+      for (const b of (billsRes.data as { ledger_id: string; ref_no: string | null }[] | null) ?? []) {
+        const arr = refsByLedger.get(b.ledger_id);
+        if (arr) arr.push(b.ref_no ?? "");
+        else refsByLedger.set(b.ledger_id, [b.ref_no ?? ""]);
+      }
+      const parties = ((ledgersRes.data as LedgerRow[] | null) ?? []).map((l) => {
+        const refs = refsByLedger.get(l.id) ?? [];
+        return { ...l, billRefs: refs, billCount: refs.length };
+      });
+      setRows(parties);
+      setDirty(new Set());
+      setError(ledgersRes.error?.message ?? billsRes.error?.message ?? null);
+      setLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [orgId, reloadKey]);
+
+  const reload = () => setReloadKey((k) => k + 1);
+
+  const suggestions = useMemo(
+    () =>
+      suggestMerges(
+        rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          gstin: r.gstin,
+          type: r.type,
+          openingBalancePaise: r.opening_balance_paise,
+          billRefs: r.billRefs,
+          billCount: r.billCount,
+        })),
+      ),
+    [rows],
+  );
+
+  const stats = useMemo(() => {
+    let receivable = 0, payable = 0, bills = 0, customers = 0, vendors = 0, others = 0;
+    for (const r of rows) {
+      if (r.opening_balance_paise > 0) receivable += r.opening_balance_paise;
+      else payable += -r.opening_balance_paise;
+      bills += r.billCount;
+      if (r.type === "vendor") vendors++;
+      else if (r.type === "other") others++;
+      else customers++;
+    }
+    return { receivable, payable, bills, customers, vendors, others, count: rows.length };
+  }, [rows]);
+
+  const visible = useMemo(() => {
+    const q = filter.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => r.name.toLowerCase().includes(q) || r.type.includes(q) || (r.gstin ?? "").toLowerCase().includes(q));
+  }, [rows, filter]);
+
+  function edit(id: string, field: "name" | "type" | "phone" | "gstin", value: string) {
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+    setDirty((d) => new Set(d).add(id));
+  }
+
+  async function save() {
+    if (!supabase || dirty.size === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      for (const id of dirty) {
+        const r = rows.find((x) => x.id === id);
+        if (!r) continue;
+        const { error: err } = await supabase
+          .from("ledgers")
+          .update({
+            name: r.name.trim(),
+            type: r.type,
+            phone: r.phone?.trim() || null,
+            gstin: r.gstin?.trim() ? r.gstin.trim().toUpperCase() : null,
+          })
+          .eq("id", id);
+        if (err) {
+          setError(err.message);
+          return;
+        }
+      }
+      reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const groupKey = (g: MergeGroup) => `${g.reason}:${g.label}`;
+  const defaultSurvivor = (g: MergeGroup) => [...g.parties].sort((a, b) => b.billCount - a.billCount)[0].id;
+  const survivorFor = (g: MergeGroup) => survivors[groupKey(g)] ?? defaultSurvivor(g);
+
+  async function merge(g: MergeGroup) {
+    if (!supabase) return;
+    const survivorId = survivorFor(g);
+    const mergedIds = g.parties.map((p) => p.id).filter((id) => id !== survivorId);
+    if (mergedIds.length === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { error: err } = await supabase.rpc("merge_ledgers", { p_survivor: survivorId, p_merged: mergedIds });
+      if (err) setError(err.message);
+      else reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col bg-muted/30">
+      <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
+        <div className="flex items-baseline gap-3">
+          <span className="text-lg font-semibold tracking-tight">Salt</span>
+          <span className="text-xs text-muted-foreground">Parties</span>
+        </div>
+        <UserMenu />
+      </header>
+
+      <main className="mx-auto w-full max-w-5xl flex-1 p-6">
+        <div className="flex items-center gap-2">
+          <Users className="size-5 text-primary" />
+          <h1 className="text-xl font-semibold">Parties</h1>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Your customers and vendors with their outstanding balances. Fix any mis-tagged type, and
+          merge duplicates that are really the same party.
+        </p>
+
+        {/* Summary */}
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <Stat label="Parties" value={stats.count.toLocaleString("en-IN")} />
+          <Stat label="Customers" value={stats.customers.toLocaleString("en-IN")} />
+          <Stat label="Vendors" value={stats.vendors.toLocaleString("en-IN")} />
+          <Stat label="Other" value={stats.others.toLocaleString("en-IN")} />
+          <Stat label="Receivable" value={`₹${rupees(stats.receivable)}`} accent="emerald" />
+          <Stat label="Payable" value={`₹${rupees(stats.payable)}`} accent="red" />
+        </div>
+
+        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+
+        {/* Merge suggestions */}
+        {suggestions.length > 0 && (
+          <div className="mt-6">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <GitMerge className="size-4 text-amber-600" />
+              {suggestions.length} possible duplicate{suggestions.length > 1 ? "s" : ""} to review
+            </div>
+            <div className="mt-2 space-y-2">
+              {suggestions.map((g) => {
+                const survivorId = survivorFor(g);
+                return (
+                  <div key={groupKey(g)} className="rounded-lg border bg-amber-500/5 p-3">
+                    <div className="mb-2 flex items-center gap-2 text-xs">
+                      <Badge variant="outline">{REASON_LABEL[g.reason]}</Badge>
+                      <span className="text-muted-foreground">pick the one to keep, then merge</span>
+                    </div>
+                    <div className="space-y-1.5">
+                      {g.parties.map((p) => (
+                        <label key={p.id} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="radio"
+                            name={groupKey(g)}
+                            checked={p.id === survivorId}
+                            onChange={() => setSurvivors((s) => ({ ...s, [groupKey(g)]: p.id }))}
+                          />
+                          <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
+                          <Badge variant="secondary">{p.type}</Badge>
+                          <span className="w-16 text-right text-xs text-muted-foreground">{p.billCount} bills</span>
+                          <span className="w-28 text-right text-xs">
+                            <Balance paise={p.openingBalancePaise} />
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button size="sm" variant="outline" disabled={busy} onClick={() => merge(g)}>
+                        <GitMerge />
+                        Merge {g.parties.length} into 1
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        balances add up; bills move to the kept party
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Toolbar */}
+        <div className="mt-6 flex items-center gap-2">
+          <Input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filter by name, type or GSTIN…"
+            className="h-9 max-w-xs"
+          />
+          <span className="text-xs text-muted-foreground">
+            {visible.length === rows.length ? `${rows.length}` : `${visible.length} of ${rows.length}`} parties
+          </span>
+          <span className="flex-1" />
+          <Button onClick={save} disabled={busy || dirty.size === 0}>
+            <Save />
+            {busy ? "Saving…" : dirty.size > 0 ? `Save ${dirty.size} change${dirty.size > 1 ? "s" : ""}` : "Saved"}
+          </Button>
+        </div>
+
+        {/* Table */}
+        <div className="mt-3 overflow-hidden rounded-lg border">
+          <div className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+            <span>Name</span>
+            <span>Type</span>
+            <span>GSTIN</span>
+            <span>Phone</span>
+            <span className="text-right">Balance</span>
+            <span className="text-right">Bills</span>
+          </div>
+          {loading ? (
+            <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+          ) : visible.length === 0 ? (
+            <p className="p-4 text-sm text-muted-foreground">
+              {rows.length === 0 ? "No parties yet — import your ledgers first." : "No parties match that filter."}
+            </p>
+          ) : (
+            <div className="max-h-[60vh] overflow-auto">
+              {visible.map((r) => (
+                <div
+                  key={r.id}
+                  className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0"
+                >
+                  <input
+                    value={r.name}
+                    onChange={(e) => edit(r.id, "name", e.target.value)}
+                    className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                  />
+                  <select
+                    value={r.type}
+                    onChange={(e) => edit(r.id, "type", e.target.value)}
+                    className="h-8 rounded-md border border-input bg-background px-1 text-sm outline-none focus-visible:border-ring"
+                  >
+                    <option value="customer">customer</option>
+                    <option value="vendor">vendor</option>
+                    <option value="other">other</option>
+                  </select>
+                  <input
+                    value={r.gstin ?? ""}
+                    onChange={(e) => edit(r.id, "gstin", e.target.value)}
+                    placeholder="—"
+                    className="h-8 rounded-md border border-input bg-background px-2 font-mono text-xs uppercase outline-none focus-visible:border-ring"
+                  />
+                  <input
+                    value={r.phone ?? ""}
+                    onChange={(e) => edit(r.id, "phone", e.target.value)}
+                    placeholder="—"
+                    className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                  />
+                  <span className="text-right text-xs">
+                    <Balance paise={r.opening_balance_paise} />
+                  </span>
+                  <span className="text-right text-xs tabular-nums text-muted-foreground">{r.billCount}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Link to="/owner" className="mt-5 inline-block text-sm font-medium text-primary hover:underline">
+          ← Back to owner dashboard
+        </Link>
+      </main>
+    </div>
+  );
+}
+
+function Stat({ label, value, accent }: { label: string; value: string; accent?: "emerald" | "red" }) {
+  return (
+    <div className="rounded-md border bg-background p-3">
+      <div
+        className={
+          accent === "emerald"
+            ? "text-base font-semibold text-emerald-700 dark:text-emerald-400"
+            : accent === "red"
+              ? "text-base font-semibold text-red-600 dark:text-red-400"
+              : "text-base font-semibold tabular-nums"
+        }
+      >
+        {value}
+      </div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}
