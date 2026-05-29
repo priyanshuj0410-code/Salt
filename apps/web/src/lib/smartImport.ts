@@ -301,7 +301,7 @@ function validate(entity: EntityKey, d: Record<string, string>, ctx: ValidateCtx
   if (entity === "ledgers") {
     if (!d.name) issues.push({ field: "name", level: "error", message: "Missing ledger name" });
     let type = (d.type || "").toLowerCase();
-    if (!["customer", "supplier", "both"].includes(type)) type = "customer";
+    if (!["customer", "vendor", "other"].includes(type)) type = "customer";
     if (d.gstin && !GSTIN_RE.test(d.gstin.toUpperCase()))
       issues.push({ field: "gstin", level: "warning", message: "GSTIN does not look valid (imported anyway)" });
     return {
