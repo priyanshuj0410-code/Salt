@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { GitMerge, Save, Users } from "lucide-react";
+import { ChevronRight, GitMerge, Save, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -273,13 +273,14 @@ export function PartiesPage() {
 
         {/* Table */}
         <div className="mt-3 overflow-hidden rounded-lg border">
-          <div className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+          <div className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr_1.75rem] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
             <span>Name</span>
             <span>Type</span>
             <span>GSTIN</span>
             <span>Phone</span>
             <span className="text-right">Balance</span>
             <span className="text-right">Bills</span>
+            <span />
           </div>
           {loading ? (
             <p className="p-4 text-sm text-muted-foreground">Loading…</p>
@@ -292,7 +293,7 @@ export function PartiesPage() {
               {visible.map((r) => (
                 <div
                   key={r.id}
-                  className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0"
+                  className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr_1.75rem] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0"
                 >
                   <input
                     value={r.name}
@@ -324,6 +325,13 @@ export function PartiesPage() {
                     <Balance paise={r.opening_balance_paise} />
                   </span>
                   <span className="text-right text-xs tabular-nums text-muted-foreground">{r.billCount}</span>
+                  <Link
+                    to={`/parties/${r.id}`}
+                    title="Open profile"
+                    className="flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                  >
+                    <ChevronRight className="size-4" />
+                  </Link>
                 </div>
               ))}
             </div>

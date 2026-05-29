@@ -57,3 +57,6 @@ Added wiki pages for the billing screen architecture (`architecture/billing-scre
 
 ## [2026-05-29] build | Bill persistence + customer-on-bill + history (PR1)
 Sales now persist. Migration 0010 adds `orders` + `order_lines` + the `place_order` RPC (atomic insert + sale stock-decrement + cash/credit settlement). Billing screen gains a customer picker (default Walk-in, Ctrl+K) bound in `useBill`; the Save button (F9) is enabled and calls `place_order` (disabled on the demo seed catalogue). New `/bills` history page lists every saved sale with line detail. Pure money/due helpers in `lib/orders.ts`. First of three staged PRs for party profiles + orders. → [domain/orders](domain/orders.md)
+
+## [2026-05-29] build | Party profile page (PR2)
+`/parties/:id` (`PartyProfilePage`): editable details (name/type/gstin/phone/address/credit-limit → `ledgers`), amount-due summary (`partyDue` = opening balance + unsettled orders), that party's order history, and the imported open bills (breakdown of opening balance). Party names on `/parties` link in via a new trailing column. "New sale" binds the customer (`useBill.setParty`) and jumps to billing, so the saved order links back by `party_id`. Vendor "New purchase" stubbed for PR3. Second of three staged PRs. → [domain/orders](domain/orders.md)
