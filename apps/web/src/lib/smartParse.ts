@@ -1,6 +1,15 @@
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { extractTable, type FieldDef, type Table } from "@/lib/smartImport";
+import { extractLedgerReport, type LedgerReport } from "@/lib/smartLedger";
+
+/** Read a CSV / XLS / XLSX file into a raw sheet matrix (rows of cells). */
+export async function readMatrix(file: File): Promise<string[][]> {
+  const name = file.name.toLowerCase();
+  return name.endsWith(".xls") || name.endsWith(".xlsx")
+    ? readXlsxMatrix(file)
+    : readCsvMatrix(file);
+}
 
 /**
  * Parse a CSV / XLS / XLSX file into a clean {headers, rows} table. The raw
@@ -9,11 +18,16 @@ import { extractTable, type FieldDef, type Table } from "@/lib/smartImport";
  * clean tabular files.
  */
 export async function parseFile(file: File, fields: FieldDef[]): Promise<Table> {
-  const name = file.name.toLowerCase();
-  const matrix = name.endsWith(".xls") || name.endsWith(".xlsx")
-    ? await readXlsxMatrix(file)
-    : await readCsvMatrix(file);
-  return extractTable(matrix, fields);
+  return extractTable(await readMatrix(file), fields);
+}
+
+/**
+ * Parse a Saral/Marg/Tally trial balance into ledgers with signed opening
+ * balances and per-invoice open bills. Unlike parseFile (flat fields), this
+ * keeps the nested bill rows under each ledger.
+ */
+export async function parseLedgerFile(file: File): Promise<LedgerReport> {
+  return extractLedgerReport(await readMatrix(file));
 }
 
 function readCsvMatrix(file: File): Promise<string[][]> {
