@@ -12,6 +12,10 @@ export interface EntityConfig {
   label: string;
   /** Cascade order index; downstream entities depend on upstream. */
   order: number;
+  /** One-line description of what this step imports. */
+  description: string;
+  /** A practical tip shown on the upload screen. */
+  tip: string;
   fields: FieldDef[];
 }
 
@@ -20,6 +24,8 @@ export const ENTITIES: EntityConfig[] = [
     key: "ledgers",
     label: "Ledgers",
     order: 0,
+    description: "Your parties — customers and suppliers/distributors. Import these first.",
+    tip: "GSTIN is checked but never blocks the import; Type defaults to customer when blank.",
     fields: [
       { key: "name", label: "Name", required: true, aliases: ["party", "ledger", "account", "customer", "supplier", "vendor", "party name"] },
       { key: "type", label: "Type", aliases: ["category", "group", "account group"] },
@@ -33,6 +39,8 @@ export const ENTITIES: EntityConfig[] = [
     key: "items",
     label: "Items",
     order: 1,
+    description: "Your product master — medicines and surgicals with salt, tax and schedule.",
+    tip: "Missing HSN is allowed (flagged as a warning); an unknown Schedule defaults to OTC.",
     fields: [
       { key: "name", label: "Name", required: true, aliases: ["item", "product", "medicine", "item name", "product name", "description"] },
       { key: "salt", label: "Salt", aliases: ["molecule", "composition", "generic", "content"] },
@@ -48,6 +56,8 @@ export const ENTITIES: EntityConfig[] = [
     key: "batches",
     label: "Batches & stock",
     order: 2,
+    description: "Your physical stock — one row per batch, linked to an item by name.",
+    tip: "Import Items first. Rows whose item is not found are quarantined with a closest-match suggestion.",
     fields: [
       { key: "item", label: "Item", required: true, aliases: ["product", "medicine", "item name", "name"] },
       { key: "batch_no", label: "Batch no", aliases: ["batch", "batch number", "lot", "lot no"] },

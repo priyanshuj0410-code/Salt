@@ -116,6 +116,24 @@ export function EntityStep({
   if (phase === "upload") {
     return (
       <div className="rounded-lg border p-5">
+        <div className="mb-4">
+          <p className="text-sm">{entity.description}</p>
+          <p className="mt-2 text-xs font-medium text-muted-foreground">Columns we look for:</p>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            {entity.fields.map((f) => (
+              <span key={f.key} className="rounded-md border bg-muted/40 px-2 py-0.5 text-xs">
+                {f.label}
+                {f.required && <span className="text-destructive"> *</span>}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            <span className="text-destructive">*</span> required · others optional · column names
+            need not match — we auto-map them.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{entity.tip}</p>
+        </div>
+
         <label
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
