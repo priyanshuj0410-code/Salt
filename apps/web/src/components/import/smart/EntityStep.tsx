@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
-import { parseFile, type ParsedFile } from "@/lib/smartParse";
+import { parseFile } from "@/lib/smartParse";
 import {
   autoMap,
   partitionRows,
   revalidate,
   type EntityConfig,
   type RowResult,
+  type Table,
   type ValidateCtx,
 } from "@/lib/smartImport";
 
@@ -26,7 +27,7 @@ export function EntityStep({
   onComplete: () => void;
 }) {
   const [phase, setPhase] = useState<"upload" | "map" | "result">("upload");
-  const [parsed, setParsed] = useState<ParsedFile | null>(null);
+  const [parsed, setParsed] = useState<Table | null>(null);
   const [mapping, setMapping] = useState<Record<string, string | null>>({});
   const [ctx, setCtx] = useState<ValidateCtx>({});
   const [importedCount, setImportedCount] = useState(0);
@@ -38,7 +39,7 @@ export function EntityStep({
 
   async function onFile(file: File) {
     setError(null);
-    const p = await parseFile(file);
+    const p = await parseFile(file, entity.fields);
     if (p.headers.length === 0) {
       setError("Could not read any columns from that file.");
       return;

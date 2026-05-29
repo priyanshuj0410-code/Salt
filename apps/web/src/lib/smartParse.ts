@@ -1,39 +1,32 @@
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
+import { extractTable, type FieldDef, type Table } from "@/lib/smartImport";
 
-export interface ParsedFile {
-  headers: string[];
-  rows: Record<string, string>[];
-}
-
-/** Parse a user-supplied CSV / XLS / XLSX file into headers + string rows. */
-export async function parseFile(file: File): Promise<ParsedFile> {
+/**
+ * Parse a CSV / XLS / XLSX file into a clean {headers, rows} table. The raw
+ * sheet matrix is run through extractTable so messy accounting-report exports
+ * (title blocks, interleaved transaction rows, footers) are handled, not just
+ * clean tabular files.
+ */
+export async function parseFile(file: File, fields: FieldDef[]): Promise<Table> {
   const name = file.name.toLowerCase();
-  if (name.endsWith(".xls") || name.endsWith(".xlsx")) return parseXlsx(file);
-  return parseCsv(file);
+  const matrix = name.endsWith(".xls") || name.endsWith(".xlsx")
+    ? await readXlsxMatrix(file)
+    : await readCsvMatrix(file);
+  return extractTable(matrix, fields);
 }
 
-function parseCsv(file: File): Promise<ParsedFile> {
+function readCsvMatrix(file: File): Promise<string[][]> {
   return new Promise((resolve) => {
-    Papa.parse<Record<string, string>>(file, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: (h) => h.trim(),
-      complete: (res) => resolve({ headers: res.meta.fields ?? [], rows: res.data }),
+    Papa.parse<string[]>(file, {
+      skipEmptyLines: false,
+      complete: (res) => resolve(res.data),
     });
   });
 }
 
-async function parseXlsx(file: File): Promise<ParsedFile> {
+async function readXlsxMatrix(file: File): Promise<string[][]> {
   const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
-  const matrix = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false, defval: "" });
-  if (matrix.length === 0) return { headers: [], rows: [] };
-  const headers = matrix[0].map((h) => String(h ?? "").trim());
-  const rows = matrix.slice(1).map((r) => {
-    const obj: Record<string, string> = {};
-    headers.forEach((h, i) => (obj[h] = String(r[i] ?? "").trim()));
-    return obj;
-  });
-  return { headers, rows };
+  return XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false, defval: "" });
 }
