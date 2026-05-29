@@ -21,6 +21,8 @@ export interface OrderLinePayload {
   discount_value: number;
   gst_rate: number;
   line_total_paise: number;
+  /** Sale price for the received batch — purchases only; the RPC ignores it for sales. */
+  mrp_paise?: number;
 }
 
 /** Args for the place_order RPC (keys match the SQL parameter names). */
@@ -56,6 +58,46 @@ export function buildSalePayload(
       discount_value: l.discountValue,
       gst_rate: l.gstRate,
       line_total_paise: lineNet(l),
+    })),
+  };
+}
+
+/** One line entered in the vendor purchase form. */
+export interface PurchaseLine {
+  itemId: string;
+  name: string;
+  batchNo: string;
+  expiry: string; // YYYY-MM (or empty)
+  qty: number;
+  ptrPaise: number; // cost — what we pay the vendor
+  mrpPaise: number; // sale price for the received batch
+  gstRate: number;
+}
+
+/** Build the place_order args for a purchase entered on a vendor profile. */
+export function buildPurchasePayload(
+  party: OrderParty,
+  lines: PurchaseLine[],
+  payment: Payment,
+): PlaceOrderArgs {
+  return {
+    p_direction: "purchase",
+    p_party_id: party.id,
+    p_payment_method: payment.method,
+    p_credit_days: payment.method === "credit" ? payment.creditDays : 0,
+    p_order_no: null,
+    p_lines: lines.map((l) => ({
+      item_id: l.itemId,
+      name: l.name,
+      batch_no: l.batchNo,
+      expiry: l.expiry,
+      qty: l.qty,
+      rate_paise: l.ptrPaise,
+      discount_type: "flat",
+      discount_value: 0,
+      gst_rate: l.gstRate,
+      line_total_paise: l.ptrPaise * l.qty,
+      mrp_paise: l.mrpPaise,
     })),
   };
 }

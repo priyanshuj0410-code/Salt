@@ -8,7 +8,7 @@ updated: 2026-05-29
 An **order** is a transaction with a party. One unified table, `orders`, carries both directions (see [../architecture/data-model.md](../architecture/data-model.md)):
 
 - **sale** — goods out to a customer. The UI calls a sale a **bill**. Composed on the [billing screen](../architecture/billing-screen.md) (customer-bound) and persisted via `place_order`. Decrements batch stock.
-- **purchase** — goods in from a vendor. Adds stock. *(The purchase branch of `place_order` is a follow-up PR; the schema already supports it.)*
+- **purchase** — goods in from a vendor. Entered on the vendor profile via "New purchase" (`/parties/:id/purchase`): pick catalogue items, set batch/expiry/qty/PTR/MRP. `place_order` (0011) **adds stock** — upserts the batch (increment if it exists, else insert) and refreshes ptr/mrp/expiry — and increases the payable. Purchases use existing catalogue items (new-item creation is a follow-up).
 
 `party_id` is nullable: **null = walk-in** (an anonymous cash sale that still persists and moves stock, but has no per-party history — PRD FR-C-002).
 

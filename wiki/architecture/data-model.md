@@ -21,6 +21,7 @@ Migrations are applied in order by the user in the Supabase SQL editor.
 | 0008 | `ledger_financials` | `opening_balance_paise`, `ledger_bills`, `known_vendors`, `classify_parties` RPC |
 | 0009 | `merge_ledgers` | `merge_ledgers` RPC (party de-duplication) |
 | 0010 | `orders` | `orders` + `order_lines` (sales/purchases), `place_order` RPC |
+| 0011 | `place_order_purchase` | `place_order` purchase branch — adds stock (upserts batches) |
 
 ## Core entities
 
@@ -44,8 +45,8 @@ Migrations are applied in order by the user in the Supabase SQL editor.
 - `redeem_migration_token(token, payload)` — migrator upload path.
 - `classify_parties(names[])` → `(name, type)` — server-side party tagging (keyword control-account → known-vendor → else customer). Security-definer. See [domain/parties.md](../domain/parties.md).
 - `merge_ledgers(survivor, merged[])` → int — atomically re-points bills to the survivor, **sums signed opening balances** (net preserved), adopts missing gstin/phone/address, deletes merged rows. Membership-checked. See [decisions/0005-faithful-import-and-merge.md](../decisions/0005-faithful-import-and-merge.md).
-- `place_order(direction, party_id, payment_method, credit_days, lines[], order_no?, notes?)` → uuid — atomically inserts an `orders` row + `order_lines`, sets `total_paise`/`paid_paise` (cash ⇒ paid in full; credit ⇒ unpaid + `due_date`), and for a **sale decrements** the matching `(item_id, batch_no)` batch stock (guards against oversell). Security-definer, resolves the caller's org from `memberships`. See [domain/orders.md](../domain/orders.md).
+- `place_order(direction, party_id, payment_method, credit_days, lines[], order_no?, notes?)` → uuid — atomically inserts an `orders` row + `order_lines`, sets `total_paise`/`paid_paise` (cash ⇒ paid in full; credit ⇒ unpaid + `due_date`), and **moves stock**: a **sale decrements** the matching `(item_id, batch_no)` batch (guards against oversell); a **purchase adds** stock (0011) by upserting the batch (increment qty if it exists, else insert) and refreshing ptr/mrp/expiry. Security-definer, resolves the caller's org from `memberships`. See [domain/orders.md](../domain/orders.md).
 
 ## Not yet modeled
 
-Purchases (the `place_order` purchase branch / stock-add lands in a follow-up PR), payments ledger (settling beyond `paid_paise`), pricing rules, audit log, multi-shop, and the master drug DB are in the PRD but not in the schema yet. **Sales now persist** (0010) via the billing screen; per-org invoice numbering is still a simple scheme.
+Payments ledger (settling beyond `paid_paise`), pricing rules, returns, audit log, multi-shop, and the master drug DB are in the PRD but not in the schema yet. **Sales and purchases now persist and move stock** (0010/0011); per-org invoice numbering is still a simple scheme, and purchases require items already in the catalogue (no new-item creation in the purchase form yet).
