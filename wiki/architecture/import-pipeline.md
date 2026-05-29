@@ -16,7 +16,7 @@ Onboarding from Marg/Tally/Saral is the leverage point for the whole business (P
 - **`smartParse.ts`** — `readMatrix(file)` reads CSV (papaparse) or XLS/XLSX (SheetJS) to a raw cell matrix. `parseFile` runs it through `extractTable`; `parseLedgerFile` runs it through `extractLedgerReport`.
 - **`smartImport.ts`** — `ENTITIES` (field configs + aliases per entity), `autoMap` (Levenshtein header→field matching), `extractTable` (report-aware extraction tolerant of title blocks, interleaved sub-rows, footers), `partitionRows` / `revalidate` (validate → split into commit-ready vs quarantined), per-entity validators.
 - **`EntityStep.tsx`** — generic upload → column-map → import → **quarantine grid** (fix bad cells or bulk-apply a default, re-process). Used for items & batches.
-- **`LedgerStep.tsx`** — dedicated ledgers path (the trial balance is too structured for the generic flow). Upload → **review/QA screen** → import. Calls `classify_parties`, inserts `ledgers`, then `ledger_bills` linked by the returned UUIDs (rows come back in request order, so bills align by index).
+- **`LedgerStep.tsx`** — dedicated ledgers path (the trial balance is too structured for the generic flow). Upload → **review/QA screen** → import. Calls `classify_parties`, generates each ledger's UUID client-side (`crypto.randomUUID()`), inserts `ledgers` with explicit ids, then inserts `ledger_bills` referencing those same ids. Linkage is correct-by-construction — no reliance on `RETURNING` order. Processes in chunks of 500. See [decisions/0007](../decisions/0007-client-side-uuid-generation.md).
 
 ## Ledger (trial balance) extraction — `smartLedger.ts`
 

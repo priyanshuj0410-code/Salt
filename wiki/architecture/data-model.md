@@ -20,6 +20,7 @@ Migrations are applied in order by the user in the Supabase SQL editor.
 | 0007 | `ledgers` | `ledgers` (parties) |
 | 0008 | `ledger_financials` | `opening_balance_paise`, `ledger_bills`, `known_vendors`, `classify_parties` RPC |
 | 0009 | `merge_ledgers` | `merge_ledgers` RPC (party de-duplication) |
+| 0010 | `orders` | `orders` + `order_lines` (sales/purchases), `place_order` RPC |
 
 ## Core entities
 
@@ -33,6 +34,8 @@ Migrations are applied in order by the user in the Supabase SQL editor.
 
 **known_vendors** — global reference list (~70 seeded pharma companies, `name` + normalized `norm`) used by classification. Readable by any authenticated user; writes only via service role.
 
+**orders / order_lines** (0010) — a unified transaction table for both directions: `direction ∈ {sale, purchase}` (a sale is a "bill"), `party_id` (FK ledgers, **null = walk-in**), `order_date, status, payment_method, credit_days, due_date, total_paise, paid_paise, order_no, notes`. `order_lines` carries `item_id (FK, nullable), name, batch_no, expiry, qty, rate_paise, discount_type, discount_value, gst_rate, line_total_paise`. A party's **amount due** = `opening_balance_paise` + Σ signed unpaid order balances (sale +, purchase −); see [domain/orders.md](../domain/orders.md). Sales are composed on the billing screen (customer-bound) and persisted via `place_order`.
+
 **invites** — one-time codes for adding cashiers. **migration_tokens** — one-time tokens the Go migrator redeems to upload a shop's data.
 
 ## Key RPCs
@@ -41,7 +44,8 @@ Migrations are applied in order by the user in the Supabase SQL editor.
 - `redeem_migration_token(token, payload)` — migrator upload path.
 - `classify_parties(names[])` → `(name, type)` — server-side party tagging (keyword control-account → known-vendor → else customer). Security-definer. See [domain/parties.md](../domain/parties.md).
 - `merge_ledgers(survivor, merged[])` → int — atomically re-points bills to the survivor, **sums signed opening balances** (net preserved), adopts missing gstin/phone/address, deletes merged rows. Membership-checked. See [decisions/0005-faithful-import-and-merge.md](../decisions/0005-faithful-import-and-merge.md).
+- `place_order(direction, party_id, payment_method, credit_days, lines[], order_no?, notes?)` → uuid — atomically inserts an `orders` row + `order_lines`, sets `total_paise`/`paid_paise` (cash ⇒ paid in full; credit ⇒ unpaid + `due_date`), and for a **sale decrements** the matching `(item_id, batch_no)` batch stock (guards against oversell). Security-definer, resolves the caller's org from `memberships`. See [domain/orders.md](../domain/orders.md).
 
 ## Not yet modeled
 
-Bills/sales, GRN/purchases, payments, pricing rules, audit log, multi-shop, and the master drug DB are all in the PRD but not in the schema yet. Counter billing currently runs on `items`/`batches` without persisting sales.
+Purchases (the `place_order` purchase branch / stock-add lands in a follow-up PR), payments ledger (settling beyond `paid_paise`), pricing rules, audit log, multi-shop, and the master drug DB are in the PRD but not in the schema yet. **Sales now persist** (0010) via the billing screen; per-org invoice numbering is still a simple scheme.

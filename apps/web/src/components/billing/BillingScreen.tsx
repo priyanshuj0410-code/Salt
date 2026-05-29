@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { ChevronDown } from "lucide-react";
 import { ItemSearch } from "./ItemSearch";
 import { BillTable } from "./BillTable";
 import { BillSummary } from "./BillSummary";
 import { ShortcutHelp } from "./ShortcutHelp";
+import { CustomerPicker } from "./CustomerPicker";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
+import { useBill } from "@/store/bill";
 
 function Hint({ keys, label }: { keys: string; label: string }) {
   return (
@@ -19,8 +22,11 @@ function Hint({ keys, label }: { keys: string; label: string }) {
 
 export function BillingScreen() {
   const [helpOpen, setHelpOpen] = useState(false);
+  const [customerOpen, setCustomerOpen] = useState(false);
   const orgId = useAuth().membership?.orgId;
   const loadCatalog = useCatalog((s) => s.load);
+  const party = useBill((s) => s.party);
+  const setParty = useBill((s) => s.setParty);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -31,6 +37,15 @@ export function BillingScreen() {
     (e) => {
       e.preventDefault();
       setHelpOpen(true);
+    },
+    { enableOnFormTags: true },
+  );
+
+  useHotkeys(
+    "mod+k",
+    (e) => {
+      e.preventDefault();
+      setCustomerOpen(true);
     },
     { enableOnFormTags: true },
   );
@@ -46,9 +61,14 @@ export function BillingScreen() {
           <span className="text-muted-foreground">
             Invoice <span className="font-medium text-foreground">INV/2026-27/0042</span>
           </span>
-          <span className="rounded-md bg-secondary px-2.5 py-1 text-xs font-medium">
-            Walk-in Customer
-          </span>
+          <button
+            onClick={() => setCustomerOpen(true)}
+            title="Change customer (Ctrl+K)"
+            className="flex items-center gap-1.5 rounded-md bg-secondary px-2.5 py-1 text-xs font-medium hover:bg-secondary/80"
+          >
+            {party?.name ?? "Walk-in Customer"}
+            <ChevronDown className="size-3 text-muted-foreground" />
+          </button>
           <UserMenu />
         </div>
       </header>
@@ -69,6 +89,12 @@ export function BillingScreen() {
       </footer>
 
       <ShortcutHelp open={helpOpen} onOpenChange={setHelpOpen} />
+      <CustomerPicker
+        open={customerOpen}
+        onOpenChange={setCustomerOpen}
+        orgId={orgId}
+        onSelect={setParty}
+      />
     </div>
   );
 }

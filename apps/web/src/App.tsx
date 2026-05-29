@@ -5,6 +5,7 @@ import { LoginPage } from "@/components/auth/LoginPage";
 import { OnboardingPage } from "@/components/auth/OnboardingPage";
 import { OwnerHome } from "@/components/owner/OwnerHome";
 import { PartiesPage } from "@/components/parties/PartiesPage";
+import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
@@ -40,6 +41,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <PartiesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bills"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <BillHistoryPage />
           </ProtectedRoute>
         }
       />

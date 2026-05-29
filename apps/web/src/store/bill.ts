@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { Batch, BillLine, DiscountType, Item, Payment, PaymentMethod } from "@/lib/types";
+import type { OrderParty } from "@/lib/orders";
 import { splitInclusiveGst } from "@/lib/currency";
 import { lineCost, lineDiscount, lineGross, lineNet, sumItemQty } from "@/lib/billing";
 import { fefoBatch, itemStock } from "@/lib/search";
@@ -41,6 +42,9 @@ function makeLine(item: Item, batch: Batch): BillLine {
 interface BillState {
   lines: BillLine[];
   payment: Payment;
+  /** The customer this bill is for; null = walk-in. */
+  party: OrderParty | null;
+  setParty: (party: OrderParty | null) => void;
   /** Add an item; defaults to its FEFO batch. Re-adding the same batch increments qty. */
   addItem: (item: Item, batchNo?: string) => void;
   setQty: (key: string, qty: number) => void;
@@ -56,6 +60,9 @@ interface BillState {
 export const useBill = create<BillState>((set) => ({
   lines: [],
   payment: { method: "cash", creditDays: 30 },
+  party: null,
+
+  setParty: (party) => set({ party }),
 
   addItem: (item, batchNo) =>
     set((state) => {
@@ -141,7 +148,7 @@ export const useBill = create<BillState>((set) => ({
   setCreditDays: (days) =>
     set((state) => ({ payment: { ...state.payment, creditDays: Math.max(0, Math.floor(days)) } })),
 
-  clear: () => set({ lines: [], payment: { method: "cash", creditDays: 30 } }),
+  clear: () => set({ lines: [], payment: { method: "cash", creditDays: 30 }, party: null }),
 }));
 
 export function billTotals(lines: BillLine[]): BillTotals {
