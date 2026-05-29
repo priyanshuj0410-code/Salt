@@ -1,10 +1,15 @@
+import { useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { addDays, format } from "date-fns";
-import { Banknote, CalendarClock, Printer, TrendingDown, TrendingUp } from "lucide-react";
+import { Banknote, CalendarClock, Check, Printer, TrendingDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatPaise, formatSigned } from "@/lib/currency";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { buildSalePayload } from "@/lib/orders";
 import { billTotals, useBill } from "@/store/bill";
+import { useCatalog } from "@/store/catalog";
 
 const CREDIT_PRESETS = [7, 15, 30];
 
@@ -21,12 +26,46 @@ export function BillSummary() {
   const lines = useBill((s) => s.lines);
   const clear = useBill((s) => s.clear);
   const payment = useBill((s) => s.payment);
+  const party = useBill((s) => s.party);
   const setPaymentMethod = useBill((s) => s.setPaymentMethod);
   const setCreditDays = useBill((s) => s.setCreditDays);
+  const usingSeed = useCatalog((s) => s.usingSeed);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const t = billTotals(lines);
   const empty = lines.length === 0;
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
+
+  async function save() {
+    if (!supabase || empty || usingSeed) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const args = buildSalePayload(party, lines, payment);
+      const { error: err } = await supabase.rpc("place_order", args);
+      if (err) {
+        setError(err.message);
+        return;
+      }
+      clear();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  useHotkeys(
+    "f9",
+    (e) => {
+      e.preventDefault();
+      void save();
+    },
+    { enableOnFormTags: true },
+    [lines, payment, party, usingSeed],
+  );
 
   return (
     <div className="flex flex-col gap-3 overflow-auto rounded-lg border p-4">
@@ -119,10 +158,21 @@ export function BillSummary() {
       </div>
 
       <div className="mt-1 flex flex-col gap-2">
-        <Button size="lg" disabled title="Payment & print — next milestone">
-          <Printer />
-          Save &amp; Print · F9
+        <Button
+          size="lg"
+          disabled={empty || saving || usingSeed}
+          onClick={save}
+          title={usingSeed ? "Import your items to save bills" : undefined}
+        >
+          {saved ? <Check /> : <Printer />}
+          {saved ? "Saved" : saving ? "Saving…" : "Save bill · F9"}
         </Button>
+        {usingSeed && (
+          <p className="text-center text-xs text-muted-foreground">
+            Demo catalogue — import your items to save bills.
+          </p>
+        )}
+        {error && <p className="text-center text-xs text-destructive">{error}</p>}
         <Button variant="ghost" size="sm" disabled={empty} onClick={clear}>
           Clear bill
         </Button>

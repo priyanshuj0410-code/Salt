@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, UserPlus, Users } from "lucide-react";
+import { Copy, Receipt, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserMenu } from "@/components/auth/UserMenu";
@@ -87,6 +87,22 @@ export function OwnerHome() {
               <h2 className="text-sm font-medium">Parties</h2>
               <p className="text-xs text-muted-foreground">
                 Customers and vendors, balances, re-tagging and merging duplicates.
+              </p>
+            </div>
+          </div>
+          <span className="text-muted-foreground">→</span>
+        </Link>
+
+        <Link
+          to="/bills"
+          className="mt-3 flex items-center justify-between rounded-lg border p-4 hover:bg-muted/40"
+        >
+          <div className="flex items-center gap-3">
+            <Receipt className="size-5 text-primary" />
+            <div>
+              <h2 className="text-sm font-medium">Bills</h2>
+              <p className="text-xs text-muted-foreground">
+                Every saved sale, with customer, payment and totals.
               </p>
             </div>
           </div>

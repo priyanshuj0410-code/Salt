@@ -36,3 +36,21 @@ Owner `/parties` screen (edit type/GSTIN/phone, balances, bills) + `mergeSuggest
 
 ## [2026-05-29] ingest | PRDs + design docs + as-built + decisions
 Created this wiki. Ingested `salt-prd-v0.3.md`, `design.md` (and referenced the migrator PRD + design-system HTML), the as-built codebase (migrations 0001–0009), and the session's decisions. Seeded product / architecture / domain / decisions pages, index, and overview.
+
+## [2026-05-29] fix | Link imported bills to ledgers by explicit UUID
+Bills were linked by index-aligning the `RETURNING` result of a multi-row `INSERT`, which Postgres does not guarantee. Now generates each ledger's UUID client-side (`crypto.randomUUID()`), supplies it in the `INSERT`, and links `ledger_bills` by the same id. Correct-by-construction. Verified: 475 unique UUIDs, 4,344 bills, 0 orphans. → [decisions/0007](decisions/0007-client-side-uuid-generation.md) · PR #14.
+
+## [2026-05-29] ingest | Product module map
+Defined 21 modules across 4 tiers derived from PRD, market research, and persona. Tier 1 (Core): Catalogue, Counter/Billing, Purchase/GRN, Inventory, Customers, Vendors. Tier 2 (Complete): Payments, Returns, GST/Compliance, Reports. Tier 3 (Differentiate): Expiry Management, H1/X Compliance, GSTR-2B Reconciliation, WhatsApp, Drug License Alerts, Salesman. Tier 4 (Enterprise): Multi-store, B2B Portal, Purchase OCR, ABHA, ONDC. Critical unlock: sales persistence + GRN tables. → [product/product-modules](product/product-modules.md)
+
+## [2026-05-29] ingest | User persona — wholesale medicine shop owner
+Deep persona: Santosh Agarwal archetype. Multi-counter wholesale dealer in tier 2/3 India. Marg 9+ power user (F2/F3/F4 muscle memory). Internet drops 2–5×/day — offline billing is non-negotiable. Business runs on credit (₹20–80L receivables outstanding). Five core jobs-to-be-done: bill fast without stopping, know who owes money, know what's expiring, file GST without 4 accountant-days, survive the drug inspector. Key design implications: keyboard-first always, real-time cross-counter stock sync, hard H1 gate, WhatsApp ledger share in one click. → [domain/persona-wholesale-owner](domain/persona-wholesale-owner.md)
+
+## [2026-05-29] ingest | Market research — Indian pharma retail ERP landscape
+Researched major competitors (Marg, GoFrugal, RetailGraph, eVitalRx, Tally+TDL), GST compliance requirements (MRP-inclusive billing, GSTR-2B reconciliation, ITC reversal on expired stock, e-invoicing thresholds), Schedule H/H1/X legal requirements (mandatory register fields, 3-year retention, sale-blocking enforcement), industry pain points, and modern trends (offline-first gap, AI purchase invoice OCR, WhatsApp, ABHA/ABDM, ONDC). Added → [product/market-research](product/market-research.md). Updated [product/roadmap](product/roadmap.md) with market-informed priority additions.
+
+## [2026-05-29] ingest | Billing screen, routing, and UUID decision
+Added wiki pages for the billing screen architecture (`architecture/billing-screen.md`), app routing and access rules (`architecture/screens-routing.md`), and ADR 0007 for client-side UUID generation. Updated `import-pipeline.md` to remove stale index-alignment claim.
+
+## [2026-05-29] build | Bill persistence + customer-on-bill + history (PR1)
+Sales now persist. Migration 0010 adds `orders` + `order_lines` + the `place_order` RPC (atomic insert + sale stock-decrement + cash/credit settlement). Billing screen gains a customer picker (default Walk-in, Ctrl+K) bound in `useBill`; the Save button (F9) is enabled and calls `place_order` (disabled on the demo seed catalogue). New `/bills` history page lists every saved sale with line detail. Pure money/due helpers in `lib/orders.ts`. First of three staged PRs for party profiles + orders. → [domain/orders](domain/orders.md)

@@ -12,7 +12,7 @@ The PRD (§7) sequences four phases over 9–12 months. This page tracks what th
 - ✅ Auth, users, orgs, roles (owner/cashier; PRD wants 5 roles)
 - ✅ Customer/party master (via trial-balance import → `ledgers`)
 - 🟡 Item master + GRN — `items`/`batches` tables + importers exist; **no GRN screen**, no seeded national drug DB
-- 🟡 Basic billing screen — built and keyboard-driven; **does not persist sales** yet (runs off `items`/`batches`)
+- 🟡 Billing screen — built, keyboard-driven, customer-bound (picker, default Walk-in), and **now persists sales** via `place_order` (0010) with stock decrement + a `/bills` history. Still missing: real print, returns, per-org invoice series.
 - ⬜ ElectricSQL sync, shop-local server, Yjs self-host POC — **none started** (the offline/real-time substrate, the PRD's core wedge)
 - ⬜ Daily sales report
 
@@ -43,4 +43,27 @@ The PRD (§7) sequences four phases over 9–12 months. This page tracks what th
 
 ## Biggest gaps to be honest about
 
-The **offline-first + real-time multi-counter** substrate — the entire strategic wedge — is not built. The app is currently an online-only Supabase SPA. Sales/GRN/payments/tax are all unbuilt. See [../decisions/0002-stack-divergence-from-prd.md](../decisions/0002-stack-divergence-from-prd.md).
+The **offline-first + real-time multi-counter** substrate — the entire strategic wedge — is not built. The app is currently an online-only Supabase SPA. Sales now persist (0010), but GRN/purchases, payments settlement, and tax are still unbuilt. See [../decisions/0002-stack-divergence-from-prd.md](../decisions/0002-stack-divergence-from-prd.md).
+
+## Market-informed priority additions
+
+From the [market research](market-research.md), several high-value items are missing from the PRD phases and should be incorporated:
+
+**Low effort / high signal (build soon):**
+- Drug license renewal alerts (missing from every competitor; strong demo moment)
+- WhatsApp invoice sharing (table stakes in India; eVitalRx/Marg/GoFrugal all have it)
+- Inspector-ready Schedule H1 register PDF export (once H1 gate is built — Law 17(5)(h))
+- ITC reversal pre-calculation when stock is marked expired (statutory; gap everywhere)
+
+**Medium effort / strong differentiator:**
+- Schedule H1 as a hard billing gate (block sale until all register fields filled; GoFrugal does this; others don't enforce it — a real compliance differentiator)
+- GSTR-2B auto-reconciliation against purchase entries (gap across every competitor; monthly compliance pain for every pharmacy)
+- ABHA / ABDM integration (74 Cr+ ABHA IDs issued; referral traffic from hospitals/clinics)
+
+**High effort / strategic:**
+- Purchase invoice OCR / AI auto-fill from photo or WhatsApp-forwarded PDF (Marg does this; single highest-value AI feature for daily workflow)
+- ONDC integration (eVitalRx is first; lets a standalone pharmacy list on ONDC without building an app)
+- Flat-rate multi-store pricing (GoFrugal charges per-store; a flat-rate model is a wedge into chains)
+
+**Data moat:**
+- Drug master database — eVitalRx has 4 lakh+ entries; Salt has none yet. The PRD's crowdsourced GRN approach (crowd-source MRP/PTR from actual GRN entries) is more defensible long-term than a one-time static import, but a seed of ~50k drugs (from CDSCO/NLEM/open sources) is needed first.
