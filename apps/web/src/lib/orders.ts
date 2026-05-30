@@ -65,18 +65,38 @@ export interface PlaceOrderArgs {
   p_order_no: string | null;
 }
 
-/** Build the place_order args for a sale composed on the billing screen. */
-export function buildSalePayload(
+/** Args for the create_sales_invoice RPC (keys match the SQL parameter names). */
+export interface SalesInvoiceArgs {
+  p_shop_id: string;
+  p_party_id: string | null;
+  p_payment_method: string;
+  p_credit_days: number;
+  p_lines: OrderLinePayload[];
+  p_invoice_no: string | null;
+  p_doctor_name: string | null;
+  p_notes: string | null;
+}
+
+/**
+ * Build the create_sales_invoice args for a sale composed on the billing screen.
+ * The RPC is authoritative for the GST split (it backs CGST/SGST/IGST out of each
+ * tax-inclusive line total) and posts the stock movement + double entry, so the
+ * client only sends item/batch/qty/rate — same line shape as the old place_order.
+ */
+export function buildSalesInvoicePayload(
+  shopId: string,
   party: OrderParty | null,
   lines: BillLine[],
   payment: Payment,
-): PlaceOrderArgs {
+): SalesInvoiceArgs {
   return {
-    p_direction: "sale",
+    p_shop_id: shopId,
     p_party_id: party?.id ?? null,
     p_payment_method: payment.method,
     p_credit_days: payment.method === "credit" ? payment.creditDays : 0,
-    p_order_no: null,
+    p_invoice_no: null,
+    p_doctor_name: null,
+    p_notes: null,
     p_lines: lines.map((l) => ({
       item_id: l.itemId,
       name: l.name,

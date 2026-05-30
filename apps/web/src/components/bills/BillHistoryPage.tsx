@@ -11,8 +11,8 @@ import { formatPaise } from "@/lib/currency";
 
 interface BillRow {
   id: string;
-  order_no: string | null;
-  order_date: string;
+  invoice_no: string | null;
+  invoice_date: string;
   created_at: string;
   total_paise: number;
   paid_paise: number;
@@ -32,7 +32,7 @@ interface LineRow {
   line_total_paise: number;
 }
 
-const invoiceNo = (b: BillRow) => b.order_no ?? `#${b.id.slice(0, 8)}`;
+const invoiceNo = (b: BillRow) => b.invoice_no ?? `#${b.id.slice(0, 8)}`;
 
 export function BillHistoryPage() {
   const orgId = useAuth().membership?.orgId;
@@ -45,12 +45,11 @@ export function BillHistoryPage() {
     if (!supabase || !orgId) return;
     let active = true;
     supabase
-      .from("orders")
+      .from("sales_invoices")
       .select(
-        "id,order_no,order_date,created_at,total_paise,paid_paise,payment_method,due_date,status,party_id,ledgers(name)",
+        "id,invoice_no,invoice_date,created_at,total_paise,paid_paise,payment_method,due_date,status,party_id,ledgers(name)",
       )
       .eq("org_id", orgId)
-      .eq("direction", "sale")
       .order("created_at", { ascending: false })
       .limit(500)
       .then(({ data }) => {
@@ -68,9 +67,9 @@ export function BillHistoryPage() {
     setLines(null);
     if (!supabase) return;
     const { data } = await supabase
-      .from("order_lines")
+      .from("sale_lines")
       .select("id,name,batch_no,qty,rate_paise,line_total_paise")
-      .eq("order_id", b.id);
+      .eq("invoice_id", b.id);
     setLines((data as LineRow[] | null) ?? []);
   }
 
