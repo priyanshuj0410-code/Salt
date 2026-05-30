@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { selectAll } from "@/lib/selectAll";
 import { parseFile } from "@/lib/smartParse";
 import {
   autoMap,
@@ -51,20 +52,42 @@ export function EntityStep({
 
   async function buildCtx(): Promise<ValidateCtx> {
     if (entity.key !== "batches" || !supabase || !orgId) return {};
-    const { data } = await supabase.from("items").select("id,name").eq("org_id", orgId);
-    const rows = (data as { id: string; name: string }[] | null) ?? [];
+    // Page past PostgREST's 1000-row cap — otherwise large catalogues only
+    // resolve their first 1000 items and every later stock row quarantines.
+    const rows = await selectAll<{ id: string; name: string; item_code: string | null }>((from, to) =>
+      supabase!.from("items").select("id,name,item_code").eq("org_id", orgId).range(from, to),
+    );
     return {
       itemByName: new Map(rows.map((r) => [r.name.toLowerCase(), r.id])),
       itemNames: rows.map((r) => r.name),
+      itemByCode: new Map(rows.filter((r) => r.item_code).map((r) => [r.item_code as string, r.id])),
     };
   }
 
   async function insertPayloads(payloads: Record<string, unknown>[]): Promise<string | null> {
     if (!supabase || !orgId || payloads.length === 0) return null;
     for (let i = 0; i < payloads.length; i += CHUNK) {
-      const chunk = payloads.slice(i, i + CHUNK).map((p) => ({ ...p, org_id: orgId }));
-      const { error: err } = await supabase.from(entity.key).insert(chunk);
-      if (err) return err.message;
+      const chunk: Record<string, unknown>[] = payloads
+        .slice(i, i + CHUNK)
+        .map((p) => ({ ...p, org_id: orgId }));
+      if (entity.key === "items") {
+        // Rows with a product code upsert (idempotent re-import); the rest insert.
+        const withCode = chunk.filter((p) => p.item_code);
+        const withoutCode = chunk.filter((p) => !p.item_code);
+        if (withCode.length) {
+          const { error: e1 } = await supabase
+            .from("items")
+            .upsert(withCode, { onConflict: "org_id,item_code" });
+          if (e1) return e1.message;
+        }
+        if (withoutCode.length) {
+          const { error: e2 } = await supabase.from("items").insert(withoutCode);
+          if (e2) return e2.message;
+        }
+      } else {
+        const { error: err } = await supabase.from(entity.key).insert(chunk);
+        if (err) return err.message;
+      }
     }
     return null;
   }
@@ -85,6 +108,8 @@ export function EntityStep({
       setImportedCount(part.valid.length);
       setQuarantine(part.quarantined);
       setPhase("result");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Import failed");
     } finally {
       setBusy(false);
     }

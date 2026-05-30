@@ -4,24 +4,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { parseLedgerFile } from "@/lib/smartParse";
 import { quality, type LedgerReport, type LedgerQuality } from "@/lib/smartLedger";
+import { classifyParties, type PartyType } from "@/lib/classifyParties";
 
 const CHUNK = 500;
-
-type PartyType = "customer" | "vendor" | "other";
 
 interface ImportResult {
   ledgers: number;
   bills: number;
-}
-
-/** Classify party names server-side (keyword → known vendor → customer). */
-async function classifyParties(names: string[]): Promise<Map<string, PartyType>> {
-  const map = new Map<string, PartyType>();
-  if (!supabase || names.length === 0) return map;
-  const { data, error } = await supabase.rpc("classify_parties", { p_names: names });
-  if (error || !data) return map; // fall back to all-customer; fixable later
-  for (const r of data as { name: string; type: PartyType }[]) map.set(r.name, r.type);
-  return map;
 }
 
 export function LedgerStep({
@@ -76,6 +65,16 @@ export function LedgerStep({
           type: types.get(l.name) ?? "customer",
           opening_balance_paise: l.openingBalancePaise,
           phone: l.phone || null,
+          // Keep the trial-balance source under a namespaced key so the party-GST
+          // step can add `gst_master` alongside without clobbering it (0013).
+          source: {
+            trial_balance: {
+              name: l.name,
+              opening_balance_paise: l.openingBalancePaise,
+              phone: l.phone || null,
+              bill_count: l.bills.length,
+            },
+          },
         }));
         const { error: lerr } = await supabase.from("ledgers").insert(payload);
         if (lerr) {

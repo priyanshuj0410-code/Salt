@@ -18,7 +18,8 @@ Catalog of every page. Read this first when answering a question, then drill in.
 
 ## Architecture
 - [architecture/stack](architecture/stack.md) — monorepo, Vite/React/Tailwind, Supabase backend, deploy/CI, conventions.
-- [architecture/data-model](architecture/data-model.md) — tables, migrations 0001–0009, key RPCs, what's not modeled yet.
+- [architecture/data-model](architecture/data-model.md) — tables, migrations 0001–0012, key RPCs, what's not modeled yet.
+- [architecture/schema](architecture/schema.md) — exact table + column definitions (types, nullability, defaults, FKs) for every table.
 - [architecture/security-rls](architecture/security-rls.md) — Auth, per-org RLS, `is_member`, security-definer RPCs, gaps.
 - [architecture/import-pipeline](architecture/import-pipeline.md) — CSV / Go migrator / Smart Importer; trial-balance extraction; merge.
 - [architecture/design-system](architecture/design-system.md) — `design.md` principles + tokens; the as-built-vs-spec gap.
@@ -41,6 +42,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [0005 — Faithful import + user-driven merge](decisions/0005-faithful-import-and-merge.md)
 - [0006 — Trial-balance column identity + positional parse](decisions/0006-trial-balance-column-identity.md)
 - [0007 — Client-side UUID generation for ledger linkage](decisions/0007-client-side-uuid-generation.md)
+- [0008 — Import join keys: name for parties, code for products](decisions/0008-import-join-keys.md)
 
 ## Raw sources (immutable, at repo root)
 `salt-prd-v0.3.md` · `salt-migrator-prd-v0.1.md` · `design.md` · `salt-design-system.html` · `PRD_Intelligent_Importer.pdf` · the codebase · `Saral/Trial_Balance.xls` (untracked sample).

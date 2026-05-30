@@ -1,4 +1,4 @@
-export type EntityKey = "ledgers" | "items" | "batches";
+export type EntityKey = "ledgers" | "party_gstin" | "items" | "batches";
 
 export interface FieldDef {
   key: string;
@@ -36,18 +36,32 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
+    key: "party_gstin",
+    label: "Party details",
+    order: 1,
+    description: "Enrich your imported parties with GSTIN, address and phone from your GST master.",
+    tip: 'Export "Party GST Master" from Marg/Saral. We match by name and fill missing details — existing values are never overwritten.',
+    fields: [
+      { key: "name", label: "Name", required: true, aliases: ["party", "ledger", "account", "customer", "supplier", "particulars", "party name"] },
+      { key: "gstin", label: "GSTIN", aliases: ["gst", "gst no", "gst number", "tax id", "gstin no"] },
+      { key: "phone", label: "Phone", aliases: ["mobile", "contact", "phone no", "mobile no", "telephone"] },
+      { key: "address", label: "Address", aliases: ["city", "location", "add", "addr"] },
+    ],
+  },
+  {
     key: "items",
     label: "Items",
-    order: 1,
+    order: 2,
     description: "Your product master — medicines and surgicals with salt, tax and schedule.",
     tip: "Missing HSN is allowed (flagged as a warning); an unknown Schedule defaults to OTC.",
     fields: [
+      { key: "item_code", label: "Code", aliases: ["code", "item code", "itemcode", "product code", "sku"] },
       { key: "name", label: "Name", required: true, aliases: ["item", "product", "medicine", "item name", "product name", "description"] },
       { key: "salt", label: "Salt", aliases: ["molecule", "composition", "generic", "content"] },
       { key: "manufacturer", label: "Manufacturer", aliases: ["company", "mfr", "maker", "brand", "comp"] },
       { key: "pack", label: "Pack", aliases: ["packing", "pack size", "unit"] },
       { key: "hsn", label: "HSN", aliases: ["hsn code", "hsncode"] },
-      { key: "gst_rate", label: "GST %", aliases: ["gst", "tax", "tax slab", "gst rate", "tax %"] },
+      { key: "gst_rate", label: "GST %", aliases: ["igst", "gst", "tax", "tax slab", "gst rate", "tax %"] },
       { key: "schedule", label: "Schedule", aliases: ["sch", "drug schedule"] },
       { key: "barcode", label: "Barcode", aliases: ["ean", "upc", "bar code"] },
     ],
@@ -55,11 +69,12 @@ export const ENTITIES: EntityConfig[] = [
   {
     key: "batches",
     label: "Batches & stock",
-    order: 2,
-    description: "Your physical stock — one row per batch, linked to an item by name.",
-    tip: "Import Items first. Rows whose item is not found are quarantined with a closest-match suggestion.",
+    order: 3,
+    description: "Your physical stock — one row per item, linked by code (or name).",
+    tip: "Import Items first. We link by item code when present, else by name; unmatched rows are quarantined with a closest-match suggestion.",
     fields: [
-      { key: "item", label: "Item", required: true, aliases: ["product", "medicine", "item name", "name"] },
+      { key: "item_code", label: "Code", aliases: ["code", "item code", "itemcode", "product code", "sku"] },
+      { key: "item", label: "Item", required: true, aliases: ["product", "medicine", "item name", "name", "product name"] },
       { key: "batch_no", label: "Batch no", aliases: ["batch", "batch number", "lot", "lot no"] },
       { key: "expiry", label: "Expiry", aliases: ["exp", "exp date", "expiry date", "exp dt", "expdate"] },
       { key: "qty", label: "Quantity", required: true, aliases: ["quantity", "stock", "qty on hand", "closing stock", "balance"] },
@@ -100,19 +115,35 @@ function similarity(a: string, b: string): number {
   return 1 - levenshtein(a, b) / max;
 }
 
-/** Best similarity of a header against a field's label/key/aliases. */
+/**
+ * Best match of a header against a field's label/key/aliases, tiered so an
+ * exact column-name match strictly beats a mere substring match. This matters
+ * for Marg/Saral exports with many lookalike columns (ItemCode vs HSNCode vs
+ * HsnName, SGST/CGST/IGST/LocalTax): without tiering, "code" inside "HSNCode"
+ * would tie the exact "ItemCode" and the wrong column could win.
+ */
 function fieldScore(field: FieldDef, header: string): number {
   const h = norm(header);
+  if (!h) return 0;
   const candidates = [field.label, field.key, ...field.aliases].map(norm);
   let best = 0;
   for (const c of candidates) {
-    if (c === h || h.includes(c) || c.includes(h)) return 1;
-    best = Math.max(best, similarity(c, h));
+    if (!c) continue;
+    let s: number;
+    if (c === h) s = 1; // exact — always wins
+    else if (h.includes(c) || c.includes(h))
+      s = 0.7 + 0.25 * (Math.min(c.length, h.length) / Math.max(c.length, h.length)); // substring (< 1)
+    else s = 0.85 * similarity(c, h); // fuzzy (< substring)
+    if (s > best) best = s;
   }
   return best;
 }
 
-/** Suggest a mapping of field key -> source header (or null) for a file. */
+/**
+ * Suggest a mapping of field key -> source header (or null) for a file.
+ * Ties resolve to the FIRST (left-most) header so a later lookalike column
+ * never displaces an exact earlier match.
+ */
 export function autoMap(headers: string[], fields: FieldDef[], threshold = 0.72): Record<string, string | null> {
   const map: Record<string, string | null> = {};
   for (const field of fields) {
@@ -120,7 +151,7 @@ export function autoMap(headers: string[], fields: FieldDef[], threshold = 0.72)
     let bestScore = threshold;
     for (const header of headers) {
       const s = fieldScore(field, header);
-      if (s >= bestScore) {
+      if (s > bestScore) {
         bestScore = s;
         bestHeader = header;
       }
@@ -263,6 +294,8 @@ export interface ValidateCtx {
   /** lowercased item name -> item id, for batch FK resolution. */
   itemByName?: Map<string, string>;
   itemNames?: string[];
+  /** item_code -> item id, the precise join when the stock file carries a code. */
+  itemByCode?: Map<string, string>;
 }
 
 const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
@@ -328,6 +361,7 @@ function validate(entity: EntityKey, d: Record<string, string>, ctx: ValidateCtx
     return {
       issues,
       payload: {
+        item_code: d.item_code || null,
         name: d.name,
         salt: d.salt || null,
         manufacturer: d.manufacturer || null,
@@ -340,23 +374,32 @@ function validate(entity: EntityKey, d: Record<string, string>, ctx: ValidateCtx
     };
   }
 
-  // batches
-  if (!d.item) {
-    issues.push({ field: "item", level: "error", message: "Missing item name" });
+  // batches — link by item code first (precise), then by name (fallback).
+  if (!d.item && !d.item_code) {
+    issues.push({ field: "item", level: "error", message: "Missing item code or name" });
   }
-  const itemId = d.item ? ctx.itemByName?.get(d.item.toLowerCase()) : undefined;
-  if (d.item && !itemId) {
-    const hint = closest(d.item, ctx.itemNames ?? []);
+  const itemId =
+    (d.item_code ? ctx.itemByCode?.get(d.item_code) : undefined) ??
+    (d.item ? ctx.itemByName?.get(d.item.toLowerCase()) : undefined);
+  if ((d.item || d.item_code) && !itemId) {
+    const hint = d.item ? closest(d.item, ctx.itemNames ?? []) : null;
     issues.push({
-      field: "item",
+      field: d.item_code && !d.item ? "item_code" : "item",
       level: "error",
       message: hint ? `Item not in catalogue. Did you mean "${hint}"?` : "Item not in catalogue",
     });
   }
-  const qty = Number(d.qty);
-  if (!Number.isFinite(qty) || qty < 0) issues.push({ field: "qty", level: "error", message: "Quantity must be a number ≥ 0" });
+  // Negative stock is a real-world value (oversold, or billed before the GRN
+  // landed) — import it faithfully, don't quarantine. Only a non-empty,
+  // non-numeric quantity warns (and saves as 0).
+  const qty = Number((d.qty || "").replace(/[,\s]/g, ""));
+  if (d.qty && !Number.isFinite(qty))
+    issues.push({ field: "qty", level: "warning", message: `Quantity "${d.qty}" isn't a number — saved as 0` });
+  // Opening stock: a zero-stock dormant item may carry no MRP — don't quarantine
+  // the whole catalogue for that. Only block negatives; warn if it's in stock yet priceless.
   const mrp = Number((d.mrp || "").replace(/[,₹\s]/g, ""));
-  if (!Number.isFinite(mrp) || mrp <= 0) issues.push({ field: "mrp", level: "error", message: "MRP must be greater than 0" });
+  if (!Number.isFinite(mrp) || mrp < 0) issues.push({ field: "mrp", level: "error", message: "MRP must be a number ≥ 0" });
+  else if (mrp === 0 && qty > 0) issues.push({ field: "mrp", level: "warning", message: "In stock but no MRP — set it before billing" });
   let expiry: string | null = "";
   if (d.expiry) {
     expiry = toExpiryYM(d.expiry);
@@ -375,7 +418,7 @@ function validate(entity: EntityKey, d: Record<string, string>, ctx: ValidateCtx
       item_id: itemId ?? null,
       batch_no: d.batch_no || null,
       expiry: expiry || null,
-      qty: Math.max(0, Math.floor(qty || 0)),
+      qty: Number.isFinite(qty) ? Math.trunc(qty) : 0, // keep negatives as-is
       mrp_paise: toPaise(d.mrp),
       ptr_paise: toPaise(d.ptr),
     },
@@ -396,15 +439,30 @@ export function partitionRows(
     if (Object.values(data).every((v) => !v)) return; // skip blank rows
     const { issues, payload } = validate(entity, data, ctx);
     const hasError = issues.some((i) => i.level === "error");
-    const result: RowResult = { index, data, issues, payload: hasError ? null : payload };
+    // Keep the verbatim source row (every column, mapped or not) so nothing is
+    // discarded — it lands in the entity's `source` jsonb (migration 0013).
+    const result: RowResult = {
+      index,
+      data,
+      issues,
+      payload: hasError || !payload ? null : { ...payload, source: pruneEmpty(raw) },
+    };
     (hasError ? quarantined : valid).push(result);
   });
   return { valid, quarantined };
+}
+
+/** Drop empty cells so `source` stays compact but loses nothing meaningful. */
+function pruneEmpty(row: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(row)) if (v != null && String(v).trim() !== "") out[k] = v;
+  return out;
 }
 
 /** Re-validate a single edited quarantine row (used by the "Re-process" action). */
 export function revalidate(entity: EntityKey, data: Record<string, string>, ctx: ValidateCtx = {}): RowResult {
   const { issues, payload } = validate(entity, data, ctx);
   const hasError = issues.some((i) => i.level === "error");
-  return { index: -1, data, issues, payload: hasError ? null : payload };
+  // Reprocessed rows are hand-edited in the grid; keep the edited field map as source.
+  return { index: -1, data, issues, payload: hasError || !payload ? null : { ...payload, source: pruneEmpty(data) } };
 }
