@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { supabase } from "@/lib/supabase";
+import { selectAll } from "@/lib/selectAll";
 import { useAuth } from "@/lib/auth";
 import { suggestMerges, type MergeGroup } from "@/lib/mergeSuggest";
 
@@ -56,26 +57,42 @@ export function PartiesPage() {
   useEffect(() => {
     if (!supabase || !orgId) return;
     let active = true;
+    // Page past the 1000-row cap — an org can have far more parties/bills.
     Promise.all([
-      supabase.from("ledgers").select("id,name,type,phone,gstin,opening_balance_paise").eq("org_id", orgId).order("name"),
-      supabase.from("ledger_bills").select("ledger_id,ref_no").eq("org_id", orgId),
-    ]).then(([ledgersRes, billsRes]) => {
-      if (!active) return;
-      const refsByLedger = new Map<string, string[]>();
-      for (const b of (billsRes.data as { ledger_id: string; ref_no: string | null }[] | null) ?? []) {
-        const arr = refsByLedger.get(b.ledger_id);
-        if (arr) arr.push(b.ref_no ?? "");
-        else refsByLedger.set(b.ledger_id, [b.ref_no ?? ""]);
-      }
-      const parties = ((ledgersRes.data as LedgerRow[] | null) ?? []).map((l) => {
-        const refs = refsByLedger.get(l.id) ?? [];
-        return { ...l, billRefs: refs, billCount: refs.length };
+      selectAll<LedgerRow>((from, to) =>
+        supabase!
+          .from("ledgers")
+          .select("id,name,type,phone,gstin,opening_balance_paise")
+          .eq("org_id", orgId)
+          .order("name")
+          .range(from, to),
+      ),
+      selectAll<{ ledger_id: string; ref_no: string | null }>((from, to) =>
+        supabase!.from("ledger_bills").select("ledger_id,ref_no").eq("org_id", orgId).range(from, to),
+      ),
+    ])
+      .then(([ledgers, bills]) => {
+        if (!active) return;
+        const refsByLedger = new Map<string, string[]>();
+        for (const b of bills) {
+          const arr = refsByLedger.get(b.ledger_id);
+          if (arr) arr.push(b.ref_no ?? "");
+          else refsByLedger.set(b.ledger_id, [b.ref_no ?? ""]);
+        }
+        const parties = ledgers.map((l) => {
+          const refs = refsByLedger.get(l.id) ?? [];
+          return { ...l, billRefs: refs, billCount: refs.length };
+        });
+        setRows(parties);
+        setDirty(new Set());
+        setError(null);
+        setLoading(false);
+      })
+      .catch((e) => {
+        if (!active) return;
+        setError(e instanceof Error ? e.message : "Failed to load parties");
+        setLoading(false);
       });
-      setRows(parties);
-      setDirty(new Set());
-      setError(ledgersRes.error?.message ?? billsRes.error?.message ?? null);
-      setLoading(false);
-    });
     return () => {
       active = false;
     };

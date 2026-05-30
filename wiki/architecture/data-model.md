@@ -7,7 +7,7 @@ updated: 2026-05-29
 
 All tables live in Postgres (Supabase), every business table carries `org_id` for tenancy, and **every table has deny-by-default RLS** gated on `public.is_member(org_id)` (see [security-rls.md](security-rls.md)). Money is integer **paise**.
 
-Migrations are applied in order by the user in the Supabase SQL editor.
+Migrations are applied in order by the user in the Supabase SQL editor. For exact column-level definitions (types, nullability, defaults, FKs) see [schema.md](schema.md).
 
 | # | File | Adds |
 |---|------|------|
@@ -22,14 +22,16 @@ Migrations are applied in order by the user in the Supabase SQL editor.
 | 0009 | `merge_ledgers` | `merge_ledgers` RPC (party de-duplication) |
 | 0010 | `orders` | `orders` + `order_lines` (sales/purchases), `place_order` RPC |
 | 0011 | `place_order_purchase` | `place_order` purchase branch — adds stock (upserts batches) |
+| 0012 | `import_keys` | `items.item_code` (unique per org), `ledgers.state_code`, `orgs.state_code` |
+| 0013 | `source_capture` | `source jsonb` on `ledgers`/`items`/`batches` — verbatim import row, nothing discarded |
 
 ## Core entities
 
 **orgs / memberships / profiles** — an `org` is a customer entity (one or more shops; multi-shop not yet modeled). `memberships(user_id, org_id, role)` ties an auth user to an org with role `owner` | `cashier`. `is_member(org_id)` is the RLS workhorse. `create_org` provisions an org + owner membership atomically. (PRD roles are Owner/Manager/Pharmacist/Cashier/Accountant; only owner/cashier exist so far.)
 
-**items** — product master: `name, salt, manufacturer, pack, hsn, gst_rate, schedule (OTC/H/H1/X), barcode`, `org_id`. **batches** — per-item stock: `item_id, batch_no, expiry, qty, mrp_paise, ptr_paise`. Billing reads these; the CSV/Smart importers write them.
+**items** — product master: `name, salt, manufacturer, pack, hsn, gst_rate, schedule (OTC/H/H1/X), barcode`, `org_id`, and (0012) `item_code` — the per-shop Marg/Saral SKU, **unique per org**, the stable key the stock import joins on. **batches** — per-item stock: `item_id, batch_no, expiry, qty, mrp_paise, ptr_paise`. Opening stock imports as one synthetic batch per item (null batch_no/expiry). Billing reads these; the CSV/Smart importers write them. See [import-pipeline.md](import-pipeline.md) and [decisions/0008](../decisions/0008-import-join-keys.md).
 
-**ledgers** (parties) — `id uuid`, `org_id`, `name`, `type ∈ {customer, vendor, other}` (default customer; 0008 migrated the old supplier/both), `phone, gstin, address, credit_limit_paise`, and (0008) `opening_balance_paise bigint` — **signed: + = receivable (Dr), − = payable (Cr)**. See [domain/parties.md](../domain/parties.md).
+**ledgers** (parties) — `id uuid`, `org_id`, `name`, `type ∈ {customer, vendor, other}` (default customer; 0008 migrated the old supplier/both), `phone, gstin, address, credit_limit_paise`, (0008) `opening_balance_paise bigint` — **signed: + = receivable (Dr), − = payable (Cr)**, and (0012) `state_code` (with `orgs.state_code`) for GST place-of-supply (intra- vs inter-state). See [domain/parties.md](../domain/parties.md).
 
 **ledger_bills** — per-invoice open items under a ledger: `ledger_id (FK cascade), ref_no, bill_date, amount_paise, nature ∈ {dr,cr}, due_date, days_overdue`. Parsed from the trial balance → [domain/trial-balance.md](../domain/trial-balance.md).
 

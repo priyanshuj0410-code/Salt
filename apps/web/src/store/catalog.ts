@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { Item, Schedule } from "@/lib/types";
 import { catalog as seedCatalog } from "@/data/catalog";
 import { supabase } from "@/lib/supabase";
+import { selectAll } from "@/lib/selectAll";
 
 interface ItemRow {
   id: string;
@@ -71,26 +72,32 @@ export const useCatalog = create<CatalogState>((set) => ({
   load: async (orgId) => {
     if (!supabase) return;
     set({ loading: true });
-    const [{ data: items }, { data: batches }] = await Promise.all([
-      supabase
-        .from("items")
-        .select("id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode")
-        .eq("org_id", orgId),
-      supabase
-        .from("batches")
-        .select("item_id,batch_no,expiry,qty,mrp_paise,ptr_paise")
-        .eq("org_id", orgId),
-    ]);
-    const rows = (items as ItemRow[] | null) ?? [];
-    if (rows.length === 0) {
+    try {
+      // Page past PostgREST's 1000-row cap so large catalogues load in full.
+      const [items, batches] = await Promise.all([
+        selectAll<ItemRow>((from, to) =>
+          supabase!
+            .from("items")
+            .select("id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode")
+            .eq("org_id", orgId)
+            .range(from, to),
+        ),
+        selectAll<BatchRow>((from, to) =>
+          supabase!
+            .from("batches")
+            .select("item_id,batch_no,expiry,qty,mrp_paise,ptr_paise")
+            .eq("org_id", orgId)
+            .range(from, to),
+        ),
+      ]);
+      if (items.length === 0) {
+        set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true });
+        return;
+      }
+      set({ items: mapRows(items, batches), usingSeed: false, loading: false, loaded: true });
+    } catch {
+      // On a load failure, keep the seed and mark loaded so the UI isn't stuck.
       set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true });
-      return;
     }
-    set({
-      items: mapRows(rows, (batches as BatchRow[] | null) ?? []),
-      usingSeed: false,
-      loading: false,
-      loaded: true,
-    });
   },
 }));
