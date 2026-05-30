@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { searchCatalog } from "@/lib/search";
-import { buildPurchasePayload, withTimeout, TimeoutError, type PurchaseLine } from "@/lib/orders";
+import { buildReceivePurchasePayload, withTimeout, TimeoutError, type PurchaseLine } from "@/lib/orders";
 import { useCatalog } from "@/store/catalog";
 import type { Payment } from "@/lib/types";
 
@@ -20,6 +20,7 @@ const toPaise = (rupees: string | number) => Math.round((Number(rupees) || 0) * 
 export function PurchaseEntryPage() {
   const { id } = useParams<{ id: string }>();
   const orgId = useAuth().membership?.orgId;
+  const shopId = useAuth().shopId;
   const navigate = useNavigate();
   const items = useCatalog((s) => s.items);
   const usingSeed = useCatalog((s) => s.usingSeed);
@@ -81,12 +82,13 @@ export function PurchaseEntryPage() {
   }
 
   async function save() {
-    if (!supabase || !vendor || lines.length === 0 || usingSeed || saving) return; // re-entry guard
+    // re-entry guard; !shopId blocks until a primary shop resolves (multi-shop)
+    if (!supabase || !vendor || lines.length === 0 || usingSeed || saving || !shopId) return;
     setSaving(true);
     setError(null);
     try {
-      const args = buildPurchasePayload({ id: vendor.id, name: vendor.name }, lines, payment);
-      const { error: err } = await withTimeout(supabase.rpc("place_order", args), 15000);
+      const args = buildReceivePurchasePayload(shopId, { id: vendor.id, name: vendor.name }, lines, payment);
+      const { error: err } = await withTimeout(supabase.rpc("receive_purchase", args), 15000);
       if (err) setError(err.message);
       else navigate(`/parties/${vendor.id}`);
     } catch (e) {
@@ -227,7 +229,7 @@ export function PurchaseEntryPage() {
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
 
         <div className="mt-4 flex items-center gap-2">
-          <Button size="lg" onClick={save} disabled={saving || lines.length === 0 || usingSeed || !vendor}>
+          <Button size="lg" onClick={save} disabled={saving || lines.length === 0 || usingSeed || !vendor || !shopId}>
             <Truck /> {saving ? "Saving…" : "Record purchase"}
           </Button>
           <Button variant="ghost" onClick={() => navigate(vendor ? `/parties/${vendor.id}` : "/parties")}>
