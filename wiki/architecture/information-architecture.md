@@ -651,15 +651,17 @@ Icon + label in expanded mode. Icon only in collapsed mode. Letter shortcut show
 
 ## What's built vs. what this IA adds
 
+**The navigation shell itself is built** (`apps/web/src/components/nav/`): a role-gated left sidebar rendering this full nested tree from `navConfig.ts`, with built modules linked and everything unbuilt shown disabled, plus `g`+letter go-to (`useGoToNav.ts`). It wraps all protected routes via `AppLayout`. So every path below is *visible*; the table is which ones are *active*.
+
 | Screen | Status |
 |---|---|
 | `/` Counter | ✅ built (keyboard billing, FEFO, useBill, place_order, F9 save) |
-| `/bills` Bill History | ✅ built (PR1) |
+| `/bills` Bill History / Sales → Invoices | ✅ built |
 | `/parties` Party List | ✅ built |
-| `/parties/:id` Party Profile | 🟡 upcoming PR |
-| `/owner` Cashier Invites | ✅ built |
-| `/import`, `/import/smart` | ✅ built |
-| All other routes | ⬜ not started |
+| `/parties/:id` Party Profile | ✅ built |
+| `/owner` Settings → Users & invites | ✅ built |
+| `/import`, `/import/smart` Settings → Import | ✅ built |
+| Purchases · Inventory · Payments · GST · Reports · Catalogue (+ unbuilt sub-items) | ⬜ visible but disabled in the sidebar |
 
 ## Related
 [architecture/billing-screen](billing-screen.md) · [architecture/screens-routing](screens-routing.md) · [domain/persona-wholesale-owner](../domain/persona-wholesale-owner.md) · [product/product-modules](../product/product-modules.md) · [domain/orders](../domain/orders.md)

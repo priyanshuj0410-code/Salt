@@ -10,6 +10,7 @@ import { PurchaseEntryPage } from "@/components/parties/PurchaseEntryPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AppLayout } from "@/components/nav/AppLayout";
 
 // Lazy-loaded so the heavy xlsx parser only loads on the smart-import page.
 const SmartImportPage = lazy(() =>
@@ -22,6 +23,7 @@ function App() {
       <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route element={<AppLayout />}>
       <Route
         path="/"
         element={
@@ -86,6 +88,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+      </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
