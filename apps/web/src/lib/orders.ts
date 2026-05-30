@@ -39,7 +39,7 @@ export interface OrderParty {
 
 export type OrderDirection = "sale" | "purchase";
 
-/** One line in the place_order RPC payload (snake_case to match the SQL). */
+/** One line in the create_sales_invoice RPC payload (snake_case to match the SQL). */
 export interface OrderLinePayload {
   item_id: string | null;
   name: string;
@@ -53,16 +53,6 @@ export interface OrderLinePayload {
   line_total_paise: number;
   /** Sale price for the received batch — purchases only; the RPC ignores it for sales. */
   mrp_paise?: number;
-}
-
-/** Args for the place_order RPC (keys match the SQL parameter names). */
-export interface PlaceOrderArgs {
-  p_direction: OrderDirection;
-  p_party_id: string | null;
-  p_payment_method: string;
-  p_credit_days: number;
-  p_lines: OrderLinePayload[];
-  p_order_no: string | null;
 }
 
 /** Args for the create_sales_invoice RPC (keys match the SQL parameter names). */
@@ -81,7 +71,7 @@ export interface SalesInvoiceArgs {
  * Build the create_sales_invoice args for a sale composed on the billing screen.
  * The RPC is authoritative for the GST split (it backs CGST/SGST/IGST out of each
  * tax-inclusive line total) and posts the stock movement + double entry, so the
- * client only sends item/batch/qty/rate — same line shape as the old place_order.
+ * client only sends item/batch/qty/rate.
  */
 export function buildSalesInvoicePayload(
   shopId: string,
@@ -124,30 +114,59 @@ export interface PurchaseLine {
   gstRate: number;
 }
 
-/** Build the place_order args for a purchase entered on a vendor profile. */
-export function buildPurchasePayload(
-  party: OrderParty,
+/** One line in the receive_purchase RPC payload (snake_case to match the SQL). */
+export interface PurchaseLinePayload {
+  item_id: string;
+  name: string;
+  batch_no: string;
+  expiry: string;
+  qty: number;
+  ptr_paise: number;
+  mrp_paise: number;
+  gst_rate: number;
+  free_qty?: number;
+  scheme_text?: string;
+}
+
+/** Args for the receive_purchase (GRN) RPC (keys match the SQL parameter names). */
+export interface ReceivePurchaseArgs {
+  p_shop_id: string;
+  p_vendor_id: string;
+  p_vendor_invoice_no: string | null;
+  p_vendor_invoice_date: string | null;
+  p_payment_method: string;
+  p_credit_days: number;
+  p_lines: PurchaseLinePayload[];
+}
+
+/**
+ * Build the receive_purchase args for a GRN entered on a vendor profile. The RPC
+ * adds stock (qty + free goods), backs CGST/SGST/IGST off the cost, and posts the
+ * stock movement + double entry (Dr Purchase + Dr GST input = Cr vendor). Taxable
+ * defaults to qty x PTR server-side, so the client only sends item/batch/qty/cost.
+ */
+export function buildReceivePurchasePayload(
+  shopId: string,
+  vendor: OrderParty,
   lines: PurchaseLine[],
   payment: Payment,
-): PlaceOrderArgs {
+): ReceivePurchaseArgs {
   return {
-    p_direction: "purchase",
-    p_party_id: party.id,
+    p_shop_id: shopId,
+    p_vendor_id: vendor.id,
+    p_vendor_invoice_no: null,
+    p_vendor_invoice_date: null,
     p_payment_method: payment.method,
     p_credit_days: payment.method === "credit" ? payment.creditDays : 0,
-    p_order_no: null,
     p_lines: lines.map((l) => ({
       item_id: l.itemId,
       name: l.name,
       batch_no: l.batchNo,
       expiry: l.expiry,
       qty: l.qty,
-      rate_paise: l.ptrPaise,
-      discount_type: "flat",
-      discount_value: 0,
-      gst_rate: l.gstRate,
-      line_total_paise: l.ptrPaise * l.qty,
+      ptr_paise: l.ptrPaise,
       mrp_paise: l.mrpPaise,
+      gst_rate: l.gstRate,
     })),
   };
 }

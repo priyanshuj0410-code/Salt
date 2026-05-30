@@ -82,17 +82,16 @@ export function PartyProfilePage() {
         .select("id,ref_no,bill_date,amount_paise,nature,due_date,days_overdue")
         .eq("ledger_id", id)
         .order("bill_date"),
-      // Sales now live in sales_invoices; purchases stay in orders until their
-      // own cutover. Both are keyed by party_id and merged for history + dues.
+      // Sales live in sales_invoices (keyed by party_id); purchases in the
+      // purchases table (keyed by vendor_id). Merged for history + dues.
       supabase
         .from("sales_invoices")
         .select("id,total_paise,paid_paise,created_at,due_date")
         .eq("party_id", id),
       supabase
-        .from("orders")
-        .select("id,total_paise,paid_paise,created_at,due_date")
-        .eq("party_id", id)
-        .eq("direction", "purchase"),
+        .from("purchases")
+        .select("id,total_paise,paid_paise,created_at")
+        .eq("vendor_id", id),
     ]).then(([l, b, s, p]) => {
       if (!active) return;
       if (!l.data) {
@@ -108,8 +107,8 @@ export function PartyProfilePage() {
         const sales = ((s.data as DocRow[] | null) ?? []).map(
           (r): OrderHistoryRow => ({ ...r, direction: "sale" }),
         );
-        const purchases = ((p.data as DocRow[] | null) ?? []).map(
-          (r): OrderHistoryRow => ({ ...r, direction: "purchase" }),
+        const purchases = ((p.data as Omit<DocRow, "due_date">[] | null) ?? []).map(
+          (r): OrderHistoryRow => ({ ...r, direction: "purchase", due_date: null }),
         );
         setLedger(l.data as Ledger);
         setBills((b.data as BillRow[] | null) ?? []);
