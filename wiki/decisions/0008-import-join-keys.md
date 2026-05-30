@@ -7,6 +7,8 @@ updated: 2026-05-29
 
 **Status:** accepted · **Date:** 2026-05
 
+> **Refined by [0010](0010-gstin-canonical-party-identity.md) (2026-05-31):** as the importer extends to the account master and transaction history (which carry GSTIN), the party key becomes **GSTIN → normalized name (fallback)**, not name-only. The product key (`item_code`) is unchanged.
+
 ## Context
 
 A real Marg/Saral shop onboards from four exports: a trial balance, a party GST master, an item/HSN master, and a stock report. We needed an ingestion model that absorbs all four faithfully and scales to any Marg/Tally/Saral customer — **without per-file parsing logic**.
