@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -33,6 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [loading, setLoading] = useState(supabase != null);
+  /** The user id the loading gate is tracking, so we ignore same-user refires. */
+  const currentUserId = useRef<string | null>(null);
 
   const loadMembership = useCallback(async (userId: string) => {
     if (!supabase) return;
@@ -58,17 +61,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
+      currentUserId.current = data.session?.user.id ?? null;
       setSession(data.session);
       setLoading(Boolean(data.session));
     });
 
+    // Supabase re-fires onAuthStateChange on tab focus / token refresh with the
+    // SAME user. Only touch the loading gate when the user actually changes, so
+    // refocus doesn't strand the app on a "Loading…" screen.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
       setSession(next);
-      if (next) {
-        setLoading(true);
+      const nextId = next?.user.id ?? null;
+      if (nextId === currentUserId.current) return; // same user → ignore refire
+      currentUserId.current = nextId;
+      if (nextId) {
+        setLoading(true); // genuine sign-in; the membership effect clears it
       } else {
         setMembership(null);
-        setLoading(false);
+        setLoading(false); // signed out
       }
     });
 
