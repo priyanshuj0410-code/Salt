@@ -48,5 +48,9 @@ This is the most domain-specific piece. A Saral/Marg/Tally trial balance is not 
 
 The trial balance legitimately repeats names (one party as both debtor and creditor). Import stays **faithful** (no auto-collapse); the [Parties screen](../domain/parties.md) suggests merges (GSTIN → identical-invoice-set → name) and the user confirms. See [decisions/0005-faithful-import-and-merge.md](../decisions/0005-faithful-import-and-merge.md).
 
+## Beyond the four files
+
+Today's cascade fills **masters + opening balances** only. The full model (0014–0024) is now live, so the next step is extending Smart Import to ingest Marg's transaction history, accounting and compliance exports too. The complete Marg-export → Salt-table scope — every file, its target table(s), join keys, and the decisions it forces — is mapped in [marg-import-map](marg-import-map.md).
+
 ## Related
-[trial-balance](../domain/trial-balance.md) · [parties](../domain/parties.md) · [data-model](data-model.md)
+[marg-import-map](marg-import-map.md) · [trial-balance](../domain/trial-balance.md) · [parties](../domain/parties.md) · [data-model](data-model.md)

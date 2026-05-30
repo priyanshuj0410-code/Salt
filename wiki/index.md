@@ -23,6 +23,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/schema](architecture/schema.md) — exact table + column definitions (types, nullability, defaults, FKs) for every table.
 - [architecture/security-rls](architecture/security-rls.md) — Auth, per-org RLS, `is_member`, security-definer RPCs, gaps.
 - [architecture/import-pipeline](architecture/import-pipeline.md) — CSV / Go migrator / Smart Importer; trial-balance extraction; merge.
+- [architecture/marg-import-map](architecture/marg-import-map.md) — everything Marg ERP 9+ can export, mapped to every Salt table; scope for extending Smart Import past today's four files.
 - [architecture/design-system](architecture/design-system.md) — `design.md` principles + tokens; the as-built-vs-spec gap.
 - [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale.
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, FEFO, stock cap, billTotals.
@@ -45,6 +46,11 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [0007 — Client-side UUID generation for ledger linkage](decisions/0007-client-side-uuid-generation.md)
 - [0008 — Import join keys: name for parties, code for products](decisions/0008-import-join-keys.md)
 - [0009 — Target data model: full IA on a shared backbone](decisions/0009-target-data-model.md)
+- [0010 — GSTIN as canonical party identity](decisions/0010-gstin-canonical-party-identity.md)
+- [0011 — Document import idempotency key](decisions/0011-document-import-idempotency-key.md)
+- [0012 — Stock cutover: snapshot, not replay](decisions/0012-stock-cutover-snapshot-vs-replay.md)
+- [0013 — GL history depth: opening balances only](decisions/0013-gl-history-depth.md)
+- [0014 — Doctors master table](decisions/0014-doctors-master.md)
 
 ## Raw sources (immutable, at repo root)
 `salt-prd-v0.3.md` · `salt-migrator-prd-v0.1.md` · `design.md` · `salt-design-system.html` · `PRD_Intelligent_Importer.pdf` · the codebase · `Saral/Trial_Balance.xls` (untracked sample).
