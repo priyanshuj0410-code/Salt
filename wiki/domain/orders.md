@@ -1,46 +1,48 @@
 ---
 type: domain
-updated: 2026-05-29
+updated: 2026-05-31
 ---
 
-# Orders, bills & amount due
+# Documents, dues & the ledger
 
-An **order** is a transaction with a party. One unified table, `orders`, carries both directions (see [../architecture/data-model.md](../architecture/data-model.md)):
+Every customer/vendor transaction is a **document** that posts to two shared ledgers — `stock_movements` (inventory) and double-entry `ledger_entries` (money). See [../architecture/proposed-data-model.md](../architecture/proposed-data-model.md) and [decision 0009](../decisions/0009-target-data-model.md).
 
-- **sale** — goods out to a customer. The UI calls a sale a **bill**. Composed on the [billing screen](../architecture/billing-screen.md) (customer-bound) and persisted via `place_order`. Decrements batch stock.
-- **purchase** — goods in from a vendor. Entered on the vendor profile via "New purchase" (`/parties/:id/purchase`): pick catalogue items, set batch/expiry/qty/PTR/MRP. `place_order` (0011) **adds stock** — upserts the batch (increment if it exists, else insert) and refreshes ptr/mrp/expiry — and increases the payable. Purchases use existing catalogue items (new-item creation is a follow-up).
+> **Migration note.** The original unified `orders` table + `place_order` RPC has been **retired from the app** (sales → PR #23, purchases → PR #25). Historical `orders` rows were copied into `sales_invoices`/`purchases`; the table stays in the DB for history only. Documents are now **shop-scoped** (`shop_id`, from the org's primary shop resolved in the auth context).
 
-`party_id` is nullable: **null = walk-in** (an anonymous cash sale that still persists and moves stock, but has no per-party history — PRD FR-C-002).
+## The documents
+
+- **Sale (a bill)** — goods out to a customer. Composed on the [billing screen](../architecture/billing-screen.md) (customer-bound, default **Walk-in** = null party) and saved via **`create_sales_invoice`** → `sales_invoices` + `sale_lines`. The RPC owns the GST split (backs CGST/SGST/IGST out of the MRP-inclusive line total by comparing shop vs party state), decrements the batch, and posts a `sale` stock movement + the double entry (Dr cash/bank or party · Cr Sales · Cr GST output).
+- **Purchase (a GRN)** — goods in from a vendor. Entered on the vendor profile (`/parties/:id/purchase`) and saved via **`receive_purchase`** → `purchases` + `purchase_lines`. Adds stock (qty + free goods), posts a `purchase` movement + Dr Purchase · Dr GST input (ITC) · Cr vendor.
 
 ## Lines
 
-Each `order_lines` row records what was transacted: `item_id` (nullable for ad-hoc), `name`, `batch_no`, `expiry`, `qty`, `rate_paise` (MRP for a sale, PTR for a purchase), `discount_type`/`discount_value`, `gst_rate`, and `line_total_paise` (the net after discount, GST-inclusive — Indian pharma convention). The order's `total_paise` is the sum of its line totals, computed server-side in `place_order` (the client total is never trusted).
+`sale_lines` / `purchase_lines` record item/batch/qty/rate plus the per-line GST split the RPC computes. Money is integer **paise**; totals are computed server-side (the client total is never trusted).
 
-## Payment & settlement
+## Payments & settlement
 
-`payment_method` is `cash` or `credit`. On save:
-- **cash** ⇒ `paid_paise = total_paise` (settled immediately).
-- **credit** ⇒ `paid_paise = 0` and `due_date = today + credit_days` (the customer owes us).
-
-A full payments ledger (recording later settlements) is a flagged follow-up; for now `paid_paise` carries the settled amount.
+Two layers:
+- **At document time** — the invoice/GRN `payment_method` sets `paid_paise` (cash/card/upi/bank ⇒ paid in full; credit ⇒ unpaid, `due_date = today + credit_days`).
+- **Later settlements** — recorded per party via **`record_payment`** (the `payments` table; posts the cash·bank ↔ party double entry). "Receive payment" (customer) / "Make payment" (vendor) on the party profile.
 
 ## Amount due (the running balance)
 
-A party's **current due** is signed the same way as the ledger balance — **+ = receivable (they owe us), − = payable (we owe them)**:
+Signed like the ledger balance — **+ = receivable (they owe us), − = payable (we owe them)**:
 
 ```
-due = ledgers.opening_balance_paise                         (imported starting point)
-    + Σ over the party's orders of signed (total − paid)    (sale +, purchase −)
+due = ledgers.opening_balance_paise                          (imported starting point)
+    + Σ over the party's documents of signed (total − paid)  (sale +, purchase −)
+    − Σ net payments received                                (receipts lower a receivable,
+                                                               payments lower a payable)
 ```
 
-`opening_balance_paise` already nets the imported [trial-balance](trial-balance.md) `ledger_bills`, so those bills are shown as the *breakdown* of the opening balance — **never added again**. New in-app orders move the balance from there. The pure helpers live in `apps/web/src/lib/orders.ts` (`orderOutstanding`, `partyDue`).
+`opening_balance_paise` already nets the imported [trial-balance](trial-balance.md) `ledger_bills` (shown as the *breakdown* of the opening balance — never added again). Payments don't touch document `paid_paise`, so folding them in doesn't double-count. The pure helpers live in `apps/web/src/lib/orders.ts` (`orderOutstanding`, `partyDue`, `paymentsAdjustment`).
 
 ## Where it surfaces
 
-- **Billing screen** — pick the customer (default Walk-in, `Ctrl+K`), compose, Save (`F9`) → `place_order`.
-- **Bills history** (`/bills`) — every saved sale, newest first; click to see its lines.
-- **Party profile** (`/parties/:id`) — editable details, the **amount-due** summary, that party's order history, and the imported open bills. "New sale" binds the customer and jumps to billing; the saved order links back via `party_id`.
+- **Billing screen** — pick the customer (default Walk-in, `Ctrl+K`), compose, Save (`F9`) → `create_sales_invoice`.
+- **Bills history** (`/bills`) — every saved sale (`sales_invoices`), newest first; click for its lines.
+- **Party profile** (`/parties/:id`) — editable details, the **amount-due** summary, the merged sale+purchase history, recorded **payments**, and the imported open bills. "Receive/Make payment" opens the payment dialog; "New sale" binds the customer and jumps to billing.
 
 ## Stock guard
 
-`place_order` only persists a sale if every line's batch has enough stock (`qty >= sold`), raising otherwise — the whole transaction rolls back. Bills can only be saved against a **real imported catalogue**; on the demo seed catalogue the Save action is disabled (seed items aren't DB rows, so stock can't move).
+`create_sales_invoice` only persists a sale if every line's batch has enough stock (`qty >= sold`), raising and rolling back otherwise. Bills save only against a **real imported catalogue** and once a primary **shop** resolves; on the demo seed the Save action is disabled.
