@@ -1,6 +1,6 @@
 ---
 type: log
-updated: 2026-05-29
+updated: 2026-05-30
 ---
 
 # Log
@@ -93,3 +93,6 @@ Added a persistent left sidebar (`components/nav/`: `navConfig.ts`, `Sidebar.tsx
 
 ## [2026-05-30] fix | Allow negative stock on import (it's real)
 The batches validator quarantined `qty < 0` as an error, but negative on-hand stock is a genuine real-world value (oversold, or billed before the GRN landed) — blocking it isn't faithful. Now negative quantities import as-is (`qty: Math.trunc(qty)`, no clamp to 0); only a non-empty, non-numeric quantity warns and saves as 0. Result on the real stock file: **7,871/7,871 import, 0 quarantined** (28 of them negative, e.g. -3). FEFO still skips non-positive batches and `place_order`'s `qty >= sold` guard still blocks selling from them, so billing stays safe. `lib/smartImport.ts`.
+
+## [2026-05-30] design | Target data model — full IA on a shared backbone (draft SQL)
+Designed the complete data model for every nav module before building further, as **unrun** draft SQL in `supabase/proposed/0014–0024` (≈40 tables/views, ~12 RPCs). Five decisions: full IA + Tier-4 hooks; **multi-shop now** (`shops` under org, `shop_id` on stock/docs, org-level RLS kept, `shop_members` hook); **per-document-type tables** (sales_invoices, purchases/GRN, POs, credit/debit notes, payments) on a **shared backbone** — `stock_movements` (signed inventory ledger; `batches.qty` becomes its cache) + **double-entry** `ledger_entries`/`chart_accounts` (party balance, trial balance, P&L, balance sheet, GST all = SUM()). `place_order`/`orders` retires into `create_sales_invoice` + `receive_purchase` (authoritative CGST/SGST/IGST split from shop vs party state). Verified in an in-process Postgres (PGlite): all 24 files apply, 55 tables (all RLS), 15 views, 21 functions; a purchase→sale→sale-return→vendor-return→payment smoke test gives stock on-hand = 6 and a trial balance that nets to 0. → [decisions/0009](decisions/0009-target-data-model.md) · [architecture/proposed-data-model](architecture/proposed-data-model.md)

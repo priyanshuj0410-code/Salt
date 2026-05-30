@@ -9,6 +9,8 @@ All tables live in Postgres (Supabase), every business table carries `org_id` fo
 
 Migrations are applied in order by the user in the Supabase SQL editor. For exact column-level definitions (types, nullability, defaults, FKs) see [schema.md](schema.md).
 
+> **Target model:** the full forward design for every nav module (multi-shop, purchases/GRN, payments, returns, GST, reports, double-entry accounting) is drafted as **unrun** SQL in `supabase/proposed/0014–0024` — see [proposed-data-model.md](proposed-data-model.md) and [decisions/0009](../decisions/0009-target-data-model.md).
+
 | # | File | Adds |
 |---|------|------|
 | 0001 | `profiles` | `profiles` (per auth user) |
