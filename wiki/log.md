@@ -1,6 +1,6 @@
 ---
 type: log
-updated: 2026-05-30
+updated: 2026-05-31
 ---
 
 # Log
@@ -96,3 +96,6 @@ The batches validator quarantined `qty < 0` as an error, but negative on-hand st
 
 ## [2026-05-30] design | Target data model — full IA on a shared backbone (draft SQL)
 Designed the complete data model for every nav module before building further, as **unrun** draft SQL in `supabase/proposed/0014–0024` (≈40 tables/views, ~12 RPCs). Five decisions: full IA + Tier-4 hooks; **multi-shop now** (`shops` under org, `shop_id` on stock/docs, org-level RLS kept, `shop_members` hook); **per-document-type tables** (sales_invoices, purchases/GRN, POs, credit/debit notes, payments) on a **shared backbone** — `stock_movements` (signed inventory ledger; `batches.qty` becomes its cache) + **double-entry** `ledger_entries`/`chart_accounts` (party balance, trial balance, P&L, balance sheet, GST all = SUM()). `place_order`/`orders` retires into `create_sales_invoice` + `receive_purchase` (authoritative CGST/SGST/IGST split from shop vs party state). Verified in an in-process Postgres (PGlite): all 24 files apply, 55 tables (all RLS), 15 views, 21 functions; a purchase→sale→sale-return→vendor-return→payment smoke test gives stock on-hand = 6 and a trial balance that nets to 0. → [decisions/0009](decisions/0009-target-data-model.md) · [architecture/proposed-data-model](architecture/proposed-data-model.md)
+
+## [2026-05-31] build | Sales billing cut over to the new backbone
+Applied `full_data_model.sql` to Supabase (the full target model is now live) and wired the first module. Billing saves sales via `create_sales_invoice` (shop-scoped; the RPC does the CGST/SGST/IGST split and posts `stock_movements` + double-entry `ledger_entries`) instead of `place_order`; Bills history and party profiles read `sales_invoices`/`sale_lines`. Auth context resolves the org primary shop (`shopId`); the Save button guards on it. Purchases still flow through `orders`/`place_order` until their own cutover — party dues merge both with no double-count. PRs #22 (model) + #23 (cutover). → [architecture/proposed-data-model](architecture/proposed-data-model.md)
