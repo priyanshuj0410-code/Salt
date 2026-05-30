@@ -1,15 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, Receipt, Save, ShoppingCart, User } from "lucide-react";
+import { ArrowLeft, Receipt, Save, ShoppingCart, User, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
-import { partyDue, type OrderRow } from "@/lib/orders";
+import {
+  partyDue,
+  paymentsAdjustment,
+  buildPaymentPayload,
+  withTimeout,
+  TimeoutError,
+  type OrderRow,
+} from "@/lib/orders";
 import { useBill } from "@/store/bill";
 
 interface Ledger {
@@ -38,6 +46,17 @@ interface OrderHistoryRow extends OrderRow {
   due_date: string | null;
 }
 
+interface PaymentRow {
+  id: string;
+  direction: "received" | "paid";
+  amount_paise: number;
+  mode: string;
+  reference: string | null;
+  created_at: string;
+}
+
+const PAY_MODES = ["cash", "upi", "bank"] as const;
+
 const rupees = (paise: number) =>
   (Math.abs(paise) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
@@ -55,17 +74,27 @@ function Money({ paise, plain }: { paise: number; plain?: boolean }) {
 export function PartyProfilePage() {
   const { id } = useParams<{ id: string }>();
   const orgId = useAuth().membership?.orgId;
+  const shopId = useAuth().shopId;
   const navigate = useNavigate();
   const setParty = useBill((s) => s.setParty);
 
   const [ledger, setLedger] = useState<Ledger | null>(null);
   const [bills, setBills] = useState<BillRow[]>([]);
   const [orders, setOrders] = useState<OrderHistoryRow[]>([]);
+  const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  // Payment dialog
+  const [payOpen, setPayOpen] = useState(false);
+  const [payAmount, setPayAmount] = useState("");
+  const [payMode, setPayMode] = useState<string>("cash");
+  const [payRef, setPayRef] = useState("");
+  const [payBusy, setPayBusy] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId || !id) return;
@@ -92,7 +121,12 @@ export function PartyProfilePage() {
         .from("purchases")
         .select("id,total_paise,paid_paise,created_at")
         .eq("vendor_id", id),
-    ]).then(([l, b, s, p]) => {
+      supabase
+        .from("payments")
+        .select("id,direction,amount_paise,mode,reference,created_at")
+        .eq("party_id", id)
+        .order("created_at", { ascending: false }),
+    ]).then(([l, b, s, p, pay]) => {
       if (!active) return;
       if (!l.data) {
         setNotFound(true);
@@ -112,6 +146,7 @@ export function PartyProfilePage() {
         );
         setLedger(l.data as Ledger);
         setBills((b.data as BillRow[] | null) ?? []);
+        setPayments((pay.data as PaymentRow[] | null) ?? []);
         setOrders(
           [...sales, ...purchases].sort((x, y) =>
             x.created_at < y.created_at ? 1 : x.created_at > y.created_at ? -1 : 0,
@@ -123,11 +158,12 @@ export function PartyProfilePage() {
     return () => {
       active = false;
     };
-  }, [orgId, id]);
+  }, [orgId, id, reloadKey]);
 
   const due = useMemo(
-    () => (ledger ? partyDue(ledger.opening_balance_paise, orders) : 0),
-    [ledger, orders],
+    () =>
+      ledger ? partyDue(ledger.opening_balance_paise, orders) + paymentsAdjustment(payments) : 0,
+    [ledger, orders, payments],
   );
 
   function edit<K extends keyof Ledger>(field: K, value: Ledger[K]) {
@@ -164,6 +200,38 @@ export function PartyProfilePage() {
     navigate("/");
   }
 
+  async function recordPayment() {
+    if (!supabase || !ledger || !shopId || payBusy) return;
+    const paise = Math.round((Number(payAmount) || 0) * 100);
+    if (paise <= 0) {
+      setPayError("Enter an amount greater than 0.");
+      return;
+    }
+    setPayBusy(true);
+    setPayError(null);
+    try {
+      const direction = ledger.type === "vendor" ? "paid" : "received";
+      const args = buildPaymentPayload(shopId, ledger.id, direction, payMode, paise, payRef);
+      const { error: err } = await withTimeout(supabase.rpc("record_payment", args), 15000);
+      if (err) {
+        setPayError(err.message);
+        return;
+      }
+      setPayOpen(false);
+      setPayAmount("");
+      setPayRef("");
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      setPayError(
+        e instanceof TimeoutError
+          ? "Taking too long — it may have gone through. Check before retrying."
+          : "Could not record the payment. Please try again.",
+      );
+    } finally {
+      setPayBusy(false);
+    }
+  }
+
   if (loading) {
     return <Shell><p className="text-sm text-muted-foreground">Loading…</p></Shell>;
   }
@@ -191,6 +259,15 @@ export function PartyProfilePage() {
         <h1 className="text-xl font-semibold">{ledger.name}</h1>
         <Badge variant="secondary">{ledger.type}</Badge>
         <span className="flex-1" />
+        <Button
+          variant="outline"
+          onClick={() => {
+            setPayError(null);
+            setPayOpen(true);
+          }}
+        >
+          <Wallet /> {ledger.type === "vendor" ? "Make payment" : "Receive payment"}
+        </Button>
         {isCustomer ? (
           <Button onClick={newSale}>
             <ShoppingCart /> New sale
@@ -214,7 +291,7 @@ export function PartyProfilePage() {
         <Stat label="Orders"><span className="tabular-nums">{orders.length}</span></Stat>
       </div>
       <p className="mt-1.5 text-xs text-muted-foreground">
-        Due = opening balance + unsettled orders. <Money paise={due} plain /> {due >= 0 ? "receivable (they owe you)" : "payable (you owe them)"}.
+        Due = opening balance + unsettled orders − payments. <Money paise={due} plain /> {due >= 0 ? "receivable (they owe you)" : "payable (you owe them)"}.
       </p>
 
       {/* Details */}
@@ -301,6 +378,34 @@ export function PartyProfilePage() {
         </div>
       </section>
 
+      {/* Payments */}
+      {payments.length > 0 && (
+        <section className="mt-6">
+          <h2 className="flex items-center gap-2 text-sm font-medium">
+            <Wallet className="size-4 text-muted-foreground" /> Payments
+          </h2>
+          <div className="mt-2 overflow-hidden rounded-lg border">
+            <div className="grid grid-cols-[1fr_0.7fr_1.2fr_0.9fr] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+              <span>Date</span>
+              <span>Mode</span>
+              <span>Reference</span>
+              <span className="text-right">Amount</span>
+            </div>
+            {payments.map((p) => (
+              <div key={p.id} className="grid grid-cols-[1fr_0.7fr_1.2fr_0.9fr] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0">
+                <span className="text-muted-foreground">{format(new Date(p.created_at), "d MMM yyyy")}</span>
+                <span><Badge variant="secondary">{p.mode}</Badge></span>
+                <span className="min-w-0 truncate text-xs text-muted-foreground">{p.reference || "—"}</span>
+                <span className="text-right tabular-nums">
+                  {p.direction === "received" ? "+" : "−"}
+                  {formatPaise(p.amount_paise)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Open bills from import */}
       {bills.length > 0 && (
         <section className="mt-6">
@@ -325,6 +430,56 @@ export function PartyProfilePage() {
           </div>
         </section>
       )}
+      <Dialog open={payOpen} onOpenChange={setPayOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {ledger.type === "vendor" ? "Make payment" : "Receive payment"} · {ledger.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-3">
+            <Field label="Amount (₹)">
+              <Input
+                type="number"
+                min={0}
+                autoFocus
+                value={payAmount}
+                onChange={(e) => setPayAmount(e.target.value)}
+                placeholder="0"
+                className="h-9 text-right tabular-nums"
+              />
+            </Field>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-muted-foreground">Mode</span>
+              <div className="flex gap-1.5">
+                {PAY_MODES.map((m) => (
+                  <Button
+                    key={m}
+                    type="button"
+                    size="sm"
+                    variant={payMode === m ? "default" : "outline"}
+                    onClick={() => setPayMode(m)}
+                  >
+                    {m.toUpperCase()}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <Field label="Reference (optional)">
+              <Input
+                value={payRef}
+                onChange={(e) => setPayRef(e.target.value)}
+                placeholder="UTR / cheque no"
+                className="h-9"
+              />
+            </Field>
+            {payError && <p className="text-sm text-destructive">{payError}</p>}
+            <Button onClick={recordPayment} disabled={payBusy || !shopId}>
+              <Wallet /> {payBusy ? "Recording…" : ledger.type === "vendor" ? "Record payment" : "Record receipt"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Shell>
   );
 }
