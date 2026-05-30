@@ -33,6 +33,10 @@ Three checks in order, each a redirect if failed:
 
 Only `BillingScreen` is reachable by cashiers. Every other non-auth route uses `allowedRoles={["owner"]}`.
 
+## Auth loading gate
+
+`AuthProvider` (`lib/auth.tsx`) exposes a `loading` flag that `ProtectedRoute` renders as a full-screen "Loading…". The gate is held only during the **initial session bootstrap and a genuine sign-in** (while membership is fetched), keyed on a change of `session.user.id`. Supabase re-fires `onAuthStateChange` on tab focus / token refresh with the *same* user; those refires must **not** flip `loading` (a `useRef` of the current user id guards this) — otherwise the app strands on "Loading…" after every tab switch, since the membership effect (keyed on `user.id`) won't re-run to clear it.
+
 ## Lazy loading
 
 `SmartImportPage` is the only route wrapped in `React.lazy` + dynamic `import()`. SheetJS (xlsx parser) is large; deferring it keeps the initial bundle small and only pays the parse cost when the owner actually navigates to `/import/smart`. The top-level `<Suspense>` fallback handles the loading state.
