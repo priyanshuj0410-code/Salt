@@ -198,3 +198,49 @@ export function orderOutstanding(o: OrderRow): number {
 export function partyDue(openingBalancePaise: number, orders: OrderRow[]): number {
   return orders.reduce((sum, o) => sum + orderOutstanding(o), openingBalancePaise);
 }
+
+/** Args for the record_payment RPC (keys match the SQL parameter names). */
+export interface RecordPaymentArgs {
+  p_shop_id: string;
+  p_party_id: string;
+  p_direction: "received" | "paid";
+  p_mode: string;
+  p_amount_paise: number;
+  p_reference: string | null;
+}
+
+/** Build the record_payment args. 'received' (from a customer) lowers their
+ *  receivable; 'paid' (to a vendor) lowers our payable. Posts the cash/bank <->
+ *  party double entry server-side. */
+export function buildPaymentPayload(
+  shopId: string,
+  partyId: string,
+  direction: "received" | "paid",
+  mode: string,
+  amountPaise: number,
+  reference: string,
+): RecordPaymentArgs {
+  return {
+    p_shop_id: shopId,
+    p_party_id: partyId,
+    p_direction: direction,
+    p_mode: mode,
+    p_amount_paise: amountPaise,
+    p_reference: reference.trim() || null,
+  };
+}
+
+/**
+ * Signed effect of recorded payments on a party's amount due (+ = receivable).
+ * A receipt ('received') reduces what they owe; a payment ('paid') reduces what
+ * we owe (moves a payable toward zero). Payments don't touch document paid_paise,
+ * so this is added on top of partyDue without double-counting.
+ */
+export function paymentsAdjustment(
+  payments: { direction: "received" | "paid"; amount_paise: number }[],
+): number {
+  return payments.reduce(
+    (sum, p) => sum + (p.direction === "paid" ? p.amount_paise : -p.amount_paise),
+    0,
+  );
+}
