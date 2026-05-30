@@ -23,6 +23,9 @@ interface AuthContextValue {
   user: User | null;
   /** The user's org + role, or null if they haven't joined/created an org yet. */
   membership: Membership | null;
+  /** The org's primary shop id, for shop-scoped writes (e.g. create_sales_invoice).
+   *  null until resolved, or if the multi-shop migration isn't applied yet. */
+  shopId: string | null;
   loading: boolean;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -33,6 +36,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
+  const [shopId, setShopId] = useState<string | null>(null);
   const [loading, setLoading] = useState(supabase != null);
   /** The user id the loading gate is tracking, so we ignore same-user refires. */
   const currentUserId = useRef<string | null>(null);
@@ -49,8 +53,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const org = data.orgs as { name: string } | { name: string }[] | null;
       const orgName = Array.isArray(org) ? (org[0]?.name ?? "") : (org?.name ?? "");
       setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole });
+      // Resolve the org's primary shop for shop-scoped writes. Tolerates absence
+      // (pre-migration or no shop yet): leaves shopId null and billing guards on it.
+      const { data: shop } = await supabase
+        .from("shops")
+        .select("id")
+        .eq("org_id", data.org_id as string)
+        .eq("is_primary", true)
+        .limit(1)
+        .maybeSingle();
+      setShopId((shop?.id as string | undefined) ?? null);
     } else {
       setMembership(null);
+      setShopId(null);
     }
   }, []);
 
@@ -78,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true); // genuine sign-in; the membership effect clears it
       } else {
         setMembership(null);
+        setShopId(null);
         setLoading(false); // signed out
       }
     });
@@ -113,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, membership, loading, refresh, signOut }}
+      value={{ session, user: session?.user ?? null, membership, shopId, loading, refresh, signOut }}
     >
       {children}
     </AuthContext.Provider>

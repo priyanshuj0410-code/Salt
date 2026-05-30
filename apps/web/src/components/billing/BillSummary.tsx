@@ -7,7 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { formatPaise, formatSigned } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
-import { buildSalePayload, withTimeout, TimeoutError } from "@/lib/orders";
+import { buildSalesInvoicePayload, withTimeout, TimeoutError } from "@/lib/orders";
+import { useAuth } from "@/lib/auth";
 import { billTotals, useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
 
@@ -30,6 +31,7 @@ export function BillSummary() {
   const setPaymentMethod = useBill((s) => s.setPaymentMethod);
   const setCreditDays = useBill((s) => s.setCreditDays);
   const usingSeed = useCatalog((s) => s.usingSeed);
+  const shopId = useAuth().shopId;
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,12 +41,14 @@ export function BillSummary() {
   const loss = t.margin < 0;
 
   async function save() {
-    if (!supabase || empty || usingSeed || saving) return; // re-entry guard (also blocks F9 while saving)
+    // re-entry guard (also blocks F9 while saving); !shopId blocks until the
+    // multi-shop migration is applied and a primary shop resolves.
+    if (!supabase || empty || usingSeed || saving || !shopId) return;
     setSaving(true);
     setError(null);
     try {
-      const args = buildSalePayload(party, lines, payment);
-      const { error: err } = await withTimeout(supabase.rpc("place_order", args), 15000);
+      const args = buildSalesInvoicePayload(shopId, party, lines, payment);
+      const { error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
       if (err) {
         setError(err.message);
         return;
@@ -72,7 +76,7 @@ export function BillSummary() {
       void save();
     },
     { enableOnFormTags: true },
-    [lines, payment, party, usingSeed],
+    [lines, payment, party, usingSeed, shopId],
   );
 
   return (
@@ -168,7 +172,7 @@ export function BillSummary() {
       <div className="mt-1 flex flex-col gap-2">
         <Button
           size="lg"
-          disabled={empty || saving || usingSeed}
+          disabled={empty || saving || usingSeed || !shopId}
           onClick={save}
           title={usingSeed ? "Import your items to save bills" : undefined}
         >

@@ -34,12 +34,8 @@ interface BillRow {
 }
 
 interface OrderHistoryRow extends OrderRow {
-  order_date: string;
   created_at: string;
-  payment_method: string | null;
   due_date: string | null;
-  status: string;
-  order_no: string | null;
 }
 
 const rupees = (paise: number) =>
@@ -86,19 +82,42 @@ export function PartyProfilePage() {
         .select("id,ref_no,bill_date,amount_paise,nature,due_date,days_overdue")
         .eq("ledger_id", id)
         .order("bill_date"),
+      // Sales now live in sales_invoices; purchases stay in orders until their
+      // own cutover. Both are keyed by party_id and merged for history + dues.
+      supabase
+        .from("sales_invoices")
+        .select("id,total_paise,paid_paise,created_at,due_date")
+        .eq("party_id", id),
       supabase
         .from("orders")
-        .select("id,direction,total_paise,paid_paise,order_date,created_at,payment_method,due_date,status,order_no")
+        .select("id,total_paise,paid_paise,created_at,due_date")
         .eq("party_id", id)
-        .order("created_at", { ascending: false }),
-    ]).then(([l, b, o]) => {
+        .eq("direction", "purchase"),
+    ]).then(([l, b, s, p]) => {
       if (!active) return;
       if (!l.data) {
         setNotFound(true);
       } else {
+        type DocRow = {
+          id: string;
+          total_paise: number;
+          paid_paise: number;
+          created_at: string;
+          due_date: string | null;
+        };
+        const sales = ((s.data as DocRow[] | null) ?? []).map(
+          (r): OrderHistoryRow => ({ ...r, direction: "sale" }),
+        );
+        const purchases = ((p.data as DocRow[] | null) ?? []).map(
+          (r): OrderHistoryRow => ({ ...r, direction: "purchase" }),
+        );
         setLedger(l.data as Ledger);
         setBills((b.data as BillRow[] | null) ?? []);
-        setOrders((o.data as OrderHistoryRow[] | null) ?? []);
+        setOrders(
+          [...sales, ...purchases].sort((x, y) =>
+            x.created_at < y.created_at ? 1 : x.created_at > y.created_at ? -1 : 0,
+          ),
+        );
       }
       setLoading(false);
     });
