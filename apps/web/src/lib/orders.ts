@@ -1,6 +1,36 @@
 import type { BillLine, Payment } from "./types";
 import { lineNet } from "./billing";
 
+/** Thrown when a save outlives its timeout (the request may still have landed). */
+export class TimeoutError extends Error {
+  constructor() {
+    super("timeout");
+    this.name = "TimeoutError";
+  }
+}
+
+/**
+ * Race a promise against a timeout so a hung request can't strand the UI on
+ * "Saving…". Rejects with TimeoutError after `ms`. Note: the underlying write
+ * may still complete server-side — callers must treat a timeout as "unknown",
+ * not "failed", to avoid duplicate submissions.
+ */
+export function withTimeout<T>(p: PromiseLike<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new TimeoutError()), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
+
 /** A party bound to a bill/order. null = walk-in. */
 export interface OrderParty {
   id: string;

@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { searchCatalog } from "@/lib/search";
-import { buildPurchasePayload, type PurchaseLine } from "@/lib/orders";
+import { buildPurchasePayload, withTimeout, TimeoutError, type PurchaseLine } from "@/lib/orders";
 import { useCatalog } from "@/store/catalog";
 import type { Payment } from "@/lib/types";
 
@@ -81,14 +81,20 @@ export function PurchaseEntryPage() {
   }
 
   async function save() {
-    if (!supabase || !vendor || lines.length === 0 || usingSeed) return;
+    if (!supabase || !vendor || lines.length === 0 || usingSeed || saving) return; // re-entry guard
     setSaving(true);
     setError(null);
     try {
       const args = buildPurchasePayload({ id: vendor.id, name: vendor.name }, lines, payment);
-      const { error: err } = await supabase.rpc("place_order", args);
+      const { error: err } = await withTimeout(supabase.rpc("place_order", args), 15000);
       if (err) setError(err.message);
       else navigate(`/parties/${vendor.id}`);
+    } catch (e) {
+      setError(
+        e instanceof TimeoutError
+          ? "Saving is taking too long — it may have gone through. Check the vendor's orders before saving again."
+          : "Could not record the purchase. Please try again.",
+      );
     } finally {
       setSaving(false);
     }

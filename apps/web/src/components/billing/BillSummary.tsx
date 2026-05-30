@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { formatPaise, formatSigned } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
-import { buildSalePayload } from "@/lib/orders";
+import { buildSalePayload, withTimeout, TimeoutError } from "@/lib/orders";
 import { billTotals, useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
 
@@ -39,12 +39,12 @@ export function BillSummary() {
   const loss = t.margin < 0;
 
   async function save() {
-    if (!supabase || empty || usingSeed) return;
+    if (!supabase || empty || usingSeed || saving) return; // re-entry guard (also blocks F9 while saving)
     setSaving(true);
     setError(null);
     try {
       const args = buildSalePayload(party, lines, payment);
-      const { error: err } = await supabase.rpc("place_order", args);
+      const { error: err } = await withTimeout(supabase.rpc("place_order", args), 15000);
       if (err) {
         setError(err.message);
         return;
@@ -52,6 +52,14 @@ export function BillSummary() {
       clear();
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
+    } catch (e) {
+      // Timeout: the bill may have saved server-side — keep the lines and warn,
+      // so the cashier checks Bills rather than blindly re-saving a duplicate.
+      setError(
+        e instanceof TimeoutError
+          ? "Saving is taking too long — it may have gone through. Check Bills before saving again."
+          : "Could not save the bill. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
