@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,27 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // If the session ended itself via idle auto-logout (SALT-115), say so once.
+  // Deferred to a microtask (not a synchronous effect setState) and the flag is
+  // cleared so the notice shows only on the visit right after the logout.
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      try {
+        if (sessionStorage.getItem("salt:idle-logout")) {
+          sessionStorage.removeItem("salt:idle-logout");
+          setInfo("You were signed out due to inactivity. Please sign in again.");
+        }
+      } catch {
+        /* storage unavailable */
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (session) return <Navigate to="/" replace />;
 

@@ -9,6 +9,39 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { IdleWarningDialog } from "@/components/auth/IdleWarningDialog";
+
+/**
+ * Idle auto-logout (SALT-115). Shared pharmacy-counter terminals must not leave
+ * an unattended session open. After IDLE_MS of no activity we sign out; in the
+ * final WARN_SECONDS we show a non-blocking countdown. Last-activity is shared
+ * across tabs via localStorage so an idle background tab can't sign out an
+ * active one. Window is set by VITE_SESSION_IDLE_MINUTES (default 30).
+ */
+const WARN_SECONDS = 60;
+const ACTIVITY_WRITE_THROTTLE_MS = 5_000;
+const LAST_ACTIVITY_KEY = "salt:last-activity";
+const IDLE_LOGOUT_KEY = "salt:idle-logout";
+
+/** Idle window in ms from env; missing / non-numeric / ≤0 fall back to default. */
+function resolveIdleMs(raw: string | undefined, fallbackMinutes = 30): number {
+  const mins = raw == null || raw === "" ? NaN : Number(raw);
+  const safe = Number.isFinite(mins) && mins > 0 ? mins : fallbackMinutes;
+  return safe * 60_000;
+}
+
+/** Pure idle decision: expired yet, and seconds to display (null = no warning). */
+function idleStatus(
+  elapsedMs: number,
+  idleMs: number,
+  warnSeconds: number,
+): { expired: boolean; secondsLeft: number | null } {
+  if (elapsedMs >= idleMs) return { expired: true, secondsLeft: 0 };
+  const secondsLeft = Math.ceil((idleMs - elapsedMs) / 1000);
+  return { expired: false, secondsLeft: secondsLeft <= warnSeconds ? secondsLeft : null };
+}
+
+const IDLE_MS = resolveIdleMs(import.meta.env.VITE_SESSION_IDLE_MINUTES as string | undefined);
 
 export type UserRole = "cashier" | "owner";
 
@@ -55,6 +88,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(supabase != null);
   /** The user id the loading gate is tracking, so we ignore same-user refires. */
   const currentUserId = useRef<string | null>(null);
+
+  // Idle auto-logout state (SALT-115). secondsLeft is non-null only inside the
+  // warning window, which drives the countdown banner.
+  const [idleSecondsLeft, setIdleSecondsLeft] = useState<number | null>(null);
+  const lastActivityRef = useRef(0);
+  const lastWriteRef = useRef(0);
+
+  /** Reset the idle clock (also the "Stay signed in" action). Stable identity. */
+  const recordActivity = useCallback(() => {
+    const now = Date.now();
+    lastActivityRef.current = now;
+    if (now - lastWriteRef.current > ACTIVITY_WRITE_THROTTLE_MS) {
+      lastWriteRef.current = now;
+      try {
+        localStorage.setItem(LAST_ACTIVITY_KEY, String(now));
+      } catch {
+        /* storage unavailable (private mode / disabled) — local timer still works */
+      }
+    }
+    setIdleSecondsLeft((prev) => (prev === null ? prev : null));
+  }, []);
 
   const loadMembership = useCallback(async (userId: string) => {
     if (!supabase) return;
@@ -154,6 +208,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [session?.user.id, loadMembership]);
 
+  // Idle auto-logout timer: runs only while signed in, fully torn down on sign
+  // out. Gated on the user id (not the session object) so token refresh / tab
+  // refocus doesn't reset the clock. Each tick also reads other tabs' activity.
+  const userId = session?.user.id ?? null;
+  useEffect(() => {
+    if (!supabase || !userId) return;
+    const client = supabase;
+    const start = Date.now();
+    lastActivityRef.current = start;
+    lastWriteRef.current = start;
+    try {
+      localStorage.setItem(LAST_ACTIVITY_KEY, String(start));
+    } catch {
+      /* storage unavailable */
+    }
+
+    const events = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel"] as const;
+    for (const ev of events) window.addEventListener(ev, recordActivity, { passive: true });
+    const onVisible = () => {
+      if (document.visibilityState === "visible") recordActivity();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    const intervalId = window.setInterval(() => {
+      const now = Date.now();
+      let last = lastActivityRef.current;
+      try {
+        const stored = Number(localStorage.getItem(LAST_ACTIVITY_KEY));
+        if (Number.isFinite(stored) && stored > last) {
+          last = stored;
+          lastActivityRef.current = stored;
+        }
+      } catch {
+        /* storage unavailable */
+      }
+      const { expired, secondsLeft } = idleStatus(now - last, IDLE_MS, WARN_SECONDS);
+      if (expired) {
+        try {
+          sessionStorage.setItem(IDLE_LOGOUT_KEY, "1");
+        } catch {
+          /* storage unavailable */
+        }
+        void client.auth.signOut();
+        return;
+      }
+      setIdleSecondsLeft(secondsLeft);
+    }, 1000);
+
+    return () => {
+      for (const ev of events) window.removeEventListener(ev, recordActivity);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(intervalId);
+      setIdleSecondsLeft(null);
+    };
+  }, [userId, recordActivity]);
+
   const refresh = useCallback(async () => {
     const userId = session?.user.id;
     if (userId) await loadMembership(userId);
@@ -168,6 +278,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{ session, user: session?.user ?? null, membership, shopId, shop, loading, refresh, signOut }}
     >
       {children}
+      {idleSecondsLeft !== null && (
+        <IdleWarningDialog secondsLeft={idleSecondsLeft} onStay={recordActivity} />
+      )}
     </AuthContext.Provider>
   );
 }
