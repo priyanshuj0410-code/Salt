@@ -9,6 +9,7 @@ import { PartyProfilePage } from "@/components/parties/PartyProfilePage";
 import { PurchaseEntryPage } from "@/components/parties/PurchaseEntryPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { ImportPage } from "@/components/import/ImportPage";
+import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/nav/AppLayout";
 
@@ -85,6 +86,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <SmartImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/organisation"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <OrgSettingsPage />
           </ProtectedRoute>
         }
       />

@@ -18,14 +18,26 @@ export interface Membership {
   role: UserRole;
 }
 
+/** Primary-shop snapshot used app-wide for place-of-supply, GSTIN, header info. */
+export interface Shop {
+  id: string;
+  name: string;
+  state_code: string | null;
+  gstin: string | null;
+  address: string | null;
+  phone: string | null;
+  cutover_date: string | null;
+}
+
 interface AuthContextValue {
   session: Session | null;
   user: User | null;
   /** The user's org + role, or null if they haven't joined/created an org yet. */
   membership: Membership | null;
-  /** The org's primary shop id, for shop-scoped writes (e.g. create_sales_invoice).
-   *  null until resolved, or if the multi-shop migration isn't applied yet. */
+  /** The org's primary shop id (kept for back-compat with existing call sites). */
   shopId: string | null;
+  /** Full primary-shop record. null until resolved, or if no shop exists yet. */
+  shop: Shop | null;
   loading: boolean;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -37,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [shopId, setShopId] = useState<string | null>(null);
+  const [shop, setShop] = useState<Shop | null>(null);
   const [loading, setLoading] = useState(supabase != null);
   /** The user id the loading gate is tracking, so we ignore same-user refires. */
   const currentUserId = useRef<string | null>(null);
@@ -54,18 +67,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const orgName = Array.isArray(org) ? (org[0]?.name ?? "") : (org?.name ?? "");
       setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole });
       // Resolve the org's primary shop for shop-scoped writes. Tolerates absence
-      // (pre-migration or no shop yet): leaves shopId null and billing guards on it.
-      const { data: shop } = await supabase
+      // (pre-migration or no shop yet): leaves shop null and billing guards on it.
+      const { data: shopRow } = await supabase
         .from("shops")
-        .select("id")
+        .select("id, name, state_code, gstin, address, phone, cutover_date")
         .eq("org_id", data.org_id as string)
         .eq("is_primary", true)
         .limit(1)
         .maybeSingle();
-      setShopId((shop?.id as string | undefined) ?? null);
+      if (shopRow) {
+        setShop(shopRow as Shop);
+        setShopId((shopRow as { id: string }).id);
+      } else {
+        setShop(null);
+        setShopId(null);
+      }
     } else {
       setMembership(null);
       setShopId(null);
+      setShop(null);
     }
   }, []);
 
@@ -94,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setMembership(null);
         setShopId(null);
+        setShop(null);
         setLoading(false); // signed out
       }
     });
@@ -129,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, membership, shopId, loading, refresh, signOut }}
+      value={{ session, user: session?.user ?? null, membership, shopId, shop, loading, refresh, signOut }}
     >
       {children}
     </AuthContext.Provider>
