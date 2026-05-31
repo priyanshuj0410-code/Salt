@@ -4,7 +4,7 @@ import { ChevronRight, GitMerge, Save, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { UserMenu } from "@/components/auth/UserMenu";
+import { Page } from "@/components/patterns/page";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
 import { useAuth } from "@/lib/auth";
@@ -189,16 +189,7 @@ export function PartiesPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
-        <div className="flex items-baseline gap-3">
-          <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-muted-foreground">Parties</span>
-        </div>
-        <UserMenu />
-      </header>
-
-      <main className="mx-auto w-full max-w-5xl flex-1 p-6">
+    <Page width="lg">
         <div className="flex items-center gap-2">
           <Users className="size-5 text-primary" />
           <h1 className="text-xl font-semibold">Parties</h1>
@@ -358,8 +349,7 @@ export function PartiesPage() {
         <Link to="/owner" className="mt-5 inline-block text-sm font-medium text-primary hover:underline">
           ← Back to owner dashboard
         </Link>
-      </main>
-    </div>
+    </Page>
   );
 }
 

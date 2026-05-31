@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { ChevronDown, ChevronRight, Lock, PanelLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, Lock, LogOut, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { NAV, type NavLeaf, type NavModule } from "./navConfig";
@@ -20,7 +20,7 @@ const disabledCls = "cursor-not-allowed text-sidebar-foreground/40";
 
 function KeyChip({ k }: { k: string }) {
   return (
-    <kbd className="ml-auto inline-flex h-4 min-w-4 items-center justify-center rounded border border-sidebar-border px-1 text-[10px] font-medium text-muted-foreground">
+    <kbd className="ml-auto hidden h-4 min-w-4 items-center justify-center rounded border border-sidebar-border px-1 text-[10px] font-medium text-muted-foreground md:inline-flex">
       {k === "," ? "," : k.toUpperCase()}
     </kbd>
   );
@@ -111,15 +111,22 @@ function IconItem({ mod, current }: { mod: NavModule; current: string }) {
   );
 }
 
-export function Sidebar() {
-  const role = useAuth().membership?.role;
+/**
+ * Left navigation. `expanded` forces the full width (used inside the mobile
+ * drawer, which has no room for the collapse rail); `onNavigate` fires when a
+ * link is clicked so the drawer can close itself.
+ */
+export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; onNavigate?: () => void }) {
+  const { membership, signOut } = useAuth();
+  const role = membership?.role;
   const { pathname } = useLocation();
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === "1");
+  const [localCollapsed, setLocalCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === "1");
+  const collapsed = expanded ? false : localCollapsed;
 
   const modules = NAV.filter((m) => role != null && m.roles.includes(role));
 
   const toggle = () =>
-    setCollapsed((c) => {
+    setLocalCollapsed((c) => {
       const next = !c;
       localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
       return next;
@@ -128,22 +135,28 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
+        "flex h-full shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground",
         collapsed ? "w-14" : "w-56",
       )}
     >
       <div className="flex items-center justify-between border-b border-sidebar-border px-3 py-2.5">
         {!collapsed && <span className="text-lg font-semibold tracking-tight">Salt</span>}
-        <button
-          type="button"
-          onClick={toggle}
-          aria-label="Toggle sidebar"
-          className="rounded-md p-1 text-muted-foreground hover:bg-sidebar-accent/60"
-        >
-          <PanelLeft className="size-4" />
-        </button>
+        {!expanded && (
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label="Toggle sidebar"
+            className="rounded-md p-1 text-muted-foreground hover:bg-sidebar-accent/60"
+          >
+            <PanelLeft className="size-4" />
+          </button>
+        )}
       </div>
-      <nav className={cn("flex-1 space-y-0.5 overflow-y-auto p-2", collapsed && "flex flex-col items-stretch")}>
+
+      <nav
+        onClick={(e) => onNavigate && (e.target as HTMLElement).closest("a") && onNavigate()}
+        className={cn("flex-1 space-y-0.5 overflow-y-auto p-2", collapsed && "flex flex-col items-stretch")}
+      >
         {modules.map((m) =>
           collapsed ? (
             <IconItem key={m.label} mod={m} current={pathname} />
@@ -152,6 +165,35 @@ export function Sidebar() {
           ),
         )}
       </nav>
+
+      {/* Footer: signed-in user. design.md — brand at top, user here, not on each screen. */}
+      <div className="border-t border-sidebar-border p-2">
+        {collapsed ? (
+          <button
+            type="button"
+            onClick={() => signOut()}
+            aria-label="Sign out"
+            className="flex w-full items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-sidebar-accent/60"
+          >
+            <LogOut className="size-4" />
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-xs font-medium">{membership?.orgName}</div>
+              <div className="truncate text-[10px] capitalize text-muted-foreground">{membership?.role}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => signOut()}
+              aria-label="Sign out"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent/60"
+            >
+              <LogOut className="size-4" />
+            </button>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

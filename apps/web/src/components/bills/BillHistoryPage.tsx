@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserMenu } from "@/components/auth/UserMenu";
+import { Page } from "@/components/patterns/page";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
@@ -76,16 +76,8 @@ export function BillHistoryPage() {
   const totalSales = useMemo(() => rows.reduce((s, r) => s + r.total_paise, 0), [rows]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
-        <div className="flex items-baseline gap-3">
-          <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-muted-foreground">Bills</span>
-        </div>
-        <UserMenu />
-      </header>
-
-      <main className="mx-auto w-full max-w-4xl flex-1 p-6">
+    <>
+      <Page width="md">
         <div className="flex items-center gap-2">
           <Receipt className="size-5 text-primary" />
           <h1 className="text-xl font-semibold">Bills</h1>
@@ -145,7 +137,7 @@ export function BillHistoryPage() {
         <Link to="/owner" className="mt-5 inline-block text-sm font-medium text-primary hover:underline">
           ← Back to owner dashboard
         </Link>
-      </main>
+      </Page>
 
       <Dialog open={openBill !== null} onOpenChange={(o) => !o && setOpenBill(null)}>
         <DialogContent className="sm:max-w-lg">
@@ -188,6 +180,6 @@ export function BillHistoryPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

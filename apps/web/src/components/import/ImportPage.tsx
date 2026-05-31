@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Papa from "papaparse";
 import { Download, FileUp, KeyRound, Upload, Wand2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { UserMenu } from "@/components/auth/UserMenu";
+import { Page } from "@/components/patterns/page";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -126,16 +126,7 @@ export function ImportPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
-        <div className="flex items-baseline gap-3">
-          <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-muted-foreground">Import data</span>
-        </div>
-        <UserMenu />
-      </header>
-
-      <main className="mx-auto w-full max-w-2xl flex-1 p-6">
+    <Page width="sm">
         <h1 className="text-xl font-semibold">Import your catalogue</h1>
 
         <Link
@@ -282,8 +273,7 @@ export function ImportPage() {
         </div>
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
-      </main>
-    </div>
+    </Page>
   );
 }
 

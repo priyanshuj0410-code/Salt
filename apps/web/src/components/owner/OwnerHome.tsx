@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Copy, Receipt, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserMenu } from "@/components/auth/UserMenu";
+import { Page } from "@/components/patterns/page";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
@@ -62,16 +62,7 @@ export function OwnerHome() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
-        <div className="flex items-baseline gap-3">
-          <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-muted-foreground">Owner</span>
-        </div>
-        <UserMenu />
-      </header>
-
-      <main className="mx-auto w-full max-w-2xl flex-1 p-6">
+    <Page width="sm">
         <h1 className="text-xl font-semibold">Owner dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Reporting and inventory health will live here. For now, manage your team.
@@ -157,7 +148,6 @@ export function OwnerHome() {
         <Link to="/" className="mt-5 inline-block text-sm font-medium text-primary hover:underline">
           ← Go to billing
         </Link>
-      </main>
-    </div>
+    </Page>
   );
 }
