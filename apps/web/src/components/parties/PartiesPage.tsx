@@ -278,9 +278,9 @@ export function PartiesPage() {
           </Button>
         </div>
 
-        {/* Table */}
-        <div className="mt-3 overflow-hidden rounded-lg border">
-          <div className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr_1.75rem] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
+        {/* Table — grid on desktop, a stacked card per party on mobile */}
+        <div className="mt-3 overflow-hidden rounded-lg border border-border">
+          <div className="hidden grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr_1.75rem] gap-2 border-b border-border bg-surface px-3 py-2 text-[0.6875rem] font-medium tracking-wide text-text-tertiary uppercase md:grid">
             <span>Name</span>
             <span>Type</span>
             <span>GSTIN</span>
@@ -290,9 +290,9 @@ export function PartiesPage() {
             <span />
           </div>
           {loading ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+            <p className="p-4 text-sm text-text-tertiary">Loading…</p>
           ) : visible.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
+            <p className="p-4 text-sm text-text-tertiary">
               {rows.length === 0 ? "No parties yet — import your ledgers first." : "No parties match that filter."}
             </p>
           ) : (
@@ -300,43 +300,60 @@ export function PartiesPage() {
               {visible.map((r) => (
                 <div
                   key={r.id}
-                  className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr_1.75rem] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0"
+                  className="flex flex-col gap-2 border-b border-divider px-3 py-3 text-sm last:border-b-0 md:grid md:grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr_1.75rem] md:items-center md:gap-2 md:py-1.5"
                 >
                   <input
                     value={r.name}
                     onChange={(e) => edit(r.id, "name", e.target.value)}
-                    className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                    aria-label="Name"
+                    className="h-8 w-full rounded-md border border-input bg-background px-2 font-medium outline-none focus-visible:border-ring md:font-normal"
                   />
-                  <select
-                    value={r.type}
-                    onChange={(e) => edit(r.id, "type", e.target.value)}
-                    className="h-8 rounded-md border border-input bg-background px-1 text-sm outline-none focus-visible:border-ring"
-                  >
-                    <option value="customer">customer</option>
-                    <option value="vendor">vendor</option>
-                    <option value="other">other</option>
-                  </select>
-                  <input
-                    value={r.gstin ?? ""}
-                    onChange={(e) => edit(r.id, "gstin", e.target.value)}
-                    placeholder="—"
-                    className="h-8 rounded-md border border-input bg-background px-2 font-mono text-xs uppercase outline-none focus-visible:border-ring"
-                  />
-                  <input
-                    value={r.phone ?? ""}
-                    onChange={(e) => edit(r.id, "phone", e.target.value)}
-                    placeholder="—"
-                    className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
-                  />
-                  <span className="text-right text-xs">
-                    <Balance paise={r.opening_balance_paise} />
-                  </span>
-                  <span className="text-right text-xs tabular-nums text-muted-foreground">{r.billCount}</span>
+                  <label className="flex items-center justify-between gap-2 md:block">
+                    <span className="text-xs text-text-tertiary md:hidden">Type</span>
+                    <select
+                      value={r.type}
+                      onChange={(e) => edit(r.id, "type", e.target.value)}
+                      className="h-8 w-40 rounded-md border border-input bg-background px-1 text-sm outline-none focus-visible:border-ring md:w-full"
+                    >
+                      <option value="customer">customer</option>
+                      <option value="vendor">vendor</option>
+                      <option value="other">other</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center justify-between gap-2 md:block">
+                    <span className="text-xs text-text-tertiary md:hidden">GSTIN</span>
+                    <input
+                      value={r.gstin ?? ""}
+                      onChange={(e) => edit(r.id, "gstin", e.target.value)}
+                      placeholder="—"
+                      className="h-8 w-40 rounded-md border border-input bg-background px-2 font-mono text-xs uppercase outline-none focus-visible:border-ring md:w-full"
+                    />
+                  </label>
+                  <label className="flex items-center justify-between gap-2 md:block">
+                    <span className="text-xs text-text-tertiary md:hidden">Phone</span>
+                    <input
+                      value={r.phone ?? ""}
+                      onChange={(e) => edit(r.id, "phone", e.target.value)}
+                      placeholder="—"
+                      className="h-8 w-40 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring md:w-full"
+                    />
+                  </label>
+                  <div className="flex items-center justify-between gap-2 md:block md:text-right">
+                    <span className="text-xs text-text-tertiary md:hidden">Balance</span>
+                    <span className="text-xs">
+                      <Balance paise={r.opening_balance_paise} />
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 md:block md:text-right">
+                    <span className="text-xs text-text-tertiary md:hidden">Bills</span>
+                    <span className="text-xs text-text-tertiary tabular-nums">{r.billCount}</span>
+                  </div>
                   <Link
                     to={`/parties/${r.id}`}
                     title="Open profile"
-                    className="flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                    className="mt-1 flex items-center justify-center gap-1 rounded-md border border-border py-1.5 text-xs font-medium text-text-secondary hover:bg-surface-2 md:mt-0 md:border-0 md:py-0 md:text-text-tertiary md:hover:bg-transparent md:hover:text-text-primary"
                   >
+                    <span className="md:hidden">Open profile</span>
                     <ChevronRight className="size-4" />
                   </Link>
                 </div>
