@@ -2,6 +2,9 @@ import type { InvoicePrintData, InvoiceLine, PrintFormat } from "./types";
 import { formatPaise, splitInclusiveGst } from "../currency";
 import { PAGE_RULE, PRINT_FORMATS, FORMAT_LABEL, FORMAT_WIDTH, FORMAT_LAYOUT } from "./format";
 import { FORMAT_KEY } from "./prefs";
+import { stateName } from "../stateCodes";
+import { rupeesInWords } from "./words";
+import { taxSummary } from "./taxSummary";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -65,6 +68,7 @@ function receiptBody(d: InvoicePrintData): string {
         ${receiptTotalRow("Total", formatPaise(d.grand), true)}
       </tfoot>
     </table>
+    <div class="words">${esc(rupeesInWords(d.grand))}</div>
     <div class="foot">Thank you. Get well soon.</div>
   </div>`;
 }
@@ -100,11 +104,25 @@ function sheetBody(d: InvoicePrintData): string {
     .filter(Boolean)
     .map((s) => esc(String(s)))
     .join(" · ");
-  const supply = d.isInterstate ? "Inter-state (IGST)" : "Intra-state (CGST + SGST)";
+  const posCode = d.customer?.state_code ?? d.shop.state_code;
+  const posName = stateName(posCode);
+  const supply = `${posName || "—"}${posCode ? ` (${esc(posCode)})` : ""} · ${d.isInterstate ? "Inter-state" : "Intra-state"}`;
   const taxRows = d.isInterstate
     ? `<tr><td>IGST</td><td>${formatPaise(d.igst)}</td></tr>`
     : `<tr><td>CGST</td><td>${formatPaise(d.cgst)}</td></tr><tr><td>SGST</td><td>${formatPaise(d.sgst)}</td></tr>`;
   const payLabel = d.payment.method === "credit" ? `Credit (${d.payment.creditDays} days)` : "Cash";
+  // Rate-wise tax breakup (rule 46) — taxable + tax per GST slab.
+  const tax = taxSummary(d.lines, d.isInterstate);
+  const taxHead = d.isInterstate
+    ? `<tr><th class="r">Taxable</th><th class="r">Rate</th><th class="r">IGST</th></tr>`
+    : `<tr><th class="r">Taxable</th><th class="r">Rate</th><th class="r">CGST</th><th class="r">SGST</th></tr>`;
+  const taxBody = tax
+    .map((r) =>
+      d.isInterstate
+        ? `<tr><td class="r">${formatPaise(r.taxable)}</td><td class="r">${r.rate}%</td><td class="r">${formatPaise(r.igst)}</td></tr>`
+        : `<tr><td class="r">${formatPaise(r.taxable)}</td><td class="r">${r.rate}%</td><td class="r">${formatPaise(r.cgst)}</td><td class="r">${formatPaise(r.sgst)}</td></tr>`,
+    )
+    .join("");
   return `<div class="sheet">
     <div class="s-head">
       <div class="s-shop">
@@ -114,10 +132,12 @@ function sheetBody(d: InvoicePrintData): string {
       </div>
       <div class="s-title">
         <div class="s-doctype">TAX INVOICE</div>
+        <div class="s-copy">Original for Recipient</div>
         <table class="s-meta">
           <tr><td>Invoice No</td><td>${esc(d.ref)}</td></tr>
           <tr><td>Date</td><td>${esc(d.dateTime)}</td></tr>
           <tr><td>Payment</td><td>${esc(payLabel)}</td></tr>
+          <tr><td>Reverse charge</td><td>No</td></tr>
         </table>
       </div>
     </div>
@@ -133,7 +153,10 @@ function sheetBody(d: InvoicePrintData): string {
       <tbody>${d.lines.map(sheetItemRow).join("")}</tbody>
     </table>
     <div class="s-bottom">
-      <div class="s-notes"></div>
+      <div class="s-notes">
+        <div class="s-cap">Tax summary</div>
+        <table class="s-tax"><thead>${taxHead}</thead><tbody>${taxBody}</tbody></table>
+      </div>
       <table class="s-totals">
         <tr><td>Gross (MRP)</td><td>${formatPaise(d.gross)}</td></tr>
         ${d.discount > 0 ? `<tr><td>Discount</td><td>- ${formatPaise(d.discount)}</td></tr>` : ""}
@@ -142,7 +165,11 @@ function sheetBody(d: InvoicePrintData): string {
         <tr class="grand"><td>Grand total</td><td>${formatPaise(d.grand)}</td></tr>
       </table>
     </div>
-    <div class="s-sign">For ${esc(d.shop.name)}<div class="s-sign-line">Authorised signatory</div></div>
+    <div class="s-words"><span class="lbl">Amount in words</span>${esc(rupeesInWords(d.grand))}</div>
+    <div class="s-foot-row">
+      <div class="s-decl">Certified that the particulars given above are true and correct.</div>
+      <div class="s-sign">For ${esc(d.shop.name)}<div class="s-sign-line">Authorised signatory</div></div>
+    </div>
   </div>`;
 }
 
@@ -158,6 +185,21 @@ const monoCenter = (s: string): string => {
 const monoSplit = (left: string, right: string): string =>
   left.length + right.length >= MONO_W ? `${left} ${right}` : padR(left, MONO_W - right.length) + right;
 const monoTotal = (label: string, value: string): string => padL(padR(label, 16) + padL(value, 14), MONO_W);
+/** Greedy word-wrap to the monospace width — keeps the amount-in-words on the form. */
+function monoWrap(s: string): string[] {
+  const out: string[] = [];
+  let line = "";
+  for (const w of s.split(" ")) {
+    if (line && line.length + 1 + w.length > MONO_W) {
+      out.push(line);
+      line = w;
+    } else {
+      line = line ? `${line} ${w}` : w;
+    }
+  }
+  if (line) out.push(line);
+  return out;
+}
 
 function monoBody(d: InvoicePrintData): string {
   const lines: string[] = [];
@@ -190,6 +232,8 @@ function monoBody(d: InvoicePrintData): string {
     lines.push(monoTotal("SGST", rs(d.sgst)));
   }
   lines.push(monoTotal("TOTAL", rs(d.grand)));
+  lines.push("");
+  for (const wl of monoWrap(rupeesInWords(d.grand))) lines.push(wl);
   lines.push(monoRule);
   lines.push(monoCenter("Thank you. Get well soon."));
   return `<pre class="mono">${esc(lines.join("\n"))}</pre>`;
@@ -233,6 +277,7 @@ ${VIS_RULES}
 .receipt tbody tr{border-bottom:1px dotted #ccc}
 .receipt tfoot td{padding:2px 0}
 .receipt tr.tot td{border-top:1px solid #000;font-weight:700;font-size:13px;padding-top:4px}
+.receipt .words{font-size:9px;color:#444;margin-top:5px;text-align:center}
 .receipt .foot{text-align:center;font-size:10px;color:#333;margin-top:8px}
 /* sheet */
 .sheet{font-size:12px;color:#111}
@@ -257,7 +302,17 @@ ${VIS_RULES}
 .sheet .s-totals td{padding:3px 0 3px 16px;text-align:right}
 .sheet .s-totals td:first-child{text-align:left;color:#555;padding-left:0}
 .sheet .s-totals tr.grand td{border-top:2px solid #111;font-weight:700;font-size:14px;padding-top:6px}
-.sheet .s-sign{margin-top:30px;text-align:right;font-size:11px}
+.sheet .s-copy{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.sheet .s-cap{font-size:10px;text-transform:uppercase;color:#888;letter-spacing:.04em;margin-bottom:3px}
+.sheet table.s-tax{border-collapse:collapse;font-size:11px;min-width:260px}
+.sheet table.s-tax th{background:#f4f4f5;border:1px solid #d4d4d8;padding:3px 8px;font-size:10px;text-transform:uppercase;color:#555}
+.sheet table.s-tax td{border:1px solid #e4e4e7;padding:3px 8px}
+.sheet table.s-tax .r{text-align:right}
+.sheet .s-words{margin-top:10px;font-size:12px}
+.sheet .s-words .lbl{display:block;font-size:10px;text-transform:uppercase;color:#888;letter-spacing:.04em}
+.sheet .s-foot-row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px}
+.sheet .s-decl{font-size:10px;color:#666;max-width:55%;font-style:italic}
+.sheet .s-sign{text-align:right;font-size:11px}
 .sheet .s-sign-line{margin-top:26px;border-top:1px solid #888;display:inline-block;padding-top:3px;color:#555}
 /* mono */
 .mono{font-family:"Courier New",monospace;font-size:12px;line-height:1.35;white-space:pre;color:#000;margin:0}
