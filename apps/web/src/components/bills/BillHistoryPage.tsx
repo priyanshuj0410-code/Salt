@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Receipt } from "lucide-react";
+import { Printer, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Dot } from "@/components/ui/dot";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { useAuth } from "@/lib/auth";
+import { useTenant } from "@/lib/tenant";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
+import { buildSavedInvoicePrintData, printSavedBill } from "@/lib/billPrint";
+import type { CustomerDetail } from "@/lib/printInvoice";
 
 interface BillRow {
   id: string;
@@ -20,19 +24,29 @@ interface BillRow {
   total_paise: number;
   paid_paise: number;
   payment_method: string | null;
+  credit_days: number | null;
   due_date: string | null;
   status: string;
   party_id: string | null;
   posts_effects: boolean | null;
+  discount_paise: number;
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
   ledgers: { name: string } | null;
 }
 
 interface LineRow {
   id: string;
   name: string;
+  pack: string | null;
   batch_no: string | null;
+  expiry: string | null;
   qty: number;
   rate_paise: number;
+  mrp_paise: number;
+  gst_rate: number;
   line_total_paise: number;
 }
 
@@ -40,10 +54,13 @@ const invoiceNo = (b: BillRow) => b.invoice_no ?? `#${b.id.slice(0, 8)}`;
 
 export function BillHistoryPage() {
   const orgId = useAuth().membership?.orgId;
+  const { shop } = useTenant();
   const [rows, setRows] = useState<BillRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openBill, setOpenBill] = useState<BillRow | null>(null);
   const [lines, setLines] = useState<LineRow[] | null>(null);
+  const [customer, setCustomer] = useState<CustomerDetail | null>(null);
+  const [reprintErr, setReprintErr] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -51,7 +68,7 @@ export function BillHistoryPage() {
     supabase
       .from("sales_invoices")
       .select(
-        "id,invoice_no,invoice_date,created_at,total_paise,paid_paise,payment_method,due_date,status,party_id,posts_effects,ledgers(name)",
+        "id,invoice_no,invoice_date,created_at,total_paise,paid_paise,payment_method,credit_days,due_date,status,party_id,posts_effects,discount_paise,taxable_paise,cgst_paise,sgst_paise,igst_paise,ledgers(name)",
       )
       .eq("org_id", orgId)
       .order("created_at", { ascending: false })
@@ -69,12 +86,36 @@ export function BillHistoryPage() {
   async function viewBill(b: BillRow) {
     setOpenBill(b);
     setLines(null);
+    setCustomer(null);
+    setReprintErr(null);
     if (!supabase) return;
     const { data } = await supabase
       .from("sale_lines")
-      .select("id,name,batch_no,qty,rate_paise,line_total_paise")
+      .select("id,name,pack,batch_no,expiry,qty,rate_paise,mrp_paise,gst_rate,line_total_paise")
       .eq("invoice_id", b.id);
     setLines((data as LineRow[] | null) ?? []);
+    if (b.party_id) {
+      const { data: cust } = await supabase
+        .from("ledgers")
+        .select("gstin,phone,state_code")
+        .eq("id", b.party_id)
+        .maybeSingle();
+      setCustomer((cust as CustomerDetail | null) ?? null);
+    }
+  }
+
+  function reprint() {
+    if (!openBill || !lines || lines.length === 0 || !shop) return;
+    const ok = printSavedBill(
+      buildSavedInvoicePrintData({
+        invoice: openBill,
+        lines,
+        shop,
+        customerName: openBill.ledgers?.name ?? "Walk-in customer",
+        customer,
+      }),
+    );
+    setReprintErr(ok ? null : "Allow pop-ups for this site, then reprint.");
   }
 
   const totalSales = useMemo(() => rows.reduce((s, r) => s + r.total_paise, 0), [rows]);
@@ -188,6 +229,17 @@ export function BillHistoryPage() {
               )}
             </div>
           )}
+          {reprintErr && <p className="text-sm text-text-tertiary">{reprintErr}</p>}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={reprint}
+              disabled={!shop || !lines || lines.length === 0}
+              title={shop ? undefined : "Set up shop details to print"}
+            >
+              <Printer className="size-4" /> Reprint
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
