@@ -9,6 +9,9 @@ import { PartyProfilePage } from "@/components/parties/PartyProfilePage";
 import { GrnListPage } from "@/components/grn/GrnListPage";
 import { GrnEntryPage } from "@/components/grn/GrnEntryPage";
 import { GrnDetailPage } from "@/components/grn/GrnDetailPage";
+import { PoListPage } from "@/components/grn/PoListPage";
+import { PoEntryPage } from "@/components/grn/PoEntryPage";
+import { PoDetailPage } from "@/components/grn/PoDetailPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { StockLedgerPage } from "@/components/inventory/StockLedgerPage";
 import { NearExpiryPage } from "@/components/inventory/NearExpiryPage";
@@ -16,9 +19,14 @@ import { DeadStockPage } from "@/components/inventory/DeadStockPage";
 import { ReorderPage } from "@/components/inventory/ReorderPage";
 import { OutOfStockPage } from "@/components/inventory/OutOfStockPage";
 import { TurnoverPage } from "@/components/inventory/TurnoverPage";
+import { AdjustmentsPage } from "@/components/inventory/AdjustmentsPage";
+import { PhysicalCountPage } from "@/components/inventory/PhysicalCountPage";
+import { ExpiryDestructionPage } from "@/components/inventory/ExpiryDestructionPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { GstLiabilityPage } from "@/components/gst/GstLiabilityPage";
+import { ItcRegisterPage } from "@/components/gst/ItcRegisterPage";
+import { TallyExportPage } from "@/components/gst/TallyExportPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
@@ -87,6 +95,30 @@ function App() {
         }
       />
       <Route
+        path="/purchases/orders"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders/new"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoEntryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/purchases/:id"
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
@@ -151,6 +183,30 @@ function App() {
         }
       />
       <Route
+        path="/inventory/adjustments"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <AdjustmentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/count"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PhysicalCountPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/destruction"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ExpiryDestructionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/gst"
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
@@ -171,6 +227,22 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <GstLiabilityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/itc"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ItcRegisterPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/tally"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <TallyExportPage />
           </ProtectedRoute>
         }
       />

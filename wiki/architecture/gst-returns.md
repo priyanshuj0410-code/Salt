@@ -77,6 +77,32 @@ SALT-069) gives the owner a live tax position without picking a period:
   as a null comparison (not a misleading zero). `shiftPeriod(period, n)` is the shared
   month-arithmetic helper. Read-only — filing is SALT-072.
 
+## ITC register & reversal
+
+`buildItcRegister` / `buildItcReversal` (screen `/gst/itc`, SALT-064):
+
+- **Register** — a month's inward invoices from `purchases` (vendor via `ledgers`): vendor,
+  GSTIN, invoice, date, taxable, CGST/SGST/IGST + totals (ITC = CGST+SGST+IGST). Same scope as
+  GSTR-3B's ITC side (shop, `status='received'`, `posts_effects=true`). CSV export.
+- **Reversal pre-calc** — Section 17(5)(h): for **expired stock** (`batches` with `qty>0` and
+  `expiry` (YYYY-MM, lexical) before the current month) the ITC to reverse is estimated as
+  `round(qty × ptr × gst_rate/100)` from the item's GST rate. **Net ITC** = eligible − reversal.
+- Batch→purchase-line attribution is approximate (PTR×rate); advisory — the exact figure would
+  ride a returns/adjustment posting.
+
+## Tally export
+
+`buildTallyXml(companyName, sales, purchases)` (screen `/gst/tally`, SALT-070) emits a Tally
+**Import Data** envelope of a month's books for the accountant — one **Sales** voucher per bill
+and one **Purchase** voucher per GRN, each a balanced double entry carrying the GST split:
+
+- Sale — Dr party/Cash (total) · Cr Sales (taxable) · Cr Output CGST/SGST/IGST.
+- Purchase — Dr Purchase (taxable) · Dr Input CGST/SGST/IGST · Cr vendor (total).
+
+Amounts are rupees; `AMOUNT` is negative for debits (Tally's sign convention) so each voucher
+sums to zero. Cash/UPI/card bills post to **Cash**, credit bills to the party ledger. Ledgers
+are referenced by name (Tally maps/creates them on import). Same scope filters as the returns.
+
 ## Deferred
 
 Credit notes (CDNR — Returns module unbuilt) · server-side `v_gstr1_*` / `v_gstr3b_summary`

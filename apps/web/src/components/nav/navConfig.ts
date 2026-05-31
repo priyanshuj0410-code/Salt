@@ -58,8 +58,8 @@ export const NAV: NavModule[] = [
     children: [
       { label: "Receive stock (GRN)", path: "/purchases/new", built: true },
       { label: "GRN history", path: "/purchases", built: true },
+      { label: "Purchase orders", path: "/purchases/orders", built: true },
       { label: "Debit notes", built: false },
-      { label: "Purchase orders", built: false },
     ],
   },
   {
@@ -89,7 +89,9 @@ export const NAV: NavModule[] = [
       { label: "Reorder", path: "/inventory/reorder", built: true },
       { label: "Out of stock", path: "/inventory/out-of-stock", built: true },
       { label: "Turnover", path: "/inventory/turnover", built: true },
-      { label: "Physical count", built: false },
+      { label: "Adjustments", path: "/inventory/adjustments", built: true },
+      { label: "Physical count", path: "/inventory/count", built: true },
+      { label: "Expiry destruction", path: "/inventory/destruction", built: true },
     ],
   },
   {
@@ -130,7 +132,8 @@ export const NAV: NavModule[] = [
       { label: "GSTR-3B", path: "/gst/gstr3b", built: true },
       { label: "Liability", path: "/gst/liability", built: true },
       { label: "GSTR-2B recon", built: false },
-      { label: "ITC register", built: false },
+      { label: "ITC register", path: "/gst/itc", built: true },
+      { label: "Tally export", path: "/gst/tally", built: true },
       { label: "H1 / X register", built: false },
       { label: "Drug licenses", built: false },
     ],
