@@ -10,6 +10,7 @@ import { GrnListPage } from "@/components/grn/GrnListPage";
 import { GrnEntryPage } from "@/components/grn/GrnEntryPage";
 import { GrnDetailPage } from "@/components/grn/GrnDetailPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
+import { ActivityPage } from "@/components/activity/ActivityPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
@@ -36,6 +37,14 @@ function App() {
         element={
           <ProtectedRoute>
             <BillingScreen />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/activity"
+        element={
+          <ProtectedRoute>
+            <ActivityPage />
           </ProtectedRoute>
         }
       />

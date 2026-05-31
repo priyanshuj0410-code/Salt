@@ -34,6 +34,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/information-architecture](architecture/information-architecture.md) — full navigation tree, screen inventory, keyboard shortcut system, 7 key user journeys, role-based access, URL structure.
 - [architecture/ondc-b2b-pharma](architecture/ondc-b2b-pharma.md) — ONDC/Beckn deep dive for vendor ordering: roles, transaction flow, the OTC-only pharma gate, the two plays (buyer-app procurement vs seller-app retail), onboarding; why it's watch-and-prototype.
 - [architecture/payments](architecture/payments.md) — money in/out on the payments ledger: the `record_payment` RPC + tables contract, the as-built `/payments` UI (SALT-003), the allocation/back-dating gaps, and the module roadmap.
+- [architecture/realtime](architecture/realtime.md) — the real-time / multi-counter substrate: Supabase Realtime (vs PRD's Yjs/ElectricSQL), the per-org Postgres-changes primitive, and the shop-wide activity feed (`activity_events` + triggers, `/activity`, SALT-104).
 
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.
