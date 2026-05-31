@@ -30,6 +30,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale.
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, FEFO, stock cap, billTotals.
 - [architecture/information-architecture](architecture/information-architecture.md) — full navigation tree, screen inventory, keyboard shortcut system, 7 key user journeys, role-based access, URL structure.
+- [architecture/ondc-b2b-pharma](architecture/ondc-b2b-pharma.md) — ONDC/Beckn deep dive for vendor ordering: roles, transaction flow, the OTC-only pharma gate, the two plays (buyer-app procurement vs seller-app retail), onboarding; why it's watch-and-prototype.
 
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.
@@ -55,6 +56,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [0013 — GL history depth: opening balances only](decisions/0013-gl-history-depth.md)
 - [0014 — Doctors master table](decisions/0014-doctors-master.md)
 - [0015 — Dual-modality interaction: one system for keyboard and touch](decisions/0015-dual-modality-interaction.md)
+- [0016 — Vendor ordering is distributor-mediated (aggregator BD or ONDC, not manufacturer APIs)](decisions/0016-vendor-ordering-channel.md)
 
 ## Raw sources (immutable, at repo root)
 `salt-prd-v0.3.md` · `salt-migrator-prd-v0.1.md` · `design.md` · `salt-design-system.html` · `PRD_Intelligent_Importer.pdf` · the codebase · `Saral/Trial_Balance.xls` (untracked sample).
