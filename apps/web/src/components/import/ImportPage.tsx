@@ -9,18 +9,21 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import {
-  templateCsv,
+  canonicalHeader,
+  templateCsvFor,
   validateRows,
+  IMPORT_TEMPLATES,
+  type ImportTemplate,
   type RawRow,
   type ValidationResult,
 } from "@/lib/import";
 
-function downloadTemplate() {
-  const blob = new Blob([templateCsv()], { type: "text/csv" });
+function downloadTemplate(t: ImportTemplate) {
+  const blob = new Blob([templateCsvFor(t.id)], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "salt-catalog-template.csv";
+  a.download = t.filename;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -57,7 +60,7 @@ export function ImportPage() {
     Papa.parse<RawRow>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim().toLowerCase(),
+      transformHeader: canonicalHeader,
       complete: (res) => setResult(validateRows(res.data)),
     });
   }
@@ -144,18 +147,24 @@ export function ImportPage() {
           <span className="self-center text-primary">→</span>
         </Link>
 
-        <h2 className="mt-6 border-t pt-5 text-sm font-medium">Or use a fixed CSV template</h2>
+        <h2 className="mt-6 border-t pt-5 text-sm font-medium">Or start from a template</h2>
         <p className="mt-1 text-sm text-muted-foreground">
+          Already export from Marg or Tally? Download that shape — Salt reads those column names automatically.
           Only <code className="rounded bg-muted px-1">name</code>,{" "}
           <code className="rounded bg-muted px-1">qty</code> and <code className="rounded bg-muted px-1">mrp</code>{" "}
-          are required — everything else is optional. One row per batch.
+          are required. One row per batch.
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Button variant="outline" onClick={downloadTemplate}>
-            <Download />
-            Download template
-          </Button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {IMPORT_TEMPLATES.map((t) => (
+            <Button key={t.id} variant="outline" size="sm" onClick={() => downloadTemplate(t)} title={t.description}>
+              <Download />
+              {t.label} template
+            </Button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-3">
           <label htmlFor="csv-file" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}>
             <FileUp />
             {fileName ?? "Choose CSV file"}
