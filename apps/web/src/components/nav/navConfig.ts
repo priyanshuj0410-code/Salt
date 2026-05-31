@@ -178,6 +178,7 @@ export const NAV: NavModule[] = [
       { label: "Drug licenses", path: "/settings/licenses", built: true },
       { label: "Print templates", path: "/settings/print", built: true },
       { label: "Data export", path: "/settings/export", built: true },
+      { label: "Audit log", path: "/settings/audit", built: true },
     ],
   },
 ];
