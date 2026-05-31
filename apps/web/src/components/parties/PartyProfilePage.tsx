@@ -14,6 +14,8 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
+import { agingFor } from "@/lib/aging";
+import { AgingTable } from "@/components/parties/AgingTable";
 import {
   partyDue,
   paymentsAdjustment,
@@ -179,6 +181,10 @@ export function PartyProfilePage() {
     [ledger, orders, payments],
   );
 
+  // Aging of the dated open items behind the due (imported bills + post-cutover
+  // unpaid orders), split into 0-30 / 31-60 / 61-90 / 90+ bands.
+  const aging = useMemo(() => agingFor(bills, orders), [bills, orders]);
+
   function edit<K extends keyof Ledger>(field: K, value: Ledger[K]) {
     setLedger((l) => (l ? { ...l, [field]: value } : l));
     setDirty(true);
@@ -306,6 +312,17 @@ export function PartyProfilePage() {
       <p className="mt-1.5 text-xs text-text-tertiary">
         Due = opening balance + unsettled orders − payments. <Money paise={due} plain /> {due >= 0 ? "receivable (they owe you)" : "payable (you owe them)"}.
       </p>
+
+      {/* Aging — open items by days overdue */}
+      {(aging.receivable.total > 0 || aging.payable.total > 0) && (
+        <section className="mt-6 rounded-lg border border-border p-4">
+          <h2 className="text-sm font-medium text-text-primary">Aging</h2>
+          <p className="mt-0.5 text-xs text-text-tertiary">Open items by days overdue (₹).</p>
+          <div className="mt-3">
+            <AgingTable receivable={aging.receivable} payable={aging.payable} />
+          </div>
+        </section>
+      )}
 
       {/* Details */}
       <section className="mt-6 rounded-lg border border-border p-4">
@@ -532,3 +549,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
