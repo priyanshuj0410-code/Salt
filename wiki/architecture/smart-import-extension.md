@@ -58,7 +58,7 @@ From [marg-import-map](marg-import-map.md), annotated with the importer mechanic
 | Sales returns | `credit_notes`+lines | doc-no | non-posting insert | 🔜 |
 | Purchase/GRN register | `purchases`+`purchase_lines` (free_qty, scheme) | doc-no; vendor; item_code | non-posting insert | 🔜 |
 | Purchase returns | `debit_notes`+lines | doc-no | non-posting insert | 🔜 |
-| Receipts/Payments | `payments`(+`payment_allocations`) | doc-no; party | non-posting insert | 🔜 |
+| Receipts/Payments | `payments` (allocations deferred) | voucher-no; party | non-posting insert | ✅ |
 | Stock transfers | `stock_transfers`+lines | doc-no | non-posting insert | 🔜 |
 | Stock adjustments | `physical_counts`/`stock_movements` | — | insert | 🔜 |
 | Sch-H/H1 register | `h1_register` | — | insert | 🔜 |
@@ -118,8 +118,8 @@ Each phase = a staged PR (+ migration where noted), verified with `pnpm lint && 
 - **Phase 0 — schema:** ✅ shipped (`0025_import_extension.sql`, run by user) — `shops.cutover_date` + source-doc idempotency/`posts_effects` on `purchases` + `sales_invoices`. (`doctors` + the remaining doc tables follow in their phases.)
 - **Phase 1 — Purchase/GRN history:** ✅ shipped (branch `feat/smart-import-purchases`) — `lib/smartDocument.ts` (`groupDocuments`/`preparePurchases`) + `DocumentStep.tsx`, wired into the stepper. The authentic batch + cost source.
 - **Phase 2 — Sales history:** ✅ shipped — `SALES_DOC` config + `prepareSales` (party GSTIN→name, **walk-in allowed**; MRP-inclusive tax backed out, CGST/SGST split for display) + `prepareDocuments` dispatch; `DocCtx` generalized `vendorBy*`→`partyBy*`. **Dues fix:** `PartyProfilePage` now excludes imported (`posts_effects=false`) docs from amount-due (already in opening balance) while still listing them tagged "imported"; `BillHistoryPage` tags them too. No new migration (0025 pre-staged `sales_invoices`).
-- **Phase 3 — Returns** (credit/debit notes).
-- **Phase 4 — Payments/receipts** (+ allocations).
+- **Phase 3 — Returns:** ✅ shipped (SALT-149, #52) — `CREDIT_NOTE_DOC`/`DEBIT_NOTE_DOC` configs + `prepareCreditNote`/`prepareDebitNote` (MRP-inclusive credit notes; tax-exclusive debit notes with `itc_reversal_paise`); migration `0026_import_returns.sql` adds source-doc/`posts_effects` to `credit_notes`+`debit_notes`. Returns don't feed `PartyProfilePage` dues, so no parties change was needed.
+- **Phase 4 — Payments/receipts:** ✅ shipped (SALT-150) — `lib/smartPayment.ts` (`PAYMENT_CONFIG` + `preparePayments` + `normalizeDirection`/`normalizeMode`) + the flat `PaymentStep.tsx`, wired into the stepper after the document registers; migration `0029_import_payments.sql` adds source-doc/`posts_effects` to `payments` (**run it**). A voucher is a single flat row (not header+lines): direction comes from separate received/paid amount columns → a Type column → a default-direction toggle; mode normalizes to the live enum (never `adjustment`); party (**NOT NULL**) resolves GSTIN→name (unresolved → quarantined); voucher-no is the dedup key (blank/duplicate → quarantined). **Dues decision:** imported payments are records only (`posts_effects=false`) and must **not** adjust party dues — the opening balance already nets every pre-cutover receipt/payment (ADRs [0012](../decisions/0012-stock-cutover-snapshot-vs-replay.md)/[0013](../decisions/0013-gl-history-depth.md)); counting them again would reduce the due twice. The consumer-side exclusion (skip `posts_effects=false` in `PartyProfilePage`'s `paymentsAdjustment`) is a **parties-module** change, filed as **SALT-166**. Allocations deferred (PRD-optional; low value since imported payments don't move dues).
 - **Phase 5 — Masters expansion:** salesmen, doctors, account groups, multi-branch shops; post opening `stock_movements` for batch stock.
 - **Phase 6 — Compliance:** H1 register, drug licences, GST-returns archive, invoice-series continuity.
 - **Future/optional:** drop-all auto-detect router (§4).

@@ -1,5 +1,5 @@
 import type { BillLine, DiscountType, Payment } from "./types";
-import { lineNet } from "./billing";
+import { apportionedLineNets, NO_BILL_DISCOUNT, type BillDiscount } from "./billing";
 import { computeGrnLine } from "./grn";
 
 /** Thrown when a save outlives its timeout (the request may still have landed). */
@@ -101,7 +101,11 @@ export function buildSalesInvoicePayload(
   lines: BillLine[],
   payment: Payment,
   rx: RxDetails | null = null,
+  billDiscount: BillDiscount = NO_BILL_DISCOUNT,
 ): SalesInvoiceArgs {
+  // Send the post-bill-discount net as each line total, so the server's GST split
+  // (backed out of line_total_paise) matches what the counter displayed.
+  const nets = apportionedLineNets(lines, billDiscount);
   return {
     p_shop_id: shopId,
     p_party_id: party?.id ?? null,
@@ -110,7 +114,7 @@ export function buildSalesInvoicePayload(
     p_invoice_no: null,
     p_doctor_name: rx?.doctorName.trim() || null,
     p_notes: rx ? formatRxNote(rx) : null,
-    p_lines: lines.map((l) => ({
+    p_lines: lines.map((l, i) => ({
       item_id: l.itemId,
       name: l.name,
       batch_no: l.batchNo,
@@ -120,7 +124,7 @@ export function buildSalesInvoicePayload(
       discount_type: l.discountType,
       discount_value: l.discountValue,
       gst_rate: l.gstRate,
-      line_total_paise: lineNet(l),
+      line_total_paise: nets[i],
     })),
   };
 }

@@ -4,13 +4,13 @@ updated: 2026-06-01
 tags: [gst, compliance, sales]
 ---
 
-# GST returns (GSTR-1, GSTR-3B)
+# GST returns & liability (GSTR-1, GSTR-3B, live liability)
 
-The **GST & compliance** module's filing screens (SALT-002, SALT-063; product-modules §9):
-read-only returns that aggregate one shop's month of documents into the GSTN sections and
-export portal-ready JSON + CSV. Screens under `/gst` (`components/gst/Gstr1Page.tsx`,
-`Gstr3bPage.tsx`); all aggregation in `lib/gst.ts`, which is **pure** (no Supabase) and
-unit-smoke-tested.
+The **GST & compliance** module's screens (SALT-002, SALT-063, SALT-069; product-modules §9):
+read-only views that aggregate one shop's documents into the GSTN sections / a live tax
+position, with portal-ready JSON + CSV export. Screens under `/gst`
+(`components/gst/Gstr1Page.tsx`, `Gstr3bPage.tsx`, `GstLiabilityPage.tsx`); all aggregation
+in `lib/gst.ts`, which is **pure** (no Supabase) and unit-smoke-tested.
 
 ## Read contract (as-built)
 
@@ -60,8 +60,57 @@ Section breakdowns and the headline totals both derive from the **lines**, so th
   per-head `balance` is shown for detail; surplus ITC is reported as credit carried forward.
 - `buildGstr3bJson` → GSTN-style `{ gstin, ret_period, sup_details, itc_elg, net_payable }`;
   `gstr3bToCsv` for spreadsheets.
-- **Deferred:** ITC reversal (returns / expired stock) until the Returns module exists; the
-  per-head set-off is simplified (no IGST cross-utilisation optimisation).
+- **ITC reversal (Table 4B)** is wired from **expiry write-offs** (`stock_movements`,
+  `reason='writeoff'`, period-scoped): `buildWriteoffReversal` sums `qty × ptr × gst_rate`, and
+  `buildGstr3b(…, reversalPaise)` subtracts it → **net ITC** → net payable (SALT-170). Sales
+  returns / credit notes still pend the Returns module; per-head set-off is simplified.
+
+## GST liability (live)
+
+`buildGstLiability(currentPeriod, sales, purchases, months=13)` (screen `/gst/liability`,
+SALT-069) gives the owner a live tax position without picking a period:
+
+- **Current month** output tax (from `sales_invoices`), eligible ITC (from `purchases`), and
+  **net payable** = `max(0, output − ITC)` — the same per-month aggregation as GSTR-3B.
+- **Payment due date** = the 20th of the following month (`shiftPeriod(period, 1)` + `-20`);
+  the screen shows days remaining / overdue.
+- **MoM / YoY** deltas of net payable (vs the previous month and the same month last year) +
+  a **13-month trend**. Months are bucketed by document date; a month with no documents reads
+  as a null comparison (not a misleading zero). `shiftPeriod(period, n)` is the shared
+  month-arithmetic helper. Read-only — filing is SALT-072.
+
+## ITC register & reversal
+
+`buildItcRegister` / `buildItcReversal` (screen `/gst/itc`, SALT-064):
+
+- **Register** — a month's inward invoices from `purchases` (vendor via `ledgers`): vendor,
+  GSTIN, invoice, date, taxable, CGST/SGST/IGST + totals (ITC = CGST+SGST+IGST). Same scope as
+  GSTR-3B's ITC side (shop, `status='received'`, `posts_effects=true`). CSV export.
+- **Reversal pre-calc** — Section 17(5)(h): for **expired stock** (`batches` with `qty>0` and
+  `expiry` (YYYY-MM, lexical) before the current month) the ITC to reverse is estimated as
+  `round(qty × ptr × gst_rate/100)` from the item's GST rate. **Net ITC** = eligible − reversal.
+- Batch→purchase-line attribution is approximate (PTR×rate); advisory — the exact figure would
+  ride a returns/adjustment posting.
+
+## Tally export
+
+`buildTallyXml(companyName, sales, purchases)` (screen `/gst/tally`, SALT-070) emits a Tally
+**Import Data** envelope of a month's books for the accountant — one **Sales** voucher per bill
+and one **Purchase** voucher per GRN, each a balanced double entry carrying the GST split:
+
+- Sale — Dr party/Cash (total) · Cr Sales (taxable) · Cr Output CGST/SGST/IGST.
+- Purchase — Dr Purchase (taxable) · Dr Input CGST/SGST/IGST · Cr vendor (total).
+
+Amounts are rupees; `AMOUNT` is negative for debits (Tally's sign convention) so each voucher
+sums to zero. Cash/UPI/card bills post to **Cash**, credit bills to the party ledger. Ledgers
+are referenced by name (Tally maps/creates them on import). Same scope filters as the returns.
+
+## HSN summary (report)
+
+`buildHsnSummary(lines)` (screen `/gst/hsn`, SALT-068) aggregates sale lines by **HSN × rate**
+(qty, taxable, CGST/SGST/IGST) over a **flexible month range** — the same table GSTR-1 §12 shows
+for one month, but spanning a quarter or year for GSTR-9 / analytics. CSV export. Same scope as
+the returns (shop, `status='placed'`, `posts_effects=true`).
 
 ## Deferred
 
