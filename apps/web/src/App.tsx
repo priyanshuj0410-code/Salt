@@ -20,6 +20,7 @@ import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { GstLiabilityPage } from "@/components/gst/GstLiabilityPage";
 import { ItcRegisterPage } from "@/components/gst/ItcRegisterPage";
+import { TallyExportPage } from "@/components/gst/TallyExportPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
@@ -180,6 +181,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <ItcRegisterPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/tally"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <TallyExportPage />
           </ProtectedRoute>
         }
       />

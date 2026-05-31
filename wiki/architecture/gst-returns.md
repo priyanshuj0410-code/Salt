@@ -90,6 +90,19 @@ SALT-069) gives the owner a live tax position without picking a period:
 - Batch→purchase-line attribution is approximate (PTR×rate); advisory — the exact figure would
   ride a returns/adjustment posting.
 
+## Tally export
+
+`buildTallyXml(companyName, sales, purchases)` (screen `/gst/tally`, SALT-070) emits a Tally
+**Import Data** envelope of a month's books for the accountant — one **Sales** voucher per bill
+and one **Purchase** voucher per GRN, each a balanced double entry carrying the GST split:
+
+- Sale — Dr party/Cash (total) · Cr Sales (taxable) · Cr Output CGST/SGST/IGST.
+- Purchase — Dr Purchase (taxable) · Dr Input CGST/SGST/IGST · Cr vendor (total).
+
+Amounts are rupees; `AMOUNT` is negative for debits (Tally's sign convention) so each voucher
+sums to zero. Cash/UPI/card bills post to **Cash**, credit bills to the party ledger. Ledgers
+are referenced by name (Tally maps/creates them on import). Same scope filters as the returns.
+
 ## Deferred
 
 Credit notes (CDNR — Returns module unbuilt) · server-side `v_gstr1_*` / `v_gstr3b_summary`
