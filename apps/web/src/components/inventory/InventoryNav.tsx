@@ -12,6 +12,7 @@ const TABS: { to: string; label: string }[] = [
   { to: "/inventory/adjustments", label: "Adjustments" },
   { to: "/inventory/count", label: "Physical count" },
   { to: "/inventory/destruction", label: "Destruction" },
+  { to: "/inventory/transfers", label: "Transfers" },
 ];
 
 /**
