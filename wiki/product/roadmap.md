@@ -18,7 +18,7 @@ The PRD (§7) sequences four phases over 9–12 months. This page tracks what th
 
 ## PRD Phase 2 — Multi-user & inventory health (4–6)
 
-- 🟡 Real-time sync (presence, live stock, parked bills), multi-counter conflict resolution — a **shop-wide activity feed** (`/activity`) now streams every sale/payment/GRN live across counters on **Supabase Realtime** (SALT-104), the first slice of the substrate; presence, live stock, parked bills, conflict resolution still ⬜. See [../architecture/realtime.md](../architecture/realtime.md)
+- 🟡 Real-time sync (presence, live stock, parked bills), multi-counter conflict resolution — a **realtime substrate** on **Supabase Realtime** now carries three live-across-counters features: the **activity feed** (`/activity`, SALT-104), **internal messages** (SALT-105), and **manager approvals** (`/approvals`, SALT-106). Still ⬜: presence, live stock, parked bills, offline-first, atomic conflict resolution. See [../architecture/realtime.md](../architecture/realtime.md)
 - ⬜ Inventory health dashboards (near-expiry / low / dead stock)
 - ⬜ Customer pricing rules engine
 - ⬜ Schedule H/H1 capture at billing

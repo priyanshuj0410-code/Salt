@@ -6,6 +6,7 @@ import {
   Landmark,
   Package,
   Settings,
+  ShieldCheck,
   ShoppingCart,
   Tag,
   Users,
@@ -57,6 +58,15 @@ export const NAV: NavModule[] = [
     built: true,
     roles: ["owner", "cashier"],
     children: [{ label: "Live feed", path: "/activity", built: true }],
+  },
+  {
+    key: "o",
+    label: "Approvals",
+    icon: ShieldCheck,
+    path: "/approvals",
+    built: true,
+    roles: ["owner", "cashier"],
+    children: [{ label: "Manager inbox", path: "/approvals", built: true }],
   },
   {
     key: "p",

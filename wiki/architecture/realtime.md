@@ -12,7 +12,7 @@ The PRD's strategic wedge (Phase 5) is **offline-first + real-time multi-counter
 
 > **PRD-vs-as-built divergence (flagged).** The PRD (§7) names **self-hosted Yjs** and **ElectricSQL** for sync. As-built rides **Supabase Realtime** (Postgres Changes + Broadcast + Presence) instead — the same reasoning as ADR [0002](../decisions/0002-stack-divergence-from-prd.md): the backend is already Supabase, so Realtime is zero new infra, RLS-aware, and ships today. Yjs/ElectricSQL remain options for the *offline* CRDT/local-first tickets (SALT-100/101) where Supabase Realtime alone is insufficient; they are not needed for server-authoritative live features (activity, presence, live stock, approvals).
 
-The reusable primitive is a **per-org Postgres-changes channel**: subscribe to `INSERT`s on a table, optionally filtered, RLS enforced. Extracted as **`lib/realtime.ts → subscribeTableInserts<T>`**; every live feature (activity feed, internal messages, future approvals) rides this one helper — point it at a table + filter.
+The reusable primitive is a **per-org Postgres-changes channel**: subscribe to row changes on a table, optionally filtered, RLS enforced. Extracted as **`lib/realtime.ts`** — `subscribeTableInserts<T>` (INSERTs) and `subscribeTableChanges<T>` (INSERT + UPDATE, for state that changes after creation, e.g. an approval going `pending → approved`). Every live feature — activity feed, internal messages, approvals — rides these; point them at a table + filter.
 
 ## Activity feed — SALT-104 ✅ (first slice)
 
@@ -36,6 +36,16 @@ Live staff notes/chat attached to any entity (a bill, customer or item). Same su
 
 **Entry point (in-lane).** Wired into the `/activity` feed: click any event → a dialog opens that event's thread. So messaging is usable today without touching other modules. Embedding the same component directly on the bill / party / item detail screens is **handed off** (those files belong to other modules): tickets **SALT-160** (bills), **SALT-161** (parties), **SALT-162** (catalogue, gated on the item screen existing).
 
+## Approve-from-manager-device — SALT-106 ✅
+
+A cashier raises an approval request on one device; an owner approves/rejects from another; the decision flows back **live**. This is the first feature to need **UPDATE** delivery (a request goes `pending → approved`), so the substrate gained `subscribeTableChanges<T>` (INSERT + UPDATE) alongside the inserts-only helper.
+
+**Storage + security.** Migration `0030_approval_requests.sql`: `approval_requests` (kind, summary, amount, context, status, requester/decider + names), `is_member` RLS for **select**, member **insert** (a `before insert` trigger stamps the requester and pins `status = pending`, so a request can't be self-approved). There is **no client UPDATE policy** — status is written only by two `security definer` RPCs: `decide_approval_request(id, approved)` (**owner-only**, enforced via `memberships.role`) and `cancel_approval_request(id)` (**requester-only**). In the `supabase_realtime` publication.
+
+**UI.** `lib/approvals.ts` (`fetchApprovals` / `requestApproval` / `decideApproval` / `cancelApproval` / `subscribeApprovals`) and `/approvals` (`components/approvals/ApprovalsPage.tsx`, nav `g o`, owner + cashier): a live **Pending** inbox (Approve/Reject for owners, Cancel for the requester) + a **Decided** history, plus a **Raise request** dialog (kind chips + summary + optional amount) any member can use — so the full request → decide loop is demoable **in-lane**, no other module touched.
+
+**Handoff.** Auto-raising requests from the counter (discount/credit over-limit gates, blocking checkout until approved) lands in **billing** files → **SALT-175**. `requestApproval()` is the API it calls; a small `useApprovalRequest` await-hook is suggested there.
+
 ## Not yet built (same module)
 
 | Ticket | What | Builds on |
@@ -44,7 +54,6 @@ Live staff notes/chat attached to any entity (a bill, customer or item). Same su
 | SALT-101 | Self-hosted Yjs presence + live stock <1s LAN + parked-bill sync | Presence + Broadcast channels (Realtime covers most) |
 | SALT-102 | Multi-counter conflict resolution (atomic last-unit) | server-authoritative stock decrement (billing RPC) |
 | SALT-103 | Shop-local server | infra |
-| SALT-106 | Approve-from-manager-device flow | same channel pattern + an approvals table |
 
 Live stock (SALT-101) and atomic last-unit (SALT-102) land in **billing/inventory** files → filed as tickets for those modules rather than edited here.
 
