@@ -3,6 +3,7 @@ import { Banknote, CalendarClock, Check, Printer, TrendingDown, TrendingUp } fro
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatPaise, formatSigned } from "@/lib/currency";
+import { gstSplit } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
 import { GstinPrompt } from "./GstinPrompt";
@@ -38,9 +39,9 @@ export function BillSummary({
 }) {
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, save, saving, saved, error, shopId } =
-    checkout;
-  const { needsRx, rxCaptured, rx, openRx } = checkout;
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
+  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
+  const tax = gstSplit(t.gst, isInterstate);
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
 
@@ -53,8 +54,14 @@ export function BillSummary({
         muted
       />
       <Row label="Taxable value" value={formatPaise(t.taxable)} muted />
-      <Row label="CGST" value={formatPaise(Math.round(t.gst / 2))} muted />
-      <Row label="SGST" value={formatPaise(t.gst - Math.round(t.gst / 2))} muted />
+      {isInterstate ? (
+        <Row label="IGST" value={formatPaise(tax.igst)} muted />
+      ) : (
+        <>
+          <Row label="CGST" value={formatPaise(tax.cgst)} muted />
+          <Row label="SGST" value={formatPaise(tax.sgst)} muted />
+        </>
+      )}
       <Separator />
       <div className="flex items-baseline justify-between">
         <span className="font-medium">Total payable</span>
@@ -141,11 +148,11 @@ export function BillSummary({
         <Button
           size="lg"
           disabled={empty || saving || usingSeed || !shopId}
-          onClick={() => save()}
+          onClick={() => saveAndPrint()}
           title={usingSeed ? "Import your items to save bills" : undefined}
         >
           {saved ? <Check /> : <Printer />}
-          {saved ? "Saved" : saving ? "Saving…" : "Save bill · F9"}
+          {saved ? "Saved" : saving ? "Saving…" : "Save & Print · F9"}
         </Button>
         {usingSeed && (
           <p className="text-center text-xs text-text-tertiary">
@@ -153,9 +160,19 @@ export function BillSummary({
           </p>
         )}
         {error && <p className="text-center text-xs text-destructive">{error}</p>}
-        <Button variant="ghost" size="sm" disabled={empty} onClick={clear}>
-          Clear bill
-        </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={empty || saving || usingSeed || !shopId}
+            onClick={() => saveOnly()}
+          >
+            Save only
+          </Button>
+          <Button variant="ghost" size="sm" disabled={empty} onClick={clear}>
+            Clear bill
+          </Button>
+        </div>
       </div>
     </div>
   );

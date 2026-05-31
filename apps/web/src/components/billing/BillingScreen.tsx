@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { ChevronDown, User } from "lucide-react";
 import { ItemSearch } from "./ItemSearch";
@@ -78,12 +78,25 @@ export function BillingScreen() {
   const loadCatalog = useCatalog((s) => s.load);
   const party = useBill((s) => s.party);
   const setParty = useBill((s) => s.setParty);
-  const checkout = useCheckout();
 
-  // Detail for the selected customer: drives the header phone + the "Add GSTIN"
-  // prompt. Refetched after a GSTIN is saved so the prompt clears.
-  const [customer, setCustomer] = useState<{ gstin: string | null; phone: string | null } | null>(null);
+  // Detail for the selected customer: drives the header phone, the "Add GSTIN"
+  // prompt, and the intra/inter-state GST split. Refetched after a GSTIN is saved.
+  const [customer, setCustomer] = useState<{
+    gstin: string | null;
+    phone: string | null;
+    state_code: string | null;
+  } | null>(null);
   const [custKey, setCustKey] = useState(0);
+  // Gate detail on `party` so a cleared bill (after save, or walk-in) never shows
+  // the previous customer's phone/GSTIN even if the fetched detail is briefly stale.
+  const customerGstin = party ? (customer?.gstin ?? null) : null;
+  const customerPhone = party ? (customer?.phone ?? null) : null;
+  const customerState = party ? (customer?.state_code ?? null) : null;
+  const customerDetail = useMemo(
+    () => (party ? { gstin: customerGstin, phone: customerPhone, state_code: customerState } : null),
+    [party, customerGstin, customerPhone, customerState],
+  );
+  const checkout = useCheckout({ customer: customerDetail });
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -95,11 +108,14 @@ export function BillingScreen() {
     let active = true;
     void supabase
       .from("ledgers")
-      .select("gstin,phone")
+      .select("gstin,phone,state_code")
       .eq("id", id)
       .maybeSingle()
       .then(({ data }) => {
-        if (active) setCustomer((data as { gstin: string | null; phone: string | null } | null) ?? null);
+        if (active)
+          setCustomer(
+            (data as { gstin: string | null; phone: string | null; state_code: string | null } | null) ?? null,
+          );
       });
     return () => {
       active = false;
@@ -124,10 +140,6 @@ export function BillingScreen() {
     { enableOnFormTags: true },
   );
 
-  // Gate detail on `party` so a cleared bill (after save, or walk-in) never shows
-  // the previous customer's phone/GSTIN even if the fetched detail is briefly stale.
-  const customerGstin = party ? (customer?.gstin ?? null) : null;
-  const customerPhone = party ? (customer?.phone ?? null) : null;
   const refetchCustomer = () => setCustKey((k) => k + 1);
 
   return (
@@ -157,7 +169,7 @@ export function BillingScreen() {
       <footer className="hidden items-center gap-4 border-t border-border bg-background px-4 py-1.5 text-xs text-text-tertiary md:flex">
         <Hint keys="↑ ↓" label="navigate" />
         <Hint keys="Enter" label="add item" />
-        <Hint keys="F9" label="save bill" />
+        <Hint keys="F9" label="save & print" />
         <Hint keys="Esc" label="clear search" />
         <Hint keys="?" label="all shortcuts" />
       </footer>
@@ -175,7 +187,7 @@ export function BillingScreen() {
       <ShopSetupDialog
         open={checkout.setupOpen}
         onOpenChange={checkout.setSetupOpen}
-        onResolved={() => void checkout.save()}
+        onResolved={() => void checkout.resumeSave()}
       />
       <H1Gate
         open={checkout.rxOpen}

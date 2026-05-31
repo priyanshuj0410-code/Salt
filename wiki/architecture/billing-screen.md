@@ -31,13 +31,14 @@ Sub-components:
 
 | File | Role |
 |---|---|
-| `BillingScreen.tsx` | Shell + header `CustomerBar`; holds the single `useCheckout`; fetches selected-customer detail (GSTIN/phone) |
+| `BillingScreen.tsx` | Shell + header `CustomerBar`; holds the single `useCheckout`; fetches selected-customer detail (GSTIN/phone/state_code) |
 | `ItemSearch.tsx` | Search input + result dropdown (type-ahead: `↑/↓` + `Enter`) |
 | `BillTable.tsx` | Bill lines — dense **table** on desktop, tappable **cards** on mobile; inline qty/discount; `BatchPicker` trigger |
 | `BatchPicker.tsx` | Popover for switching a line to a different batch of the same item |
-| `useCheckout.ts` | Shared checkout logic: save → `create_sales_invoice`, **F9**, payment, totals, shop-setup rescue (held once) |
-| `BillSummary.tsx` | **Desktop** checkout pane: breakdown, payment, GSTIN prompt, Save · F9 — presentational (props from `useCheckout`) |
-| `MobileCheckout.tsx` | **Mobile** checkout bar: items · payment · total + **Charge ₹X**; taps to expand breakdown/payment/GSTIN |
+| `useCheckout.ts` | Shared checkout logic: `create_sales_invoice` → **Save & Print** (`F9`), payment, totals, intra/inter-state split, H1 gate + shop-setup rescue (held once) |
+| `BillSummary.tsx` | **Desktop** checkout pane: breakdown, payment, GSTIN prompt, **Save & Print · F9** + Save only — presentational (props from `useCheckout`) |
+| `MobileCheckout.tsx` | **Mobile** checkout bar: items · payment · total + **Save & Print** (printer + ₹X); taps to expand breakdown/payment/Save only |
+| `printInvoice.ts` (`lib/`) | Builds the receipt from live bill + shop + customer and opens a print window — see [Save & Print](#save--print--gst-split) |
 | `GstinPrompt.tsx` | Inline "Add GSTIN" when the customer has none — writes `ledgers.gstin` mid-bill, never blocks the sale |
 | `CustomerPicker.tsx` | Choose customer (walk-in default); search by name/phone; **Enter picks the top match** |
 | `ShortcutHelp.tsx` | Modal reference (Shift+/) |
@@ -59,8 +60,17 @@ Sub-components:
 | `Del` / `Backspace` | Bill row focused | Remove line |
 | `Tab` | Bill row focused | Move into qty / discount inline inputs |
 | `Ctrl+K` | Anywhere | Open `CustomerPicker` (type → `Enter` picks the top match) |
-| `F9` | Anywhere | Save the bill → `create_sales_invoice` |
+| `F9` | Anywhere | **Save & Print** the bill → `create_sales_invoice` then print receipt |
 | `Shift+/` | Anywhere | Open `ShortcutHelp` dialog |
+
+## Save & Print + GST split
+
+The primary checkout action is **Save & Print** (the desktop `Save & Print · F9` button, the mobile printer+₹ button, and `F9`): it saves via `create_sales_invoice`, then prints a receipt. A secondary **Save only** button writes the bill without printing.
+
+- **Print path** ([`lib/printInvoice.ts`](../../apps/web/src/lib/printInvoice.ts)) is self-contained — `printInvoice(data)` opens a new window with an inline-styled 80mm receipt (shop header from `useAuth().shop`, customer, lines with batch/expiry, totals + the GST split), which auto-prints and closes. No global print CSS or `App.tsx` change, so it stays inside the billing module. The browser dialog covers thermal / A4 / PDF.
+- `useCheckout.save({ print })` returns the new invoice id and captures the receipt from live bill state **before** `clear()` wipes it. Print intent is remembered (a `ref`) across the H1 gate / shop-setup detours, so a resumed save still prints; `saveAndPrint` / `saveOnly` set it explicitly.
+- **Invoice ref:** until the FY-scoped GST series (**SALT-013**) exists, the printed handle is `invoiceRef(id)` — the first 8 hex of the invoice UUID. **Drug-license no. is not yet on the receipt** (the `drug_licenses` table has no entry UI yet) — follow-up.
+- **CGST/SGST vs IGST** is shown at checkout *and* on the receipt via `gstSplit(gst, isInterstate)` (`lib/billing.ts`). `isInterstate` = the bound customer has a `state_code` differing from the shop's (walk-in / no party ⇒ intra-state) — matching the server split in `create_sales_invoice`.
 
 ## Schedule H1/X gate
 
