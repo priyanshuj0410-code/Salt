@@ -6,7 +6,9 @@ import { OnboardingPage } from "@/components/auth/OnboardingPage";
 import { OwnerHome } from "@/components/owner/OwnerHome";
 import { PartiesPage } from "@/components/parties/PartiesPage";
 import { PartyProfilePage } from "@/components/parties/PartyProfilePage";
-import { PurchaseEntryPage } from "@/components/parties/PurchaseEntryPage";
+import { GrnListPage } from "@/components/grn/GrnListPage";
+import { GrnEntryPage } from "@/components/grn/GrnEntryPage";
+import { GrnDetailPage } from "@/components/grn/GrnDetailPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
@@ -62,10 +64,26 @@ function App() {
         }
       />
       <Route
-        path="/parties/:id/purchase"
+        path="/purchases"
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
-            <PurchaseEntryPage />
+            <GrnListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/new"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GrnEntryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GrnDetailPage />
           </ProtectedRoute>
         }
       />

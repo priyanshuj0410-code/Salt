@@ -1,0 +1,367 @@
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { addDays, format } from "date-fns";
+import { ArrowLeft, Banknote, CalendarClock, Plus, PackagePlus, Search, Trash2, Truck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Page } from "@/components/patterns/page";
+import { PageHeader } from "@/components/patterns/page-header";
+import { useAuth } from "@/lib/auth";
+import { useShopBlockers } from "@/lib/useShopBlockers";
+import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
+import { supabase } from "@/lib/supabase";
+import { formatPaise } from "@/lib/currency";
+import { searchCatalog } from "@/lib/search";
+import { buildReceivePurchasePayload, withTimeout, TimeoutError, type PurchaseLine } from "@/lib/orders";
+import { computeGrnLine, grnTotals, isInterstate } from "@/lib/grn";
+import { useCatalog } from "@/store/catalog";
+import type { Item, Payment } from "@/lib/types";
+import { CreateItemDialog } from "./CreateItemDialog";
+import { VendorPicker, type PickedVendor } from "./VendorPicker";
+
+const CREDIT_PRESETS = [7, 15, 30];
+const toRupees = (paise: number) => (paise ? paise / 100 : 0);
+const toPaise = (rupees: string | number) => Math.round((Number(rupees) || 0) * 100);
+const MAX_RESULTS = 8;
+
+/** GRN line grid: Item · Batch · Exp · Qty · Free · PTR · Disc% · MRP · Total · ✕ */
+const GRID = "grid-cols-[minmax(9rem,1.6fr)_0.9fr_0.8fr_0.5fr_0.5fr_0.8fr_0.6fr_0.8fr_0.9fr_2rem]";
+
+export function GrnEntryPage() {
+  const { id: routeVendorId } = useParams<{ id: string }>();
+  const [sp] = useSearchParams();
+  const vendorId = routeVendorId ?? sp.get("vendor") ?? null;
+
+  const orgId = useAuth().membership?.orgId;
+  const shopId = useAuth().shopId;
+  const shopState = useAuth().shop?.state_code ?? null;
+  const navigate = useNavigate();
+  const items = useCatalog((s) => s.items);
+  const usingSeed = useCatalog((s) => s.usingSeed);
+  const loadCatalog = useCatalog((s) => s.load);
+  const upsertItem = useCatalog((s) => s.upsertItem);
+
+  const blockers = useShopBlockers();
+  const [vendor, setVendor] = useState<PickedVendor | null>(null);
+  const [vendorPickerOpen, setVendorPickerOpen] = useState(false);
+  const [invoiceNo, setInvoiceNo] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState("");
+  const [query, setQuery] = useState("");
+  const [lines, setLines] = useState<PurchaseLine[]>([]);
+  const [payment, setPayment] = useState<Payment>({ method: "credit", creditDays: 30 });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [createItemOpen, setCreateItemOpen] = useState(false);
+
+  useEffect(() => {
+    if (orgId) loadCatalog(orgId);
+  }, [orgId, loadCatalog]);
+
+  // Preselect the vendor when arriving from a vendor profile (?vendor= or :id).
+  useEffect(() => {
+    if (!supabase || !orgId || !vendorId) return;
+    let active = true;
+    supabase
+      .from("ledgers")
+      .select("id,name,state_code")
+      .eq("org_id", orgId)
+      .eq("id", vendorId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const v = data as { id: string; name: string; state_code: string | null };
+        setVendor({ id: v.id, name: v.name, stateCode: v.state_code });
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId, vendorId]);
+
+  const interstate = isInterstate(vendor?.stateCode, shopState);
+  const results = useMemo(() => (query ? searchCatalog(query, items).slice(0, MAX_RESULTS) : []), [query, items]);
+  const hasExactMatch = useMemo(
+    () => results.some((r) => r.name.toLowerCase() === query.trim().toLowerCase()),
+    [results, query],
+  );
+  const totals = useMemo(() => grnTotals(lines, interstate), [lines, interstate]);
+
+  function addItem(item: Item) {
+    const b = item.batches[0];
+    setLines((ls) => [
+      ...ls,
+      {
+        itemId: item.id,
+        name: item.name,
+        batchNo: "",
+        expiry: "",
+        qty: 1,
+        freeQty: 0,
+        ptrPaise: b?.ptrPaise ?? 0,
+        mrpPaise: b?.mrpPaise ?? 0,
+        gstRate: item.gstRate,
+        discountType: "pct",
+        discountValue: 0,
+      },
+    ]);
+    setQuery("");
+  }
+
+  function patch(idx: number, p: Partial<PurchaseLine>) {
+    setLines((ls) => ls.map((l, i) => (i === idx ? { ...l, ...p } : l)));
+  }
+
+  function onItemCreated(item: Item) {
+    upsertItem(item); // make it searchable for next time
+    addItem(item); // and drop it straight onto this GRN
+  }
+
+  async function save() {
+    if (!supabase || !vendor || lines.length === 0 || usingSeed || saving || !shopId) return;
+    // Pre-flight: the shop must have a state_code or receive_purchase trips the
+    // is_interstate NOT NULL. Show the rescue dialog and bail; it retries save.
+    if (!blockers.ready) {
+      setError(null);
+      setSetupOpen(true);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const args = buildReceivePurchasePayload(shopId, { id: vendor.id, name: vendor.name }, lines, payment, interstate, {
+        vendorInvoiceNo: invoiceNo,
+        vendorInvoiceDate: invoiceDate,
+      });
+      const { data, error: err } = await withTimeout(supabase.rpc("receive_purchase", args), 15000);
+      if (err) setError(err.message);
+      else navigate(typeof data === "string" ? `/purchases/${data}` : "/purchases");
+    } catch (e) {
+      setError(
+        e instanceof TimeoutError
+          ? "Saving is taking too long — it may have gone through. Check the GRN history before saving again."
+          : "Could not record the GRN. Please try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const canSave = !saving && !!vendor && lines.length > 0 && !usingSeed && !!shopId;
+
+  return (
+    <Page width="lg">
+      <Link to="/purchases" className="mb-2 inline-flex items-center gap-1 text-sm text-text-tertiary hover:text-text-primary">
+        <ArrowLeft className="size-3.5" /> Purchases
+      </Link>
+
+      <PageHeader
+        icon={Truck}
+        title="Receive stock (GRN)"
+        subtitle="Goods received from a vendor. Each line adds stock (incl. free goods) and increases what you owe."
+        actions={
+          vendor ? (
+            <Button variant="outline" onClick={() => setVendorPickerOpen(true)}>
+              <Truck /> {vendor.name}
+            </Button>
+          ) : (
+            <Button onClick={() => setVendorPickerOpen(true)}>
+              <Truck /> Choose vendor
+            </Button>
+          )
+        }
+      />
+
+      {/* Vendor + invoice meta */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Field label="Vendor">
+          <button
+            onClick={() => setVendorPickerOpen(true)}
+            className="flex h-9 items-center justify-between gap-2 rounded-md border border-input bg-background px-2.5 text-left text-sm hover:bg-surface"
+          >
+            <span className={vendor ? "truncate" : "text-text-tertiary"}>{vendor?.name ?? "Choose vendor…"}</span>
+            {vendor && (
+              <Badge variant={interstate ? "warning" : "neutral"}>{interstate ? "IGST" : "CGST+SGST"}</Badge>
+            )}
+          </button>
+        </Field>
+        <Field label="Vendor invoice no.">
+          <Input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="—" className="h-9" />
+        </Field>
+        <Field label="Invoice date">
+          <Input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="h-9" />
+        </Field>
+      </div>
+
+      {usingSeed && (
+        <p className="mt-3 rounded-md bg-warning-bg px-3 py-2 text-sm text-warning">
+          Demo catalogue — import or add your items before recording purchases.
+        </p>
+      )}
+
+      {/* Item search */}
+      <div className="mt-5">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-text-tertiary" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search items to receive…"
+            className="pl-8"
+          />
+        </div>
+        {query.trim() && (
+          <div className="mt-1 overflow-hidden rounded-md border border-border">
+            {results.map((it) => (
+              <button
+                key={it.id}
+                onClick={() => addItem(it)}
+                className="flex w-full items-center gap-2 border-b border-divider px-3 py-2 text-left text-sm last:border-b-0 hover:bg-surface"
+              >
+                <Plus className="size-3.5 text-text-tertiary" />
+                <span className="min-w-0 flex-1 truncate">{it.name}</span>
+                <span className="shrink-0 text-xs text-text-tertiary">{it.manufacturer}</span>
+              </button>
+            ))}
+            {/* No silent add: an unmatched item is created explicitly here. */}
+            {!hasExactMatch && (
+              <button
+                onClick={() => setCreateItemOpen(true)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-primary hover:bg-surface"
+              >
+                <PackagePlus className="size-3.5" />
+                Add “{query.trim()}” as a new item
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Lines */}
+      <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+        <div className="min-w-[52rem]">
+          <div className={`grid ${GRID} gap-2 border-b border-border bg-surface px-3 py-2 text-[0.6875rem] font-medium tracking-wide text-text-tertiary uppercase`}>
+            <span>Item</span>
+            <span>Batch</span>
+            <span>Expiry</span>
+            <span className="text-right">Qty</span>
+            <span className="text-right">Free</span>
+            <span className="text-right">PTR ₹</span>
+            <span className="text-right">Disc %</span>
+            <span className="text-right">MRP ₹</span>
+            <span className="text-right">Total</span>
+            <span />
+          </div>
+          {lines.length === 0 ? (
+            <p className="p-4 text-sm text-text-tertiary">Search above to add items received.</p>
+          ) : (
+            lines.map((l, i) => {
+              const c = computeGrnLine(l, interstate);
+              return (
+                <div key={i} className={`grid ${GRID} items-center gap-2 border-b border-divider px-3 py-1.5 text-sm last:border-b-0`}>
+                  <div className="min-w-0">
+                    <div className="truncate" title={l.name}>{l.name}</div>
+                    <div className="truncate text-[0.6875rem] text-text-tertiary">
+                      eff {formatPaise(c.effectiveCostPaise)}/u · GST {formatPaise(c.gstPaise)} @ {l.gstRate}%
+                      {l.freeQty ? ` · +${l.freeQty} free` : ""}
+                    </div>
+                  </div>
+                  <Input value={l.batchNo} onChange={(e) => patch(i, { batchNo: e.target.value })} placeholder="batch" className="h-7 px-2 text-xs" />
+                  <Input value={l.expiry} onChange={(e) => patch(i, { expiry: e.target.value })} placeholder="YYYY-MM" className="h-7 px-2 text-xs" />
+                  <Input type="number" min={0} value={l.qty} onChange={(e) => patch(i, { qty: Math.max(0, Math.floor(Number(e.target.value) || 0)) })} className="h-7 px-1 text-right text-xs tabular-nums" />
+                  <Input type="number" min={0} value={l.freeQty || ""} onChange={(e) => patch(i, { freeQty: Math.max(0, Math.floor(Number(e.target.value) || 0)) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
+                  <Input type="number" min={0} value={toRupees(l.ptrPaise) || ""} onChange={(e) => patch(i, { ptrPaise: toPaise(e.target.value) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
+                  <Input type="number" min={0} max={100} value={l.discountValue || ""} onChange={(e) => patch(i, { discountType: "pct", discountValue: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
+                  <Input type="number" min={0} value={toRupees(l.mrpPaise) || ""} onChange={(e) => patch(i, { mrpPaise: toPaise(e.target.value) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
+                  <span className="text-right text-xs tabular-nums">{formatPaise(c.lineTotalPaise)}</span>
+                  <button onClick={() => setLines((ls) => ls.filter((_, idx) => idx !== i))} className="text-text-tertiary hover:text-destructive" aria-label="Remove line">
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Footer: payment + totals */}
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-text-tertiary">Payment to vendor</p>
+          <div className="flex items-center gap-2">
+            <Button variant={payment.method === "cash" ? "default" : "outline"} size="sm" onClick={() => setPayment((p) => ({ ...p, method: "cash" }))}>
+              <Banknote /> Paid now
+            </Button>
+            <Button variant={payment.method === "credit" ? "default" : "outline"} size="sm" onClick={() => setPayment((p) => ({ ...p, method: "credit" }))}>
+              <CalendarClock /> On credit
+            </Button>
+          </div>
+          {payment.method === "credit" && (
+            <div className="mt-2 flex items-center gap-1.5">
+              {CREDIT_PRESETS.map((d) => (
+                <Button key={d} size="sm" variant={payment.creditDays === d ? "secondary" : "outline"} onClick={() => setPayment((p) => ({ ...p, creditDays: d }))}>
+                  {d}d
+                </Button>
+              ))}
+              <span className="text-xs text-text-tertiary">due {format(addDays(new Date(), payment.creditDays), "d MMM yyyy")}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Totals breakup */}
+        <div className="w-full max-w-xs space-y-1 text-sm sm:w-auto">
+          <Row label="Subtotal" value={formatPaise(totals.subtotalPaise)} muted />
+          {totals.discountPaise > 0 && <Row label="Trade discount" value={`− ${formatPaise(totals.discountPaise)}`} muted />}
+          <Row label="Taxable" value={formatPaise(totals.taxablePaise)} muted />
+          {totals.byRate
+            .filter((b) => b.gstPaise > 0)
+            .map((b) => (
+              <Row key={b.rate} label={`GST @ ${b.rate}% ${interstate ? "(IGST)" : "(CGST+SGST)"}`} value={formatPaise(b.gstPaise)} muted />
+            ))}
+          {totals.freeQty > 0 && <Row label={`Free goods (${totals.freeQty}, zero ITC)`} value="₹0.00" muted />}
+          <div className="flex items-center justify-between border-t border-border pt-1.5 text-base font-semibold">
+            <span>Total payable</span>
+            <span className="tabular-nums">{formatPaise(totals.grandTotalPaise)}</span>
+          </div>
+          <p className="text-right text-[0.6875rem] text-text-tertiary">ITC claimable {formatPaise(totals.gstPaise)}</p>
+        </div>
+      </div>
+
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+
+      <div className="mt-4 flex items-center gap-2">
+        <Button size="lg" onClick={save} disabled={!canSave}>
+          <Truck /> {saving ? "Saving…" : "Record GRN"}
+        </Button>
+        <Button variant="ghost" onClick={() => navigate("/purchases")}>
+          Cancel
+        </Button>
+      </div>
+
+      <VendorPicker open={vendorPickerOpen} onOpenChange={setVendorPickerOpen} orgId={orgId} onSelect={setVendor} />
+      {/* Mounted only while open so the name prefills from the current search each time. */}
+      {createItemOpen && (
+        <CreateItemDialog open onOpenChange={setCreateItemOpen} defaultName={query.trim()} onCreated={onItemCreated} />
+      )}
+      <ShopSetupDialog open={setupOpen} onOpenChange={setSetupOpen} onResolved={() => void save()} />
+    </Page>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-xs text-text-tertiary">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className={muted ? "text-text-tertiary" : ""}>{label}</span>
+      <span className="tabular-nums">{value}</span>
+    </div>
+  );
+}

@@ -1,5 +1,6 @@
-import type { BillLine, Payment } from "./types";
+import type { BillLine, DiscountType, Payment } from "./types";
 import { lineNet } from "./billing";
+import { computeGrnLine } from "./grn";
 
 /** Thrown when a save outlives its timeout (the request may still have landed). */
 export class TimeoutError extends Error {
@@ -124,16 +125,23 @@ export function buildSalesInvoicePayload(
   };
 }
 
-/** One line entered in the vendor purchase form. */
+/** One line entered in the GRN (vendor purchase) form. */
 export interface PurchaseLine {
   itemId: string;
   name: string;
   batchNo: string;
   expiry: string; // YYYY-MM (or empty)
   qty: number;
-  ptrPaise: number; // cost — what we pay the vendor
+  /** Scheme free goods (e.g. the "1" in 10+1): enter stock, carry zero ITC. */
+  freeQty: number;
+  ptrPaise: number; // cost per unit, tax-exclusive — what we pay the vendor
   mrpPaise: number; // sale price for the received batch
   gstRate: number;
+  /** Trade discount on the line: "pct" of gross, or "flat" paise off. */
+  discountType?: DiscountType;
+  discountValue?: number;
+  /** Free-text scheme note (e.g. "10+1", "2% CD") kept for the record. */
+  schemeText?: string;
 }
 
 /** One line in the receive_purchase RPC payload (snake_case to match the SQL). */
@@ -143,11 +151,16 @@ export interface PurchaseLinePayload {
   batch_no: string;
   expiry: string;
   qty: number;
+  free_qty: number;
   ptr_paise: number;
   mrp_paise: number;
   gst_rate: number;
-  free_qty?: number;
-  scheme_text?: string;
+  /** Tax-exclusive taxable value (gross − trade discount). The RPC trusts this
+   *  if sent, else falls back to qty×ptr — so discounts must come through here. */
+  taxable_paise: number;
+  discount_type: string | null;
+  discount_value: number;
+  scheme_text: string | null;
 }
 
 /** Args for the receive_purchase (GRN) RPC (keys match the SQL parameter names). */
@@ -159,36 +172,55 @@ export interface ReceivePurchaseArgs {
   p_payment_method: string;
   p_credit_days: number;
   p_lines: PurchaseLinePayload[];
+  p_grn_no?: string | null;
+}
+
+/** Invoice/GRN metadata captured alongside the lines. */
+export interface GrnMeta {
+  vendorInvoiceNo?: string;
+  /** YYYY-MM-DD. */
+  vendorInvoiceDate?: string;
+  grnNo?: string;
 }
 
 /**
- * Build the receive_purchase args for a GRN entered on a vendor profile. The RPC
- * adds stock (qty + free goods), backs CGST/SGST/IGST off the cost, and posts the
- * stock movement + double entry (Dr Purchase + Dr GST input = Cr vendor). Taxable
- * defaults to qty x PTR server-side, so the client only sends item/batch/qty/cost.
+ * Build the receive_purchase args for a GRN. The RPC adds stock (qty + free
+ * goods), splits CGST/SGST/IGST off the cost, and posts the stock movement +
+ * double entry (Dr Purchase + Dr GST input = Cr vendor). It trusts the
+ * `taxable_paise` we send (so trade discounts are honoured) and derives the tax
+ * split from `interstate` itself — we pass the same flag to `computeGrnLine` so
+ * the stored numbers equal what the user saw.
  */
 export function buildReceivePurchasePayload(
   shopId: string,
   vendor: OrderParty,
   lines: PurchaseLine[],
   payment: Payment,
+  interstate: boolean,
+  meta: GrnMeta = {},
 ): ReceivePurchaseArgs {
   return {
     p_shop_id: shopId,
     p_vendor_id: vendor.id,
-    p_vendor_invoice_no: null,
-    p_vendor_invoice_date: null,
+    p_vendor_invoice_no: meta.vendorInvoiceNo?.trim() || null,
+    p_vendor_invoice_date: meta.vendorInvoiceDate || null,
     p_payment_method: payment.method,
     p_credit_days: payment.method === "credit" ? payment.creditDays : 0,
+    p_grn_no: meta.grnNo?.trim() || null,
     p_lines: lines.map((l) => ({
       item_id: l.itemId,
       name: l.name,
       batch_no: l.batchNo,
       expiry: l.expiry,
       qty: l.qty,
+      free_qty: l.freeQty || 0,
       ptr_paise: l.ptrPaise,
       mrp_paise: l.mrpPaise,
       gst_rate: l.gstRate,
+      taxable_paise: computeGrnLine(l, interstate).taxablePaise,
+      discount_type: l.discountType ?? null,
+      discount_value: l.discountValue ?? 0,
+      scheme_text: l.schemeText?.trim() || null,
     })),
   };
 }
