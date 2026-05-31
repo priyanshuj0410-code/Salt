@@ -1,4 +1,4 @@
-export type EntityKey = "ledgers" | "party_gstin" | "items" | "batches";
+export type EntityKey = "ledgers" | "party_gstin" | "items" | "batches" | "salesmen" | "doctors" | "shops";
 
 export interface FieldDef {
   key: string;
@@ -80,6 +80,45 @@ export const ENTITIES: EntityConfig[] = [
       { key: "qty", label: "Quantity", required: true, aliases: ["quantity", "stock", "qty on hand", "closing stock", "balance"] },
       { key: "mrp", label: "MRP", required: true, aliases: ["rate", "price", "sale rate", "mrp rate"] },
       { key: "ptr", label: "Purchase price", aliases: ["ptr", "purchase rate", "purchase price", "cost", "buy rate"] },
+    ],
+  },
+  {
+    key: "salesmen",
+    label: "Salesmen",
+    order: 4,
+    description: "Your sales staff — so historical sales and collections can be attributed.",
+    tip: "Just names; phone and territory are optional. Re-importing adds rows (no dedup).",
+    fields: [
+      { key: "name", label: "Name", required: true, aliases: ["salesman", "sales man", "sales person", "salesperson", "staff", "employee", "representative", "rep", "mr"] },
+      { key: "phone", label: "Phone", aliases: ["mobile", "contact", "phone no", "mobile no"] },
+      { key: "territory", label: "Territory", aliases: ["area", "region", "route", "beat", "zone"] },
+    ],
+  },
+  {
+    key: "doctors",
+    label: "Doctors",
+    order: 5,
+    description: "Prescribing doctors — for Schedule H1/X records and prescriptions.",
+    tip: "Name is required; the registration no is the identity key. Re-importing adds rows (no dedup).",
+    fields: [
+      { key: "name", label: "Name", required: true, aliases: ["doctor", "dr", "physician", "prescriber", "doctor name"] },
+      { key: "registration_no", label: "Registration no", aliases: ["reg no", "registration", "registration number", "regn no", "mci no", "license no", "imr no"] },
+      { key: "phone", label: "Phone", aliases: ["mobile", "contact", "phone no", "mobile no"] },
+    ],
+  },
+  {
+    key: "shops",
+    label: "Branches",
+    order: 6,
+    description: "Your branches / outlets — one row per shop. Import each branch's data by switching the active shop.",
+    tip: "Name is required; GSTIN/state/code optional. Imported branches are never marked primary.",
+    fields: [
+      { key: "name", label: "Name", required: true, aliases: ["shop", "branch", "outlet", "store", "company", "firm"] },
+      { key: "code", label: "Code", aliases: ["short code", "branch code", "shop code", "abbr"] },
+      { key: "gstin", label: "GSTIN", aliases: ["gst", "gst no", "gst number", "gstin no"] },
+      { key: "state_code", label: "State code", aliases: ["state", "state code", "pos", "place of supply"] },
+      { key: "address", label: "Address", aliases: ["city", "location", "add", "addr"] },
+      { key: "phone", label: "Phone", aliases: ["mobile", "contact", "phone no", "telephone"] },
     ],
   },
 ];
@@ -370,6 +409,33 @@ function validate(entity: EntityKey, d: Record<string, string>, ctx: ValidateCtx
         gst_rate: Number(d.gst_rate) || 0,
         schedule,
         barcode: d.barcode || null,
+      },
+    };
+  }
+
+  if (entity === "salesmen") {
+    if (!d.name) issues.push({ field: "name", level: "error", message: "Missing salesman name" });
+    return { issues, payload: { name: d.name, phone: d.phone || null, territory: d.territory || null } };
+  }
+
+  if (entity === "doctors") {
+    if (!d.name) issues.push({ field: "name", level: "error", message: "Missing doctor name" });
+    return { issues, payload: { name: d.name, registration_no: d.registration_no || null, phone: d.phone || null } };
+  }
+
+  if (entity === "shops") {
+    if (!d.name) issues.push({ field: "name", level: "error", message: "Missing branch name" });
+    if (d.gstin && !GSTIN_RE.test(d.gstin.toUpperCase()))
+      issues.push({ field: "gstin", level: "warning", message: "GSTIN does not look valid (imported anyway)" });
+    return {
+      issues,
+      payload: {
+        name: d.name,
+        code: d.code || null,
+        gstin: d.gstin ? d.gstin.toUpperCase() : null,
+        state_code: d.state_code || null,
+        address: d.address || null,
+        phone: d.phone || null,
       },
     };
   }
