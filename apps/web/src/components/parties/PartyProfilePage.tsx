@@ -322,7 +322,7 @@ export function PartyProfilePage() {
                 <ShoppingCart /> New sale
               </Button>
             ) : (
-              <Button onClick={() => navigate(`/parties/${ledger.id}/purchase`)}>
+              <Button onClick={() => navigate(`/purchases/new?vendor=${ledger.id}`)}>
                 <ShoppingCart /> New purchase
               </Button>
             )}

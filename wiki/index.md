@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-05-31
+updated: 2026-06-01
 ---
 
 # Wiki index
@@ -30,6 +30,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale.
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, FEFO, stock cap, billTotals, Schedule H1/X checkout gate, Save & Print + GST split.
 - [architecture/gst-returns](architecture/gst-returns.md) — GST returns: GSTR-1 (B2B/B2CL/B2CS/HSN) and GSTR-3B (output − ITC = net payable), read from `sales_invoices`/`sale_lines`/`purchases`; GSTN JSON + CSV export.
+- [architecture/grn](architecture/grn.md) — GRN / purchase (inbound): `purchases`/`purchase_lines` + `receive_purchase`, scheme free goods + multi-rate GST + trade discount economics (`lib/grn.ts`), effective cost + ITC, new-item review, the `/purchases` screens.
 - [architecture/information-architecture](architecture/information-architecture.md) — full navigation tree, screen inventory, keyboard shortcut system, 7 key user journeys, role-based access, URL structure.
 - [architecture/ondc-b2b-pharma](architecture/ondc-b2b-pharma.md) — ONDC/Beckn deep dive for vendor ordering: roles, transaction flow, the OTC-only pharma gate, the two plays (buyer-app procurement vs seller-app retail), onboarding; why it's watch-and-prototype.
 - [architecture/payments](architecture/payments.md) — money in/out on the payments ledger: the `record_payment` RPC + tables contract, the as-built `/payments` UI (SALT-003), the allocation/back-dating gaps, and the module roadmap.

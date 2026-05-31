@@ -33,6 +33,9 @@ interface CatalogState {
   /** True when falling back to the demo seed because the org has no items yet. */
   usingSeed: boolean;
   load: (orgId: string) => Promise<void>;
+  /** Add or replace a single item (e.g. one just created at GRN entry) without a
+   *  full reload. The first real item also drops the demo seed. */
+  upsertItem: (item: Item) => void;
 }
 
 function mapRows(items: ItemRow[], batches: BatchRow[]): Item[] {
@@ -100,4 +103,14 @@ export const useCatalog = create<CatalogState>((set) => ({
       set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true });
     }
   },
+
+  upsertItem: (item) =>
+    set((s) => {
+      // A real item means the org has its own catalogue now — never merge into
+      // the demo seed (it would pollute search with fake stock).
+      const base = s.usingSeed ? [] : s.items;
+      const idx = base.findIndex((i) => i.id === item.id);
+      const items = idx >= 0 ? base.map((i, k) => (k === idx ? item : i)) : [...base, item];
+      return { items, usingSeed: false, loaded: true };
+    }),
 }));
