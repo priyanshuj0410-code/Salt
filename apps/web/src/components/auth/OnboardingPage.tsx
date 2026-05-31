@@ -1,18 +1,21 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import { parseGstin } from "@/lib/gstin";
 
 export function OnboardingPage() {
   const { session, membership, loading, refresh, signOut } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"create" | "join">("create");
   const [name, setName] = useState("");
+  const [gstin, setGstin] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const gstinInfo = useMemo(() => parseGstin(gstin), [gstin]);
 
   if (loading) {
     return (
@@ -30,16 +33,34 @@ export function OnboardingPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const { error } =
-        mode === "create"
-          ? await supabase.rpc("create_org", { p_name: name.trim() })
-          : await supabase.rpc("redeem_invite", { p_code: code.trim() });
-      if (error) {
-        setError(error.message);
-        return;
+      // Owners go to the first-run setup wizard; cashiers (join) go straight to the counter.
+      let target = "/";
+      if (mode === "create") {
+        const { data: orgId, error } = await supabase.rpc("create_org", { p_name: name.trim() });
+        if (error) {
+          setError(error.message);
+          return;
+        }
+        target = "/setup";
+        // Pre-fill the new org's primary shop from a valid GSTIN so the owner
+        // skips the just-in-time ShopSetupDialog before their first bill (state
+        // is billing's hard blocker). Best-effort — a failure here must not strand
+        // signup; they can still set it under Settings → Organisation.
+        if (orgId && gstinInfo.valid) {
+          await supabase
+            .from("shops")
+            .update({ gstin: gstinInfo.raw, state_code: gstinInfo.stateCode })
+            .eq("org_id", orgId as string);
+        }
+      } else {
+        const { error } = await supabase.rpc("redeem_invite", { p_code: code.trim() });
+        if (error) {
+          setError(error.message);
+          return;
+        }
       }
       await refresh();
-      navigate("/", { replace: true });
+      navigate(target, { replace: true });
     } finally {
       setSubmitting(false);
     }
@@ -80,14 +101,38 @@ export function OnboardingPage() {
 
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           {mode === "create" ? (
-            <Input
-              type="text"
-              placeholder="e.g. Sharma Medical Store"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              aria-label="Organization name"
-              autoFocus
-            />
+            <>
+              <Input
+                type="text"
+                placeholder="e.g. Sharma Medical Store"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                aria-label="Organization name"
+                autoFocus
+              />
+              <div>
+                <Input
+                  type="text"
+                  inputMode="text"
+                  placeholder="GSTIN (optional) — e.g. 27AAPFU0939F1ZV"
+                  value={gstin}
+                  onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                  aria-label="GSTIN"
+                  maxLength={15}
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="font-mono text-xs uppercase tracking-wide"
+                />
+                {gstinInfo.raw &&
+                  (gstinInfo.valid ? (
+                    <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
+                      ✓ {gstinInfo.stateName} — we&apos;ll set this as your billing state.
+                    </p>
+                  ) : gstinInfo.error ? (
+                    <p className="mt-1 text-xs text-muted-foreground">{gstinInfo.error}</p>
+                  ) : null)}
+              </div>
+            </>
           ) : (
             <Input
               type="text"
