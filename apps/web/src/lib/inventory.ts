@@ -10,7 +10,7 @@
  * The pure helpers (no React, no Supabase) carry all the arithmetic so they can be
  * smoke-tested in isolation; the views are thin presentation over `useInventory`.
  */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
@@ -370,6 +370,8 @@ interface UseInventory {
   loading: boolean;
   error: string | null;
   lookbackDays: number;
+  /** Re-fetch from the server (call after a stock mutation). */
+  reload: () => void;
 }
 
 /** Raw PostgREST row shape for the batches+item embed. */
@@ -433,6 +435,8 @@ export function useInventory(): UseInventory {
   const [movements, setMovements] = useState<SaleMovement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nonce, setNonce] = useState(0);
+  const reload = useCallback(() => setNonce((n) => n + 1), []);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -465,7 +469,7 @@ export function useInventory(): UseInventory {
     return () => {
       active = false;
     };
-  }, [orgId]);
+  }, [orgId, nonce]);
 
   const batches = useMemo(() => {
     const now = new Date();
@@ -477,5 +481,5 @@ export function useInventory(): UseInventory {
     [batchRows, movements],
   );
 
-  return { batches, items, loading, error, lookbackDays: LOOKBACK_DAYS };
+  return { batches, items, loading, error, lookbackDays: LOOKBACK_DAYS, reload };
 }

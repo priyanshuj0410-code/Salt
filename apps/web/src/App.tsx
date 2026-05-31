@@ -19,6 +19,9 @@ import { DeadStockPage } from "@/components/inventory/DeadStockPage";
 import { ReorderPage } from "@/components/inventory/ReorderPage";
 import { OutOfStockPage } from "@/components/inventory/OutOfStockPage";
 import { TurnoverPage } from "@/components/inventory/TurnoverPage";
+import { AdjustmentsPage } from "@/components/inventory/AdjustmentsPage";
+import { PhysicalCountPage } from "@/components/inventory/PhysicalCountPage";
+import { ExpiryDestructionPage } from "@/components/inventory/ExpiryDestructionPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { GstLiabilityPage } from "@/components/gst/GstLiabilityPage";
@@ -176,6 +179,30 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <TurnoverPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/adjustments"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <AdjustmentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/count"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PhysicalCountPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/destruction"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ExpiryDestructionPage />
           </ProtectedRoute>
         }
       />

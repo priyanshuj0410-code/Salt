@@ -9,6 +9,9 @@ const TABS: { to: string; label: string }[] = [
   { to: "/inventory/reorder", label: "Reorder" },
   { to: "/inventory/out-of-stock", label: "Out of stock" },
   { to: "/inventory/turnover", label: "Turnover" },
+  { to: "/inventory/adjustments", label: "Adjustments" },
+  { to: "/inventory/count", label: "Physical count" },
+  { to: "/inventory/destruction", label: "Destruction" },
 ];
 
 /**
