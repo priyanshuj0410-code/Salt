@@ -139,7 +139,7 @@ export const NAV: NavModule[] = [
     roles: ["owner"],
     children: [
       { label: "Dashboard", path: "/reports", built: true },
-      { label: "Sales reports", built: false },
+      { label: "Sales reports", path: "/reports/sales", built: true },
       { label: "Purchase reports", built: false },
       { label: "Inventory reports", built: false },
       { label: "Financial reports", built: false },

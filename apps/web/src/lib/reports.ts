@@ -38,6 +38,27 @@ export function daysBetween(from: string, to: string): number {
   return Math.floor((Date.parse(to) - Date.parse(from)) / 86_400_000);
 }
 
+export type RangePreset = "today" | "month" | "last-month" | "fy";
+
+/**
+ * Common date-range presets as inclusive [from, to]. The Indian financial year
+ * runs Apr 1 → Mar 31, so "This FY" starts on the most recent April 1st.
+ */
+export function presetRange(preset: RangePreset, today: string = istToday()): { from: string; to: string } {
+  const [y, m] = today.split("-").map(Number); // m is 1-12
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const lastDayOfMonth = (yy: number, mm: number) => new Date(Date.UTC(yy, mm, 0)).getUTCDate();
+  if (preset === "today") return { from: today, to: today };
+  if (preset === "month") return { from: `${y}-${pad(m)}-01`, to: today };
+  if (preset === "last-month") {
+    const ly = m === 1 ? y - 1 : y;
+    const lm = m === 1 ? 12 : m - 1;
+    return { from: `${ly}-${pad(lm)}-01`, to: `${ly}-${pad(lm)}-${pad(lastDayOfMonth(ly, lm))}` };
+  }
+  const fyStartYear = m >= 4 ? y : y - 1; // before April ⇒ FY started last calendar year
+  return { from: `${fyStartYear}-04-01`, to: today };
+}
+
 // ---- Sales: top items + cash/credit split -----------------------------------
 
 /** A `sale_lines` row, the shape the dashboard / sales reports fetch. */
@@ -103,6 +124,96 @@ export function cashCreditSplit(rows: PayMethodRow[]): CashCreditSplit {
     }
   }
   return out;
+}
+
+// ---- Generic rollups (items / categories / parties), reused across suites ---
+
+/** Minimum line shape for {@link rollupLines} — a sold/received line. */
+export interface RollupLineInput {
+  qty: number;
+  taxable_paise: number;
+  line_total_paise: number;
+}
+
+/** A line group (per item, per GST rate, per schedule…), value-ranked. */
+export interface LineGroup {
+  key: string;
+  label: string;
+  qty: number;
+  taxablePaise: number;
+  totalPaise: number;
+  lines: number;
+}
+
+/** Group lines by `keyOf`, summing qty / taxable / total; sorted by value desc. */
+export function rollupLines<T extends RollupLineInput>(
+  rows: T[],
+  keyOf: (r: T) => string,
+  labelOf: (r: T) => string,
+): LineGroup[] {
+  const map = new Map<string, LineGroup>();
+  for (const r of rows) {
+    const key = keyOf(r);
+    let g = map.get(key);
+    if (!g) {
+      g = { key, label: labelOf(r), qty: 0, taxablePaise: 0, totalPaise: 0, lines: 0 };
+      map.set(key, g);
+    }
+    g.qty += r.qty;
+    g.taxablePaise += r.taxable_paise;
+    g.totalPaise += r.line_total_paise;
+    g.lines += 1;
+  }
+  return Array.from(map.values()).sort((a, b) => b.totalPaise - a.totalPaise);
+}
+
+/** Minimum document shape for {@link rollupParties} — a dated invoice/GRN. */
+export interface RollupDocInput {
+  total_paise: number;
+  taxable_paise: number;
+  paid_paise: number;
+  date: string;
+}
+
+/** A party group (customer / vendor / cashier), value-ranked, with outstanding + last activity. */
+export interface PartyGroup {
+  key: string;
+  name: string;
+  docs: number;
+  totalPaise: number;
+  taxablePaise: number;
+  paidPaise: number;
+  outstandingPaise: number;
+  lastDate: string;
+}
+
+/** Group documents by `keyOf` (party/vendor/cashier), summing value + tracking last activity. */
+export function rollupParties<T extends RollupDocInput>(
+  rows: T[],
+  keyOf: (r: T) => string,
+  nameOf: (r: T) => string,
+): PartyGroup[] {
+  const map = new Map<string, PartyGroup>();
+  for (const r of rows) {
+    const key = keyOf(r);
+    let g = map.get(key);
+    if (!g) {
+      g = { key, name: nameOf(r), docs: 0, totalPaise: 0, taxablePaise: 0, paidPaise: 0, outstandingPaise: 0, lastDate: r.date };
+      map.set(key, g);
+    }
+    g.docs += 1;
+    g.totalPaise += r.total_paise;
+    g.taxablePaise += r.taxable_paise;
+    g.paidPaise += r.paid_paise;
+    if (r.date > g.lastDate) g.lastDate = r.date;
+  }
+  for (const g of map.values()) g.outstandingPaise = g.totalPaise - g.paidPaise;
+  return Array.from(map.values()).sort((a, b) => b.totalPaise - a.totalPaise);
+}
+
+/** Sum a numeric field across rows. */
+export function sumBy<T>(rows: T[], pick: (r: T) => number): number {
+  return rows.reduce((s, r) => s + pick(r), 0);
 }
 
 // ---- Drug licenses ----------------------------------------------------------

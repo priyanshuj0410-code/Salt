@@ -15,6 +15,7 @@ import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { DashboardPage } from "@/components/reports/DashboardPage";
+import { SalesReportsPage } from "@/components/reports/SalesReportsPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -117,6 +118,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/sales"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SalesReportsPage />
           </ProtectedRoute>
         }
       />
