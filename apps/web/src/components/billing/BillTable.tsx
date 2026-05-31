@@ -70,14 +70,14 @@ export function BillTable() {
 
   if (lines.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+      <div className="flex min-h-44 flex-1 items-center justify-center rounded-lg border border-dashed border-border px-4 text-center text-sm text-text-tertiary">
         No items yet — search above and press Enter to add.
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-auto rounded-lg border">
+    <div className="overflow-auto rounded-lg border border-border md:flex-1">
       <Table className="table-fixed">
         <TableHeader className="sticky top-0 z-10 bg-background">
           <TableRow>
