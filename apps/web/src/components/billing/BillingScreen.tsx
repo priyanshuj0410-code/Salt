@@ -131,21 +131,16 @@ export function BillingScreen() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-surface">
+      {/* Customer is the primary context, so it anchors the header (left); the
+          brand lives in the sidebar, not here. */}
       <header className="flex items-center gap-3 border-b border-border bg-background px-3 py-2 md:px-4 md:py-2.5">
-        <div className="hidden shrink-0 items-baseline gap-3 md:flex">
-          <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-text-tertiary">Counter 1</span>
-        </div>
-        <div className="hidden flex-1 md:block" />
-        <span className="hidden text-sm text-text-tertiary lg:block">
-          Invoice <span className="font-medium text-text-primary">INV/2026-27/0042</span>
-        </span>
         <CustomerBar
           name={party?.name ?? "Walk-in customer"}
           phone={customerPhone}
           onChange={() => setCustomerOpen(true)}
-          className="min-w-0 flex-1 md:w-64 md:flex-none"
+          className="min-w-0 flex-1 md:w-72 md:flex-none"
         />
+        <span className="ml-auto hidden shrink-0 text-sm text-text-tertiary md:block">Counter 1</span>
       </header>
 
       <div className="flex-1 overflow-y-auto p-3 md:grid md:grid-cols-[1fr_320px] md:gap-4 md:overflow-hidden md:p-4">
