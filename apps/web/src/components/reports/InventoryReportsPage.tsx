@@ -14,11 +14,13 @@ import { fetchAllPaged } from "@/lib/reportData";
 import {
   presetRange,
   rollupStock,
+  reorderList,
   sumBy,
   downloadCsv,
   paiseToRupeeStr,
   type StockRow,
   type StockItemAgg,
+  type ReorderItem,
 } from "@/lib/reports";
 
 interface StockOnHandRow extends StockRow {
@@ -56,6 +58,11 @@ interface CountLineRow {
   items: { name: string | null } | null;
   physical_counts: { count_date: string; status: string } | null;
 }
+interface ItemReorderRow {
+  id: string;
+  name: string;
+  reorder_level: number;
+}
 
 type ViewKey = "stock" | "valuation" | "expiry" | "dead" | "low" | "movement" | "variance";
 const VIEWS: ReportView<ViewKey>[] = [
@@ -63,14 +70,10 @@ const VIEWS: ReportView<ViewKey>[] = [
   { key: "valuation", label: "Valuation" },
   { key: "expiry", label: "Near expiry" },
   { key: "dead", label: "Dead / slow" },
-  { key: "low", label: "Low stock" },
+  { key: "low", label: "Reorder" },
   { key: "movement", label: "Movement" },
   { key: "variance", label: "Count variance" },
 ];
-
-/** On-hand units at or below this count surface in the low-stock view (until
- *  per-item reorder levels exist — see the filed catalogue ticket). */
-const LOW_STOCK_QTY = 10;
 
 const REASON_LABEL: Record<string, string> = {
   sale: "Sale",
@@ -101,6 +104,7 @@ export function InventoryReportsPage() {
   const [stock, setStock] = useState<StockOnHandRow[]>([]);
   const [expiry, setExpiry] = useState<NearExpiryRow[]>([]);
   const [dead, setDead] = useState<DeadRow[]>([]);
+  const [reorderItems, setReorderItems] = useState<ItemReorderRow[]>([]);
   const [moves, setMoves] = useState<MovementRow[]>([]);
   const [counts, setCounts] = useState<CountLineRow[]>([]);
   const [snapLoading, setSnapLoading] = useState(true);
@@ -113,7 +117,7 @@ export function InventoryReportsPage() {
     const db = supabase;
     (async () => {
       setSnapLoading(true);
-      const [st, ex, dd] = await Promise.all([
+      const [st, ex, dd, it] = await Promise.all([
         fetchAllPaged<StockOnHandRow>((f, t) =>
           db
             .from("v_stock_on_hand")
@@ -142,11 +146,21 @@ export function InventoryReportsPage() {
             .order("stock_value_paise", { ascending: false })
             .range(f, t),
         ),
+        fetchAllPaged<ItemReorderRow>((f, t) =>
+          db
+            .from("items")
+            .select("id,name,reorder_level")
+            .eq("org_id", orgId)
+            .eq("is_active", true)
+            .gt("reorder_level", 0)
+            .range(f, t),
+        ),
       ]);
       if (!active) return;
       setStock(st);
       setExpiry(ex);
       setDead(dd);
+      setReorderItems(it);
       setSnapLoading(false);
     })();
     return () => {
@@ -196,7 +210,12 @@ export function InventoryReportsPage() {
   }, [orgId, shopId, range]);
 
   const byItem = useMemo(() => rollupStock(stock), [stock]);
-  const lowStock = useMemo(() => byItem.filter((i) => i.qty <= LOW_STOCK_QTY).sort((a, b) => a.qty - b.qty), [byItem]);
+  const onHandByItem = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const i of byItem) if (i.itemId) m.set(i.itemId, i.qty);
+    return m;
+  }, [byItem]);
+  const reorder = useMemo(() => reorderList(reorderItems, onHandByItem), [reorderItems, onHandByItem]);
   const stockKpis = useMemo(
     () => ({
       skus: byItem.length,
@@ -236,9 +255,9 @@ export function InventoryReportsPage() {
       ),
     low: () =>
       downloadCsv(
-        "low-stock.csv",
-        ["Item", "On hand", "Batches", "Cost value"],
-        lowStock.map((i) => [i.name, i.qty, i.batches, paiseToRupeeStr(i.costPaise)]),
+        "reorder.csv",
+        ["Item", "On hand", "Reorder level", "Shortfall"],
+        reorder.map((r) => [r.name, r.onHand, r.reorderLevel, r.shortfall]),
       ),
     movement: () =>
       downloadCsv(
@@ -260,7 +279,7 @@ export function InventoryReportsPage() {
     (view === "valuation" && byItem.length > 0) ||
     (view === "expiry" && expiry.length > 0) ||
     (view === "dead" && dead.length > 0) ||
-    (view === "low" && lowStock.length > 0) ||
+    (view === "low" && reorder.length > 0) ||
     (view === "movement" && moves.length > 0) ||
     (view === "variance" && counts.length > 0);
 
@@ -369,22 +388,22 @@ export function InventoryReportsPage() {
 
           {view === "low" && (
             <div className="flex flex-col gap-2">
-              <DataTable<StockItemAgg>
-                cols="2fr 0.7fr 0.7fr 1fr"
-                rows={lowStock}
-                rowKey={(r) => r.itemId ?? `name:${r.name}`}
+              <DataTable<ReorderItem>
+                cols="2fr 0.7fr 0.8fr 0.8fr"
+                rows={reorder}
+                rowKey={(r) => r.itemId}
                 loading={snapLoading}
-                empty={<EmptyState title="Nothing low on stock" hint={`Items with ${LOW_STOCK_QTY} units or fewer on hand appear here.`} />}
+                empty={<EmptyState title="Nothing to reorder" hint="Items at or below their reorder level appear here, including out-of-stock." />}
                 columns={[
                   { key: "item", header: "Item", cell: (r) => r.name },
-                  { key: "qty", header: "On hand", numeric: true, cell: (r) => <span className="text-warning">{r.qty}</span> },
-                  { key: "batches", header: "Batches", numeric: true, cell: (r) => r.batches },
-                  { key: "cost", header: "Cost value", numeric: true, cell: (r) => formatPaise(r.costPaise) },
+                  { key: "qty", header: "On hand", numeric: true, cell: (r) => <span className={r.onHand === 0 ? "text-danger" : "text-warning"}>{r.onHand}</span> },
+                  { key: "level", header: "Reorder level", numeric: true, cell: (r) => r.reorderLevel },
+                  { key: "short", header: "Shortfall", numeric: true, cell: (r) => r.shortfall },
                 ]}
               />
               <p className="text-xs text-text-tertiary">
-                Low-stock uses a flat {LOW_STOCK_QTY}-unit threshold; per-item reorder levels (and out-of-stock items) need a
-                catalogue reorder field — a ticket is filed.
+                Items at or below their per-item reorder level (set in the catalogue), including out-of-stock. Reorder level
+                is org-wide; on-hand is this shop.
               </p>
             </div>
           )}
@@ -439,7 +458,7 @@ export function InventoryReportsPage() {
           )}
 
           <p className="text-xs text-text-tertiary">
-            Stock, valuation, expiry, dead and low-stock are current-state. Movement and count variance cover the selected
+            Stock, valuation, expiry, dead and reorder are current-state. Movement and count variance cover the selected
             date range. Cost uses batch PTR; valuation at batch cost ≈ weighted average.
           </p>
         </div>

@@ -258,6 +258,38 @@ export function rollupStock(rows: StockRow[]): StockItemAgg[] {
   return Array.from(map.values()).sort((a, b) => b.costPaise - a.costPaise);
 }
 
+/** An item with its configured reorder level (from `items`). */
+export interface ReorderInput {
+  id: string;
+  name: string;
+  reorder_level: number;
+}
+
+/** A reorder candidate: on-hand at/below its reorder level (incl. out of stock). */
+export interface ReorderItem {
+  itemId: string;
+  name: string;
+  reorderLevel: number;
+  onHand: number;
+  shortfall: number;
+}
+
+/**
+ * Items needing reorder: those with a positive `reorder_level` whose on-hand
+ * (0 when absent from stock — the most urgent case `v_stock_on_hand` can't show)
+ * is at or below it. Sorted by shortfall, biggest gap first.
+ */
+export function reorderList(items: ReorderInput[], onHandByItem: Map<string, number>): ReorderItem[] {
+  return items
+    .filter((i) => i.reorder_level > 0)
+    .map((i) => {
+      const onHand = onHandByItem.get(i.id) ?? 0;
+      return { itemId: i.id, name: i.name, reorderLevel: i.reorder_level, onHand, shortfall: i.reorder_level - onHand };
+    })
+    .filter((r) => r.shortfall > 0)
+    .sort((a, b) => b.shortfall - a.shortfall);
+}
+
 // ---- Drug licenses ----------------------------------------------------------
 
 export interface LicenseRow {

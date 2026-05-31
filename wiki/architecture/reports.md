@@ -68,7 +68,7 @@ Shared UI: `components/reports/report-controls.tsx` (`ViewTabs` segmented contro
 | `/reports` | `DashboardPage` | live KPIs (today sales + cash/credit, collected, near-expiry value-at-risk, overdue >30d, receivables/payables, license status) + top items today + overdue collections (→ party) |
 | `/reports/sales` | `SalesReportsPage` | daily register · item-wise · categories (GST rate + schedule) · customers · cashiers · cancelled |
 | `/reports/purchases` | `PurchaseReportsPage` | GRN register · vendor-wise · item-wise · scheme tracking (free goods / scheme notes) |
-| `/reports/inventory` | `InventoryReportsPage` | stock on hand · valuation (cost vs MRP + margin) · near-expiry · dead/slow · low-stock · movement¹ · count variance¹ |
+| `/reports/inventory` | `InventoryReportsPage` | stock on hand · valuation (cost vs MRP + margin) · near-expiry · dead/slow · reorder · movement¹ · count variance¹ |
 | `/reports/financial` | `FinancialReportsPage` | receivables/payables aging · P&L¹ (accrual) · balance sheet · trial balance · day/cash/bank book¹ · margin¹ |
 | `/reports/tax` | `TaxReportsPage` | GSTR-1/3B summary preview · HSN summary · output by rate · ITC by rate |
 
@@ -86,9 +86,12 @@ current-state / as-of-now.
 - **P&L is accrual** (the ledger expenses purchases when received; periodic, no
   COGS posting). The **margin** view computes true gross margin = posted Sales −
   COGS from `stock_movements.unit_cost_paise`. A cash-basis P&L is future work.
-- **Low-stock** uses a flat 10-unit threshold and can't see out-of-stock items
-  (they drop out of `v_stock_on_hand`'s `qty <> 0`). Real per-item reorder levels
-  need a catalogue `items.reorder_point` — filed as **SALT-167** (catalogue).
+- **Reorder** uses the live per-item **`items.reorder_level`** (confirmed live —
+  the column is `reorder_level`, not the `reorder_point` first assumed): items
+  at/below their level, **including out-of-stock** (which `v_stock_on_hand` can't
+  show, as it filters `qty <> 0`). On-hand is per-shop, reorder level is org-wide.
+  Setting the level needs a field in the catalogue item form — **SALT-167**
+  (catalogue) narrowed to that.
 - **Tax reports preview**; filing (GSTN JSON/CSV, B2B/B2C detail, GSTR-2B match)
   stays in [GST & compliance](gst-returns.md). The tax suite reuses `lib/gst.ts`
   (`buildGstr1` / `buildGstr3b`) and links across.
