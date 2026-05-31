@@ -58,8 +58,8 @@ export const NAV: NavModule[] = [
     children: [
       { label: "Receive stock (GRN)", path: "/purchases/new", built: true },
       { label: "GRN history", path: "/purchases", built: true },
+      { label: "Purchase orders", path: "/purchases/orders", built: true },
       { label: "Debit notes", built: false },
-      { label: "Purchase orders", built: false },
     ],
   },
   {
