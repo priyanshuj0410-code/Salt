@@ -10,7 +10,6 @@ import { PageHeader } from "@/components/patterns/page-header";
 import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { useAuth } from "@/lib/auth";
-import { useTenant } from "@/lib/tenant";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { buildSavedInvoicePrintData, printSavedBill } from "@/lib/billPrint";
@@ -40,12 +39,10 @@ interface BillRow {
 interface LineRow {
   id: string;
   name: string;
-  pack: string | null;
   batch_no: string | null;
   expiry: string | null;
   qty: number;
   rate_paise: number;
-  mrp_paise: number;
   gst_rate: number;
   line_total_paise: number;
 }
@@ -53,8 +50,9 @@ interface LineRow {
 const invoiceNo = (b: BillRow) => b.invoice_no ?? `#${b.id.slice(0, 8)}`;
 
 export function BillHistoryPage() {
-  const orgId = useAuth().membership?.orgId;
-  const { shop } = useTenant();
+  const auth = useAuth();
+  const orgId = auth.membership?.orgId;
+  const shop = auth.shop;
   const [rows, setRows] = useState<BillRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [openBill, setOpenBill] = useState<BillRow | null>(null);
@@ -91,7 +89,7 @@ export function BillHistoryPage() {
     if (!supabase) return;
     const { data } = await supabase
       .from("sale_lines")
-      .select("id,name,pack,batch_no,expiry,qty,rate_paise,mrp_paise,gst_rate,line_total_paise")
+      .select("id,name,batch_no,expiry,qty,rate_paise,gst_rate,line_total_paise")
       .eq("invoice_id", b.id);
     setLines((data as LineRow[] | null) ?? []);
     if (b.party_id) {

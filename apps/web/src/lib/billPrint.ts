@@ -33,19 +33,18 @@ export interface SavedInvoice {
 /** Persisted sale line — the fields a reprint needs. */
 export interface SavedLine {
   name: string;
-  pack: string | null;
   batch_no: string | null;
   expiry: string | null;
   qty: number;
-  mrp_paise: number;
+  rate_paise: number; // MRP (tax-inclusive); sale_lines has no separate mrp column
   gst_rate: number;
   line_total_paise: number;
 }
 
-const PAYMENT_METHODS: PaymentMethod[] = ["cash", "card", "upi", "bank", "credit"];
-
+// The client Payment type is binary (cash | credit). card/upi/bank all print as a
+// cash sale (matching the counter); only an explicit credit sale shows "Credit".
 function asPaymentMethod(m: string | null): PaymentMethod {
-  return PAYMENT_METHODS.includes(m as PaymentMethod) ? (m as PaymentMethod) : "cash";
+  return m === "credit" ? "credit" : "cash";
 }
 
 /**
@@ -65,7 +64,7 @@ export function buildSavedInvoicePrintData(args: {
     method: asPaymentMethod(invoice.payment_method),
     creditDays: invoice.credit_days ?? 0,
   };
-  const gross = lines.reduce((s, l) => s + Math.round(l.qty * l.mrp_paise), 0);
+  const gross = lines.reduce((s, l) => s + Math.round(l.qty * l.rate_paise), 0);
   return {
     ref: invoice.invoice_no?.trim() || invoiceRef(invoice.id),
     dateTime: new Date(invoice.created_at).toLocaleString("en-IN", {
@@ -79,11 +78,11 @@ export function buildSavedInvoicePrintData(args: {
     payment,
     lines: lines.map<InvoiceLine>((l) => ({
       name: l.name,
-      pack: l.pack ?? "",
+      pack: "",
       batchNo: l.batch_no ?? "",
       expiry: l.expiry ?? "",
       qty: l.qty,
-      mrpPaise: l.mrp_paise,
+      mrpPaise: l.rate_paise,
       netPaise: l.line_total_paise,
       gstRate: l.gst_rate,
     })),
