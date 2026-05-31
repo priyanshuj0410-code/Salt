@@ -26,6 +26,8 @@ export interface Shop {
   gstin: string | null;
   address: string | null;
   phone: string | null;
+  /** UPI payee address (e.g. "shop@okhdfcbank") for collection pay-links. */
+  upi_vpa: string | null;
   cutover_date: string | null;
 }
 
@@ -75,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // guards on it.
       const { data: shopRow } = await supabase
         .from("shops")
-        .select("id, name, state_code, gstin, address, phone, cutover_date, is_primary")
+        .select("id, name, state_code, gstin, address, phone, upi_vpa, cutover_date, is_primary")
         .eq("org_id", data.org_id as string)
         .order("is_primary", { ascending: false })
         .order("created_at", { ascending: true })

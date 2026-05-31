@@ -86,6 +86,7 @@ export function PartyProfilePage() {
   const orgId = useAuth().membership?.orgId;
   const orgName = useAuth().membership?.orgName;
   const shopId = useAuth().shopId;
+  const shop = useAuth().shop;
   const navigate = useNavigate();
   const setParty = useBill((s) => s.setParty);
 
@@ -230,8 +231,9 @@ export function PartyProfilePage() {
     const msg = reminderMessage({
       partyName: ledger.name,
       duePaise: due,
-      shopName: orgName,
+      shopName: shop?.name ?? orgName,
       receivable: aging.receivable,
+      vpa: shop?.upi_vpa,
     });
     window.open(whatsappUrl(waPhone, msg), "_blank", "noopener,noreferrer");
   }
