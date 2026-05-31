@@ -6,6 +6,7 @@ import { OnboardingPage } from "@/components/auth/OnboardingPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/nav/AppLayout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OfflineBanner } from "@/components/OfflineBanner";
 
 // Route-level code splitting. Only the counter (the cashier hot path) plus the
 // auth/shell screens ship in the initial bundle; every owner-only screen — and
@@ -51,6 +52,7 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
+      <OfflineBanner />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
