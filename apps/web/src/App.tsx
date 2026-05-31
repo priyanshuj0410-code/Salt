@@ -18,6 +18,9 @@ const PartyProfilePage = lazy(() => import("@/components/parties/PartyProfilePag
 const GrnListPage = lazy(() => import("@/components/grn/GrnListPage").then((m) => ({ default: m.GrnListPage })));
 const GrnEntryPage = lazy(() => import("@/components/grn/GrnEntryPage").then((m) => ({ default: m.GrnEntryPage })));
 const GrnDetailPage = lazy(() => import("@/components/grn/GrnDetailPage").then((m) => ({ default: m.GrnDetailPage })));
+const PoListPage = lazy(() => import("@/components/grn/PoListPage").then((m) => ({ default: m.PoListPage })));
+const PoEntryPage = lazy(() => import("@/components/grn/PoEntryPage").then((m) => ({ default: m.PoEntryPage })));
+const PoDetailPage = lazy(() => import("@/components/grn/PoDetailPage").then((m) => ({ default: m.PoDetailPage })));
 const BillHistoryPage = lazy(() => import("@/components/bills/BillHistoryPage").then((m) => ({ default: m.BillHistoryPage })));
 const StockLedgerPage = lazy(() => import("@/components/inventory/StockLedgerPage").then((m) => ({ default: m.StockLedgerPage })));
 const NearExpiryPage = lazy(() => import("@/components/inventory/NearExpiryPage").then((m) => ({ default: m.NearExpiryPage })));
@@ -112,6 +115,30 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["owner"]}>
                   <GrnEntryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchases/orders"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <PoListPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchases/orders/new"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <PoEntryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/purchases/orders/:id"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <PoDetailPage />
                 </ProtectedRoute>
               }
             />
