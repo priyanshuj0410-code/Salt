@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, GitMerge, Users } from "lucide-react";
+import { ChevronRight, GitMerge, UserPlus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
+import { CreatePartyDialog } from "@/components/parties/CreatePartyDialog";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
 import { useAuth } from "@/lib/auth";
@@ -72,6 +73,7 @@ export function PartiesPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -179,6 +181,11 @@ export function PartiesPage() {
           icon={Users}
           title="Parties"
           subtitle="Customers and vendors with their balances. Open a party to see history and edit details."
+          actions={
+            <Button onClick={() => setCreateOpen(true)}>
+              <UserPlus /> New party
+            </Button>
+          }
         />
 
         {/* Summary */}
@@ -261,9 +268,16 @@ export function PartiesPage() {
           {loading ? (
             <p className="p-4 text-sm text-text-tertiary">Loading…</p>
           ) : visible.length === 0 ? (
-            <p className="p-4 text-sm text-text-tertiary">
-              {rows.length === 0 ? "No parties yet — import your ledgers first." : "No parties match that filter."}
-            </p>
+            rows.length === 0 ? (
+              <div className="flex flex-col items-start gap-3 p-4">
+                <p className="text-sm text-text-tertiary">No parties yet — import your ledgers, or add one by hand.</p>
+                <Button variant="outline" onClick={() => setCreateOpen(true)}>
+                  <UserPlus /> New party
+                </Button>
+              </div>
+            ) : (
+              <p className="p-4 text-sm text-text-tertiary">No parties match that filter.</p>
+            )
           ) : (
             <div className="max-h-[64vh] divide-y divide-divider overflow-auto">
               {visible.map((r) => (
@@ -299,6 +313,11 @@ export function PartiesPage() {
           )}
         </div>
 
+        <CreatePartyDialog
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          onCreated={reload}
+        />
     </Page>
   );
 }
