@@ -25,7 +25,8 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/import-pipeline](architecture/import-pipeline.md) — CSV / Go migrator / Smart Importer; trial-balance extraction; merge.
 - [architecture/marg-import-map](architecture/marg-import-map.md) — everything Marg ERP 9+ can export, mapped to every Salt table; scope for extending Smart Import past today's four files.
 - [architecture/smart-import-extension](architecture/smart-import-extension.md) — engineering design to grow Smart Import to the full Marg dataset (history + compliance): reuse, identity, non-posting load path, net-new schema, phased build.
-- [architecture/design-system](architecture/design-system.md) — `design.md` principles + tokens; verified as-built status (tokens/primitives built, DataTable + density switch pending) + research-backed direction.
+- [architecture/design-system](architecture/design-system.md) — `design.md` principles + tokens; verified as-built status (tokens, primitives, patterns + density switch built; FormRow pending) + research-backed direction.
+- [architecture/interaction-patterns](architecture/interaction-patterns.md) — the keyboard+touch contract: one model/two presentations, the seven laws, per-pattern dual-modality behaviour, the counter as worked example.
 - [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale.
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, FEFO, stock cap, billTotals.
 - [architecture/information-architecture](architecture/information-architecture.md) — full navigation tree, screen inventory, keyboard shortcut system, 7 key user journeys, role-based access, URL structure.
@@ -53,6 +54,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [0012 — Stock cutover: snapshot, not replay](decisions/0012-stock-cutover-snapshot-vs-replay.md)
 - [0013 — GL history depth: opening balances only](decisions/0013-gl-history-depth.md)
 - [0014 — Doctors master table](decisions/0014-doctors-master.md)
+- [0015 — Dual-modality interaction: one system for keyboard and touch](decisions/0015-dual-modality-interaction.md)
 
 ## Raw sources (immutable, at repo root)
 `salt-prd-v0.3.md` · `salt-migrator-prd-v0.1.md` · `design.md` · `salt-design-system.html` · `PRD_Intelligent_Importer.pdf` · the codebase · `Saral/Trial_Balance.xls` (untracked sample).
