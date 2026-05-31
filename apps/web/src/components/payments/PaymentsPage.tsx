@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Plus, Wallet } from "lucide-react";
+import { Landmark, Plus, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { formatPaise, formatSigned } from "@/lib/currency";
 import { signedAmount, type PaymentListRow } from "@/lib/payments";
 import { RecordPaymentDialog, type PartyLite } from "./RecordPaymentDialog";
 import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
+import { BankReconcile } from "./BankReconcile";
 
 type DirFilter = "all" | "received" | "paid";
 type PartyRow = PartyLite & { phone: string | null };
@@ -31,6 +32,7 @@ export function PaymentsPage() {
   const [q, setQ] = useState("");
   const [recordOpen, setRecordOpen] = useState(false);
   const [receipt, setReceipt] = useState<PaymentListRow | null>(null);
+  const [view, setView] = useState<"payments" | "reconcile">("payments");
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -111,6 +113,29 @@ export function PaymentsPage() {
         }
       />
 
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "payments" ? "default" : "outline"}
+          onClick={() => setView("payments")}
+        >
+          <Wallet /> Payments
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "reconcile" ? "default" : "outline"}
+          onClick={() => setView("reconcile")}
+        >
+          <Landmark /> Bank reconciliation
+        </Button>
+      </div>
+
+      {view === "reconcile" ? (
+        <BankReconcile orgId={orgId ?? null} payments={payments} nameById={nameById} />
+      ) : (
+        <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Received" value={formatPaise(stats.received)} tone="success" hint="money in from customers" />
         <StatCard label="Paid" value={formatPaise(stats.paid)} tone="danger" hint="money out to vendors" />
@@ -195,6 +220,8 @@ export function PaymentsPage() {
           ]}
         />
       </div>
+        </>
+      )}
 
       <RecordPaymentDialog
         open={recordOpen}
