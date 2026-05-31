@@ -109,7 +109,7 @@ export const NAV: NavModule[] = [
     roles: ["owner"],
     children: [
       { label: "Receive payment", path: "/payments", built: true },
-      { label: "Make payment", path: "/payments", built: true },
+      { label: "Make payment", path: "/payments/make", built: true },
       { label: "Bank reconciliation", built: false },
     ],
   },

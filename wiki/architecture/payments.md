@@ -34,9 +34,10 @@ HYG-1). Money is integer paise.
 **Payments never touch document `paid_paise`.** A receipt nets against a party at
 the ledger level — `partyDue + paymentsAdjustment` in `lib/orders.ts`
 (`due = opening + unsettled docs − net receipts`) — not by marking individual
-invoices paid. Allocations are therefore currently informational.
+invoices paid. So per-invoice outstanding is **derived on read** as
+`total − paid_paise − Σ allocations` (see the make-payment screen below).
 
-## As-built UI (SALT-003)
+## As-built UI (SALT-003, SALT-056)
 
 - **`/payments`** (owner-gated route; left nav → Payments) → `PaymentsPage`:
   Received / Paid / Net stat cards over all payments, direction + text filters, a
@@ -47,16 +48,23 @@ invoices paid. Allocations are therefore currently informational.
   `record_payment` with a 15s `withTimeout`. `lib/payments.ts` owns `PAYMENT_MODES`,
   `buildRecordPaymentArgs` (adds `p_notes`), `recordPayment`, and `signedAmount` —
   deliberately kept out of billing's `lib/orders.ts` so the modules stay disjoint.
+- **`/payments/make`** → `MakePaymentPage` (SALT-056) — pay a vendor against their
+  open purchase invoices: vendor picker → invoices with **derived outstanding**
+  (`total − paid_paise − Σ allocations`), amount + mode + cheque/UTR reference,
+  **oldest-first auto-allocation** (per-row editable), any remainder recorded
+  on-account. Submits `record_payment(direction='paid', p_allocations)`; the new
+  `autoAllocate` / `allocatedTotal` / `OpenDoc` helpers live in `lib/payments.ts`.
 - The same RPC also backs the per-party Receive/Make payment on the
   [party profile](../domain/parties.md) (PR #26) — this screen generalises it.
 
 ## Roadmap (open tickets)
 
-`record_payment` UI = **SALT-003** (this). Remaining module tickets: make-payment
-vs open invoices + cheque/UTR (SALT-056), receipts print/WhatsApp (SALT-057), bank
-reconciliation (SALT-058), cash-drawer recon (SALT-059), post-dated cheques
-(SALT-060), credit/debit notes linked to invoice + return (SALT-061), Razorpay
-links (SALT-062). Allocation UI and back-dating need, respectively, document
-`paid_paise` reconciliation and a new `p_payment_date` RPC param.
+Built: `record_payment` UI (**SALT-003**) + vendor make-payment with invoice
+allocation (**SALT-056**). Remaining module tickets: receipts print/WhatsApp
+(SALT-057), bank reconciliation (SALT-058), cash-drawer recon (SALT-059),
+post-dated cheques (SALT-060), credit/debit notes linked to invoice + return
+(SALT-061), Razorpay links (SALT-062). Allocation is reflected by read-derived
+outstanding (no `paid_paise` write); back-dating still needs a new
+`p_payment_date` RPC param.
 
 → [domain/orders](../domain/orders.md) · [architecture/data-model](data-model.md) · [proposed-data-model](proposed-data-model.md)

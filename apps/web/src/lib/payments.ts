@@ -43,10 +43,17 @@ export interface PaymentListRow {
   created_at: string;
 }
 
+/** One line of a payment applied against a specific open document. */
+export interface PaymentAllocationInput {
+  target_table: "sales_invoice" | "purchase" | "ledger_bill";
+  target_id: string;
+  allocated_paise: number;
+}
+
 /**
  * `record_payment` args — keys match the SQL parameter names. `p_allocations`
- * (apply across specific open bills) and `p_payment_date` are left to their SQL
- * defaults (null / today) for now; allocation UI lands with SALT-056/061.
+ * applies the payment across specific open bills (omit => party-level only).
+ * `p_payment_date` is left to its SQL default (today) — the RPC has no param.
  */
 export interface RecordPaymentArgs {
   p_shop_id: string;
@@ -56,6 +63,7 @@ export interface RecordPaymentArgs {
   p_amount_paise: number;
   p_reference: string | null;
   p_notes: string | null;
+  p_allocations?: PaymentAllocationInput[];
 }
 
 export function buildRecordPaymentArgs(input: {
@@ -66,7 +74,9 @@ export function buildRecordPaymentArgs(input: {
   amountPaise: number;
   reference?: string;
   notes?: string;
+  allocations?: PaymentAllocationInput[];
 }): RecordPaymentArgs {
+  const allocations = (input.allocations ?? []).filter((a) => a.allocated_paise > 0);
   return {
     p_shop_id: input.shopId,
     p_party_id: input.partyId,
@@ -75,6 +85,7 @@ export function buildRecordPaymentArgs(input: {
     p_amount_paise: input.amountPaise,
     p_reference: input.reference?.trim() || null,
     p_notes: input.notes?.trim() || null,
+    ...(allocations.length ? { p_allocations: allocations } : {}),
   };
 }
 
@@ -89,4 +100,38 @@ export async function recordPayment(args: RecordPaymentArgs): Promise<string> {
 /** Signed paise for cash-flow stats: received = +in, paid = −out. */
 export function signedAmount(p: { direction: PaymentDirection; amount_paise: number }): number {
   return p.direction === "received" ? p.amount_paise : -p.amount_paise;
+}
+
+/**
+ * An open document to pay against (a vendor purchase or a customer sale). The
+ * outstanding is derived on read — total − paid_paise − already-allocated —
+ * because record_payment records allocations but does not move document
+ * paid_paise (party-level netting lives in lib/orders `paymentsAdjustment`).
+ */
+export interface OpenDoc {
+  target_table: "sales_invoice" | "purchase";
+  target_id: string;
+  ref: string | null;
+  doc_date: string | null;
+  outstanding_paise: number;
+}
+
+/** Allocate an amount across docs oldest-first; never over-allocates a doc. */
+export function autoAllocate(amountPaise: number, docs: OpenDoc[]): Record<string, number> {
+  let remaining = Math.max(0, amountPaise);
+  const out: Record<string, number> = {};
+  for (const d of docs) {
+    if (remaining <= 0) break;
+    const take = Math.min(remaining, d.outstanding_paise);
+    if (take > 0) {
+      out[d.target_id] = take;
+      remaining -= take;
+    }
+  }
+  return out;
+}
+
+/** Sum of a per-doc allocation map (paise). */
+export function allocatedTotal(alloc: Record<string, number>): number {
+  return Object.values(alloc).reduce((sum, n) => sum + n, 0);
 }
