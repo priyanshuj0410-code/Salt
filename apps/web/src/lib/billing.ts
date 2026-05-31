@@ -1,4 +1,27 @@
-import type { BillLine } from "./types";
+import type { BillLine, Schedule } from "./types";
+
+/**
+ * Schedules that hard-gate checkout: a sale containing one of these may not be
+ * saved until the prescriber + patient are recorded (Drugs & Cosmetics Rules —
+ * the Schedule H1 register; X is narcotic/psychotropic, stricter still). Plain
+ * Schedule H needs a prescription but no separate register, so it is not gated.
+ * Mirrors the server contract in `record_h1_entry` / `enforce_h1_gate`.
+ */
+export const GATED_SCHEDULES: Schedule[] = ["H1", "X"];
+
+export function isGatedSchedule(s: Schedule): boolean {
+  return s === "H1" || s === "X";
+}
+
+/** True when the bill has any Schedule H1/X line and so needs prescription capture. */
+export function requiresRx(lines: BillLine[]): boolean {
+  return lines.some((l) => isGatedSchedule(l.schedule));
+}
+
+/** The H1/X lines on the bill — shown in the gate so the cashier sees what triggered it. */
+export function gatedLines(lines: BillLine[]): BillLine[] {
+  return lines.filter((l) => isGatedSchedule(l.schedule));
+}
 
 export function lineGross(l: BillLine): number {
   return l.mrpPaise * l.qty;

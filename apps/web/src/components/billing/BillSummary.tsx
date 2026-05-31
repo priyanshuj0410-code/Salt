@@ -6,6 +6,7 @@ import { formatPaise, formatSigned } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
 import { GstinPrompt } from "./GstinPrompt";
+import { H1Notice } from "./H1Gate";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -39,6 +40,7 @@ export function BillSummary({
   const clear = useBill((s) => s.clear);
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, save, saving, saved, error, shopId } =
     checkout;
+  const { needsRx, rxCaptured, rx, openRx } = checkout;
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
 
@@ -133,10 +135,13 @@ export function BillSummary({
       </div>
 
       <div className="mt-1 flex flex-col gap-2">
+        {needsRx && (
+          <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
+        )}
         <Button
           size="lg"
           disabled={empty || saving || usingSeed || !shopId}
-          onClick={save}
+          onClick={() => save()}
           title={usingSeed ? "Import your items to save bills" : undefined}
         >
           {saved ? <Check /> : <Printer />}
