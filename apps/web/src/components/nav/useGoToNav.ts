@@ -33,7 +33,7 @@ export function useGoToNav() {
         armedAt.current = Date.now();
         return;
       }
-      if (Date.now() - armedAt.current > 1200) {
+      if (Date.now() - armedAt.current > 650) {
         armedAt.current = 0;
         return; // no recent `g` — not a go-to chord
       }
