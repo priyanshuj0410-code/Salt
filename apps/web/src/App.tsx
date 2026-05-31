@@ -37,7 +37,10 @@ import { InventoryReportsPage } from "@/components/reports/InventoryReportsPage"
 import { FinancialReportsPage } from "@/components/reports/FinancialReportsPage";
 import { TaxReportsPage } from "@/components/reports/TaxReportsPage";
 import { ImportPage } from "@/components/import/ImportPage";
+import { PurchaseInvoiceImportPage } from "@/components/import/PurchaseInvoiceImportPage";
+import { GlOpeningImportPage } from "@/components/import/GlOpeningImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
+import { SetupWizard } from "@/components/onboarding/SetupWizard";
 import { DrugLicensesPage } from "@/components/settings/DrugLicensesPage";
 import { DataExportPage } from "@/components/settings/DataExportPage";
 import { PrintTemplatesPage } from "@/components/settings/PrintTemplatesPage";
@@ -71,6 +74,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <OwnerHome />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/setup"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SetupWizard />
           </ProtectedRoute>
         }
       />
@@ -343,6 +354,22 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <SmartImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import/purchases"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PurchaseInvoiceImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import/gl"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GlOpeningImportPage />
           </ProtectedRoute>
         }
       />

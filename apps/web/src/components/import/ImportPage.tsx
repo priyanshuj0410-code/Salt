@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Papa from "papaparse";
-import { Download, FileUp, KeyRound, Upload, Wand2 } from "lucide-react";
+import { Download, FileUp, KeyRound, Landmark, PackagePlus, Upload, Wand2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
 import { cn } from "@/lib/utils";
@@ -9,18 +9,23 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import {
-  templateCsv,
+  canonicalHeader,
+  isMissingFunctionError,
+  itemsToImportPayload,
+  templateCsvFor,
   validateRows,
+  IMPORT_TEMPLATES,
+  type ImportTemplate,
   type RawRow,
   type ValidationResult,
 } from "@/lib/import";
 
-function downloadTemplate() {
-  const blob = new Blob([templateCsv()], { type: "text/csv" });
+function downloadTemplate(t: ImportTemplate) {
+  const blob = new Blob([templateCsvFor(t.id)], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "salt-catalog-template.csv";
+  a.download = t.filename;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -57,7 +62,7 @@ export function ImportPage() {
     Papa.parse<RawRow>(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (h) => h.trim().toLowerCase(),
+      transformHeader: canonicalHeader,
       complete: (res) => setResult(validateRows(res.data)),
     });
   }
@@ -68,61 +73,91 @@ export function ImportPage() {
     setError(null);
     try {
       const orgId = membership.orgId;
-      const { data: inserted, error: itemErr } = await supabase
-        .from("items")
-        .insert(
-          result.items.map((it) => ({
-            org_id: orgId,
-            name: it.name,
-            salt: it.salt || null,
-            manufacturer: it.manufacturer || null,
-            pack: it.pack || null,
-            hsn: it.hsn || null,
-            gst_rate: it.gstRate,
-            schedule: it.schedule,
-            barcode: it.barcode,
-          })),
-        )
-        .select("id,name,manufacturer");
-      if (itemErr) {
-        setError(itemErr.message);
-        return;
-      }
-
-      const idByKey = new Map<string, string>();
-      for (const row of inserted ?? []) {
-        idByKey.set(`${row.name.toLowerCase()}|${(row.manufacturer ?? "").toLowerCase()}`, row.id);
-      }
-
-      const batchPayload = result.items.flatMap((it) => {
-        const itemId = idByKey.get(it.key);
-        if (!itemId) return [];
-        return it.batches.map((b) => ({
-          org_id: orgId,
-          item_id: itemId,
-          batch_no: b.batchNo || null,
-          expiry: b.expiry || null,
-          qty: b.qty,
-          mrp_paise: b.mrpPaise,
-          ptr_paise: b.ptrPaise,
-        }));
+      // Preferred path: one atomic RPC — any failure rolls the whole import back.
+      const { data, error: rpcErr } = await supabase.rpc("import_catalog", {
+        p_items: itemsToImportPayload(result.items),
       });
-
-      for (let i = 0; i < batchPayload.length; i += 500) {
-        const { error: bErr } = await supabase.from("batches").insert(batchPayload.slice(i, i + 500));
-        if (bErr) {
-          setError(bErr.message);
+      if (rpcErr) {
+        if (isMissingFunctionError(rpcErr)) {
+          await legacyImport(orgId); // migration 0028 not applied yet
           return;
         }
+        // The transaction already rolled back server-side — catalogue unchanged.
+        setError(`${rpcErr.message} — nothing was imported (rolled back).`);
+        return;
       }
-
+      const counts = (data ?? {}) as { items?: number; batches?: number };
       await loadCatalog(orgId);
-      setDone({ items: result.items.length, batches: batchPayload.length });
+      setDone({ items: counts.items ?? result.items.length, batches: counts.batches ?? 0 });
       setResult(null);
       setFileName(null);
     } finally {
       setImporting(false);
     }
+  }
+
+  // Fallback for before 0028 is applied: the legacy multi-step insert, now with a
+  // best-effort compensating rollback so a mid-import failure still leaves the
+  // catalogue clean rather than half-imported.
+  async function legacyImport(orgId: string) {
+    if (!supabase || !result) return;
+    const { data: inserted, error: itemErr } = await supabase
+      .from("items")
+      .insert(
+        result.items.map((it) => ({
+          org_id: orgId,
+          name: it.name,
+          salt: it.salt || null,
+          manufacturer: it.manufacturer || null,
+          pack: it.pack || null,
+          hsn: it.hsn || null,
+          gst_rate: it.gstRate,
+          schedule: it.schedule,
+          barcode: it.barcode,
+        })),
+      )
+      .select("id,name,manufacturer");
+    if (itemErr) {
+      setError(itemErr.message);
+      return;
+    }
+
+    const insertedIds = (inserted ?? []).map((r) => r.id);
+    const idByKey = new Map<string, string>();
+    for (const row of inserted ?? []) {
+      idByKey.set(`${row.name.toLowerCase()}|${(row.manufacturer ?? "").toLowerCase()}`, row.id);
+    }
+
+    const batchPayload = result.items.flatMap((it) => {
+      const itemId = idByKey.get(it.key);
+      if (!itemId) return [];
+      return it.batches.map((b) => ({
+        org_id: orgId,
+        item_id: itemId,
+        batch_no: b.batchNo || null,
+        expiry: b.expiry || null,
+        qty: b.qty,
+        mrp_paise: b.mrpPaise,
+        ptr_paise: b.ptrPaise,
+      }));
+    });
+
+    for (let i = 0; i < batchPayload.length; i += 500) {
+      const { error: bErr } = await supabase.from("batches").insert(batchPayload.slice(i, i + 500));
+      if (bErr) {
+        if (insertedIds.length) {
+          await supabase.from("batches").delete().in("item_id", insertedIds);
+          await supabase.from("items").delete().in("id", insertedIds);
+        }
+        setError(`${bErr.message} — import rolled back, nothing was saved.`);
+        return;
+      }
+    }
+
+    await loadCatalog(orgId);
+    setDone({ items: result.items.length, batches: batchPayload.length });
+    setResult(null);
+    setFileName(null);
   }
 
   return (
@@ -144,18 +179,54 @@ export function ImportPage() {
           <span className="self-center text-primary">→</span>
         </Link>
 
-        <h2 className="mt-6 border-t pt-5 text-sm font-medium">Or use a fixed CSV template</h2>
+        <Link
+          to="/import/purchases"
+          className="mt-3 flex items-start gap-3 rounded-lg border p-4 hover:bg-muted/40"
+        >
+          <PackagePlus className="mt-0.5 size-5 shrink-0 text-primary" />
+          <div className="flex-1">
+            <p className="text-sm font-medium">Import purchase invoices</p>
+            <p className="text-sm text-muted-foreground">
+              Upload vendor bills to post as GRNs — adds stock, payable and ITC. Missing vendors and items are
+              created for you.
+            </p>
+          </div>
+          <span className="self-center text-primary">→</span>
+        </Link>
+
+        <Link
+          to="/import/gl"
+          className="mt-3 flex items-start gap-3 rounded-lg border p-4 hover:bg-muted/40"
+        >
+          <Landmark className="mt-0.5 size-5 shrink-0 text-primary" />
+          <div className="flex-1">
+            <p className="text-sm font-medium">Import opening balances (GL)</p>
+            <p className="text-sm text-muted-foreground">
+              Seed Cash, Bank, Stock, Capital and other ledger accounts with their opening balances as one
+              balanced entry.
+            </p>
+          </div>
+          <span className="self-center text-primary">→</span>
+        </Link>
+
+        <h2 className="mt-6 border-t pt-5 text-sm font-medium">Or start from a template</h2>
         <p className="mt-1 text-sm text-muted-foreground">
+          Already export from Marg or Tally? Download that shape — Salt reads those column names automatically.
           Only <code className="rounded bg-muted px-1">name</code>,{" "}
           <code className="rounded bg-muted px-1">qty</code> and <code className="rounded bg-muted px-1">mrp</code>{" "}
-          are required — everything else is optional. One row per batch.
+          are required. One row per batch.
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Button variant="outline" onClick={downloadTemplate}>
-            <Download />
-            Download template
-          </Button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {IMPORT_TEMPLATES.map((t) => (
+            <Button key={t.id} variant="outline" size="sm" onClick={() => downloadTemplate(t)} title={t.description}>
+              <Download />
+              {t.label} template
+            </Button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-3">
           <label htmlFor="csv-file" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}>
             <FileUp />
             {fileName ?? "Choose CSV file"}
@@ -176,6 +247,12 @@ export function ImportPage() {
 
         {result && (
           <div className="mt-6 rounded-lg border">
+            <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+              <span className="text-xs font-medium">Dry run — preview only, nothing saved yet</span>
+              <span className="text-xs text-muted-foreground">
+                Will create {result.items.length} items · {result.batchCount} batches
+              </span>
+            </div>
             <div className="grid grid-cols-4 divide-x border-b text-center">
               <Stat label="Items" value={result.items.length} />
               <Stat label="Batches" value={result.batchCount} />
@@ -201,7 +278,7 @@ export function ImportPage() {
               <p className="text-xs text-muted-foreground">
                 {result.errorCount > 0
                   ? "Fix the errors in your CSV and re-upload."
-                  : "Re-importing the same file adds rows again (no dedupe yet)."}
+                  : "Imported as one transaction — if anything fails, nothing is saved. Re-importing the same file adds rows again (no dedupe yet)."}
               </p>
               <Button onClick={doImport} disabled={importing || result.items.length === 0 || result.errorCount > 0}>
                 <Upload />
