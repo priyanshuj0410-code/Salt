@@ -44,6 +44,7 @@ Sub-components:
 | `ShortcutHelp.tsx` | Modal reference (Shift+/) |
 | `ScheduleBadge.tsx` | H / H1 / X / OTC badge on search results **and bill lines** |
 | `H1Gate.tsx` | Schedule H1/X checkout gate dialog + `H1Notice` inline banner — see [Schedule H1/X gate](#schedule-h1x-gate) |
+| `ParkedBills.tsx` | Held-bills strip under the header — resume/discard bills set aside on this counter — see [Parked / held bills](#parked--held-bills) |
 
 ## Keyboard map
 
@@ -61,6 +62,7 @@ Sub-components:
 | `Tab` | Bill row focused | Move into qty / discount inline inputs |
 | `Ctrl+K` | Anywhere | Open `CustomerPicker` (type → `Enter` picks the top match) |
 | `F9` | Anywhere | **Save & Print** the bill → `create_sales_invoice` then print receipt |
+| `F4` | Anywhere | **Hold** the current bill aside and start a fresh one |
 | `Shift+/` | Anywhere | Open `ShortcutHelp` dialog |
 
 ## Save & Print + GST split
@@ -94,6 +96,7 @@ lines: BillLine[]
 payment: { method: "cash" | "credit"; creditDays: number }
 party: OrderParty | null   // the customer; null = walk-in
 rx: RxDetails | null        // captured Schedule H1/X prescription; cleared by clear()
+parked: ParkedBill[]        // bills held aside on this counter, newest first
 ```
 
 **Actions:**
@@ -101,9 +104,16 @@ rx: RxDetails | null        // captured Schedule H1/X prescription; cleared by c
 - `setQty(key, qty)` — updates qty, enforces per-item stock cap via `lineMaxQty()`; removes line if qty ≤ 0
 - `setBatch(key, item, batch)` — re-keys the line to `itemId:newBatchNo`; if that key already exists, merges qty (capped by stock) and drops the old line
 - `setDiscount(key, type, value)` — `"pct"` (0–100) or `"flat"` (paise, capped at line gross)
+- `parkBill()` / `resumeBill(id)` / `discardPark(id)` — see [Parked / held bills](#parked--held-bills)
 - `removeLine(key)`, `setPaymentMethod()`, `setCreditDays()`, `clear()`
 
 **Line key:** `itemId:batchNo` — stable across qty changes, changes only when the batch is swapped.
+
+## Parked / held bills
+
+A counter often needs to set a bill aside (the customer forgot something, or is fetching cash) and serve the next person. `parkBill()` (the desktop **Hold · F4** button, the mobile **Hold**, or `F4`) snapshots `{lines, payment, party, rx}` into `useBill.parked` and resets the counter to a fresh bill; it is a no-op on an empty bill. The **`ParkedBills`** strip under the header shows one chip per held bill (label = customer or "Walk-in", with item count + total); tapping a chip `resumeBill(id)` loads it back — and **holds the in-progress bill in its place** so a bill is never lost — while the × `discardPark(id)` drops it. Held bills survive saves and route changes (`clear()` leaves `parked` untouched) but are **in-memory** for now.
+
+Out of billing's scope (filed as follow-ups): **cross-counter handoff** (resume a hold from another till) and **refresh-persistence** both need the hold to live server-side, not in the Zustand store.
 
 `billTotals(lines)` is a pure function (not stored in Zustand):
 ```
@@ -142,7 +152,9 @@ Match strength per field (`fieldScore`):
 
 `finalScore = max(weight × fieldScore)` across all fields. Results sorted: **in-stock first**, then score descending, then sales velocity descending. Capped at `MAX_RESULTS = 8`.
 
-If the highlighted result has no stock and a same-salt substitute exists in-stock, pressing `Enter` adds the substitute.
+## Out-of-stock substitutes (`lib/search.ts: substitutes`)
+
+When a result is **out of stock**, `ItemSearch` shows its in-stock, **same-salt** alternatives inline — ranked best-first by per-unit **margin** (`itemMargin` = FEFO `mrp − ptr`) then **velocity**, capped at 3. Each is a one-tap button; the top one carries a **Best** badge. Pressing `Enter` on the out-of-stock row adds the top substitute (the keyboard fast-path), while clicking picks a specific one. If the item has no salt recorded or no same-salt peer is in stock, the row reads "no same-salt substitute available". (Substitution pivots on salt per [domain/medical-retail](../domain/medical-retail.md).)
 
 ## FEFO (`lib/search.ts: fefoBatch`)
 

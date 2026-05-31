@@ -31,6 +31,7 @@ export function MobileCheckout({
 }) {
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
+  const parkBill = useBill((s) => s.parkBill);
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
   const tax = gstSplit(t.gst, isInterstate);
@@ -101,17 +102,20 @@ export function MobileCheckout({
 
           {party && !customerGstin && <GstinPrompt partyId={party.id} onSaved={onCustomerUpdated} />}
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <Button
               variant="outline"
               size="sm"
               disabled={saving || usingSeed}
               onClick={() => saveOnly()}
             >
-              Save only
+              Save
+            </Button>
+            <Button variant="outline" size="sm" onClick={parkBill}>
+              Hold
             </Button>
             <Button variant="ghost" size="sm" onClick={clear}>
-              Clear bill
+              Clear
             </Button>
           </div>
         </div>
