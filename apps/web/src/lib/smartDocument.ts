@@ -329,7 +329,11 @@ export function preparePurchases(groups: DocGroup[], ctx: DocCtx): PrepareResult
 }
 
 /** Resolve a party (ledger) id by GSTIN → name; undefined if neither matches. */
-function resolveParty(gstinRaw: string | undefined, name: string | undefined, ctx: DocCtx): string | undefined {
+export function resolveParty(
+  gstinRaw: string | undefined,
+  name: string | undefined,
+  ctx: Pick<DocCtx, "partyByGstin" | "partyByName">,
+): string | undefined {
   const gstin = (gstinRaw ?? "").toUpperCase();
   let id = gstin && GSTIN_RE.test(gstin) ? ctx.partyByGstin.get(gstin) : undefined;
   if (!id && name) id = ctx.partyByName.get(norm(name));
