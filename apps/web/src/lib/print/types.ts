@@ -14,6 +14,8 @@ export type PrintLayout = "receipt" | "sheet" | "mono";
 
 /** Shop header fields printed on the invoice (structural subset of auth `Shop`). */
 export interface ShopHeader {
+  /** Primary-shop id — keys the per-shop print template. */
+  id: string;
   name: string;
   address: string | null;
   phone: string | null;

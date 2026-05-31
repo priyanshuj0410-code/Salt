@@ -6,9 +6,17 @@ import { stateName } from "../stateCodes";
 import { rupeesInWords } from "./words";
 import { taxSummary } from "./taxSummary";
 import { DOC_META, SALE_DOC_TYPES, type DocMeta, type DocType } from "./docType";
+import { templateStorageKey, type PrintTemplate } from "./template";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** A per-shop template text node, hidden until it has a value (so the live editor can reveal it). */
+const tplText = (field: string, val: string | undefined, tag = "div", extra = ""): string =>
+  `<${tag} class="tpl-${field}${extra}"${val ? "" : ' style="display:none"'}>${esc(val ?? "")}</${tag}>`;
+
+const tplLogo = (logo: string | undefined): string =>
+  `<img class="tpl-logo" alt=""${logo ? ` src="${logo.replace(/"/g, "&quot;")}"` : ' style="display:none"'}>`;
 
 const plainInr = new Intl.NumberFormat("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 /** Rupees without the ₹ glyph — many dot-matrix / impact printer fonts can't render it. */
@@ -39,7 +47,7 @@ function receiptTotalRow(label: string, value: string, strong = false): string {
   return `<tr class="${strong ? "tot" : ""}"><td colspan="3" class="r">${esc(label)}</td><td class="r">${esc(value)}</td></tr>`;
 }
 
-function receiptBody(d: InvoicePrintData, meta: DocMeta): string {
+function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string {
   const shopMeta = [d.shop.address, d.shop.phone && `Ph: ${d.shop.phone}`, d.shop.gstin && `GSTIN: ${d.shop.gstin}`]
     .filter(Boolean)
     .map((s) => esc(String(s)))
@@ -54,7 +62,7 @@ function receiptBody(d: InvoicePrintData, meta: DocMeta): string {
   const payLabel = d.payment.method === "credit" ? "Credit" : "Cash";
   const refLine = d.reference ? `<div class="note-only ref">${esc(d.reference)}</div>` : "";
   return `<div class="receipt">
-    <div class="shop"><h1>${esc(d.shop.name)}</h1><div class="meta">${shopMeta}</div></div>
+    <div class="shop">${tplLogo(t.logo)}<h1>${esc(d.shop.name)}</h1>${tplText("tagline", t.tagline)}<div class="meta">${shopMeta}</div>${tplText("licenses", t.licenses, "div", " meta")}</div>
     <hr>
     <div class="row"><span class="doctitle">${esc(meta.title)}</span><span>${esc(d.dateTime)}</span></div>
     <div class="row"><span>Ref: ${esc(d.ref)}</span><span>${esc(payLabel)}</span></div>
@@ -72,7 +80,9 @@ function receiptBody(d: InvoicePrintData, meta: DocMeta): string {
       </tfoot>
     </table>
     <div class="words">${esc(rupeesInWords(d.grand))}</div>
+    ${tplText("terms", t.terms)}
     <div class="foot">Thank you. Get well soon.</div>
+    ${tplText("footer", t.footer)}
   </div>`;
 }
 
@@ -98,7 +108,7 @@ function sheetItemRow(l: InvoiceLine, i: number): string {
   </tr>`;
 }
 
-function sheetBody(d: InvoicePrintData, meta: DocMeta): string {
+function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string {
   const shopLines = [d.shop.address, d.shop.phone && `Ph: ${d.shop.phone}`]
     .filter(Boolean)
     .map((s) => `<div>${esc(String(s))}</div>`)
@@ -129,9 +139,12 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta): string {
   return `<div class="sheet">
     <div class="s-head">
       <div class="s-shop">
+        ${tplLogo(t.logo)}
         <h1>${esc(d.shop.name)}</h1>
+        ${tplText("tagline", t.tagline)}
         ${shopLines}
         ${d.shop.gstin ? `<div><strong>GSTIN: ${esc(d.shop.gstin)}</strong></div>` : ""}
+        ${tplText("licenses", t.licenses)}
       </div>
       <div class="s-title">
         <div class="s-doctype doctitle">${esc(meta.title)}</div>
@@ -170,10 +183,12 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta): string {
       </table>
     </div>
     <div class="s-words"><span class="lbl">Amount in words</span>${esc(rupeesInWords(d.grand))}</div>
+    ${tplText("terms", t.terms)}
     <div class="s-foot-row">
       <div class="s-decl taxdoc-only">Certified that the particulars given above are true and correct.</div>
-      <div class="s-sign">For ${esc(d.shop.name)}<div class="s-sign-line">Authorised signatory</div></div>
+      <div class="s-sign">For ${esc(d.shop.name)}<div class="s-sign-line"><span class="tpl-signatureLabel">${esc(t.signatureLabel ?? "Authorised signatory")}</span></div></div>
     </div>
+    ${tplText("footer", t.footer)}
   </div>`;
 }
 
@@ -205,14 +220,16 @@ function monoWrap(s: string): string[] {
   return out;
 }
 
-function monoBody(d: InvoicePrintData, meta: DocMeta): string {
+function monoBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string {
   const lines: string[] = [];
   lines.push(monoCenter(d.shop.name.toUpperCase()));
+  if (t.tagline) lines.push(monoCenter(t.tagline));
   if (d.shop.address) lines.push(monoCenter(d.shop.address));
   const idLine = [d.shop.phone && `Ph: ${d.shop.phone}`, d.shop.gstin && `GSTIN: ${d.shop.gstin}`]
     .filter(Boolean)
     .join("  ");
   if (idLine) lines.push(monoCenter(idLine));
+  if (t.licenses) for (const wl of monoWrap(t.licenses)) lines.push(monoCenter(wl));
   lines.push(monoRule);
   lines.push(monoSplit(`No: ${d.ref}`, `Date: ${d.dateTime}`));
   lines.push(`Customer: ${d.customerName}`);
@@ -239,8 +256,12 @@ function monoBody(d: InvoicePrintData, meta: DocMeta): string {
   lines.push(monoTotal("TOTAL", rs(d.grand)));
   lines.push("");
   for (const wl of monoWrap(rupeesInWords(d.grand))) lines.push(wl);
+  if (t.terms) {
+    lines.push("");
+    for (const wl of monoWrap(t.terms)) lines.push(wl);
+  }
   lines.push(monoRule);
-  lines.push(monoCenter("Thank you. Get well soon."));
+  lines.push(monoCenter(t.footer || "Thank you. Get well soon."));
   return `<div class="mono-title doctitle">${esc(meta.title)}</div><pre class="mono">${esc(lines.join("\n"))}</pre>`;
 }
 
@@ -333,9 +354,24 @@ body[data-doctype="debit-note"] .note-only,
 body[data-doctype="sales-return"] .note-only{display:block}
 body[data-doctype="cash-memo"] .taxdoc-only,
 body[data-doctype="sales-return"] .taxdoc-only{display:none}
+/* per-shop template elements */
+.tpl-logo{max-height:48px;max-width:70%;margin:0 auto 4px;display:block;object-fit:contain}
+.sheet .tpl-logo{margin:0 0 6px}
+.tpl-tagline{font-size:11px;color:#444}
+.receipt .tpl-tagline{font-size:10px}
+.tpl-licenses{font-size:10px;color:#555}
+.tpl-footer{margin-top:4px;font-size:10px;color:#444;text-align:center}
+.tpl-terms{margin-top:6px;font-size:9px;color:#666;white-space:pre-wrap}
+.sheet .tpl-terms{font-size:10px;max-width:62%}
+/* template editor (screen only) */
+.tpl-editor{max-width:760px;margin:8px auto 0;padding:10px 12px;border:1px solid #d4d4d8;border-radius:8px;background:#fff;font-size:12px}
+.tpl-editor .tpl-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tpl-editor label{width:92px;color:#71717a;flex:none}
+.tpl-editor input,.tpl-editor textarea{flex:1;font:inherit;padding:4px 6px;border:1px solid #d4d4d8;border-radius:5px;min-width:0}
+.tpl-editor .tpl-note{color:#a1a1aa;font-size:11px;margin-top:2px}
 @media print{
   body{background:#fff;padding:0}
-  .toolbar{display:none!important}
+  .toolbar,.tpl-editor{display:none!important}
   .doc{box-shadow:none;margin:0;padding:0;width:auto!important}
 }`;
 
@@ -376,14 +412,52 @@ function wire(sel,fn){
 }
 wire(".toolbar [data-f]",setFormat);
 wire(".toolbar [data-d]",setDoc);
+var TPL=(window.__TPL||{});
+var TPL_KEY=(window.__TPL_KEY||"salt.print.template:default");
+function saveTpl(){try{localStorage.setItem(TPL_KEY,JSON.stringify(TPL));}catch(e){}}
+function applyText(field,val){
+  if(val){TPL[field]=val;}else{delete TPL[field];}
+  saveTpl();
+  var els=document.querySelectorAll(".tpl-"+field);
+  for(var i=0;i<els.length;i++){els[i].textContent=val;if(field!=="signatureLabel"){els[i].style.display=val?"":"none";}}
+}
+var tins=document.querySelectorAll(".tpl-editor [data-tpl]");
+for(var ti=0;ti<tins.length;ti++){(function(inp){inp.oninput=function(){applyText(inp.getAttribute("data-tpl"),inp.value);};})(tins[ti]);}
+var logoIn=document.getElementById("tpl-logo-input");
+if(logoIn)logoIn.onchange=function(){
+  var f=this.files&&this.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){TPL.logo=String(rd.result);saveTpl();var ls=document.querySelectorAll(".tpl-logo");for(var i=0;i<ls.length;i++){ls[i].src=TPL.logo;ls[i].style.display="";}};
+  rd.readAsDataURL(f);
+};
+var cust=document.getElementById("customise");var panel=document.getElementById("tpl-editor");
+if(cust&&panel)cust.onclick=function(){panel.style.display=panel.style.display==="none"?"block":"none";};
 var go=document.getElementById("go");if(go)go.onclick=function(){window.print();};
 var cl=document.getElementById("close");if(cl)cl.onclick=function(){window.close();};
 window.onload=function(){window.focus();window.print();};
 })();`;
 
+/** The screen-only per-shop template editor (logo / tagline / license / footer / terms / signature). */
+function editorPanel(t: PrintTemplate): string {
+  const field = (key: keyof PrintTemplate, label: string, val: string | undefined) =>
+    `<div class="tpl-row"><label>${label}</label><input data-tpl="${key}" value="${esc(val ?? "")}"></div>`;
+  return `<div class="tpl-editor" id="tpl-editor" style="display:none">
+  <div class="tpl-row"><label>Logo</label><input type="file" id="tpl-logo-input" accept="image/*"></div>
+  ${field("tagline", "Tagline", t.tagline)}
+  ${field("licenses", "License no.", t.licenses)}
+  ${field("footer", "Footer", t.footer)}
+  <div class="tpl-row"><label>Terms</label><textarea data-tpl="terms" rows="2">${esc(t.terms ?? "")}</textarea></div>
+  ${field("signatureLabel", "Signature", t.signatureLabel ?? "Authorised signatory")}
+  <div class="tpl-note">Saved on this device for this shop · applies to every bill</div>
+</div>`;
+}
+
 /** Build the invoice HTML document (self-contained, inline styles, all formats). */
-export function invoiceHtml(d: InvoicePrintData, opts: { format: PrintFormat; docType: DocType }): string {
-  const { format: fmt, docType } = opts;
+export function invoiceHtml(
+  d: InvoicePrintData,
+  opts: { format: PrintFormat; docType: DocType; template: PrintTemplate },
+): string {
+  const { format: fmt, docType, template } = opts;
   const meta = DOC_META[docType];
   const fmtButtons = PRINT_FORMATS.map(
     (f) => `<button data-f="${f}"${f === fmt ? ' class="on"' : ""}>${esc(FORMAT_LABEL[f])}</button>`,
@@ -396,6 +470,9 @@ export function invoiceHtml(d: InvoicePrintData, opts: { format: PrintFormat; do
         (t) => `<button data-d="${t}"${t === docType ? ' class="on"' : ""}>${esc(DOC_META[t].label)}</button>`,
       ).join("")
     : "";
+  // Escape "<" so a stray "</script>" inside a template field can't close the tag.
+  const j = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c");
+  const dataScript = `<script>window.__TPL=${j(template)};window.__TPL_KEY=${j(templateStorageKey(d.shop.id))};</script>`;
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(meta.title)} ${esc(d.ref)}</title>
 <style id="pagestyle">${PAGE_RULE[fmt]}</style>
 <style>${STYLE}</style></head>
@@ -403,12 +480,15 @@ export function invoiceHtml(d: InvoicePrintData, opts: { format: PrintFormat; do
 <div class="toolbar">
   <span class="lbl">Format</span>${fmtButtons}${docButtons}
   <span class="spacer"></span>
+  <button id="customise">Customise</button>
   <button id="go" class="go">Print</button>
   <button id="close">Close</button>
 </div>
-<div class="doc" id="doc-receipt">${receiptBody(d, meta)}</div>
-<div class="doc" id="doc-sheet">${sheetBody(d, meta)}</div>
-<div class="doc" id="doc-mono">${monoBody(d, meta)}</div>
+${editorPanel(template)}
+<div class="doc" id="doc-receipt">${receiptBody(d, meta, template)}</div>
+<div class="doc" id="doc-sheet">${sheetBody(d, meta, template)}</div>
+<div class="doc" id="doc-mono">${monoBody(d, meta, template)}</div>
+${dataScript}
 <script>${SCRIPT}</script>
 </body></html>`;
 }
