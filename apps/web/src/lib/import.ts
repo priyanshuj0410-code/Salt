@@ -300,3 +300,34 @@ export function templateCsvFor(id: ImportTemplate["id"]): string {
 export function templateCsv(): string {
   return templateCsvFor("salt");
 }
+
+/** Shape `validateRows` output into the `import_catalog` RPC payload (snake_case). */
+export function itemsToImportPayload(items: ParsedItem[]) {
+  return items.map((it) => ({
+    name: it.name,
+    salt: it.salt,
+    manufacturer: it.manufacturer,
+    pack: it.pack,
+    hsn: it.hsn,
+    gst_rate: it.gstRate,
+    schedule: it.schedule,
+    barcode: it.barcode ?? "",
+    batches: it.batches.map((b) => ({
+      batch_no: b.batchNo,
+      expiry: b.expiry,
+      qty: b.qty,
+      mrp_paise: b.mrpPaise,
+      ptr_paise: b.ptrPaise,
+    })),
+  }));
+}
+
+/**
+ * True when a PostgREST error means the RPC isn't in the schema yet (migration
+ * 0028 not run) — the signal to fall back to the legacy multi-step client insert.
+ */
+export function isMissingFunctionError(err: { code?: string; message?: string } | null): boolean {
+  if (!err) return false;
+  if (err.code === "PGRST202" || err.code === "42883") return true;
+  return /could not find the function|does not exist/i.test(err.message ?? "");
+}

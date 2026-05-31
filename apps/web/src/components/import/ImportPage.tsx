@@ -10,6 +10,8 @@ import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import {
   canonicalHeader,
+  isMissingFunctionError,
+  itemsToImportPayload,
   templateCsvFor,
   validateRows,
   IMPORT_TEMPLATES,
@@ -71,61 +73,91 @@ export function ImportPage() {
     setError(null);
     try {
       const orgId = membership.orgId;
-      const { data: inserted, error: itemErr } = await supabase
-        .from("items")
-        .insert(
-          result.items.map((it) => ({
-            org_id: orgId,
-            name: it.name,
-            salt: it.salt || null,
-            manufacturer: it.manufacturer || null,
-            pack: it.pack || null,
-            hsn: it.hsn || null,
-            gst_rate: it.gstRate,
-            schedule: it.schedule,
-            barcode: it.barcode,
-          })),
-        )
-        .select("id,name,manufacturer");
-      if (itemErr) {
-        setError(itemErr.message);
-        return;
-      }
-
-      const idByKey = new Map<string, string>();
-      for (const row of inserted ?? []) {
-        idByKey.set(`${row.name.toLowerCase()}|${(row.manufacturer ?? "").toLowerCase()}`, row.id);
-      }
-
-      const batchPayload = result.items.flatMap((it) => {
-        const itemId = idByKey.get(it.key);
-        if (!itemId) return [];
-        return it.batches.map((b) => ({
-          org_id: orgId,
-          item_id: itemId,
-          batch_no: b.batchNo || null,
-          expiry: b.expiry || null,
-          qty: b.qty,
-          mrp_paise: b.mrpPaise,
-          ptr_paise: b.ptrPaise,
-        }));
+      // Preferred path: one atomic RPC — any failure rolls the whole import back.
+      const { data, error: rpcErr } = await supabase.rpc("import_catalog", {
+        p_items: itemsToImportPayload(result.items),
       });
-
-      for (let i = 0; i < batchPayload.length; i += 500) {
-        const { error: bErr } = await supabase.from("batches").insert(batchPayload.slice(i, i + 500));
-        if (bErr) {
-          setError(bErr.message);
+      if (rpcErr) {
+        if (isMissingFunctionError(rpcErr)) {
+          await legacyImport(orgId); // migration 0028 not applied yet
           return;
         }
+        // The transaction already rolled back server-side — catalogue unchanged.
+        setError(`${rpcErr.message} — nothing was imported (rolled back).`);
+        return;
       }
-
+      const counts = (data ?? {}) as { items?: number; batches?: number };
       await loadCatalog(orgId);
-      setDone({ items: result.items.length, batches: batchPayload.length });
+      setDone({ items: counts.items ?? result.items.length, batches: counts.batches ?? 0 });
       setResult(null);
       setFileName(null);
     } finally {
       setImporting(false);
     }
+  }
+
+  // Fallback for before 0028 is applied: the legacy multi-step insert, now with a
+  // best-effort compensating rollback so a mid-import failure still leaves the
+  // catalogue clean rather than half-imported.
+  async function legacyImport(orgId: string) {
+    if (!supabase || !result) return;
+    const { data: inserted, error: itemErr } = await supabase
+      .from("items")
+      .insert(
+        result.items.map((it) => ({
+          org_id: orgId,
+          name: it.name,
+          salt: it.salt || null,
+          manufacturer: it.manufacturer || null,
+          pack: it.pack || null,
+          hsn: it.hsn || null,
+          gst_rate: it.gstRate,
+          schedule: it.schedule,
+          barcode: it.barcode,
+        })),
+      )
+      .select("id,name,manufacturer");
+    if (itemErr) {
+      setError(itemErr.message);
+      return;
+    }
+
+    const insertedIds = (inserted ?? []).map((r) => r.id);
+    const idByKey = new Map<string, string>();
+    for (const row of inserted ?? []) {
+      idByKey.set(`${row.name.toLowerCase()}|${(row.manufacturer ?? "").toLowerCase()}`, row.id);
+    }
+
+    const batchPayload = result.items.flatMap((it) => {
+      const itemId = idByKey.get(it.key);
+      if (!itemId) return [];
+      return it.batches.map((b) => ({
+        org_id: orgId,
+        item_id: itemId,
+        batch_no: b.batchNo || null,
+        expiry: b.expiry || null,
+        qty: b.qty,
+        mrp_paise: b.mrpPaise,
+        ptr_paise: b.ptrPaise,
+      }));
+    });
+
+    for (let i = 0; i < batchPayload.length; i += 500) {
+      const { error: bErr } = await supabase.from("batches").insert(batchPayload.slice(i, i + 500));
+      if (bErr) {
+        if (insertedIds.length) {
+          await supabase.from("batches").delete().in("item_id", insertedIds);
+          await supabase.from("items").delete().in("id", insertedIds);
+        }
+        setError(`${bErr.message} — import rolled back, nothing was saved.`);
+        return;
+      }
+    }
+
+    await loadCatalog(orgId);
+    setDone({ items: result.items.length, batches: batchPayload.length });
+    setResult(null);
+    setFileName(null);
   }
 
   return (
@@ -185,6 +217,12 @@ export function ImportPage() {
 
         {result && (
           <div className="mt-6 rounded-lg border">
+            <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+              <span className="text-xs font-medium">Dry run — preview only, nothing saved yet</span>
+              <span className="text-xs text-muted-foreground">
+                Will create {result.items.length} items · {result.batchCount} batches
+              </span>
+            </div>
             <div className="grid grid-cols-4 divide-x border-b text-center">
               <Stat label="Items" value={result.items.length} />
               <Stat label="Batches" value={result.batchCount} />
@@ -210,7 +248,7 @@ export function ImportPage() {
               <p className="text-xs text-muted-foreground">
                 {result.errorCount > 0
                   ? "Fix the errors in your CSV and re-upload."
-                  : "Re-importing the same file adds rows again (no dedupe yet)."}
+                  : "Imported as one transaction — if anything fails, nothing is saved. Re-importing the same file adds rows again (no dedupe yet)."}
               </p>
               <Button onClick={doImport} disabled={importing || result.items.length === 0 || result.errorCount > 0}>
                 <Upload />
