@@ -41,6 +41,8 @@ const TallyExportPage = lazy(() => import("@/components/gst/TallyExportPage").th
 const HsnReportPage = lazy(() => import("@/components/gst/HsnReportPage").then((m) => ({ default: m.HsnReportPage })));
 const PaymentsPage = lazy(() => import("@/components/payments/PaymentsPage").then((m) => ({ default: m.PaymentsPage })));
 const MakePaymentPage = lazy(() => import("@/components/payments/MakePaymentPage").then((m) => ({ default: m.MakePaymentPage })));
+const CatalogPage = lazy(() => import("@/components/catalog/CatalogPage").then((m) => ({ default: m.CatalogPage })));
+const ItemDetailPage = lazy(() => import("@/components/catalog/ItemDetailPage").then((m) => ({ default: m.ItemDetailPage })));
 const DashboardPage = lazy(() => import("@/components/reports/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const SalesReportsPage = lazy(() => import("@/components/reports/SalesReportsPage").then((m) => ({ default: m.SalesReportsPage })));
 const PurchaseReportsPage = lazy(() => import("@/components/reports/PurchaseReportsPage").then((m) => ({ default: m.PurchaseReportsPage })));
@@ -383,6 +385,22 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <MakePaymentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/catalogue"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <CatalogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/catalogue/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ItemDetailPage />
           </ProtectedRoute>
         }
       />

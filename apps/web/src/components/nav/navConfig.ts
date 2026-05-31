@@ -179,12 +179,10 @@ export const NAV: NavModule[] = [
     key: "k",
     label: "Catalogue",
     icon: Tag,
-    built: false,
+    path: "/catalogue",
+    built: true,
     roles: ["owner"],
-    children: [
-      { label: "Items", built: false },
-      { label: "Item detail", built: false },
-    ],
+    children: [{ label: "Items", path: "/catalogue", built: true }],
   },
   {
     key: ",",

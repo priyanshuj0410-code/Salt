@@ -22,6 +22,9 @@ export interface Item {
   gstRate: number;
   schedule: Schedule;
   barcode?: string;
+  /** AYUSH / non-allopathic item (ayurveda, siddha, unani, homeopathy). These
+   *  carry no Drugs-&-Cosmetics schedule and describe contents, not a salt. */
+  ayush?: boolean;
   /** Relative sales velocity for this shop; used as a ranking tie-breaker. */
   velocity: number;
   batches: Batch[];
