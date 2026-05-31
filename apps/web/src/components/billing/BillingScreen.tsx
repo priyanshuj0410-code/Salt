@@ -8,6 +8,7 @@ import { MobileCheckout } from "./MobileCheckout";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { CustomerPicker } from "./CustomerPicker";
 import { H1Gate } from "./H1Gate";
+import { ParkedBills } from "./ParkedBills";
 import { useCheckout } from "./useCheckout";
 import { Kbd } from "@/components/ui/kbd";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
@@ -78,6 +79,7 @@ export function BillingScreen() {
   const loadCatalog = useCatalog((s) => s.load);
   const party = useBill((s) => s.party);
   const setParty = useBill((s) => s.setParty);
+  const parkBill = useBill((s) => s.parkBill);
 
   // Detail for the selected customer: drives the header phone, the "Add GSTIN"
   // prompt, and the intra/inter-state GST split. Refetched after a GSTIN is saved.
@@ -140,6 +142,17 @@ export function BillingScreen() {
     { enableOnFormTags: true },
   );
 
+  // F4 — hold the current bill aside (Marg-style), start a fresh one.
+  useHotkeys(
+    "f4",
+    (e) => {
+      e.preventDefault();
+      parkBill();
+    },
+    { enableOnFormTags: true },
+    [parkBill],
+  );
+
   const refetchCustomer = () => setCustKey((k) => k + 1);
 
   return (
@@ -155,6 +168,8 @@ export function BillingScreen() {
         />
         <span className="ml-auto hidden shrink-0 text-sm text-text-tertiary md:block">Counter 1</span>
       </header>
+
+      <ParkedBills />
 
       <div className="flex-1 overflow-y-auto p-3 md:grid md:grid-cols-[1fr_320px] md:gap-4 md:overflow-hidden md:p-4">
         <div className="flex flex-col gap-3 md:min-h-0">
