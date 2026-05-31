@@ -100,6 +100,7 @@ export function PartiesPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [aging, setAging] = useState<{ receivable: AgingBuckets; payable: AgingBuckets } | null>(null);
   const [vendorPay, setVendorPay] = useState<{ buckets: UpcomingBuckets; next: NextPayment[] } | null>(null);
+  const [retagging, setRetagging] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -167,6 +168,22 @@ export function PartiesPage() {
   }, [orgId, reloadKey]);
 
   const reload = () => setReloadKey((k) => k + 1);
+
+  // Re-tag a party's type inline from the list (fix import mistags without
+  // opening the profile). Optimistic; reverts on error.
+  async function retag(id: string, type: string) {
+    if (!supabase || retagging) return;
+    const prev = rows;
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, type } : r)));
+    setRetagging(id);
+    setError(null);
+    const { error: err } = await supabase.from("ledgers").update({ type }).eq("id", id);
+    setRetagging(null);
+    if (err) {
+      setError(err.message);
+      setRows(prev);
+    }
+  }
 
   const suggestions = useMemo(
     () =>
@@ -385,33 +402,46 @@ export function PartiesPage() {
           ) : (
             <div className="max-h-[64vh] divide-y divide-divider overflow-auto">
               {visible.map((r) => (
-                <Link
-                  key={r.id}
-                  to={`/parties/${r.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
-                >
-                  <span
-                    className={cn(
-                      "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                      typeTint(r.type),
-                    )}
+                <div key={r.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface">
+                  <Link
+                    to={`/parties/${r.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-3 focus-visible:outline-none"
                   >
-                    {initials(r.name)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{r.name}</div>
-                    <div className="truncate text-xs text-text-tertiary">
-                      <span className="capitalize">{r.type}</span>
-                      {r.phone ? ` · ${r.phone}` : ""}
-                      {r.gstin ? ` · ${r.gstin}` : ""}
+                    <span
+                      className={cn(
+                        "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                        typeTint(r.type),
+                      )}
+                    >
+                      {initials(r.name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">{r.name}</div>
+                      <div className="truncate text-xs text-text-tertiary">
+                        {[r.phone, r.gstin].filter(Boolean).join(" · ") || "—"}
+                      </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-right text-sm">
-                    <Balance paise={r.opening_balance_paise} />
-                    <div className="text-xs text-text-tertiary tabular-nums">{r.billCount} bills</div>
-                  </div>
-                  <ChevronRight className="size-4 shrink-0 text-text-tertiary" />
-                </Link>
+                    <div className="shrink-0 text-right text-sm">
+                      <Balance paise={r.opening_balance_paise} />
+                      <div className="text-xs text-text-tertiary tabular-nums">{r.billCount} bills</div>
+                    </div>
+                  </Link>
+                  {/* Inline re-tag (SALT-051) — fix mistags without opening the profile */}
+                  <select
+                    aria-label={`Type for ${r.name}`}
+                    value={r.type}
+                    disabled={retagging === r.id}
+                    onChange={(e) => retag(r.id, e.target.value)}
+                    className="h-8 shrink-0 rounded-md border border-input bg-background px-1.5 text-xs capitalize outline-none focus-visible:border-ring disabled:opacity-50"
+                  >
+                    <option value="customer">customer</option>
+                    <option value="vendor">vendor</option>
+                    <option value="other">other</option>
+                  </select>
+                  <Link to={`/parties/${r.id}`} className="shrink-0" aria-label={`Open ${r.name}`}>
+                    <ChevronRight className="size-4 text-text-tertiary" />
+                  </Link>
+                </div>
               ))}
             </div>
           )}
