@@ -52,3 +52,46 @@ begin
 end; $$;
 
 grant execute on function public.adjust_stock(uuid, integer, text, text) to authenticated;
+
+-- 2. finalize_physical_count: reconcile a stock-take ------------------------
+-- For every draft count line with a non-zero variance (counted − system), set
+-- the batch on-hand to the counted figure and post an 'adjustment' movement of
+-- the variance (referencing the count). Marks the count finalized. Returns the
+-- number of lines adjusted. The lines themselves are inserted/edited client-side
+-- (RLS-gated) while the count is a draft; only the posting is centralised here.
+create or replace function public.finalize_physical_count(p_count_id uuid) returns integer
+language plpgsql security definer set search_path = public as $$
+declare v_org uuid; v_shop uuid; v_n integer := 0; r record;
+begin
+  select org_id into v_org from public.memberships where user_id = auth.uid() limit 1;
+  if v_org is null then raise exception 'no organization for current user'; end if;
+
+  select shop_id into v_shop from public.physical_counts
+    where id = p_count_id and org_id = v_org and status = 'draft' for update;
+  if not found then raise exception 'count not found or already finalized'; end if;
+  if v_shop is null then
+    select id into v_shop from public.shops where org_id = v_org and is_primary limit 1;
+  end if;
+
+  for r in
+    select l.item_id, l.batch_id, l.counted_qty, l.variance, coalesce(b.ptr_paise, 0) as ptr
+    from public.physical_count_lines l
+    left join public.batches b on b.id = l.batch_id
+    where l.count_id = p_count_id and l.org_id = v_org
+  loop
+    if r.batch_id is not null and r.variance <> 0 then
+      update public.batches set qty = r.counted_qty where id = r.batch_id and org_id = v_org;
+      insert into public.stock_movements (
+        org_id, shop_id, item_id, batch_id, qty_delta, reason, unit_cost_paise, ref_table, ref_id, note, created_by
+      ) values (
+        v_org, v_shop, r.item_id, r.batch_id, r.variance, 'adjustment', r.ptr, 'physical_count', p_count_id, 'Physical count variance', auth.uid()
+      );
+      v_n := v_n + 1;
+    end if;
+  end loop;
+
+  update public.physical_counts set status = 'finalized' where id = p_count_id;
+  return v_n;
+end; $$;
+
+grant execute on function public.finalize_physical_count(uuid) to authenticated;

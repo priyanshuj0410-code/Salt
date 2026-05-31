@@ -10,6 +10,7 @@ const TABS: { to: string; label: string }[] = [
   { to: "/inventory/out-of-stock", label: "Out of stock" },
   { to: "/inventory/turnover", label: "Turnover" },
   { to: "/inventory/adjustments", label: "Adjustments" },
+  { to: "/inventory/count", label: "Physical count" },
 ];
 
 /**
