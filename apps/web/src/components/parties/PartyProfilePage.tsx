@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Page } from "@/components/patterns/page";
+import { PageHeader } from "@/components/patterns/page-header";
+import { StatCard } from "@/components/patterns/stat-card";
+import { DataTable } from "@/components/patterns/data-table";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
@@ -65,10 +68,10 @@ const rupees = (paise: number) =>
   (Math.abs(paise) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
 function Money({ paise, plain }: { paise: number; plain?: boolean }) {
-  if (paise === 0) return <span className="text-muted-foreground">₹0</span>;
+  if (paise === 0) return <span className="text-text-tertiary">₹0</span>;
   const dr = paise > 0;
   return (
-    <span className={plain ? "" : dr ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
+    <span className={plain ? "" : dr ? "text-success" : "text-danger"}>
       ₹{rupees(paise)}
       {!plain && ` ${dr ? "Dr" : "Cr"}`}
     </span>
@@ -244,12 +247,12 @@ export function PartyProfilePage() {
   }
 
   if (loading) {
-    return <Shell><p className="text-sm text-muted-foreground">Loading…</p></Shell>;
+    return <Shell><p className="text-sm text-text-tertiary">Loading…</p></Shell>;
   }
   if (notFound || !ledger) {
     return (
       <Shell>
-        <p className="text-sm text-muted-foreground">Party not found.</p>
+        <p className="text-sm text-text-tertiary">Party not found.</p>
         <Link to="/parties" className="mt-3 inline-block text-sm font-medium text-primary hover:underline">
           ← Back to parties
         </Link>
@@ -261,53 +264,52 @@ export function PartyProfilePage() {
 
   return (
     <Shell>
-      <Link to="/parties" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link to="/parties" className="mb-2 inline-flex items-center gap-1 text-sm text-text-tertiary hover:text-text-primary">
         <ArrowLeft className="size-3.5" /> Parties
       </Link>
 
-      <div className="mt-2 flex flex-wrap items-center gap-3">
-        <User className="size-6 text-primary" />
-        <h1 className="text-xl font-semibold">{ledger.name}</h1>
-        <Badge variant="secondary">{ledger.type}</Badge>
-        <span className="flex-1" />
-        <Button
-          variant="outline"
-          onClick={() => {
-            setPayError(null);
-            setPayOpen(true);
-          }}
-        >
-          <Wallet /> {ledger.type === "vendor" ? "Make payment" : "Receive payment"}
-        </Button>
-        {isCustomer ? (
-          <Button onClick={newSale}>
-            <ShoppingCart /> New sale
-          </Button>
-        ) : (
-          <Button onClick={() => navigate(`/parties/${ledger.id}/purchase`)}>
-            <ShoppingCart /> New purchase
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        icon={User}
+        title={ledger.name}
+        subtitle={<Badge variant="neutral" className="capitalize">{ledger.type}</Badge>}
+        actions={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPayError(null);
+                setPayOpen(true);
+              }}
+            >
+              <Wallet /> {ledger.type === "vendor" ? "Make payment" : "Receive payment"}
+            </Button>
+            {isCustomer ? (
+              <Button onClick={newSale}>
+                <ShoppingCart /> New sale
+              </Button>
+            ) : (
+              <Button onClick={() => navigate(`/parties/${ledger.id}/purchase`)}>
+                <ShoppingCart /> New purchase
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Due summary */}
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Amount due">
-          <span className={due >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
-            <Money paise={due} />
-          </span>
-        </Stat>
-        <Stat label="Opening balance"><Money paise={ledger.opening_balance_paise} /></Stat>
-        <Stat label="Open bills"><span className="tabular-nums">{bills.length}</span></Stat>
-        <Stat label="Orders"><span className="tabular-nums">{orders.length}</span></Stat>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatCard label="Amount due" value={<Money paise={due} />} />
+        <StatCard label="Opening balance" value={<Money paise={ledger.opening_balance_paise} />} />
+        <StatCard label="Open bills" value={bills.length} />
+        <StatCard label="Orders" value={orders.length} />
       </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">
+      <p className="mt-1.5 text-xs text-text-tertiary">
         Due = opening balance + unsettled orders − payments. <Money paise={due} plain /> {due >= 0 ? "receivable (they owe you)" : "payable (you owe them)"}.
       </p>
 
       {/* Details */}
-      <section className="mt-6 rounded-lg border p-4">
-        <h2 className="text-sm font-medium">Details</h2>
+      <section className="mt-6 rounded-lg border border-border p-4">
+        <h2 className="text-sm font-medium text-text-primary">Details</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <Field label="Name">
             <Input value={ledger.name} onChange={(e) => edit("name", e.target.value)} className="h-8" />
@@ -372,87 +374,96 @@ export function PartyProfilePage() {
 
       {/* Order history */}
       <section className="mt-6">
-        <h2 className="flex items-center gap-2 text-sm font-medium">
-          <Receipt className="size-4 text-muted-foreground" /> Order history
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
+          <Receipt className="size-4 text-text-tertiary" /> Order history
         </h2>
-        <div className="mt-2 overflow-hidden rounded-lg border">
-          <div className="grid grid-cols-[1fr_0.8fr_0.9fr_0.9fr_0.8fr] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
-            <span>Date</span>
-            <span>Type</span>
-            <span className="text-right">Total</span>
-            <span className="text-right">Paid</span>
-            <span className="text-right">Status</span>
-          </div>
-          {orders.length === 0 ? (
-            <p className="p-3 text-sm text-muted-foreground">
-              No orders yet. {isCustomer && "Use New sale to bill this customer."}
-            </p>
-          ) : (
-            orders.map((o) => (
-              <div key={o.id} className="grid grid-cols-[1fr_0.8fr_0.9fr_0.9fr_0.8fr] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0">
-                <span className="text-muted-foreground">{format(new Date(o.created_at), "d MMM yyyy")}</span>
-                <span><Badge variant="secondary">{o.direction}</Badge></span>
-                <span className="text-right tabular-nums">{formatPaise(o.total_paise)}</span>
-                <span className="text-right tabular-nums text-muted-foreground">{formatPaise(o.paid_paise)}</span>
-                <span className="text-right text-xs text-muted-foreground">
+        <DataTable
+          cols="1fr 0.8fr 0.9fr 0.9fr 0.8fr"
+          rows={orders}
+          rowKey={(o) => o.id}
+          maxHeight="none"
+          columns={[
+            { key: "date", header: "Date", cell: (o) => <span className="text-text-tertiary">{format(new Date(o.created_at), "d MMM yyyy")}</span> },
+            { key: "type", header: "Type", cell: (o) => <Badge variant="neutral" className="capitalize">{o.direction}</Badge> },
+            { key: "total", header: "Total", numeric: true, cell: (o) => formatPaise(o.total_paise) },
+            { key: "paid", header: "Paid", numeric: true, cell: (o) => <span className="text-text-tertiary">{formatPaise(o.paid_paise)}</span> },
+            {
+              key: "status",
+              header: "Status",
+              numeric: true,
+              cell: (o) => (
+                <span className="text-xs text-text-tertiary">
                   {o.paid_paise >= o.total_paise ? "paid" : o.due_date ? `due ${format(new Date(o.due_date), "d MMM")}` : "due"}
                 </span>
-              </div>
-            ))
-          )}
-        </div>
+              ),
+            },
+          ]}
+          empty={
+            <p className="px-3 py-6 text-sm text-text-tertiary">
+              No orders yet.{isCustomer ? " Use New sale to bill this customer." : ""}
+            </p>
+          }
+        />
       </section>
 
       {/* Payments */}
       {payments.length > 0 && (
         <section className="mt-6">
-          <h2 className="flex items-center gap-2 text-sm font-medium">
-            <Wallet className="size-4 text-muted-foreground" /> Payments
+          <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
+            <Wallet className="size-4 text-text-tertiary" /> Payments
           </h2>
-          <div className="mt-2 overflow-hidden rounded-lg border">
-            <div className="grid grid-cols-[1fr_0.7fr_1.2fr_0.9fr] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
-              <span>Date</span>
-              <span>Mode</span>
-              <span>Reference</span>
-              <span className="text-right">Amount</span>
-            </div>
-            {payments.map((p) => (
-              <div key={p.id} className="grid grid-cols-[1fr_0.7fr_1.2fr_0.9fr] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0">
-                <span className="text-muted-foreground">{format(new Date(p.created_at), "d MMM yyyy")}</span>
-                <span><Badge variant="secondary">{p.mode}</Badge></span>
-                <span className="min-w-0 truncate text-xs text-muted-foreground">{p.reference || "—"}</span>
-                <span className="text-right tabular-nums">
-                  {p.direction === "received" ? "+" : "−"}
-                  {formatPaise(p.amount_paise)}
-                </span>
-              </div>
-            ))}
-          </div>
+          <DataTable
+            cols="1fr 0.7fr 1.2fr 0.9fr"
+            rows={payments}
+            rowKey={(p) => p.id}
+            maxHeight="none"
+            columns={[
+              { key: "date", header: "Date", cell: (p) => <span className="text-text-tertiary">{format(new Date(p.created_at), "d MMM yyyy")}</span> },
+              { key: "mode", header: "Mode", cell: (p) => <Badge variant="neutral" className="uppercase">{p.mode}</Badge> },
+              { key: "ref", header: "Reference", cell: (p) => <span className="text-text-tertiary">{p.reference || "—"}</span> },
+              {
+                key: "amount",
+                header: "Amount",
+                numeric: true,
+                cell: (p) => (
+                  <>
+                    {p.direction === "received" ? "+" : "−"}
+                    {formatPaise(p.amount_paise)}
+                  </>
+                ),
+              },
+            ]}
+          />
         </section>
       )}
 
       {/* Open bills from import */}
       {bills.length > 0 && (
         <section className="mt-6">
-          <h2 className="text-sm font-medium">Open bills <span className="text-xs font-normal text-muted-foreground">(from import — breakdown of opening balance)</span></h2>
-          <div className="mt-2 max-h-72 overflow-auto rounded-lg border">
-            <div className="grid grid-cols-[1fr_0.9fr_0.9fr_0.7fr] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
-              <span>Ref</span>
-              <span>Date</span>
-              <span className="text-right">Amount</span>
-              <span className="text-right">Days</span>
-            </div>
-            {bills.map((b) => (
-              <div key={b.id} className="grid grid-cols-[1fr_0.9fr_0.9fr_0.7fr] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0">
-                <span className="min-w-0 truncate font-mono text-xs">{b.ref_no || "—"}</span>
-                <span className="text-muted-foreground">{b.bill_date ? format(new Date(b.bill_date), "d MMM yyyy") : "—"}</span>
-                <span className="text-right tabular-nums">
-                  {formatPaise(b.amount_paise)} <span className="text-xs text-muted-foreground">{b.nature?.toUpperCase()}</span>
-                </span>
-                <span className="text-right text-xs tabular-nums text-muted-foreground">{b.days_overdue ?? "—"}</span>
-              </div>
-            ))}
-          </div>
+          <h2 className="mb-2 text-sm font-medium text-text-primary">
+            Open bills <span className="text-xs font-normal text-text-tertiary">(from import — breakdown of opening balance)</span>
+          </h2>
+          <DataTable
+            cols="1fr 0.9fr 0.9fr 0.7fr"
+            rows={bills}
+            rowKey={(b) => b.id}
+            maxHeight="18rem"
+            columns={[
+              { key: "ref", header: "Ref", cell: (b) => <span className="font-mono text-xs">{b.ref_no || "—"}</span> },
+              { key: "date", header: "Date", cell: (b) => <span className="text-text-tertiary">{b.bill_date ? format(new Date(b.bill_date), "d MMM yyyy") : "—"}</span> },
+              {
+                key: "amount",
+                header: "Amount",
+                numeric: true,
+                cell: (b) => (
+                  <>
+                    {formatPaise(b.amount_paise)} <span className="text-xs text-text-tertiary">{b.nature?.toUpperCase()}</span>
+                  </>
+                ),
+              },
+              { key: "days", header: "Days", numeric: true, cell: (b) => <span className="text-text-tertiary">{b.days_overdue ?? "—"}</span> },
+            ]}
+          />
         </section>
       )}
       <Dialog open={payOpen} onOpenChange={setPayOpen}>
@@ -475,7 +486,7 @@ export function PartyProfilePage() {
               />
             </Field>
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-muted-foreground">Mode</span>
+              <span className="text-xs text-text-tertiary">Mode</span>
               <div className="flex gap-1.5">
                 {PAY_MODES.map((m) => (
                   <Button
@@ -513,19 +524,10 @@ function Shell({ children }: { children: React.ReactNode }) {
   return <Page width="md">{children}</Page>;
 }
 
-function Stat({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-md border bg-background p-3">
-      <div className="text-base font-semibold tabular-nums">{children}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-    </div>
-  );
-}
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-xs text-text-tertiary">{label}</span>
       {children}
     </label>
   );
