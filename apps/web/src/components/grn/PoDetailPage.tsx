@@ -123,7 +123,7 @@ export function PoDetailPage() {
         }
         actions={
           head && canReceive ? (
-            <Button onClick={() => navigate(`/purchases/new?vendor=${head.vendor_id ?? ""}`)}>
+            <Button onClick={() => navigate(`/purchases/new?po=${head.id}`)}>
               <Truck /> Receive against this PO
             </Button>
           ) : undefined

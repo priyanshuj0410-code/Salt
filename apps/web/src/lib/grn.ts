@@ -231,3 +231,109 @@ export function buildPoLineRows(poId: string, orgId: string, lines: PoLine[]): P
     line_total_paise: poLineTotal(l),
   }));
 }
+
+// ── PO ↔ GRN matching (SALT-024) ─────────────────────────────────────────────
+// When a GRN is received against a PO, compare what was ordered vs what arrived
+// and surface discrepancies (short/excess supply, price changes, missing/extra
+// items) so the user reconciles before committing. Match is by item_id; received
+// batches of the same item aggregate (10 from batch A + 5 from B vs an order of
+// 15 is a clean match, not two shorts).
+
+export interface MatchableLine {
+  itemId: string | null;
+  name: string;
+  qty: number;
+  ptrPaise: number;
+}
+
+export type DiscrepancyKind = "qty-short" | "qty-excess" | "price-mismatch" | "missing" | "extra";
+
+export interface LineDiscrepancy {
+  kind: DiscrepancyKind;
+  itemId: string | null;
+  name: string;
+  orderedQty?: number;
+  receivedQty?: number;
+  orderedPtrPaise?: number;
+  receivedPtrPaise?: number;
+}
+
+export interface PoMatch {
+  discrepancies: LineDiscrepancy[];
+  /** True when nothing differs between ordered and received. */
+  matched: boolean;
+  orderedTotalPaise: number; // Σ po qty×ptr
+  receivedTotalPaise: number; // Σ grn qty×ptr
+}
+
+export function matchGrnToPo(grn: MatchableLine[], po: MatchableLine[]): PoMatch {
+  const discrepancies: LineDiscrepancy[] = [];
+  const poByItem = new Map<string, MatchableLine>();
+  for (const p of po) if (p.itemId) poByItem.set(p.itemId, p);
+
+  // Aggregate received qty per item (same-item batches sum together).
+  const recvByItem = new Map<string, { qty: number; ptrPaise: number; name: string }>();
+  for (const g of grn) {
+    if (!g.itemId) {
+      // An off-catalogue received line can't be matched — always an extra.
+      discrepancies.push({ kind: "extra", itemId: null, name: g.name, receivedQty: g.qty, receivedPtrPaise: g.ptrPaise });
+      continue;
+    }
+    const e = recvByItem.get(g.itemId);
+    if (e) e.qty += g.qty;
+    else recvByItem.set(g.itemId, { qty: g.qty, ptrPaise: g.ptrPaise, name: g.name });
+  }
+
+  for (const [itemId, r] of recvByItem) {
+    const p = poByItem.get(itemId);
+    if (!p) {
+      discrepancies.push({ kind: "extra", itemId, name: r.name, receivedQty: r.qty, receivedPtrPaise: r.ptrPaise });
+      continue;
+    }
+    if (r.qty !== p.qty) {
+      discrepancies.push({
+        kind: r.qty < p.qty ? "qty-short" : "qty-excess",
+        itemId,
+        name: p.name,
+        orderedQty: p.qty,
+        receivedQty: r.qty,
+      });
+    }
+    if (r.ptrPaise !== p.ptrPaise) {
+      discrepancies.push({
+        kind: "price-mismatch",
+        itemId,
+        name: p.name,
+        orderedPtrPaise: p.ptrPaise,
+        receivedPtrPaise: r.ptrPaise,
+      });
+    }
+  }
+
+  // PO lines that nothing was received against.
+  for (const p of po) {
+    if (p.itemId && !recvByItem.has(p.itemId)) {
+      discrepancies.push({ kind: "missing", itemId: p.itemId, name: p.name, orderedQty: p.qty });
+    }
+  }
+
+  const orderedTotalPaise = po.reduce((s, p) => s + Math.round(p.qty * p.ptrPaise), 0);
+  const receivedTotalPaise = grn.reduce((s, g) => s + Math.round(g.qty * g.ptrPaise), 0);
+  return { discrepancies, matched: discrepancies.length === 0, orderedTotalPaise, receivedTotalPaise };
+}
+
+/** Short human label for a discrepancy chip. */
+export function discrepancyLabel(d: LineDiscrepancy): string {
+  switch (d.kind) {
+    case "qty-short":
+      return `short ${(d.orderedQty ?? 0) - (d.receivedQty ?? 0)} (ord ${d.orderedQty}, got ${d.receivedQty})`;
+    case "qty-excess":
+      return `excess ${(d.receivedQty ?? 0) - (d.orderedQty ?? 0)} (ord ${d.orderedQty}, got ${d.receivedQty})`;
+    case "price-mismatch":
+      return "price changed";
+    case "missing":
+      return `not received (ord ${d.orderedQty})`;
+    case "extra":
+      return "not on PO";
+  }
+}
