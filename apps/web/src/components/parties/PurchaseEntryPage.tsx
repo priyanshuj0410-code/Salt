@@ -4,7 +4,7 @@ import { addDays, format } from "date-fns";
 import { ArrowLeft, Banknote, CalendarClock, Plus, Search, Trash2, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UserMenu } from "@/components/auth/UserMenu";
+import { Page } from "@/components/patterns/page";
 import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
@@ -115,16 +115,7 @@ export function PurchaseEntryPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
-        <div className="flex items-baseline gap-3">
-          <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-muted-foreground">New purchase</span>
-        </div>
-        <UserMenu />
-      </header>
-
-      <main className="mx-auto w-full max-w-4xl flex-1 p-6">
+    <Page width="md">
         <Link
           to={vendor ? `/parties/${vendor.id}` : "/parties"}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -248,13 +239,11 @@ export function PurchaseEntryPage() {
             Cancel
           </Button>
         </div>
-      </main>
-
       <ShopSetupDialog
         open={setupOpen}
         onOpenChange={setSetupOpen}
         onResolved={() => void save()}
       />
-    </div>
+    </Page>
   );
 }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserMenu } from "@/components/auth/UserMenu";
+import { Page } from "@/components/patterns/page";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
@@ -502,18 +502,7 @@ export function PartyProfilePage() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
-        <div className="flex items-baseline gap-3">
-          <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-muted-foreground">Party</span>
-        </div>
-        <UserMenu />
-      </header>
-      <main className="mx-auto w-full max-w-4xl flex-1 p-6">{children}</main>
-    </div>
-  );
+  return <Page width="md">{children}</Page>;
 }
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
