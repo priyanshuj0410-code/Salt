@@ -356,6 +356,8 @@ Central stock control, inter-store transfers, HQ dashboard, consolidated GST fil
 
 ERP-to-ERP ordering: the pharmacy sees the distributor's live stock, prices, and active schemes inside Salt and places a purchase order electronically. Eliminates the WhatsApp order cycle.
 
+> **Integration reality (researched):** vendor ordering is *distributor-mediated* — the `known_vendors` are manufacturers with no retailer ordering API, and the aggregators (Pharmarack/Retailio) are partnership-only, not self-serve. The open path is an **ONDC buyer app**, but pharma B2B there is nascent. See the deep dive in [architecture/ondc-b2b-pharma](../architecture/ondc-b2b-pharma.md) and ADR [0016](../decisions/0016-vendor-ordering-channel.md). Near-term stopgap: structured PO → WhatsApp/PDF export.
+
 ### 19. Purchase Invoice OCR
 
 AI auto-fill: point phone camera at a paper distributor invoice; Salt extracts item, batch, qty, MRP, PTR, GST. Saves 30–60 minutes of daily manual GRN entry. Marg already does this — it must be matched.
@@ -367,6 +369,8 @@ Link each sale to the patient's ABHA health ID. Generates referral traffic from 
 ### 21. ONDC
 
 List the pharmacy's stock on the ONDC network; fulfill online orders through Salt. eVitalRx is first. Enables independents to compete with PharmEasy/Apollo without a commission.
+
+> This is the **seller-app / B2C retail** ONDC play (the pharmacy sells to consumers) — distinct from the **buyer-app / B2B procurement** play in Module 18. Both share the same network plumbing and the same pharma gate (OTC-only today, no Rx). Deep dive — roles, Beckn flow, onboarding, regulatory gate: [architecture/ondc-b2b-pharma](../architecture/ondc-b2b-pharma.md).
 
 ---
 
