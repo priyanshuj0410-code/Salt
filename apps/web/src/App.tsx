@@ -30,6 +30,12 @@ import { TallyExportPage } from "@/components/gst/TallyExportPage";
 import { HsnReportPage } from "@/components/gst/HsnReportPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
+import { DashboardPage } from "@/components/reports/DashboardPage";
+import { SalesReportsPage } from "@/components/reports/SalesReportsPage";
+import { PurchaseReportsPage } from "@/components/reports/PurchaseReportsPage";
+import { InventoryReportsPage } from "@/components/reports/InventoryReportsPage";
+import { FinancialReportsPage } from "@/components/reports/FinancialReportsPage";
+import { TaxReportsPage } from "@/components/reports/TaxReportsPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { DrugLicensesPage } from "@/components/settings/DrugLicensesPage";
@@ -257,6 +263,54 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <HsnReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/sales"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SalesReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/purchases"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PurchaseReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/inventory"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <InventoryReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/financial"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <FinancialReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/tax"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <TaxReportsPage />
           </ProtectedRoute>
         }
       />

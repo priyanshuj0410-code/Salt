@@ -1,0 +1,104 @@
+---
+type: architecture
+updated: 2026-06-01
+tags: [reports, analytics, dashboard, accounting, gst]
+---
+
+# Reports & analytics
+
+The **Reports** module (`R`, `g r`) — the owner's read surface over everything the
+operational modules write. One dashboard plus five report suites, all owner-gated,
+each a single screen with switchable views and CSV export. Built in SALT-073…078.
+
+Maps the [Reports & Analytics product module](../product/product-modules.md) onto
+the [information architecture](information-architecture.md) `/reports/*` routes.
+
+## The reporting basis (read it first)
+
+Every report reads **operational, post-cutover documents** — the same filter the
+[GST module](gst-returns.md) uses, so figures reconcile across modules:
+
+- Sales/purchases: `status` active (`placed` / `received`) **and `posts_effects = true`**.
+- Imported pre-cutover history (`posts_effects = false`) is **excluded** — those
+  balances live in `ledgers.opening_balance_paise` / `ledger_bills` and surface in
+  the [Parties](../domain/parties.md) module, not re-counted here.
+- "Today" / month boundaries are computed in **IST** (`istToday`), so a UTC cloud
+  clock never stamps a day's sales onto the wrong date.
+
+This is documented inline on each page and is the single most important thing to
+preserve when extending a report.
+
+## Data sources
+
+Reports lean on the purpose-built **`v_*` views** from `supabase/proposed/0023`
+(confirmed live by probing — the proposed `0014–0024` schema is as-built despite
+the "DO NOT RUN" headers; same finding as the GST/GRN slices):
+
+| Source | Used by |
+|---|---|
+| `sales_invoices` / `sale_lines` (+ `items`, `ledgers` embeds) | dashboard, sales, tax |
+| `purchases` / `purchase_lines` | purchase, tax |
+| `payments` | dashboard (collected today) |
+| `v_receivables_aging` / `v_payables_aging` | dashboard, financial |
+| `v_stock_on_hand` / `v_near_expiry` / `v_dead_stock` | dashboard, inventory |
+| `stock_movements` | inventory (movement ledger), financial (COGS) |
+| `v_trial_balance` / `v_pnl` / `v_balance_sheet` + `ledger_entries` | financial |
+| `drug_licenses` | dashboard (license status) |
+| `physical_count_lines` | inventory (count variance) |
+
+Two shared libs underpin the suite:
+
+- **`lib/reports.ts`** — pure, smoke-tested aggregation + helpers: `istToday` /
+  `monthRange` / `presetRange` (Indian FY-aware), `rollupLines` / `rollupParties` /
+  `rollupStock`, `sumAging`, `topItemsSold` / `cashCreditSplit` / `summarizeLicenses`,
+  the accounting builders `buildTrialBalance` / `buildPnl` / `buildBalanceSheet`,
+  and CSV (`downloadCsv` / `toCsv`).
+- **`lib/reportData.ts`** — `fetchAllPaged`, which pages past PostgREST's ~1000-row
+  cap (a month register/line pull can exceed it). The page supplies the typed
+  `(from,to) => query.range(...)`; the helper loops.
+
+Shared UI: `components/reports/report-controls.tsx` (`ViewTabs` segmented control,
+`RangeControls` from/to + presets, `ExportButton`). Tables reuse the `patterns/`
+`DataTable` / `StatCard` / `EmptyState`.
+
+## The suites
+
+| Route | Screen | Views |
+|---|---|---|
+| `/reports` | `DashboardPage` | live KPIs (today sales + cash/credit, collected, near-expiry value-at-risk, overdue >30d, receivables/payables, license status) + top items today + overdue collections (→ party) |
+| `/reports/sales` | `SalesReportsPage` | daily register · item-wise · categories (GST rate + schedule) · customers · cashiers · cancelled |
+| `/reports/purchases` | `PurchaseReportsPage` | GRN register · vendor-wise · item-wise · scheme tracking (free goods / scheme notes) |
+| `/reports/inventory` | `InventoryReportsPage` | stock on hand · valuation (cost vs MRP + margin) · near-expiry · dead/slow · reorder · movement¹ · count variance¹ |
+| `/reports/financial` | `FinancialReportsPage` | receivables/payables aging · P&L¹ (accrual) · balance sheet · trial balance · day/cash/bank book¹ · margin¹ |
+| `/reports/tax` | `TaxReportsPage` | GSTR-1/3B summary preview · HSN summary · output by rate · ITC by rate |
+
+¹ Date-range-driven (the range picker shows only for these); other views are
+current-state / as-of-now.
+
+## Decisions & limitations
+
+- **Financial reports are organisation-wide**, not shop-scoped — accounting is per
+  legal entity (the `v_trial_balance` / `v_pnl` / `v_balance_sheet` views group by
+  `org_id` only). The other suites are shop-scoped. Stated in each subtitle.
+- **Balance sheet** folds all-time net P&L (`v_pnl`) into equity as "retained
+  earnings" so assets ≈ liabilities + equity (the asset/liability/equity view
+  excludes income/expense accounts).
+- **P&L is accrual** (the ledger expenses purchases when received; periodic, no
+  COGS posting). The **margin** view computes true gross margin = posted Sales −
+  COGS from `stock_movements.unit_cost_paise`. A cash-basis P&L is future work.
+- **Reorder** uses the live per-item **`items.reorder_level`** (confirmed live —
+  the column is `reorder_level`, not the `reorder_point` first assumed): items
+  at/below their level, **including out-of-stock** (which `v_stock_on_hand` can't
+  show, as it filters `qty <> 0`). On-hand is per-shop, reorder level is org-wide.
+  Setting the level needs a field in the catalogue item form — **SALT-167**
+  (catalogue) narrowed to that.
+- **Tax reports preview**; filing (GSTN JSON/CSV, B2B/B2C detail, GSTR-2B match)
+  stays in [GST & compliance](gst-returns.md). The tax suite reuses `lib/gst.ts`
+  (`buildGstr1` / `buildGstr3b`) and links across.
+- **Cashier names** resolve best-effort from `profiles` (RLS may hide non-self
+  rows → falls back to a short id).
+- Sales returns / credit notes are excluded until the **Returns** module exists
+  (noted on the cancelled + tax views).
+
+## Related
+[information-architecture](information-architecture.md) · [gst-returns](gst-returns.md) · [grn](grn.md) · [payments](payments.md) · [data-model](data-model.md) · [product/product-modules](../product/product-modules.md)
