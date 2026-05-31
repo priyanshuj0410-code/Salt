@@ -222,6 +222,10 @@ cmd_post() {
   append_line "$(current_slug)" "$*"
 }
 
+cmd_portal() {  # launch the live status dashboard (zero-dependency Node server)
+  exec node "$MAIN_REPO/scripts/status-server.mjs" "${1:-7878}"
+}
+
 usage() {
   cat <<'EOF'
 wt.sh — parallel-chat worktrees + work queue (see CLAUDE.md > "Working in parallel")
@@ -235,6 +239,7 @@ wt.sh — parallel-chat worktrees + work queue (see CLAUDE.md > "Working in para
   wt.sh claim <module...>   take an exclusive lock on each module for this chat
   wt.sh release <m...> [--force]   release locks this chat holds (--force steals)
   wt.sh locks               show which chat holds which module
+  wt.sh portal [port]       launch the live status dashboard (default :7878)
 EOF
 }
 
@@ -244,6 +249,7 @@ case "${1:-}" in
   rm)    shift; cmd_rm "$@" ;;
   queue) shift; cmd_queue "$@" ;;
   post)  shift; cmd_post "$@" ;;
+  portal) shift; cmd_portal "$@" ;;
   claim)       shift; cmd_claim "$@" ;;
   release)     shift; cmd_release "$@" ;;
   locks)       shift; cmd_locks "$@" ;;
