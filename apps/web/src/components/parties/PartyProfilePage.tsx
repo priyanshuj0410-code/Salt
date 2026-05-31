@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, MessageCircle, Receipt, Save, ShoppingCart, User, Wallet } from "lucide-react";
+import { ArrowLeft, MessageCircle, MessageSquare, Receipt, Save, ShoppingCart, User, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
 import { agingFor } from "@/lib/aging";
 import { normalizePhoneForWa, reminderMessage, whatsappUrl } from "@/lib/collection";
 import { AgingTable } from "@/components/parties/AgingTable";
+import { MessageThread } from "@/components/messages/MessageThread";
 import {
   partyDue,
   paymentsAdjustment,
@@ -415,6 +416,14 @@ export function PartyProfilePage() {
             <Save /> {busy ? "Saving…" : dirty ? "Save changes" : "Saved"}
           </Button>
         </div>
+      </section>
+
+      {/* Internal notes (SALT-161) — live message thread, shared across counters */}
+      <section className="mt-6 rounded-lg border border-border p-4">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
+          <MessageSquare className="size-4 text-text-tertiary" /> Internal notes
+        </h2>
+        <MessageThread entityType="customer" entityId={ledger.id} />
       </section>
 
       {/* Order history */}
