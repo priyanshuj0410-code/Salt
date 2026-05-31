@@ -9,6 +9,7 @@ import { PartyProfilePage } from "@/components/parties/PartyProfilePage";
 import { PurchaseEntryPage } from "@/components/parties/PurchaseEntryPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
+import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -79,6 +80,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <Gstr1Page />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PaymentsPage />
           </ProtectedRoute>
         }
       />
