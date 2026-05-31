@@ -116,10 +116,11 @@ export const NAV: NavModule[] = [
     key: "t",
     label: "GST & compliance",
     icon: Landmark,
-    built: false,
+    path: "/gst",
+    built: true,
     roles: ["owner"],
     children: [
-      { label: "GSTR-1", built: false },
+      { label: "GSTR-1", path: "/gst", built: true },
       { label: "GSTR-3B", built: false },
       { label: "GSTR-2B recon", built: false },
       { label: "ITC register", built: false },
