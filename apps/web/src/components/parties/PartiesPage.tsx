@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth";
 import { suggestMerges, type MergeGroup } from "@/lib/mergeSuggest";
 import { agingFor, type AgingBuckets } from "@/lib/aging";
 import { upcomingPayments, UPCOMING_BANDS, type UpcomingBuckets } from "@/lib/cashflow";
+import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
 import { cn } from "@/lib/utils";
 
 interface LedgerRow {
@@ -23,6 +24,7 @@ interface LedgerRow {
   type: string;
   phone: string | null;
   gstin: string | null;
+  state_code: string | null;
   opening_balance_paise: number;
 }
 
@@ -54,6 +56,14 @@ const rupees = (paise: number) =>
 
 const fmtDueDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+// A GSTIN's first two digits are its GST state code. Used to backfill a missing
+// ledgers.state_code so create_sales_invoice splits CGST/SGST vs IGST correctly (SALT-054).
+const VALID_STATE_CODES = new Set(INDIAN_STATE_CODES.map((s) => s.code));
+const stateFromGstin = (gstin: string | null): string | null => {
+  const code = gstin?.trim().slice(0, 2);
+  return code && VALID_STATE_CODES.has(code) ? code : null;
+};
 
 const initials = (name: string) =>
   name
@@ -110,7 +120,7 @@ export function PartiesPage() {
       selectAll<LedgerRow>((from, to) =>
         supabase!
           .from("ledgers")
-          .select("id,name,type,phone,gstin,opening_balance_paise")
+          .select("id,name,type,phone,gstin,state_code,opening_balance_paise")
           .eq("org_id", orgId)
           .order("name")
           .range(from, to),
@@ -185,6 +195,36 @@ export function PartiesPage() {
     }
   }
 
+  // Backfill missing state_code from each party's GSTIN prefix, grouped into one
+  // update per state, so the sales RPC can pick CGST/SGST vs IGST (SALT-054).
+  async function fillStateFromGstin() {
+    if (!supabase || busy) return;
+    const byState = new Map<string, string[]>();
+    for (const r of rows) {
+      if (r.state_code) continue;
+      const s = stateFromGstin(r.gstin);
+      if (!s) continue;
+      const arr = byState.get(s);
+      if (arr) arr.push(r.id);
+      else byState.set(s, [r.id]);
+    }
+    if (byState.size === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      for (const [s, ids] of byState) {
+        const { error: err } = await supabase.from("ledgers").update({ state_code: s }).in("id", ids);
+        if (err) {
+          setError(err.message);
+          break;
+        }
+      }
+      reload();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const suggestions = useMemo(
     () =>
       suggestMerges(
@@ -212,6 +252,18 @@ export function PartiesPage() {
       else customers++;
     }
     return { receivable, payable, bills, customers, vendors, others, count: rows.length };
+  }, [rows]);
+
+  // Parties with no state_code bill as intra-state (CGST+SGST) by default; count
+  // them and how many can be auto-filled from their GSTIN prefix (SALT-054).
+  const stateGap = useMemo(() => {
+    let missing = 0, fillable = 0;
+    for (const r of rows) {
+      if (r.state_code) continue;
+      missing++;
+      if (stateFromGstin(r.gstin)) fillable++;
+    }
+    return { missing, fillable };
   }, [rows]);
 
   const visible = useMemo(() => {
@@ -262,6 +314,24 @@ export function PartiesPage() {
           <StatCard label="Receivable" value={`₹${rupees(stats.receivable)}`} tone="success" />
           <StatCard label="Payable" value={`₹${rupees(stats.payable)}`} tone="danger" />
         </div>
+
+        {/* State coverage (SALT-054) — missing state_code defaults sales to intra-state CGST+SGST */}
+        {!loading && stateGap.missing > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-warning-bg/50 p-3 text-sm">
+            <span className="min-w-0 flex-1">
+              <span className="font-medium">{stateGap.missing.toLocaleString("en-IN")}</span>{" "}
+              part{stateGap.missing === 1 ? "y has" : "ies have"} no state set — their sales default to CGST+SGST (intra-state).
+              {stateGap.fillable > 0
+                ? ` ${stateGap.fillable.toLocaleString("en-IN")} can be filled from their GSTIN.`
+                : " Add a state on each party to fix the GST split."}
+            </span>
+            {stateGap.fillable > 0 && (
+              <Button size="sm" variant="outline" disabled={busy} onClick={fillStateFromGstin}>
+                Fill {stateGap.fillable.toLocaleString("en-IN")} from GSTIN
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Aging of imported open bills (per-party view also counts live orders) */}
         {aging && (aging.receivable.total > 0 || aging.payable.total > 0) && (
