@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Papa from "papaparse";
-import { Download, FileUp, KeyRound, Upload, Wand2 } from "lucide-react";
+import { Download, FileUp, KeyRound, PackagePlus, Upload, Wand2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
 import { cn } from "@/lib/utils";
@@ -174,6 +174,21 @@ export function ImportPage() {
             <p className="text-sm text-muted-foreground">
               Drag in your raw Marg/Tally Excel or CSV — it auto-maps the columns and quarantines
               only the rows that need a fix. Handles ledgers, items, and stock in order.
+            </p>
+          </div>
+          <span className="self-center text-primary">→</span>
+        </Link>
+
+        <Link
+          to="/import/purchases"
+          className="mt-3 flex items-start gap-3 rounded-lg border p-4 hover:bg-muted/40"
+        >
+          <PackagePlus className="mt-0.5 size-5 shrink-0 text-primary" />
+          <div className="flex-1">
+            <p className="text-sm font-medium">Import purchase invoices</p>
+            <p className="text-sm text-muted-foreground">
+              Upload vendor bills to post as GRNs — adds stock, payable and ITC. Missing vendors and items are
+              created for you.
             </p>
           </div>
           <span className="self-center text-primary">→</span>

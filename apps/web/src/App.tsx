@@ -15,6 +15,7 @@ import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
+import { PurchaseInvoiceImportPage } from "@/components/import/PurchaseInvoiceImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { SetupWizard } from "@/components/onboarding/SetupWizard";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -149,6 +150,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <SmartImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import/purchases"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PurchaseInvoiceImportPage />
           </ProtectedRoute>
         }
       />
