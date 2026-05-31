@@ -11,7 +11,7 @@ export interface DocumentConfig {
   key: string; // step key, e.g. "purchases"
   label: string; // "Purchases / GRN"
   section: string; // "History"
-  kind: "purchase" | "sales"; // selects the payload builder + party requirement
+  kind: "purchase" | "sales" | "credit_note" | "debit_note"; // selects the payload builder + party requirement
   table: string; // header table, e.g. "purchases"
   lineTable: string; // "purchase_lines"
   lineFk: string; // FK column on the line table → header, e.g. "purchase_id"
@@ -81,7 +81,65 @@ export const SALES_DOC: DocumentConfig = {
   ],
 };
 
-export const DOCUMENTS: DocumentConfig[] = [PURCHASE_DOC, SALES_DOC];
+export const CREDIT_NOTE_DOC: DocumentConfig = {
+  key: "credit_notes",
+  label: "Sales returns",
+  section: "History",
+  kind: "credit_note",
+  table: "credit_notes",
+  lineTable: "credit_note_lines",
+  lineFk: "credit_note_id",
+  description: "Your sales-return register (credit notes) — one row per line, grouped by note no.",
+  tip: "Export the sales-return register with item detail. Imported as records (no stock/ledger re-posting); unknown customers import as walk-in.",
+  headerFields: [
+    { key: "doc_no", label: "Note no", required: true, aliases: ["note no", "credit note no", "cn no", "return no", "voucher no", "ref no", "note", "bill no"] },
+    { key: "date", label: "Date", aliases: ["date", "note date", "return date", "bill date"] },
+    { key: "party_name", label: "Customer", aliases: ["customer", "party", "party name", "account", "buyer"] },
+    { key: "party_gstin", label: "Customer GSTIN", aliases: ["gstin", "gst no", "gst number", "customer gstin", "party gstin"] },
+    { key: "reason", label: "Reason", aliases: ["reason", "remark", "remarks", "narration"] },
+  ],
+  lineFields: [
+    { key: "item_code", label: "Item code", aliases: ["item code", "code", "sku", "product code", "itemcode"] },
+    { key: "item_name", label: "Item", required: true, aliases: ["item", "product", "item name", "product name", "description", "particulars", "medicine"] },
+    { key: "batch_no", label: "Batch", aliases: ["batch", "batch no", "lot", "lot no"] },
+    { key: "expiry", label: "Expiry", aliases: ["expiry", "exp", "exp date", "expiry date", "expdate"] },
+    { key: "qty", label: "Qty", aliases: ["qty", "quantity", "pcs", "returned"] },
+    { key: "rate", label: "Rate / MRP", aliases: ["rate", "mrp", "sale rate", "price", "m.r.p"] },
+    { key: "gst_rate", label: "GST %", aliases: ["gst", "gst%", "gst rate", "igst", "tax", "tax%"] },
+    { key: "amount", label: "Amount", aliases: ["amount", "value", "net amount", "line total", "total", "net"] },
+  ],
+};
+
+export const DEBIT_NOTE_DOC: DocumentConfig = {
+  key: "debit_notes",
+  label: "Purchase returns",
+  section: "History",
+  kind: "debit_note",
+  table: "debit_notes",
+  lineTable: "debit_note_lines",
+  lineFk: "debit_note_id",
+  description: "Your purchase-return register (debit notes) — one row per line, grouped by note no.",
+  tip: "Export the purchase-return register with item detail. Imported as records (no stock re-posting); vendors must already exist (import ledgers first).",
+  headerFields: [
+    { key: "doc_no", label: "Note no", required: true, aliases: ["note no", "debit note no", "dn no", "return no", "voucher no", "ref no", "note", "bill no"] },
+    { key: "date", label: "Date", aliases: ["date", "note date", "return date", "bill date"] },
+    { key: "vendor_name", label: "Vendor", aliases: ["vendor", "supplier", "party", "party name", "account", "seller"] },
+    { key: "vendor_gstin", label: "Vendor GSTIN", aliases: ["gstin", "gst no", "gst number", "vendor gstin", "party gstin"] },
+    { key: "reason", label: "Reason", aliases: ["reason", "remark", "remarks", "narration"] },
+  ],
+  lineFields: [
+    { key: "item_code", label: "Item code", aliases: ["item code", "code", "sku", "product code", "itemcode"] },
+    { key: "item_name", label: "Item", required: true, aliases: ["item", "product", "item name", "product name", "description", "particulars", "medicine"] },
+    { key: "batch_no", label: "Batch", aliases: ["batch", "batch no", "lot", "lot no"] },
+    { key: "expiry", label: "Expiry", aliases: ["expiry", "exp", "exp date", "expiry date", "expdate"] },
+    { key: "qty", label: "Qty", aliases: ["qty", "quantity", "pcs", "returned"] },
+    { key: "ptr", label: "PTR / Cost", aliases: ["ptr", "purchase rate", "cost", "cost price", "p rate", "purchase price", "rate"] },
+    { key: "gst_rate", label: "GST %", aliases: ["gst", "gst%", "gst rate", "igst", "tax", "tax%"] },
+    { key: "amount", label: "Amount", aliases: ["amount", "value", "net amount", "line total", "taxable", "net"] },
+  ],
+};
+
+export const DOCUMENTS: DocumentConfig[] = [PURCHASE_DOC, SALES_DOC, CREDIT_NOTE_DOC, DEBIT_NOTE_DOC];
 
 export interface DocGroup {
   docNo: string;
@@ -369,7 +427,192 @@ export function prepareSales(groups: DocGroup[], ctx: DocCtx): PrepareResult {
   return { valid, quarantined, skippedLines };
 }
 
+/**
+ * Build DB-ready credit-note (sales-return) payloads. Like sales: MRP-inclusive
+ * `rate`, tax backed out of the line gross, CGST/SGST split (display only — non
+ * posting). credit_notes.party_id is nullable, so an unmatched customer imports
+ * as walk-in (party_id null) with the name kept in notes. A note with no usable
+ * lines is quarantined.
+ */
+export function prepareCreditNote(groups: DocGroup[], ctx: DocCtx): PrepareResult {
+  const valid: PreparedDoc[] = [];
+  const quarantined: PrepareResult["quarantined"] = [];
+  let skippedLines = 0;
+
+  for (const g of groups) {
+    const partyId = resolveParty(g.header.party_gstin, g.header.party_name, ctx);
+    const unmatchedName = !partyId && g.header.party_name ? g.header.party_name.trim() : "";
+
+    const lines: Record<string, unknown>[] = [];
+    let taxableTot = 0;
+    let cgstTot = 0;
+    let sgstTot = 0;
+    let total = 0;
+    for (const ln of g.lines) {
+      const code = (ln.item_code ?? "").trim();
+      const nm = (ln.item_name ?? "").trim();
+      let itemId = code ? ctx.itemByCode.get(code) : undefined;
+      if (!itemId && nm) itemId = ctx.itemByName.get(norm(nm));
+      if (!nm && !itemId) {
+        skippedLines++;
+        continue;
+      }
+      const qty = toInt(ln.qty);
+      const rate = toNum(ln.gst_rate);
+      const gross = ln.amount ? toPaise(ln.amount) : qty * toPaise(ln.rate);
+      const taxable = rate > 0 ? Math.round((gross * 100) / (100 + rate)) : gross;
+      const tax = gross - taxable;
+      const cgst = Math.floor(tax / 2);
+      const sgst = tax - cgst;
+      taxableTot += taxable;
+      cgstTot += cgst;
+      sgstTot += sgst;
+      total += gross;
+      lines.push({
+        item_id: itemId ?? null,
+        name: nm || "(unnamed)",
+        batch_no: ln.batch_no || null,
+        expiry: ln.expiry || null,
+        qty,
+        rate_paise: toPaise(ln.rate),
+        taxable_paise: taxable,
+        gst_rate: rate,
+        cgst_paise: cgst,
+        sgst_paise: sgst,
+        igst_paise: 0,
+        line_total_paise: gross,
+      });
+    }
+    if (lines.length === 0) {
+      quarantined.push({ docNo: g.docNo, reason: "No usable lines", lineCount: 0 });
+      continue;
+    }
+
+    const date = toIsoDate(g.header.date ?? "");
+    const header: Record<string, unknown> = {
+      party_id: partyId ?? null,
+      note_no: g.docNo,
+      reason: g.header.reason || null,
+      is_interstate: false,
+      taxable_paise: taxableTot,
+      cgst_paise: cgstTot,
+      sgst_paise: sgstTot,
+      igst_paise: 0,
+      total_paise: total,
+      status: "placed",
+      notes: unmatchedName ? `Customer: ${unmatchedName}` : null,
+      source_system: "marg",
+      source_doc_no: g.docNo,
+      posts_effects: false,
+      ...(date ? { note_date: date } : {}),
+    };
+    valid.push({ docNo: g.docNo, header, lines });
+  }
+
+  return { valid, quarantined, skippedLines };
+}
+
+/**
+ * Build DB-ready debit-note (purchase-return) payloads. Like purchases: `ptr` is
+ * tax-exclusive, GST added on top; debit_notes.vendor_id is NOT NULL, so a note
+ * with no resolvable vendor is quarantined. itc_reversal_paise = the GST reversed.
+ */
+export function prepareDebitNote(groups: DocGroup[], ctx: DocCtx): PrepareResult {
+  const valid: PreparedDoc[] = [];
+  const quarantined: PrepareResult["quarantined"] = [];
+  let skippedLines = 0;
+
+  for (const g of groups) {
+    const vendorId = resolveParty(g.header.vendor_gstin, g.header.vendor_name, ctx);
+    if (!vendorId) {
+      quarantined.push({
+        docNo: g.docNo,
+        reason: g.header.vendor_name ? `Vendor not found: ${g.header.vendor_name}` : "No vendor on document",
+        lineCount: g.lines.length,
+      });
+      continue;
+    }
+
+    const lines: Record<string, unknown>[] = [];
+    let taxableTot = 0;
+    let cgstTot = 0;
+    let sgstTot = 0;
+    let total = 0;
+    for (const ln of g.lines) {
+      const code = (ln.item_code ?? "").trim();
+      const nm = (ln.item_name ?? "").trim();
+      let itemId = code ? ctx.itemByCode.get(code) : undefined;
+      if (!itemId && nm) itemId = ctx.itemByName.get(norm(nm));
+      if (!nm && !itemId) {
+        skippedLines++;
+        continue;
+      }
+      const qty = toInt(ln.qty);
+      const ptr = toPaise(ln.ptr);
+      const rate = toNum(ln.gst_rate);
+      // taxable is tax-exclusive: use the amount column if given, else qty × ptr
+      const taxable = ln.amount ? toPaise(ln.amount) : qty * ptr;
+      const tax = Math.round((taxable * rate) / 100);
+      const cgst = Math.floor(tax / 2);
+      const sgst = tax - cgst;
+      taxableTot += taxable;
+      cgstTot += cgst;
+      sgstTot += sgst;
+      total += taxable + tax;
+      lines.push({
+        item_id: itemId ?? null,
+        name: nm || "(unnamed)",
+        batch_no: ln.batch_no || null,
+        expiry: ln.expiry || null,
+        qty,
+        ptr_paise: ptr,
+        taxable_paise: taxable,
+        gst_rate: rate,
+        cgst_paise: cgst,
+        sgst_paise: sgst,
+        igst_paise: 0,
+        line_total_paise: taxable + tax,
+      });
+    }
+    if (lines.length === 0) {
+      quarantined.push({ docNo: g.docNo, reason: "No usable lines", lineCount: 0 });
+      continue;
+    }
+
+    const date = toIsoDate(g.header.date ?? "");
+    const header: Record<string, unknown> = {
+      vendor_id: vendorId,
+      note_no: g.docNo,
+      reason: g.header.reason || null,
+      is_interstate: false,
+      taxable_paise: taxableTot,
+      cgst_paise: cgstTot,
+      sgst_paise: sgstTot,
+      igst_paise: 0,
+      itc_reversal_paise: cgstTot + sgstTot,
+      total_paise: total,
+      status: "placed",
+      source_system: "marg",
+      source_doc_no: g.docNo,
+      posts_effects: false,
+      ...(date ? { note_date: date } : {}),
+    };
+    valid.push({ docNo: g.docNo, header, lines });
+  }
+
+  return { valid, quarantined, skippedLines };
+}
+
 /** Dispatch to the right payload builder for a document config. */
 export function prepareDocuments(cfg: DocumentConfig, groups: DocGroup[], ctx: DocCtx): PrepareResult {
-  return cfg.kind === "sales" ? prepareSales(groups, ctx) : preparePurchases(groups, ctx);
+  switch (cfg.kind) {
+    case "sales":
+      return prepareSales(groups, ctx);
+    case "credit_note":
+      return prepareCreditNote(groups, ctx);
+    case "debit_note":
+      return prepareDebitNote(groups, ctx);
+    default:
+      return preparePurchases(groups, ctx);
+  }
 }

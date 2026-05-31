@@ -255,7 +255,7 @@ export function DocumentStep({
       {(result?.quarantined.length ?? 0) > 0 && (
         <>
           <p className="mt-3 text-sm text-muted-foreground">
-            {cfg.kind === "purchase"
+            {cfg.kind === "purchase" || cfg.kind === "debit_note"
               ? "These documents could not be matched to a vendor — import your ledgers/party-GST first, then re-run this step (already-imported documents are skipped)."
               : "These documents could not be imported (see reasons). Fix the source data and re-run — already-imported documents are skipped."}
           </p>
