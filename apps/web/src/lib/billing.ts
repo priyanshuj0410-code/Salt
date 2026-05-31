@@ -1,4 +1,4 @@
-import type { BillLine, Schedule } from "./types";
+import type { BillLine, DiscountType, Schedule } from "./types";
 
 /**
  * Schedules that hard-gate checkout: a sale containing one of these may not be
@@ -65,6 +65,48 @@ export function sumItemQty(lines: BillLine[], itemId: string, excludeKeys: strin
  */
 export function lineMaxQty(lines: BillLine[], line: BillLine): number {
   return line.stock - sumItemQty(lines, line.itemId, [line.key]);
+}
+
+/** A discount applied to the whole bill, on top of any per-line discounts. */
+export interface BillDiscount {
+  /** "pct" = percent of the post-line-discount bill; "flat" = paise off the bill. */
+  type: DiscountType;
+  value: number;
+}
+
+export const NO_BILL_DISCOUNT: BillDiscount = { type: "pct", value: 0 };
+
+/** The bill-level discount in paise, capped at the summed post-line-discount net. */
+export function billDiscountPaise(lines: BillLine[], bill: BillDiscount): number {
+  const total = lines.reduce((sum, l) => sum + lineNet(l), 0);
+  if (total <= 0) return 0;
+  if (bill.type === "pct") {
+    const pct = Math.max(0, Math.min(100, bill.value));
+    return Math.round((total * pct) / 100);
+  }
+  return Math.max(0, Math.min(Math.round(bill.value), total));
+}
+
+/**
+ * Each line's net after distributing the bill-level discount **pro-rata by line
+ * net**, using the largest-remainder method so the per-line shares sum to the
+ * discount **exactly**. The same apportionment feeds the totals, the
+ * `create_sales_invoice` payload and the printed receipt, so the client and
+ * server GST splits always agree. Returns the plain line nets when there is no
+ * bill discount.
+ */
+export function apportionedLineNets(lines: BillLine[], bill: BillDiscount): number[] {
+  const nets = lines.map(lineNet);
+  const total = nets.reduce((a, b) => a + b, 0);
+  const cut = billDiscountPaise(lines, bill);
+  if (cut <= 0 || total <= 0) return nets;
+  const shares = nets.map((n) => Math.floor((cut * n) / total));
+  const frac = (i: number) => (cut * nets[i]) / total - Math.floor((cut * nets[i]) / total);
+  let remainder = cut - shares.reduce((a, b) => a + b, 0);
+  // Hand each leftover paise to the largest fractional part (then the larger net).
+  const order = nets.map((_, i) => i).sort((a, b) => frac(b) - frac(a) || nets[b] - nets[a]);
+  for (let k = 0; k < order.length && remainder > 0; k++, remainder--) shares[order[k]] += 1;
+  return nets.map((n, i) => n - shares[i]);
 }
 
 /**

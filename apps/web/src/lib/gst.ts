@@ -526,3 +526,383 @@ export function gstr3bToCsv(summary: Gstr3bSummary): string {
   ];
   return rows.map((cols) => cols.map(csvCell).join(",")).join("\n");
 }
+
+// ============================================================================
+// GST liability — current-month output/ITC/net + due date + MoM/YoY trend
+// ============================================================================
+
+/** A tax-bearing document tagged with its date ('YYYY-MM-DD'); only the heads matter here. */
+export interface DatedTaxRow {
+  date: string;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+
+/** Net GST position for one month (all paise). */
+export interface MonthLiability {
+  period: string; // 'YYYY-MM'
+  outputPaise: number; // tax on sales
+  itcPaise: number; // tax credit on purchases
+  netPaise: number; // output − itc (signed; negative = surplus credit)
+  netPayablePaise: number; // max(0, net) — the cash figure
+}
+
+/** A MoM / YoY comparison of net payable. `prev` is null when that month had no documents. */
+export interface LiabilityDelta {
+  prev: MonthLiability | null;
+  deltaPaise: number; // current.netPayable − prev.netPayable
+  pct: number | null; // null when prev is absent or zero
+}
+
+export interface GstLiabilityView {
+  current: MonthLiability;
+  dueDate: string; // 'YYYY-MM-DD' — 20th of the month after `current`
+  mom: LiabilityDelta;
+  yoy: LiabilityDelta;
+  series: MonthLiability[]; // chronological ascending, one per month in the window
+}
+
+/** Shift a 'YYYY-MM' period by a (possibly negative) number of months. */
+export function shiftPeriod(period: string, deltaMonths: number): string {
+  const [y, m] = period.split("-").map(Number);
+  const idx = y * 12 + (m - 1) + deltaMonths;
+  return `${Math.floor(idx / 12)}-${String((idx % 12) + 1).padStart(2, "0")}`;
+}
+
+function sumHeads(r: DatedTaxRow): number {
+  return r.cgst_paise + r.sgst_paise + r.igst_paise;
+}
+
+function liabilityDelta(current: MonthLiability, prev: MonthLiability | null): LiabilityDelta {
+  if (!prev) return { prev: null, deltaPaise: current.netPayablePaise, pct: null };
+  const d = current.netPayablePaise - prev.netPayablePaise;
+  return { prev, deltaPaise: d, pct: prev.netPayablePaise > 0 ? (d / prev.netPayablePaise) * 100 : null };
+}
+
+/**
+ * Build the GST liability view ending at `currentPeriod`, over a window of
+ * `months` months (the series covers `currentPeriod-(months-1) … currentPeriod`;
+ * default 13 so the same month last year is in-window for YoY). Output tax comes
+ * from sales rows, ITC from purchase rows — both bucketed by month from their
+ * date. Net payable = `max(0, output − itc)`. GSTR-3B for month M is due the 20th
+ * of M+1. All money is paise.
+ */
+export function buildGstLiability(
+  currentPeriod: string,
+  sales: DatedTaxRow[],
+  purchases: DatedTaxRow[],
+  months = 13,
+): GstLiabilityView {
+  const output = new Map<string, number>();
+  const itc = new Map<string, number>();
+  for (const r of sales) {
+    const k = r.date.slice(0, 7);
+    output.set(k, (output.get(k) ?? 0) + sumHeads(r));
+  }
+  for (const r of purchases) {
+    const k = r.date.slice(0, 7);
+    itc.set(k, (itc.get(k) ?? 0) + sumHeads(r));
+  }
+
+  const monthOf = (period: string): MonthLiability => {
+    const o = output.get(period) ?? 0;
+    const i = itc.get(period) ?? 0;
+    const net = o - i;
+    return { period, outputPaise: o, itcPaise: i, netPaise: net, netPayablePaise: Math.max(0, net) };
+  };
+  const monthOrNull = (period: string): MonthLiability | null =>
+    output.has(period) || itc.has(period) ? monthOf(period) : null;
+
+  const series: MonthLiability[] = [];
+  for (let k = months - 1; k >= 0; k--) series.push(monthOf(shiftPeriod(currentPeriod, -k)));
+
+  const current = monthOf(currentPeriod);
+  return {
+    current,
+    dueDate: `${shiftPeriod(currentPeriod, 1)}-20`,
+    mom: liabilityDelta(current, monthOrNull(shiftPeriod(currentPeriod, -1))),
+    yoy: liabilityDelta(current, monthOrNull(shiftPeriod(currentPeriod, -12))),
+    series,
+  };
+}
+
+// ============================================================================
+// ITC register + reversal pre-calc (SALT-064)
+// ============================================================================
+
+/** One inward invoice in the ITC register (a `purchases` row + its vendor). */
+export interface ItcInvoiceRow {
+  invoiceNo: string;
+  date: string; // received_date 'YYYY-MM-DD'
+  vendorName: string;
+  vendorGstin: string;
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+}
+
+export interface ItcRegisterTotals {
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  itcPaise: number; // cgst + sgst + igst
+}
+
+export interface ItcRegisterView {
+  rows: ItcInvoiceRow[];
+  totals: ItcRegisterTotals;
+  count: number;
+}
+
+/** Aggregate a period's inward invoices into the ITC register (rows sorted by date). */
+export function buildItcRegister(rows: ItcInvoiceRow[]): ItcRegisterView {
+  const totals: ItcRegisterTotals = { taxablePaise: 0, cgstPaise: 0, sgstPaise: 0, igstPaise: 0, itcPaise: 0 };
+  for (const r of rows) {
+    totals.taxablePaise += r.taxablePaise;
+    totals.cgstPaise += r.cgstPaise;
+    totals.sgstPaise += r.sgstPaise;
+    totals.igstPaise += r.igstPaise;
+  }
+  totals.itcPaise = totals.cgstPaise + totals.sgstPaise + totals.igstPaise;
+  const sorted = [...rows].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return { rows: sorted, totals, count: rows.length };
+}
+
+/** A batch fed to the reversal pre-calc; `expiry` is 'YYYY-MM' (or empty). */
+export interface ExpiredBatchInput {
+  itemName: string;
+  batchNo: string;
+  expiry: string;
+  qty: number;
+  ptrPaise: number; // GST-exclusive purchase rate per unit
+  gstRate: number;
+}
+
+export interface ItcReversalRow extends ExpiredBatchInput {
+  reverseItcPaise: number;
+}
+
+export interface ItcReversalView {
+  rows: ItcReversalRow[];
+  totalReversePaise: number;
+}
+
+/**
+ * ITC to reverse on expired stock (Section 17(5)(h)). A batch counts when it still
+ * has stock (`qty > 0`) and its `expiry` month (YYYY-MM, lexical compare) is before
+ * `currentPeriod`. Per-unit ITC is estimated from PTR × the item's GST rate
+ * (advisory — the exact figure would come from the batch's purchase line). Paise.
+ */
+export function buildItcReversal(batches: ExpiredBatchInput[], currentPeriod: string): ItcReversalView {
+  const rows: ItcReversalRow[] = [];
+  let total = 0;
+  for (const b of batches) {
+    if (b.qty <= 0 || !b.expiry || b.expiry >= currentPeriod) continue;
+    const reverseItcPaise = Math.round((b.qty * b.ptrPaise * b.gstRate) / 100);
+    rows.push({ ...b, reverseItcPaise });
+    total += reverseItcPaise;
+  }
+  rows.sort((a, b) => (a.expiry < b.expiry ? -1 : a.expiry > b.expiry ? 1 : 0));
+  return { rows, totalReversePaise: total };
+}
+
+/** Flat CSV of the ITC register (spreadsheet fallback). */
+export function itcRegisterToCsv(view: ItcRegisterView): string {
+  const m = (p: number) => (Math.round(p) / 100).toFixed(2);
+  const head = ["vendor", "gstin", "invoice", "date", "taxable", "cgst", "sgst", "igst", "itc"];
+  const rows = view.rows.map((r) => [
+    r.vendorName,
+    r.vendorGstin,
+    r.invoiceNo,
+    r.date,
+    m(r.taxablePaise),
+    m(r.cgstPaise),
+    m(r.sgstPaise),
+    m(r.igstPaise),
+    m(r.cgstPaise + r.sgstPaise + r.igstPaise),
+  ]);
+  const totalRow = ["TOTAL", "", "", "", m(view.totals.taxablePaise), m(view.totals.cgstPaise), m(view.totals.sgstPaise), m(view.totals.igstPaise), m(view.totals.itcPaise)];
+  return [head, ...rows, totalRow].map((c) => c.map(csvCell).join(",")).join("\n");
+}
+
+// ============================================================================
+// Tally XML export (SALT-070) — sales + purchase vouchers for the accountant
+// ============================================================================
+
+/** A sale as a Tally voucher input (`partyName` is "Cash" for walk-in / cash bills). */
+export interface TallySaleRow {
+  invoiceNo: string;
+  date: string; // 'YYYY-MM-DD'
+  partyName: string;
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  totalPaise: number;
+}
+
+/** A purchase as a Tally voucher input. */
+export interface TallyPurchaseRow {
+  invoiceNo: string;
+  date: string;
+  vendorName: string;
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  totalPaise: number;
+}
+
+const TALLY = {
+  sales: "Sales",
+  purchase: "Purchase",
+  outCgst: "Output CGST",
+  outSgst: "Output SGST",
+  outIgst: "Output IGST",
+  inCgst: "Input CGST",
+  inSgst: "Input SGST",
+  inIgst: "Input IGST",
+} as const;
+
+function xmlEscape(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c] ?? c);
+}
+
+/** paise → rupee string, 2 dp (Tally amounts are rupees). */
+function rupeeStr(paise: number): string {
+  return (Math.round(paise) / 100).toFixed(2);
+}
+
+/**
+ * One Tally ledger line. In Tally XML, AMOUNT is **negative for a debit** and
+ * positive for a credit, with ISDEEMEDPOSITIVE 'Yes' on debits. Zero is omitted.
+ */
+function ledgerEntry(name: string, debit: boolean, paise: number): string {
+  if (paise === 0) return "";
+  const amt = debit ? -Math.round(paise) : Math.round(paise);
+  return [
+    "        <ALLLEDGERENTRIES.LIST>",
+    `          <LEDGERNAME>${xmlEscape(name)}</LEDGERNAME>`,
+    `          <ISDEEMEDPOSITIVE>${debit ? "Yes" : "No"}</ISDEEMEDPOSITIVE>`,
+    `          <AMOUNT>${rupeeStr(amt)}</AMOUNT>`,
+    "        </ALLLEDGERENTRIES.LIST>",
+  ].join("\n");
+}
+
+function voucher(vchType: string, date: string, num: string, partyName: string, entries: string[]): string {
+  return [
+    "      <TALLYMESSAGE>",
+    `        <VOUCHER VCHTYPE="${xmlEscape(vchType)}" ACTION="Create">`,
+    `          <DATE>${date.replace(/-/g, "")}</DATE>`,
+    `          <VOUCHERTYPENAME>${xmlEscape(vchType)}</VOUCHERTYPENAME>`,
+    `          <VOUCHERNUMBER>${xmlEscape(num)}</VOUCHERNUMBER>`,
+    `          <PARTYLEDGERNAME>${xmlEscape(partyName)}</PARTYLEDGERNAME>`,
+    ...entries.filter(Boolean),
+    "        </VOUCHER>",
+    "      </TALLYMESSAGE>",
+  ].join("\n");
+}
+
+/**
+ * Build a Tally-importable XML envelope of the period's sales + purchase vouchers,
+ * each a balanced double entry carrying the GST split:
+ *  - Sale:     Dr party/Cash (total) · Cr Sales (taxable) · Cr Output CGST/SGST/IGST
+ *  - Purchase: Dr Purchase (taxable) · Dr Input CGST/SGST/IGST · Cr vendor (total)
+ * Ledgers are referenced by name (Tally maps/creates them on import). Amounts in rupees.
+ */
+export function buildTallyXml(companyName: string, sales: TallySaleRow[], purchases: TallyPurchaseRow[]): string {
+  const vouchers: string[] = [];
+  for (const s of sales) {
+    vouchers.push(
+      voucher("Sales", s.date, s.invoiceNo, s.partyName, [
+        ledgerEntry(s.partyName, true, s.totalPaise),
+        ledgerEntry(TALLY.sales, false, s.taxablePaise),
+        ledgerEntry(TALLY.outCgst, false, s.cgstPaise),
+        ledgerEntry(TALLY.outSgst, false, s.sgstPaise),
+        ledgerEntry(TALLY.outIgst, false, s.igstPaise),
+      ]),
+    );
+  }
+  for (const p of purchases) {
+    vouchers.push(
+      voucher("Purchase", p.date, p.invoiceNo, p.vendorName, [
+        ledgerEntry(TALLY.purchase, true, p.taxablePaise),
+        ledgerEntry(TALLY.inCgst, true, p.cgstPaise),
+        ledgerEntry(TALLY.inSgst, true, p.sgstPaise),
+        ledgerEntry(TALLY.inIgst, true, p.igstPaise),
+        ledgerEntry(p.vendorName, false, p.totalPaise),
+      ]),
+    );
+  }
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    "<ENVELOPE>",
+    "  <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>",
+    "  <BODY>",
+    "    <IMPORTDATA>",
+    "      <REQUESTDESC>",
+    "        <REPORTNAME>Vouchers</REPORTNAME>",
+    `        <STATICVARIABLES><SVCURRENTCOMPANY>${xmlEscape(companyName)}</SVCURRENTCOMPANY></STATICVARIABLES>`,
+    "      </REQUESTDESC>",
+    "      <REQUESTDATA>",
+    ...vouchers,
+    "      </REQUESTDATA>",
+    "    </IMPORTDATA>",
+    "  </BODY>",
+    "</ENVELOPE>",
+  ].join("\n");
+}
+
+// ============================================================================
+// HSN-wise summary report (SALT-068) — flexible date range (e.g. GSTR-9 annual)
+// ============================================================================
+
+/** A sale line for the HSN summary (date-filtered upstream by its invoice). */
+export interface HsnLineInput {
+  hsn: string | null;
+  gst_rate: number;
+  qty: number;
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+
+export interface HsnSummary {
+  rows: HsnRow[];
+  totals: TaxTotals;
+  qty: number;
+}
+
+/** Aggregate sale lines by HSN × rate (the GSTR-1 §12 / GSTR-9 HSN table, over any range). */
+export function buildHsnSummary(lines: HsnLineInput[]): HsnSummary {
+  const map = new Map<string, HsnRow>();
+  const totals = emptyTotals();
+  let qty = 0;
+  for (const line of lines) {
+    const hsn = line.hsn?.trim() || "—";
+    const key = `${hsn}|${line.gst_rate}`;
+    let row = map.get(key);
+    if (!row) {
+      row = { hsn, rate: line.gst_rate, qty: 0, ...emptyTotals() };
+      map.set(key, row);
+    }
+    row.qty += line.qty;
+    addInto(row, line);
+    qty += line.qty;
+    addInto(totals, line);
+  }
+  return { rows: sortRows(Array.from(map.values()), (r) => [r.hsn, r.rate]), totals, qty };
+}
+
+/** Flat CSV of the HSN summary (spreadsheet fallback). */
+export function hsnSummaryToCsv(s: HsnSummary): string {
+  const m = (p: number) => (Math.round(p) / 100).toFixed(2);
+  const head = ["hsn", "rate", "qty", "taxable", "cgst", "sgst", "igst", "total"];
+  const rows = s.rows.map((r) => [r.hsn, r.rate, r.qty, m(r.taxablePaise), m(r.cgstPaise), m(r.sgstPaise), m(r.igstPaise), m(r.totalPaise)]);
+  const total = ["TOTAL", "", s.qty, m(s.totals.taxablePaise), m(s.totals.cgstPaise), m(s.totals.sgstPaise), m(s.totals.igstPaise), m(s.totals.totalPaise)];
+  return [head, ...rows, total].map((c) => c.map(csvCell).join(",")).join("\n");
+}

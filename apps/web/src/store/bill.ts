@@ -2,20 +2,67 @@ import { create } from "zustand";
 import type { Batch, BillLine, DiscountType, Item, Payment, PaymentMethod } from "@/lib/types";
 import type { OrderParty, RxDetails } from "@/lib/orders";
 import { splitInclusiveGst } from "@/lib/currency";
-import { lineCost, lineDiscount, lineGross, lineNet, sumItemQty } from "@/lib/billing";
+import {
+  apportionedLineNets,
+  billDiscountPaise,
+  lineCost,
+  lineDiscount,
+  lineGross,
+  NO_BILL_DISCOUNT,
+  sumItemQty,
+  type BillDiscount,
+} from "@/lib/billing";
 import { fefoBatch, itemStock } from "@/lib/search";
 
 export interface BillTotals {
   items: number;
   qty: number;
   gross: number;
+  /** Total per-line discount, in paise. */
   discount: number;
+  /** Bill-level discount applied on top of line discounts, in paise. */
+  billDiscount: number;
   taxable: number;
   gst: number;
   grand: number;
   cost: number;
   margin: number;
 }
+
+/** A bill set aside on this counter to be resumed later (SALT-008, local/in-memory). */
+export interface ParkedBill {
+  id: string;
+  /** Display label — the customer name, or "Walk-in". */
+  label: string;
+  parkedAt: number;
+  lines: BillLine[];
+  payment: Payment;
+  party: OrderParty | null;
+  rx: RxDetails | null;
+  billDiscount: BillDiscount;
+}
+
+/** Snapshot the bill-defining fields of the current state into a parked bill. */
+function makeParked(s: Pick<BillState, "lines" | "payment" | "party" | "rx" | "billDiscount">): ParkedBill {
+  return {
+    id: crypto.randomUUID(),
+    label: s.party?.name ?? "Walk-in",
+    parkedAt: Date.now(),
+    lines: s.lines,
+    payment: s.payment,
+    party: s.party,
+    rx: s.rx,
+    billDiscount: s.billDiscount,
+  };
+}
+
+const freshFields = () => ({
+  lines: [] as BillLine[],
+  payment: { method: "cash" as PaymentMethod, creditDays: 30 },
+  party: null as OrderParty | null,
+  rx: null as RxDetails | null,
+  billDiscount: NO_BILL_DISCOUNT,
+});
 
 const lineKey = (itemId: string, batchNo: string) => `${itemId}:${batchNo}`;
 
@@ -48,6 +95,17 @@ interface BillState {
   /** Captured prescription for a Schedule H1/X sale; null until the gate is filled. */
   rx: RxDetails | null;
   setRx: (rx: RxDetails | null) => void;
+  /** Whole-bill discount, on top of per-line discounts (SALT-014). */
+  billDiscount: BillDiscount;
+  setBillDiscount: (d: BillDiscount) => void;
+  /** Bills held aside on this counter, newest first (SALT-008). */
+  parked: ParkedBill[];
+  /** Hold the current bill aside and start a fresh one. No-op on an empty bill. */
+  parkBill: () => void;
+  /** Resume a held bill onto the counter; any current bill is held in its place. */
+  resumeBill: (id: string) => void;
+  /** Drop a held bill without resuming it. */
+  discardPark: (id: string) => void;
   /** Add an item; defaults to its FEFO batch. Re-adding the same batch increments qty. */
   addItem: (item: Item, batchNo?: string) => void;
   setQty: (key: string, qty: number) => void;
@@ -65,9 +123,37 @@ export const useBill = create<BillState>((set) => ({
   payment: { method: "cash", creditDays: 30 },
   party: null,
   rx: null,
+  billDiscount: NO_BILL_DISCOUNT,
+  parked: [],
 
   setParty: (party) => set({ party }),
   setRx: (rx) => set({ rx }),
+  setBillDiscount: (billDiscount) => set({ billDiscount }),
+
+  parkBill: () =>
+    set((state) => {
+      if (state.lines.length === 0) return state;
+      return { parked: [makeParked(state), ...state.parked], ...freshFields() };
+    }),
+
+  resumeBill: (id) =>
+    set((state) => {
+      const target = state.parked.find((p) => p.id === id);
+      if (!target) return state;
+      const rest = state.parked.filter((p) => p.id !== id);
+      // Hold the in-progress bill (if any) in the resumed one's place — never lose a bill.
+      const parked = state.lines.length > 0 ? [makeParked(state), ...rest] : rest;
+      return {
+        lines: target.lines,
+        payment: target.payment,
+        party: target.party,
+        rx: target.rx,
+        billDiscount: target.billDiscount,
+        parked,
+      };
+    }),
+
+  discardPark: (id) => set((state) => ({ parked: state.parked.filter((p) => p.id !== id) })),
 
   addItem: (item, batchNo) =>
     set((state) => {
@@ -153,10 +239,13 @@ export const useBill = create<BillState>((set) => ({
   setCreditDays: (days) =>
     set((state) => ({ payment: { ...state.payment, creditDays: Math.max(0, Math.floor(days)) } })),
 
-  clear: () => set({ lines: [], payment: { method: "cash", creditDays: 30 }, party: null, rx: null }),
+  clear: () => set({ lines: [], payment: { method: "cash", creditDays: 30 }, party: null, rx: null, billDiscount: NO_BILL_DISCOUNT }),
 }));
 
-export function billTotals(lines: BillLine[]): BillTotals {
+export function billTotals(lines: BillLine[], bill: BillDiscount = NO_BILL_DISCOUNT): BillTotals {
+  // Per-line net AFTER the bill-level discount is apportioned, so taxable / GST /
+  // grand are all computed on what the customer actually pays for each line.
+  const nets = apportionedLineNets(lines, bill);
   let gross = 0;
   let discount = 0;
   let taxable = 0;
@@ -164,8 +253,8 @@ export function billTotals(lines: BillLine[]): BillTotals {
   let grand = 0;
   let cost = 0;
   let qty = 0;
-  for (const l of lines) {
-    const net = lineNet(l);
+  lines.forEach((l, i) => {
+    const net = nets[i];
     const split = splitInclusiveGst(net, l.gstRate);
     gross += lineGross(l);
     discount += lineDiscount(l);
@@ -174,6 +263,17 @@ export function billTotals(lines: BillLine[]): BillTotals {
     grand += net;
     cost += lineCost(l);
     qty += l.qty;
-  }
-  return { items: lines.length, qty, gross, discount, taxable, gst, grand, cost, margin: grand - cost };
+  });
+  return {
+    items: lines.length,
+    qty,
+    gross,
+    discount,
+    billDiscount: billDiscountPaise(lines, bill),
+    taxable,
+    gst,
+    grand,
+    cost,
+    margin: grand - cost,
+  };
 }
