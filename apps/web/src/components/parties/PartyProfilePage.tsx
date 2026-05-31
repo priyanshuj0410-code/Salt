@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, Receipt, Save, ShoppingCart, User, Wallet } from "lucide-react";
+import { ArrowLeft, MessageCircle, Receipt, Save, ShoppingCart, User, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
 import { agingFor } from "@/lib/aging";
+import { normalizePhoneForWa, reminderMessage, whatsappUrl } from "@/lib/collection";
 import { AgingTable } from "@/components/parties/AgingTable";
 import {
   partyDue,
@@ -83,6 +84,7 @@ function Money({ paise, plain }: { paise: number; plain?: boolean }) {
 export function PartyProfilePage() {
   const { id } = useParams<{ id: string }>();
   const orgId = useAuth().membership?.orgId;
+  const orgName = useAuth().membership?.orgName;
   const shopId = useAuth().shopId;
   const navigate = useNavigate();
   const setParty = useBill((s) => s.setParty);
@@ -185,6 +187,9 @@ export function PartyProfilePage() {
   // unpaid orders), split into 0-30 / 31-60 / 61-90 / 90+ bands.
   const aging = useMemo(() => agingFor(bills, orders), [bills, orders]);
 
+  // wa.me-ready phone (null = unusable) for the collection reminder.
+  const waPhone = ledger ? normalizePhoneForWa(ledger.phone) : null;
+
   function edit<K extends keyof Ledger>(field: K, value: Ledger[K]) {
     setLedger((l) => (l ? { ...l, [field]: value } : l));
     setDirty(true);
@@ -218,6 +223,17 @@ export function PartyProfilePage() {
     if (!ledger) return;
     setParty({ id: ledger.id, name: ledger.name });
     navigate("/");
+  }
+
+  function sendReminder() {
+    if (!ledger || !waPhone) return;
+    const msg = reminderMessage({
+      partyName: ledger.name,
+      duePaise: due,
+      shopName: orgName,
+      receivable: aging.receivable,
+    });
+    window.open(whatsappUrl(waPhone, msg), "_blank", "noopener,noreferrer");
   }
 
   async function recordPayment() {
@@ -280,6 +296,16 @@ export function PartyProfilePage() {
         subtitle={<Badge variant="neutral" className="capitalize">{ledger.type}</Badge>}
         actions={
           <>
+            {due > 0 && (
+              <Button
+                variant="outline"
+                disabled={!waPhone}
+                title={waPhone ? "Open WhatsApp with a payment reminder" : "Add a phone number to send a reminder"}
+                onClick={sendReminder}
+              >
+                <MessageCircle /> Send reminder
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => {
