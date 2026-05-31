@@ -22,6 +22,8 @@ const PoListPage = lazy(() => import("@/components/grn/PoListPage").then((m) => 
 const PoEntryPage = lazy(() => import("@/components/grn/PoEntryPage").then((m) => ({ default: m.PoEntryPage })));
 const PoDetailPage = lazy(() => import("@/components/grn/PoDetailPage").then((m) => ({ default: m.PoDetailPage })));
 const BillHistoryPage = lazy(() => import("@/components/bills/BillHistoryPage").then((m) => ({ default: m.BillHistoryPage })));
+const ActivityPage = lazy(() => import("@/components/activity/ActivityPage").then((m) => ({ default: m.ActivityPage })));
+const ApprovalsPage = lazy(() => import("@/components/approvals/ApprovalsPage").then((m) => ({ default: m.ApprovalsPage })));
 const StockLedgerPage = lazy(() => import("@/components/inventory/StockLedgerPage").then((m) => ({ default: m.StockLedgerPage })));
 const NearExpiryPage = lazy(() => import("@/components/inventory/NearExpiryPage").then((m) => ({ default: m.NearExpiryPage })));
 const DeadStockPage = lazy(() => import("@/components/inventory/DeadStockPage").then((m) => ({ default: m.DeadStockPage })));
@@ -93,6 +95,22 @@ function App() {
         element={
           <ProtectedRoute>
             <BillingScreen />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/activity"
+        element={
+          <ProtectedRoute>
+            <ActivityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/approvals"
+        element={
+          <ProtectedRoute>
+            <ApprovalsPage />
           </ProtectedRoute>
         }
       />
