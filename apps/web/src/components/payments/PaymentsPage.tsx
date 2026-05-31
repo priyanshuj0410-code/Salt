@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Landmark, Plus, Wallet } from "lucide-react";
+import { Coins, Landmark, Plus, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import { signedAmount, type PaymentListRow } from "@/lib/payments";
 import { RecordPaymentDialog, type PartyLite } from "./RecordPaymentDialog";
 import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
 import { BankReconcile } from "./BankReconcile";
+import { CashDrawer } from "./CashDrawer";
 
 type DirFilter = "all" | "received" | "paid";
 type PartyRow = PartyLite & { phone: string | null };
@@ -32,7 +33,7 @@ export function PaymentsPage() {
   const [q, setQ] = useState("");
   const [recordOpen, setRecordOpen] = useState(false);
   const [receipt, setReceipt] = useState<PaymentListRow | null>(null);
-  const [view, setView] = useState<"payments" | "reconcile">("payments");
+  const [view, setView] = useState<"payments" | "reconcile" | "drawer">("payments");
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -130,10 +131,20 @@ export function PaymentsPage() {
         >
           <Landmark /> Bank reconciliation
         </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "drawer" ? "default" : "outline"}
+          onClick={() => setView("drawer")}
+        >
+          <Coins /> Cash drawer
+        </Button>
       </div>
 
       {view === "reconcile" ? (
         <BankReconcile orgId={orgId ?? null} payments={payments} nameById={nameById} />
+      ) : view === "drawer" ? (
+        <CashDrawer orgId={orgId ?? null} />
       ) : (
         <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
