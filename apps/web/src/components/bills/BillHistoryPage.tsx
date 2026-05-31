@@ -71,6 +71,10 @@ export function BillHistoryPage() {
   const [lines, setLines] = useState<LineRow[] | null>(null);
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [reprintErr, setReprintErr] = useState<string | null>(null);
+  const [confirmVoid, setConfirmVoid] = useState(false);
+  const [voidReason, setVoidReason] = useState("");
+  const [voiding, setVoiding] = useState(false);
+  const [voidErr, setVoidErr] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -98,6 +102,9 @@ export function BillHistoryPage() {
     setLines(null);
     setCustomer(null);
     setReprintErr(null);
+    setConfirmVoid(false);
+    setVoidReason("");
+    setVoidErr(null);
     if (!supabase) return;
     const { data } = await supabase
       .from("sale_lines")
@@ -126,6 +133,23 @@ export function BillHistoryPage() {
       }),
     );
     setReprintErr(ok ? null : "Allow pop-ups for this site, then reprint.");
+  }
+
+  async function doVoid() {
+    if (!supabase || !openBill || !voidReason.trim()) return;
+    setVoiding(true);
+    setVoidErr(null);
+    const { error } = await supabase.rpc("void_sales_invoice", {
+      p_invoice_id: openBill.id,
+      p_reason: voidReason.trim(),
+    });
+    setVoiding(false);
+    if (error) {
+      setVoidErr(error.message);
+      return;
+    }
+    setRows((rs) => rs.map((r) => (r.id === openBill.id ? { ...r, status: "cancelled", paid_paise: 0 } : r)));
+    setOpenBill(null);
   }
 
   // --- SALT-030: history filters + search, synced to the URL ---
@@ -300,6 +324,13 @@ export function BillHistoryPage() {
               key: "status",
               header: "Status",
               cell: (b) => {
+                if (b.status === "cancelled") {
+                  return (
+                    <span className="inline-flex items-center gap-1.5 text-text-tertiary">
+                      <Dot variant="danger" /> cancelled
+                    </span>
+                  );
+                }
                 const due = b.payment_method === "credit" && b.paid_paise < b.total_paise;
                 return (
                   <span className="inline-flex items-center gap-1.5 text-text-tertiary">
@@ -316,8 +347,9 @@ export function BillHistoryPage() {
       <Dialog open={openBill !== null} onOpenChange={(o) => !o && setOpenBill(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              {openBill ? `${openBill.ledgers?.name ?? "Walk-in"} · ${invoiceNo(openBill)}` : "Bill"}
+            <DialogTitle className="flex items-center gap-2">
+              <span>{openBill ? `${openBill.ledgers?.name ?? "Walk-in"} · ${invoiceNo(openBill)}` : "Bill"}</span>
+              {openBill?.status === "cancelled" && <Badge variant="danger">Cancelled</Badge>}
             </DialogTitle>
           </DialogHeader>
           {lines === null ? (
@@ -353,36 +385,70 @@ export function BillHistoryPage() {
             </div>
           )}
           {reprintErr && <p className="text-sm text-text-tertiary">{reprintErr}</p>}
-          <DialogFooter className="flex-wrap">
-            <Button
-              variant="outline"
-              onClick={reprint}
-              disabled={!shop || !lines || lines.length === 0}
-              title={shop ? undefined : "Set up shop details to print"}
-            >
-              <Printer className="size-4" /> Reprint
-            </Button>
-            {openBill?.party_id && openBill.paid_paise < openBill.total_paise && (
-              <Button variant="outline" render={<Link to={`/parties/${openBill.party_id}?receive=1`} />}>
-                <Wallet className="size-4" /> Record receipt
+          {confirmVoid ? (
+            <div className="space-y-2">
+              <p className="text-sm text-text-tertiary">
+                Cancel this bill? Stock goes back and the sale is reversed in the ledger. This cannot be undone.
+              </p>
+              <Input
+                autoFocus
+                value={voidReason}
+                onChange={(e) => setVoidReason(e.target.value)}
+                placeholder="Reason (required) — e.g. wrong item, customer cancelled"
+              />
+              {voidErr && <p className="text-sm text-danger">{voidErr}</p>}
+              <DialogFooter className="flex-wrap">
+                <Button variant="ghost" onClick={() => setConfirmVoid(false)} disabled={voiding}>
+                  Back
+                </Button>
+                <Button variant="danger" onClick={doVoid} disabled={voiding || !voidReason.trim()}>
+                  {voiding ? "Cancelling…" : "Confirm cancellation"}
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <DialogFooter className="flex-wrap">
+              <Button
+                variant="outline"
+                onClick={reprint}
+                disabled={!shop || !lines || lines.length === 0}
+                title={shop ? undefined : "Set up shop details to print"}
+              >
+                <Printer className="size-4" /> Reprint
               </Button>
-            )}
-            {waUrl ? (
-              <Button variant="outline" render={<a href={waUrl} target="_blank" rel="noopener noreferrer" />}>
-                <MessageCircle className="size-4" /> WhatsApp
+              {openBill?.party_id && openBill.status !== "cancelled" && openBill.paid_paise < openBill.total_paise && (
+                <Button variant="outline" render={<Link to={`/parties/${openBill.party_id}?receive=1`} />}>
+                  <Wallet className="size-4" /> Record receipt
+                </Button>
+              )}
+              {waUrl ? (
+                <Button variant="outline" render={<a href={waUrl} target="_blank" rel="noopener noreferrer" />}>
+                  <MessageCircle className="size-4" /> WhatsApp
+                </Button>
+              ) : (
+                <Button variant="outline" disabled title="Add a phone number to the customer to share on WhatsApp">
+                  <MessageCircle className="size-4" /> WhatsApp
+                </Button>
+              )}
+              <Button variant="outline" render={<a href={smsUrl} />}>
+                <MessageSquare className="size-4" /> SMS
               </Button>
-            ) : (
-              <Button variant="outline" disabled title="Add a phone number to the customer to share on WhatsApp">
-                <MessageCircle className="size-4" /> WhatsApp
+              <Button variant="outline" render={<a href={mailUrl} />}>
+                <Mail className="size-4" /> Email
               </Button>
-            )}
-            <Button variant="outline" render={<a href={smsUrl} />}>
-              <MessageSquare className="size-4" /> SMS
-            </Button>
-            <Button variant="outline" render={<a href={mailUrl} />}>
-              <Mail className="size-4" /> Email
-            </Button>
-          </DialogFooter>
+              {openBill && openBill.status !== "cancelled" && openBill.posts_effects !== false && (
+                <Button
+                  variant="danger"
+                  onClick={() => {
+                    setVoidErr(null);
+                    setConfirmVoid(true);
+                  }}
+                >
+                  Cancel bill
+                </Button>
+              )}
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </>

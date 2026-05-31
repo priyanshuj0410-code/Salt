@@ -98,6 +98,14 @@ function App() {
         }
       />
       <Route
+        path="/bills/credit-notes"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <CreditNotesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/gst"
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
