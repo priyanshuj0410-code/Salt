@@ -855,3 +855,54 @@ export function buildTallyXml(companyName: string, sales: TallySaleRow[], purcha
     "</ENVELOPE>",
   ].join("\n");
 }
+
+// ============================================================================
+// HSN-wise summary report (SALT-068) — flexible date range (e.g. GSTR-9 annual)
+// ============================================================================
+
+/** A sale line for the HSN summary (date-filtered upstream by its invoice). */
+export interface HsnLineInput {
+  hsn: string | null;
+  gst_rate: number;
+  qty: number;
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+
+export interface HsnSummary {
+  rows: HsnRow[];
+  totals: TaxTotals;
+  qty: number;
+}
+
+/** Aggregate sale lines by HSN × rate (the GSTR-1 §12 / GSTR-9 HSN table, over any range). */
+export function buildHsnSummary(lines: HsnLineInput[]): HsnSummary {
+  const map = new Map<string, HsnRow>();
+  const totals = emptyTotals();
+  let qty = 0;
+  for (const line of lines) {
+    const hsn = line.hsn?.trim() || "—";
+    const key = `${hsn}|${line.gst_rate}`;
+    let row = map.get(key);
+    if (!row) {
+      row = { hsn, rate: line.gst_rate, qty: 0, ...emptyTotals() };
+      map.set(key, row);
+    }
+    row.qty += line.qty;
+    addInto(row, line);
+    qty += line.qty;
+    addInto(totals, line);
+  }
+  return { rows: sortRows(Array.from(map.values()), (r) => [r.hsn, r.rate]), totals, qty };
+}
+
+/** Flat CSV of the HSN summary (spreadsheet fallback). */
+export function hsnSummaryToCsv(s: HsnSummary): string {
+  const m = (p: number) => (Math.round(p) / 100).toFixed(2);
+  const head = ["hsn", "rate", "qty", "taxable", "cgst", "sgst", "igst", "total"];
+  const rows = s.rows.map((r) => [r.hsn, r.rate, r.qty, m(r.taxablePaise), m(r.cgstPaise), m(r.sgstPaise), m(r.igstPaise), m(r.totalPaise)]);
+  const total = ["TOTAL", "", s.qty, m(s.totals.taxablePaise), m(s.totals.cgstPaise), m(s.totals.sgstPaise), m(s.totals.igstPaise), m(s.totals.totalPaise)];
+  return [head, ...rows, total].map((c) => c.map(csvCell).join(",")).join("\n");
+}
