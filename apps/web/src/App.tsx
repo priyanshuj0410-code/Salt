@@ -16,6 +16,7 @@ import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { PurchaseInvoiceImportPage } from "@/components/import/PurchaseInvoiceImportPage";
+import { GlOpeningImportPage } from "@/components/import/GlOpeningImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { SetupWizard } from "@/components/onboarding/SetupWizard";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -158,6 +159,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <PurchaseInvoiceImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import/gl"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GlOpeningImportPage />
           </ProtectedRoute>
         }
       />
