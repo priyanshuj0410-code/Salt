@@ -399,3 +399,130 @@ function csvCell(v: string | number): string {
   const s = String(v);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
+
+// ============================================================================
+// GSTR-3B — monthly summary return (output tax − ITC = net payable)
+// ============================================================================
+
+/** Tax amounts per head, in paise. */
+export interface HeadAmounts {
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+}
+
+/** Sales side: invoice-level tax, already split by `create_sales_invoice`. */
+export interface Gstr3bOutwardRow {
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+
+/** Purchase side: eligible ITC, already split by `receive_purchase`. */
+export interface Gstr3bItcRow {
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+
+export interface Gstr3bSummary {
+  period: string;
+  outwardTaxablePaise: number; // 3.1(a) taxable value of outward supplies
+  output: HeadAmounts; // output tax from sales
+  itc: HeadAmounts; // eligible ITC from purchases
+  balance: HeadAmounts; // output − itc per head (negative = credit available)
+  outputTotalPaise: number;
+  itcTotalPaise: number;
+  netPayablePaise: number; // max(0, output − itc) after full set-off — the cash figure
+  creditCarryPaise: number; // max(0, itc − output) carried forward
+  invoiceCount: number;
+  purchaseCount: number;
+}
+
+const emptyHead = (): HeadAmounts => ({ cgstPaise: 0, sgstPaise: 0, igstPaise: 0 });
+
+/**
+ * Build the GSTR-3B summary for a period. Output tax is summed from the period's
+ * sales invoices, eligible ITC from its purchases — both already carry the
+ * CGST/SGST/IGST split (computed at write time). `netPayable` applies full credit
+ * set-off across heads (the standard cash figure); per-head `balance` is exposed
+ * for detail. ITC reversal (returns / expired stock) is deferred until the Returns
+ * module exists. All money is paise.
+ */
+export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases: Gstr3bItcRow[]): Gstr3bSummary {
+  const output = emptyHead();
+  let outwardTaxable = 0;
+  for (const s of sales) {
+    outwardTaxable += s.taxable_paise;
+    output.cgstPaise += s.cgst_paise;
+    output.sgstPaise += s.sgst_paise;
+    output.igstPaise += s.igst_paise;
+  }
+  const itc = emptyHead();
+  for (const p of purchases) {
+    itc.cgstPaise += p.cgst_paise;
+    itc.sgstPaise += p.sgst_paise;
+    itc.igstPaise += p.igst_paise;
+  }
+  const balance: HeadAmounts = {
+    cgstPaise: output.cgstPaise - itc.cgstPaise,
+    sgstPaise: output.sgstPaise - itc.sgstPaise,
+    igstPaise: output.igstPaise - itc.igstPaise,
+  };
+  const outputTotal = output.cgstPaise + output.sgstPaise + output.igstPaise;
+  const itcTotal = itc.cgstPaise + itc.sgstPaise + itc.igstPaise;
+  return {
+    period,
+    outwardTaxablePaise: outwardTaxable,
+    output,
+    itc,
+    balance,
+    outputTotalPaise: outputTotal,
+    itcTotalPaise: itcTotal,
+    netPayablePaise: Math.max(0, outputTotal - itcTotal),
+    creditCarryPaise: Math.max(0, itcTotal - outputTotal),
+    invoiceCount: sales.length,
+    purchaseCount: purchases.length,
+  };
+}
+
+/** GSTN-style GSTR-3B JSON (key sections: 3.1(a) outward, 4 ITC, net payable). */
+export function buildGstr3bJson(summary: Gstr3bSummary, gstin: string) {
+  const r = (p: number) => Math.round(p) / 100;
+  return {
+    gstin,
+    ret_period: gstnPeriod(summary.period),
+    sup_details: {
+      osup_det: {
+        txval: r(summary.outwardTaxablePaise),
+        camt: r(summary.output.cgstPaise),
+        samt: r(summary.output.sgstPaise),
+        iamt: r(summary.output.igstPaise),
+      },
+    },
+    itc_elg: {
+      itc_avl: [{ ty: "OTH", camt: r(summary.itc.cgstPaise), samt: r(summary.itc.sgstPaise), iamt: r(summary.itc.igstPaise) }],
+    },
+    net_payable: {
+      camt: r(Math.max(0, summary.balance.cgstPaise)),
+      samt: r(Math.max(0, summary.balance.sgstPaise)),
+      iamt: r(Math.max(0, summary.balance.igstPaise)),
+      total: r(summary.netPayablePaise),
+    },
+  };
+}
+
+/** Flat CSV of the GSTR-3B summary (spreadsheet fallback). */
+export function gstr3bToCsv(summary: Gstr3bSummary): string {
+  const m = (p: number) => (Math.round(p) / 100).toFixed(2);
+  const rows: (string | number)[][] = [
+    ["row", "cgst", "sgst", "igst", "total"],
+    ["Output tax (sales)", m(summary.output.cgstPaise), m(summary.output.sgstPaise), m(summary.output.igstPaise), m(summary.outputTotalPaise)],
+    ["Eligible ITC (purchases)", m(summary.itc.cgstPaise), m(summary.itc.sgstPaise), m(summary.itc.igstPaise), m(summary.itcTotalPaise)],
+    ["Balance (output - ITC)", m(summary.balance.cgstPaise), m(summary.balance.sgstPaise), m(summary.balance.igstPaise), m(summary.outputTotalPaise - summary.itcTotalPaise)],
+    ["Net payable (after set-off)", "", "", "", m(summary.netPayablePaise)],
+    ["Outward taxable value", "", "", "", m(summary.outwardTaxablePaise)],
+  ];
+  return rows.map((cols) => cols.map(csvCell).join(",")).join("\n");
+}

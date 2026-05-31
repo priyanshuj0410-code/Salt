@@ -4,12 +4,13 @@ updated: 2026-06-01
 tags: [gst, compliance, sales]
 ---
 
-# GSTR-1 export (outward supplies)
+# GST returns (GSTR-1, GSTR-3B)
 
-First slice of the **GST & compliance** module (SALT-002, product-modules §9). A
-read-only return: aggregates one shop's month of outward sales into the GSTN sections and
-exports portal-ready JSON + CSV. Screen at `/gst` (`components/gst/Gstr1Page.tsx`); all
-aggregation in `lib/gst.ts`, which is **pure** (no Supabase) and unit-smoke-tested.
+The **GST & compliance** module's filing screens (SALT-002, SALT-063; product-modules §9):
+read-only returns that aggregate one shop's month of documents into the GSTN sections and
+export portal-ready JSON + CSV. Screens under `/gst` (`components/gst/Gstr1Page.tsx`,
+`Gstr3bPage.tsx`); all aggregation in `lib/gst.ts`, which is **pure** (no Supabase) and
+unit-smoke-tested.
 
 ## Read contract (as-built)
 
@@ -46,11 +47,27 @@ Section breakdowns and the headline totals both derive from the **lines**, so th
   dates `DD-MM-YYYY`, `fp = MMYYYY`).
 - `gstr1ToCsv` → one flat CSV across all sections (spreadsheet fallback).
 
+## GSTR-3B (summary return)
+
+`buildGstr3b(period, sales, purchases)` (screen `/gst/gstr3b`) nets the month's tax:
+
+- **Output tax** — summed per head (CGST/SGST/IGST) from the period's `sales_invoices`
+  (same scope as GSTR-1: shop, `status='placed'`, `posts_effects=true`).
+- **Eligible ITC** — summed per head from `purchases` (`status='received'`,
+  `posts_effects=true`, `received_date` in month); `receive_purchase` stores the split the
+  same way `create_sales_invoice` does.
+- **Net payable** = `max(0, output − ITC)` after full credit set-off (the cash figure);
+  per-head `balance` is shown for detail; surplus ITC is reported as credit carried forward.
+- `buildGstr3bJson` → GSTN-style `{ gstin, ret_period, sup_details, itc_elg, net_payable }`;
+  `gstr3bToCsv` for spreadsheets.
+- **Deferred:** ITC reversal (returns / expired stock) until the Returns module exists; the
+  per-head set-off is simplified (no IGST cross-utilisation optimisation).
+
 ## Deferred
 
-Credit notes (CDNR — Returns module unbuilt) · server-side `v_gstr1_*` views (proposed
-`0022_gst_compliance.sql` matches the live schema and can be promoted by the database
-chat) · GSTR-3B, GSTR-2B recon (SALT-007, smart-import), ITC register, H1/X register,
+Credit notes (CDNR — Returns module unbuilt) · server-side `v_gstr1_*` / `v_gstr3b_summary`
+views (proposed `0022_gst_compliance.sql` matches the live schema and can be promoted by the
+database chat) · GSTR-2B recon (SALT-007, smart-import), ITC register, H1/X register,
 drug-license alerts (other GST slices).
 
 Links: [product/product-modules](../product/product-modules.md) §9 ·
