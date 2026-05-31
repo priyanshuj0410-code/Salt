@@ -66,18 +66,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const org = data.orgs as { name: string } | { name: string }[] | null;
       const orgName = Array.isArray(org) ? (org[0]?.name ?? "") : (org?.name ?? "");
       setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole });
-      // Resolve the org's primary shop for shop-scoped writes. Tolerates absence
-      // (pre-migration or no shop yet): leaves shop null and billing guards on it.
+      // Resolve the org's working shop. Prefer the one flagged `is_primary`;
+      // if none is flagged, fall back to the oldest shop in the org and
+      // self-heal by promoting it so subsequent loads are deterministic. This
+      // covers orgs whose imports created shops without ever marking one
+      // primary (the common case for the four-file Saral import). Tolerates
+      // absence (pre-migration or no shop yet): leaves shop null and billing
+      // guards on it.
       const { data: shopRow } = await supabase
         .from("shops")
-        .select("id, name, state_code, gstin, address, phone, cutover_date")
+        .select("id, name, state_code, gstin, address, phone, cutover_date, is_primary")
         .eq("org_id", data.org_id as string)
-        .eq("is_primary", true)
+        .order("is_primary", { ascending: false })
+        .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
       if (shopRow) {
-        setShop(shopRow as Shop);
-        setShopId((shopRow as { id: string }).id);
+        const { is_primary, ...shopFields } = shopRow as Shop & { is_primary: boolean };
+        setShop(shopFields);
+        setShopId(shopFields.id);
+        if (!is_primary) {
+          // Self-heal: promote this shop to primary. Errors are swallowed —
+          // a unique-per-org race (another tab promoting a different shop)
+          // resolves on the next refresh().
+          await supabase.from("shops").update({ is_primary: true }).eq("id", shopFields.id);
+        }
       } else {
         setShop(null);
         setShopId(null);
