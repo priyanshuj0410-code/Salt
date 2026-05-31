@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Coins, FileCheck, Landmark, Plus, Wallet } from "lucide-react";
+import { Coins, FileCheck, FileText, Landmark, Plus, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
 import { BankReconcile } from "./BankReconcile";
 import { CashDrawer } from "./CashDrawer";
 import { ChequeManager } from "./ChequeManager";
+import { CreditDebitNotes } from "./CreditDebitNotes";
 
 type DirFilter = "all" | "received" | "paid";
 type PartyRow = PartyLite & { phone: string | null };
@@ -34,7 +35,7 @@ export function PaymentsPage() {
   const [q, setQ] = useState("");
   const [recordOpen, setRecordOpen] = useState(false);
   const [receipt, setReceipt] = useState<PaymentListRow | null>(null);
-  const [view, setView] = useState<"payments" | "reconcile" | "drawer" | "cheques">("payments");
+  const [view, setView] = useState<"payments" | "reconcile" | "drawer" | "cheques" | "notes">("payments");
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -148,6 +149,14 @@ export function PaymentsPage() {
         >
           <FileCheck /> Cheques
         </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "notes" ? "default" : "outline"}
+          onClick={() => setView("notes")}
+        >
+          <FileText /> Credit / debit notes
+        </Button>
       </div>
 
       {view === "reconcile" ? (
@@ -156,6 +165,8 @@ export function PaymentsPage() {
         <CashDrawer orgId={orgId ?? null} />
       ) : view === "cheques" ? (
         <ChequeManager orgId={orgId ?? null} nameById={nameById} />
+      ) : view === "notes" ? (
+        <CreditDebitNotes orgId={orgId ?? null} nameById={nameById} />
       ) : (
         <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
