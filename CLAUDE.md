@@ -19,6 +19,46 @@ Salt is a **cloud-first ERP for Indian medical retail** (chemists, surgicals, ay
 - **Secrets:** only the Supabase publishable/anon key is used client-side (safe). Never the service-role key or DB password.
 - Commit messages: no apostrophes in heredocs (they break the shell); run commit and push as separate commands.
 
+## Working in parallel (multiple chats)
+
+Run several Claude Code chats at once **without** messy branches or wasted tokens. The rule: **1 module = 1 worktree = 1 chat = 1 branch = 1 PR.** Spin up with `scripts/wt.sh new <slug>`; never run two chats in the same directory (one dir holds one branch — that is the mess). Two payoffs: disjoint PRs merge for free (git does it — Claude only spends tokens on *conflicts*, never on clean merges), and each chat loads a fraction of the context.
+
+**Scope each chat to its module.** Start by reading `CLAUDE.md` + `wiki/index.md` + *your module's* wiki page(s) below — not the whole codebase. To reach into another module, read *its* wiki page, not its source.
+
+| Chat / module | Read first (its context) | Owns (paths under `apps/web/src` unless noted) |
+|---|---|---|
+| Billing / Counter | `architecture/billing-screen`, `domain/orders` | `components/billing/**`, `store/bill.ts`, `store/catalog.ts`, `data/catalog.ts`, `lib/billing.ts`, `lib/orders.ts`, `lib/search.ts` |
+| Parties | `domain/parties`, `decisions/0010` | `components/parties/**`, `lib/classifyParties.ts`, `lib/mergeSuggest.ts` |
+| Bills (history/view) | `domain/orders` | `components/bills/**` |
+| Smart Import | `architecture/import-pipeline`, `architecture/smart-import-extension`, `architecture/marg-import-map`, `domain/marg-export-guide` | `components/import/**`, `lib/smart*.ts`, `lib/import.ts` |
+| Migrator (Go) | `salt-migrator-prd-v0.1.md`, `architecture/import-pipeline` | `migrator/**` (repo root) |
+| Owner dashboard | `product/product-modules` (Reports), `architecture/information-architecture` | `components/owner/**` |
+| Nav / routing / IA | `architecture/information-architecture`, `architecture/screens-routing` | `components/nav/**`, `App.tsx` |
+| Settings | — | `components/settings/**`, `lib/useShopBlockers.ts` |
+| Auth | `architecture/security-rls` | `components/auth/**`, `lib/auth.tsx` |
+| Database / model | `architecture/data-model`, `architecture/proposed-data-model`, `architecture/schema`, `architecture/security-rls` | `supabase/migrations/**` (repo root) |
+| Design system / UI | `architecture/design-system`, `design.md` | `components/ui/**`, `index.css` |
+| Wiki / docs | this section + the wiki schema below | `wiki/**` (repo root) |
+
+New modules from [`wiki/product/product-modules.md`](wiki/product/product-modules.md) — GRN/Purchase, Payments, Returns, GST — get a row when work starts.
+
+**Shared / hot files — the only real conflict surface. Coordinate or serialize:**
+- `supabase/migrations/NNNN_*.sql` — claim the next number up front; reserve ranges if two DB chats run (we already did 0014–0024). On collision, just renumber the file in git — don't make Claude reason about it.
+- `wiki/index.md`, `wiki/log.md` — append-only; do wiki edits in one chat, or accept the trivial append-conflict.
+- `lib/supabase.ts`, `lib/currency.ts`, `lib/utils.ts`, `lib/types.ts` — shared primitives everyone imports; edit solo.
+- `App.tsx` + nav, `components/ui/**`, `index.css` (tokens) — central; if your task must touch one, run it solo or merge that PR first.
+- `pnpm-lock.yaml`, `package.json`, `apps/web/package.json` — regenerate via `pnpm install` after rebase; never hand-merge the lockfile.
+
+**Coordinating dependencies — the work queue.** `scripts/wt.sh queue` shows a shared board (`../salt-worktrees/queue.md`, **not** in git, instant across worktrees on this machine). Post with `scripts/wt.sh post "<msg>"`, tagged:
+- `BLOCK: <what you need>` — before a dependent task, post the exact need (RPC name + signature, table, migration number) and tell the user you are blocked. Do not guess the interface.
+- `DONE: <what landed> (#PR)` — the producing chat posts on merge, naming the concrete artifact, **and** updates its module's wiki page so the contract is durable, not just in the queue.
+- `NOTE:` / `CLAIM:` — anything else worth other chats seeing; `CLAIM` is auto-posted by `wt.sh new`.
+- When unblocked, run `scripts/wt.sh queue`, then `git fetch origin && git rebase origin/main`, then proceed — no re-explanation needed.
+
+**Vertical features that cross modules** (e.g. persisting sales = Database + Billing): either one chat owns the slice and reads both wiki pages, or split it — the Database chat ships the migration + RPC and posts `DONE` first, then the Billing chat consumes it. Don't run both halves at once.
+
+**Merge / rebase discipline (keeps tokens near zero):** merge independent PRs in any order (squash on GitHub); after any merge, `git fetch origin && git rebase origin/main` in every other worktree (disjoint = conflict-free). Let GitHub merge and git rebase — only ask Claude to resolve a conflict you could not avoid.
+
 ## The knowledge wiki (`wiki/`)
 
 This repo follows the **LLM Wiki pattern** (Karpathy): a persistent, LLM-maintained knowledge base so context compounds across sessions instead of being re-derived. You (the LLM) own and maintain it; the human curates and asks questions.
@@ -59,3 +99,4 @@ wiki/
 - What exists vs what the PRD plans → [wiki/product/roadmap.md](wiki/product/roadmap.md)
 - Data model + migrations → [wiki/architecture/data-model.md](wiki/architecture/data-model.md)
 - Why the stack differs from the PRD → [wiki/decisions/0002-stack-divergence-from-prd.md](wiki/decisions/0002-stack-divergence-from-prd.md)
+- Running multiple chats in parallel → [Working in parallel](#working-in-parallel-multiple-chats) (use `scripts/wt.sh`)
