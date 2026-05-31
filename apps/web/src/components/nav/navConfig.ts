@@ -91,6 +91,7 @@ export const NAV: NavModule[] = [
       { label: "Turnover", path: "/inventory/turnover", built: true },
       { label: "Adjustments", path: "/inventory/adjustments", built: true },
       { label: "Physical count", path: "/inventory/count", built: true },
+      { label: "Expiry destruction", path: "/inventory/destruction", built: true },
     ],
   },
   {
