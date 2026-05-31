@@ -14,6 +14,7 @@ import { selectAll } from "@/lib/selectAll";
 import { useAuth } from "@/lib/auth";
 import { suggestMerges, type MergeGroup } from "@/lib/mergeSuggest";
 import { agingFor, type AgingBuckets } from "@/lib/aging";
+import { upcomingPayments, UPCOMING_BANDS, type UpcomingBuckets } from "@/lib/cashflow";
 import { cn } from "@/lib/utils";
 
 interface LedgerRow {
@@ -40,8 +41,19 @@ interface BillRow {
   days_overdue: number | null;
 }
 
+/** A single scheduled vendor payment shown in the cash-flow panel. */
+interface NextPayment {
+  vendorId: string;
+  vendorName: string;
+  amountPaise: number;
+  dueDate: string;
+}
+
 const rupees = (paise: number) =>
   (Math.abs(paise) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+const fmtDueDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 const initials = (name: string) =>
   name
@@ -87,6 +99,7 @@ export function PartiesPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
   const [aging, setAging] = useState<{ receivable: AgingBuckets; payable: AgingBuckets } | null>(null);
+  const [vendorPay, setVendorPay] = useState<{ buckets: UpcomingBuckets; next: NextPayment[] } | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -124,6 +137,22 @@ export function PartiesPage() {
         setRows(parties);
         // Org-wide aging from imported open bills (per-party view adds live orders).
         setAging(agingFor(bills, []));
+        // Upcoming vendor payments (SALT-055): dated cr payables on vendor parties.
+        const vendorName = new Map(
+          ledgers.filter((l) => l.type === "vendor").map((l) => [l.id, l.name] as const),
+        );
+        const payables: NextPayment[] = bills
+          .filter((b) => b.nature === "cr" && b.due_date && b.amount_paise > 0 && vendorName.has(b.ledger_id))
+          .map((b) => ({
+            vendorId: b.ledger_id,
+            vendorName: vendorName.get(b.ledger_id)!,
+            amountPaise: b.amount_paise,
+            dueDate: b.due_date as string,
+          }));
+        const next = [...payables]
+          .sort((a, b) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0))
+          .slice(0, 8);
+        setVendorPay({ buckets: upcomingPayments(payables), next });
         setError(null);
         setLoading(false);
       })
@@ -227,6 +256,49 @@ export function PartiesPage() {
             <div className="mt-3">
               <AgingTable receivable={aging.receivable} payable={aging.payable} />
             </div>
+          </section>
+        )}
+
+        {/* Upcoming vendor payments (SALT-055) */}
+        {vendorPay && vendorPay.buckets.total > 0 && (
+          <section className="mt-4 rounded-lg border border-border p-4">
+            <h2 className="text-sm font-medium text-text-primary">Upcoming vendor payments</h2>
+            <p className="mt-0.5 text-xs text-text-tertiary">
+              What you owe vendors, by due date (₹). From imported open bills that carry a due date.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {UPCOMING_BANDS.map((b) => (
+                <div key={b.key} className="rounded-md border border-border px-3 py-2">
+                  <div className="text-xs text-text-tertiary">{b.label}</div>
+                  <div
+                    className={cn(
+                      "text-sm font-medium tabular-nums",
+                      b.key === "overdue" && vendorPay.buckets[b.key] > 0 ? "text-danger" : "",
+                    )}
+                  >
+                    ₹{rupees(vendorPay.buckets[b.key])}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {vendorPay.next.length > 0 && (
+              <div className="mt-3">
+                <div className="mb-1 text-xs font-medium text-text-tertiary">Next payments</div>
+                <div className="divide-y divide-divider">
+                  {vendorPay.next.map((p, i) => (
+                    <Link
+                      key={`${p.vendorId}-${i}`}
+                      to={`/parties/${p.vendorId}`}
+                      className="flex items-center gap-3 py-1.5 text-sm hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
+                    >
+                      <span className="min-w-0 flex-1 truncate">{p.vendorName}</span>
+                      <span className="shrink-0 text-xs text-text-tertiary">{fmtDueDate(p.dueDate)}</span>
+                      <span className="shrink-0 tabular-nums">₹{rupees(p.amountPaise)}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
 
