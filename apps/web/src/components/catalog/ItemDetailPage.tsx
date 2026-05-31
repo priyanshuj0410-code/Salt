@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, PencilLine, Save, Tag, X } from "lucide-react";
+import { ArrowLeft, PencilLine, Plus, Save, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Page } from "@/components/patterns/page";
@@ -19,6 +19,13 @@ import type { Batch, Item, Schedule } from "@/lib/types";
 
 const SCHEDULES: Schedule[] = ["OTC", "H", "H1", "X"];
 const GST_RATES = [0, 5, 12, 18];
+const ALIAS_KINDS = ["synonym", "brand", "salt", "barcode"] as const;
+type AliasKind = (typeof ALIAS_KINDS)[number];
+interface AliasRow {
+  id: string;
+  alias: string;
+  kind: AliasKind;
+}
 
 function formFrom(i: Item) {
   return {
@@ -56,10 +63,33 @@ export function ItemDetailPage() {
   const [form, setForm] = useState<Form | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [aliases, setAliases] = useState<AliasRow[]>([]);
+  const [aliasText, setAliasText] = useState("");
+  const [aliasKind, setAliasKind] = useState<AliasKind>("synonym");
+  const [aliasBusy, setAliasBusy] = useState(false);
+  const [aliasReload, setAliasReload] = useState(0);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
   }, [orgId, loadCatalog]);
+
+  // Alternate names / barcodes for this item (item_aliases), for counter lookup.
+  useEffect(() => {
+    if (!supabase || !orgId || !id) return;
+    let active = true;
+    supabase
+      .from("item_aliases")
+      .select("id,alias,kind")
+      .eq("org_id", orgId)
+      .eq("item_id", id)
+      .order("created_at")
+      .then(({ data }) => {
+        if (active) setAliases((data as AliasRow[] | null) ?? []);
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId, id, aliasReload]);
 
   // Leaving one item for another resets any in-progress edit. Adjusting state
   // during render on a prop change is the React-recommended pattern (not an effect).
@@ -69,6 +99,7 @@ export function ItemDetailPage() {
     setEditing(false);
     setForm(null);
     setError(null);
+    setAliases([]);
   }
 
   const item = items.find((i) => i.id === id);
@@ -150,6 +181,26 @@ export function ItemDetailPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function addAlias() {
+    const text = aliasText.trim();
+    if (!text || aliasBusy || !supabase || !orgId || !id) return;
+    setAliasBusy(true);
+    const { error: err } = await supabase
+      .from("item_aliases")
+      .insert({ org_id: orgId, item_id: id, alias: text, kind: aliasKind });
+    setAliasBusy(false);
+    if (!err) {
+      setAliasText("");
+      setAliasReload((k) => k + 1);
+    }
+  }
+
+  async function removeAlias(aliasId: string) {
+    if (!supabase) return;
+    await supabase.from("item_aliases").delete().eq("id", aliasId);
+    setAliasReload((k) => k + 1);
   }
 
   const stock = itemStock(item);
@@ -359,6 +410,71 @@ export function ItemDetailPage() {
             <ViewField label="Type" value={item.ayush ? <AyushBadge /> : "Allopathic"} />
             <ViewField label="Barcode" value={item.barcode ?? ""} mono />
           </dl>
+        )}
+      </section>
+
+      {/* Also known as — alternate names/barcodes (item_aliases) for counter lookup */}
+      <section className="mt-6 rounded-lg border border-border p-4">
+        <div className="mb-1 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-text-primary">Also known as</h2>
+          <span className="text-xs text-text-tertiary">Alternate names, brands or barcodes for counter lookup.</span>
+        </div>
+        {usingSeed ? (
+          <p className="mt-2 text-xs text-text-tertiary">Add or import your own catalogue to manage alternate names.</p>
+        ) : (
+          <>
+            {aliases.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {aliases.map((a) => (
+                  <span
+                    key={a.id}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2 py-1 text-xs"
+                  >
+                    <span className="uppercase text-text-tertiary">{a.kind}</span>
+                    <span className="font-medium">{a.alias}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeAlias(a.id)}
+                      aria-label={`Remove ${a.alias}`}
+                      className="text-text-tertiary hover:text-danger"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-text-tertiary">No alternate names yet.</p>
+            )}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {ALIAS_KINDS.map((k) => (
+                <Button
+                  key={k}
+                  type="button"
+                  size="sm"
+                  variant={aliasKind === k ? "default" : "outline"}
+                  onClick={() => setAliasKind(k)}
+                >
+                  {k}
+                </Button>
+              ))}
+              <Input
+                value={aliasText}
+                onChange={(e) => setAliasText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addAlias();
+                  }
+                }}
+                placeholder="Add an alias…"
+                className="h-9 max-w-[12rem]"
+              />
+              <Button type="button" variant="outline" disabled={aliasBusy || !aliasText.trim()} onClick={addAlias}>
+                <Plus /> Add
+              </Button>
+            </div>
+          </>
         )}
       </section>
 

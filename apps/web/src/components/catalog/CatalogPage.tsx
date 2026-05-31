@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { PackagePlus, Tag } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Copy, PackagePlus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Page } from "@/components/patterns/page";
@@ -14,6 +14,7 @@ import { CreateItemDialog } from "@/components/grn/CreateItemDialog";
 import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import { searchCatalog, itemStock } from "@/lib/search";
+import { findDuplicateGroups } from "@/lib/itemDupes";
 import type { Item } from "@/lib/types";
 
 const SCHED_FILTERS = ["All", "OTC", "H", "H1", "X"] as const;
@@ -56,6 +57,8 @@ export function CatalogPage() {
     }
     return { total: items.length, inStock, outOfStock: items.length - inStock, scheduled };
   }, [items]);
+
+  const dupes = useMemo(() => findDuplicateGroups(items), [items]);
 
   const visible = useMemo(() => {
     const base = query.trim()
@@ -136,6 +139,39 @@ export function CatalogPage() {
         <p className="mt-4 rounded-lg border border-info-border bg-info-bg px-3 py-2 text-xs text-info">
           Showing demo items. Import your ledgers or add items to build your own catalogue.
         </p>
+      )}
+
+      {/* Possible duplicates — same name + manufacturer entered more than once */}
+      {dupes.length > 0 && (
+        <div className="mt-6">
+          <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
+            <Copy className="size-4 text-warning" />
+            {dupes.length} possible duplicate{dupes.length > 1 ? "s" : ""} to review
+          </div>
+          <div className="mt-2 space-y-2">
+            {dupes.map((g) => (
+              <div key={g.key} className="rounded-lg border border-warning-border bg-warning-bg/40 p-3">
+                <div className="mb-1.5 text-xs text-text-secondary">
+                  {g.items.length} items look like <span className="font-medium">{g.label}</span> — open each to compare.
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {g.items.map((i) => (
+                    <Link
+                      key={i.id}
+                      to={`/catalogue/${i.id}`}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs hover:bg-surface"
+                    >
+                      <span className="font-medium">{i.name}</span>
+                      <span className="text-text-tertiary">
+                        {i.manufacturer || "—"} · {itemStock(i)} in stock
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Search + filters */}
