@@ -7,7 +7,7 @@ import { parseFile } from "@/lib/smartParse";
 import { autoMap, type Table } from "@/lib/smartImport";
 import {
   groupDocuments,
-  preparePurchases,
+  prepareDocuments,
   type DocCtx,
   type DocumentConfig,
   type PrepareResult,
@@ -68,16 +68,17 @@ export function DocumentStep({
     setBusy(true);
     setError(null);
     try {
-      // Resolution context (paged past the 1000-row cap).
-      const vendors = await selectAll<{ id: string; name: string; gstin: string | null }>((f, t) =>
+      // Resolution context (paged past the 1000-row cap). Parties (ledgers) cover
+      // both the vendor on a purchase and the customer on a sale.
+      const parties = await selectAll<{ id: string; name: string; gstin: string | null }>((f, t) =>
         supabase!.from("ledgers").select("id,name,gstin").eq("org_id", orgId).range(f, t),
       );
       const items = await selectAll<{ id: string; name: string; item_code: string | null }>((f, t) =>
         supabase!.from("items").select("id,name,item_code").eq("org_id", orgId).range(f, t),
       );
       const ctx: DocCtx = {
-        vendorByGstin: new Map(vendors.filter((v) => v.gstin).map((v) => [(v.gstin as string).toUpperCase(), v.id])),
-        vendorByName: new Map(vendors.map((v) => [norm(v.name), v.id])),
+        partyByGstin: new Map(parties.filter((v) => v.gstin).map((v) => [(v.gstin as string).toUpperCase(), v.id])),
+        partyByName: new Map(parties.map((v) => [norm(v.name), v.id])),
         itemByCode: new Map(items.filter((i) => i.item_code).map((i) => [i.item_code as string, i.id])),
         itemByName: new Map(items.map((i) => [norm(i.name), i.id])),
       };
@@ -99,7 +100,7 @@ export function DocumentStep({
       const groups = allGroups.filter((g) => !existingSet.has(g.docNo));
       const skippedDocs = allGroups.length - groups.length;
 
-      const prep = preparePurchases(groups, ctx);
+      const prep = prepareDocuments(cfg, groups, ctx);
 
       let docs = 0;
       let lines = 0;
@@ -246,7 +247,7 @@ export function DocumentStep({
         )}
         {(result?.quarantined.length ?? 0) > 0 && (
           <span className="font-medium text-amber-600 dark:text-amber-500">
-            {result?.quarantined.length} need a vendor
+            {result?.quarantined.length} skipped
           </span>
         )}
       </div>
@@ -254,8 +255,9 @@ export function DocumentStep({
       {(result?.quarantined.length ?? 0) > 0 && (
         <>
           <p className="mt-3 text-sm text-muted-foreground">
-            These documents could not be matched to a vendor — import your ledgers/party-GST first,
-            then re-run this step (already-imported documents are skipped).
+            {cfg.kind === "purchase"
+              ? "These documents could not be matched to a vendor — import your ledgers/party-GST first, then re-run this step (already-imported documents are skipped)."
+              : "These documents could not be imported (see reasons). Fix the source data and re-run — already-imported documents are skipped."}
           </p>
           <div className="mt-2 max-h-48 overflow-auto rounded-md border bg-amber-500/5 p-2 text-xs">
             {result?.quarantined.slice(0, 50).map((q) => (
