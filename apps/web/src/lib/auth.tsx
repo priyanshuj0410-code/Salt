@@ -11,6 +11,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { IdleWarningDialog } from "@/components/auth/IdleWarningDialog";
 import { UpdatePasswordDialog } from "@/components/auth/UpdatePasswordDialog";
+import { MfaChallengeDialog } from "@/components/auth/MfaChallengeDialog";
 
 /**
  * Idle auto-logout (SALT-115). Shared pharmacy-counter terminals must not leave
@@ -43,6 +44,16 @@ function idleStatus(
 }
 
 const IDLE_MS = resolveIdleMs(import.meta.env.VITE_SESSION_IDLE_MINUTES as string | undefined);
+
+/**
+ * MFA gate (SALT-113): true when the session is aal1 but a verified factor
+ * exists (nextLevel "aal2"), i.e. the user must complete a TOTP challenge.
+ */
+function needsMfaChallenge(
+  aal: { currentLevel: string | null; nextLevel: string | null } | null,
+): boolean {
+  return !!aal && aal.currentLevel === "aal1" && aal.nextLevel === "aal2";
+}
 
 export type UserRole = "cashier" | "owner";
 
@@ -96,6 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Password-recovery overlay (SALT-114): true after a PASSWORD_RECOVERY event,
   // until the user sets a new password (or cancels).
   const [recoveryMode, setRecoveryMode] = useState(false);
+  // MFA login gate (SALT-113): true while a verified-factor user is still aal1.
+  const [mfaChallengeRequired, setMfaChallengeRequired] = useState(false);
   const lastActivityRef = useRef(0);
   const lastWriteRef = useRef(0);
 
@@ -185,10 +198,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       currentUserId.current = nextId;
       if (nextId) {
         setLoading(true); // genuine sign-in; the membership effect clears it
+        setMfaChallengeRequired(false); // re-evaluated by the AAL effect
       } else {
         setMembership(null);
         setShopId(null);
         setShop(null);
+        setMfaChallengeRequired(false);
         setLoading(false); // signed out
       }
     });
@@ -269,6 +284,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [userId, recordActivity]);
 
+  // MFA gate (SALT-113): when signed in, check the session's assurance level and
+  // require a challenge if a verified factor exists but the session is aal1.
+  useEffect(() => {
+    if (!supabase || !userId) return;
+    const client = supabase;
+    let active = true;
+    void client.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
+      if (active) setMfaChallengeRequired(needsMfaChallenge(data));
+    });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
   const refresh = useCallback(async () => {
     const userId = session?.user.id;
     if (userId) await loadMembership(userId);
@@ -291,6 +320,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           onDone={() => setRecoveryMode(false)}
           onCancel={() => {
             setRecoveryMode(false);
+            void supabase?.auth.signOut();
+          }}
+        />
+      )}
+      {mfaChallengeRequired && (
+        <MfaChallengeDialog
+          onVerified={() => setMfaChallengeRequired(false)}
+          onCancel={() => {
+            setMfaChallengeRequired(false);
             void supabase?.auth.signOut();
           }}
         />
