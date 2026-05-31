@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dot } from "@/components/ui/dot";
 import { Page } from "@/components/patterns/page";
+import { PageHeader } from "@/components/patterns/page-header";
+import { DataTable } from "@/components/patterns/data-table";
+import { EmptyState } from "@/components/patterns/empty-state";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
@@ -79,68 +82,71 @@ export function BillHistoryPage() {
   return (
     <>
       <Page width="md">
-        <div className="flex items-center gap-2">
-          <Receipt className="size-5 text-primary" />
-          <h1 className="text-xl font-semibold">Bills</h1>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Every saved sale, newest first. {rows.length > 0 && `${rows.length} bills · ${formatPaise(totalSales)} total.`}
-        </p>
+        <PageHeader
+          icon={Receipt}
+          title="Bills"
+          subtitle={
+            rows.length > 0
+              ? `${rows.length} bills · ${formatPaise(totalSales)}`
+              : "Every saved sale, newest first"
+          }
+        />
 
-        <div className="mt-5 overflow-hidden rounded-lg border">
-          <div className="grid grid-cols-[1fr_1.4fr_0.8fr_0.9fr_0.9fr] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
-            <span>Date</span>
-            <span>Customer</span>
-            <span>Payment</span>
-            <span className="text-right">Total</span>
-            <span className="text-right">Status</span>
-          </div>
-          {loading ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading…</p>
-          ) : rows.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
-              No bills yet. Save a bill from the billing screen to see it here.
-            </p>
-          ) : (
-            <div className="max-h-[64vh] overflow-auto">
-              {rows.map((b) => (
-                <button
-                  key={b.id}
-                  onClick={() => viewBill(b)}
-                  className="grid w-full grid-cols-[1fr_1.4fr_0.8fr_0.9fr_0.9fr] items-center gap-2 border-b px-3 py-2 text-left text-sm last:border-b-0 hover:bg-muted/50"
-                >
-                  <span className="text-muted-foreground">
-                    {format(new Date(b.created_at), "d MMM, HH:mm")}
-                  </span>
-                  <span className="min-w-0 truncate">
-                    {b.ledgers?.name ?? "Walk-in"}
-                    <span className="ml-1.5 text-xs text-muted-foreground">{invoiceNo(b)}</span>
-                    {b.posts_effects === false && (
-                      <Badge variant="outline" className="ml-1.5 text-[10px]">imported</Badge>
-                    )}
-                  </span>
-                  <span className="text-xs">
-                    <Badge variant={b.payment_method === "credit" ? "outline" : "secondary"}>
-                      {b.payment_method ?? "—"}
+        <DataTable<BillRow>
+          rows={rows}
+          rowKey={(b) => b.id}
+          cols="1fr 1.4fr 0.8fr 0.9fr 0.9fr"
+          onRowActivate={viewBill}
+          loading={loading}
+          empty={
+            <EmptyState icon={Receipt} title="No bills yet" hint="Save a bill from the counter to see it here." />
+          }
+          columns={[
+            {
+              key: "date",
+              header: "Date",
+              cell: (b) => <span className="text-text-tertiary">{format(new Date(b.created_at), "d MMM, HH:mm")}</span>,
+            },
+            {
+              key: "customer",
+              header: "Customer",
+              cell: (b) => (
+                <>
+                  {b.ledgers?.name ?? "Walk-in"}
+                  <span className="ml-1.5 text-xs text-text-tertiary">{invoiceNo(b)}</span>
+                  {b.posts_effects === false && (
+                    <Badge variant="neutral" className="ml-1.5">
+                      imported
                     </Badge>
+                  )}
+                </>
+              ),
+            },
+            {
+              key: "payment",
+              header: "Payment",
+              cell: (b) => (
+                <Badge variant={b.payment_method === "credit" ? "neutral" : "secondary"}>
+                  {b.payment_method ?? "—"}
+                </Badge>
+              ),
+            },
+            { key: "total", header: "Total", numeric: true, cell: (b) => formatPaise(b.total_paise) },
+            {
+              key: "status",
+              header: "Status",
+              cell: (b) => {
+                const due = b.payment_method === "credit" && b.paid_paise < b.total_paise;
+                return (
+                  <span className="inline-flex items-center gap-1.5 text-text-tertiary">
+                    <Dot variant={due ? "warning" : "success"} />
+                    {due ? (b.due_date ? `due ${format(new Date(b.due_date), "d MMM")}` : "due") : "paid"}
                   </span>
-                  <span className="text-right tabular-nums">{formatPaise(b.total_paise)}</span>
-                  <span className="text-right text-xs text-muted-foreground">
-                    {b.payment_method === "credit" && b.paid_paise < b.total_paise
-                      ? b.due_date
-                        ? `due ${format(new Date(b.due_date), "d MMM")}`
-                        : "due"
-                      : "paid"}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <Link to="/owner" className="mt-5 inline-block text-sm font-medium text-primary hover:underline">
-          ← Back to owner dashboard
-        </Link>
+                );
+              },
+            },
+          ]}
+        />
       </Page>
 
       <Dialog open={openBill !== null} onOpenChange={(o) => !o && setOpenBill(null)}>
@@ -151,10 +157,10 @@ export function BillHistoryPage() {
             </DialogTitle>
           </DialogHeader>
           {lines === null ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-text-tertiary">Loading…</p>
           ) : (
-            <div className="overflow-hidden rounded-md border">
-              <div className="grid grid-cols-[1fr_0.4fr_0.6fr_0.6fr] gap-2 border-b bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            <div className="overflow-hidden rounded-md border border-border">
+              <div className="grid grid-cols-[1fr_0.4fr_0.6fr_0.6fr] gap-2 border-b border-border bg-surface px-3 py-1.5 text-[0.6875rem] font-medium tracking-wide text-text-tertiary uppercase">
                 <span>Item</span>
                 <span className="text-right">Qty</span>
                 <span className="text-right">Rate</span>
@@ -163,11 +169,11 @@ export function BillHistoryPage() {
               {lines.map((l) => (
                 <div
                   key={l.id}
-                  className="grid grid-cols-[1fr_0.4fr_0.6fr_0.6fr] gap-2 border-b px-3 py-1.5 text-sm last:border-b-0"
+                  className="grid grid-cols-[1fr_0.4fr_0.6fr_0.6fr] gap-2 border-b border-divider px-3 py-1.5 text-sm last:border-b-0"
                 >
                   <span className="min-w-0 truncate">
                     {l.name}
-                    {l.batch_no && <span className="ml-1 text-xs text-muted-foreground">{l.batch_no}</span>}
+                    {l.batch_no && <span className="ml-1 text-xs text-text-tertiary">{l.batch_no}</span>}
                   </span>
                   <span className="text-right tabular-nums">{l.qty}</span>
                   <span className="text-right tabular-nums">{formatPaise(l.rate_paise)}</span>
@@ -175,7 +181,7 @@ export function BillHistoryPage() {
                 </div>
               ))}
               {openBill && (
-                <div className="flex justify-between bg-muted/30 px-3 py-2 text-sm font-medium">
+                <div className="flex justify-between bg-surface px-3 py-2 text-sm font-medium">
                   <span>Total</span>
                   <span className="tabular-nums">{formatPaise(openBill.total_paise)}</span>
                 </div>
