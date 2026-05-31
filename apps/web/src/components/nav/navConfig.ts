@@ -175,7 +175,7 @@ export const NAV: NavModule[] = [
       { label: "Users & invites", path: "/owner", built: true },
       { label: "Import / migration", path: "/import", built: true },
       { label: "Organisation", path: "/settings/organisation", built: true },
-      { label: "Drug licenses", built: false },
+      { label: "Drug licenses", path: "/settings/licenses", built: true },
       { label: "Print templates", built: false },
     ],
   },
