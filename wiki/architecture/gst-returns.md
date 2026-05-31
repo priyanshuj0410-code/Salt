@@ -60,8 +60,10 @@ Section breakdowns and the headline totals both derive from the **lines**, so th
   per-head `balance` is shown for detail; surplus ITC is reported as credit carried forward.
 - `buildGstr3bJson` → GSTN-style `{ gstin, ret_period, sup_details, itc_elg, net_payable }`;
   `gstr3bToCsv` for spreadsheets.
-- **Deferred:** ITC reversal (returns / expired stock) until the Returns module exists; the
-  per-head set-off is simplified (no IGST cross-utilisation optimisation).
+- **ITC reversal (Table 4B)** is wired from **expiry write-offs** (`stock_movements`,
+  `reason='writeoff'`, period-scoped): `buildWriteoffReversal` sums `qty × ptr × gst_rate`, and
+  `buildGstr3b(…, reversalPaise)` subtracts it → **net ITC** → net payable (SALT-170). Sales
+  returns / credit notes still pend the Returns module; per-head set-off is simplified.
 
 ## GST liability (live)
 

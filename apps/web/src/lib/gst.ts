@@ -433,9 +433,11 @@ export interface Gstr3bSummary {
   itc: HeadAmounts; // eligible ITC from purchases
   balance: HeadAmounts; // output − itc per head (negative = credit available)
   outputTotalPaise: number;
-  itcTotalPaise: number;
-  netPayablePaise: number; // max(0, output − itc) after full set-off — the cash figure
-  creditCarryPaise: number; // max(0, itc − output) carried forward
+  itcTotalPaise: number; // gross ITC from purchases
+  reversalPaise: number; // ITC reversed on write-offs / expiry destruction (Table 4B)
+  netItcPaise: number; // itcTotal − reversal — the ITC actually available
+  netPayablePaise: number; // max(0, output − netItc) after full set-off — the cash figure
+  creditCarryPaise: number; // max(0, netItc − output) carried forward
   invoiceCount: number;
   purchaseCount: number;
 }
@@ -450,7 +452,7 @@ const emptyHead = (): HeadAmounts => ({ cgstPaise: 0, sgstPaise: 0, igstPaise: 0
  * for detail. ITC reversal (returns / expired stock) is deferred until the Returns
  * module exists. All money is paise.
  */
-export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases: Gstr3bItcRow[]): Gstr3bSummary {
+export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases: Gstr3bItcRow[], reversalPaise = 0): Gstr3bSummary {
   const output = emptyHead();
   let outwardTaxable = 0;
   for (const s of sales) {
@@ -472,6 +474,7 @@ export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases
   };
   const outputTotal = output.cgstPaise + output.sgstPaise + output.igstPaise;
   const itcTotal = itc.cgstPaise + itc.sgstPaise + itc.igstPaise;
+  const netItc = itcTotal - reversalPaise; // ITC available after the Table 4B reversal
   return {
     period,
     outwardTaxablePaise: outwardTaxable,
@@ -480,16 +483,56 @@ export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases
     balance,
     outputTotalPaise: outputTotal,
     itcTotalPaise: itcTotal,
-    netPayablePaise: Math.max(0, outputTotal - itcTotal),
-    creditCarryPaise: Math.max(0, itcTotal - outputTotal),
+    reversalPaise,
+    netItcPaise: netItc,
+    netPayablePaise: Math.max(0, outputTotal - netItc),
+    creditCarryPaise: Math.max(0, netItc - outputTotal),
     invoiceCount: sales.length,
     purchaseCount: purchases.length,
   };
 }
 
 /** GSTN-style GSTR-3B JSON (key sections: 3.1(a) outward, 4 ITC, net payable). */
+/** A write-off / expiry-destruction stock movement fed to the GSTR-3B reversal. */
+export interface WriteoffRow {
+  itemName: string;
+  batchNo: string;
+  date: string; // 'YYYY-MM-DD'
+  qty: number; // positive units written off
+  ptrPaise: number; // unit cost (GST-exclusive)
+  gstRate: number;
+}
+
+export interface WriteoffReversalRow extends WriteoffRow {
+  reverseItcPaise: number;
+}
+
+export interface WriteoffReversalView {
+  rows: WriteoffReversalRow[];
+  totalPaise: number;
+}
+
+/**
+ * ITC to reverse for the period's write-offs / expiry destructions (GSTR-3B Table 4B,
+ * Section 17(5)(h)). Per-unit ITC = PTR × the item's GST rate — the same figure
+ * `lib/destruction.ts` recorded at destruction time. Paise.
+ */
+export function buildWriteoffReversal(rows: WriteoffRow[]): WriteoffReversalView {
+  const out: WriteoffReversalRow[] = [];
+  let total = 0;
+  for (const r of rows) {
+    const reverseItcPaise = Math.round((r.qty * r.ptrPaise * r.gstRate) / 100);
+    out.push({ ...r, reverseItcPaise });
+    total += reverseItcPaise;
+  }
+  out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return { rows: out, totalPaise: total };
+}
+
 export function buildGstr3bJson(summary: Gstr3bSummary, gstin: string) {
   const r = (p: number) => Math.round(p) / 100;
+  // Apportion the reversal total across heads by the gross-ITC proportion (Table 4B).
+  const rev = (head: number) => (summary.itcTotalPaise > 0 ? Math.round((summary.reversalPaise * head) / summary.itcTotalPaise) : 0);
   return {
     gstin,
     ret_period: gstnPeriod(summary.period),
@@ -503,6 +546,7 @@ export function buildGstr3bJson(summary: Gstr3bSummary, gstin: string) {
     },
     itc_elg: {
       itc_avl: [{ ty: "OTH", camt: r(summary.itc.cgstPaise), samt: r(summary.itc.sgstPaise), iamt: r(summary.itc.igstPaise) }],
+      itc_rev: [{ ty: "OTH", camt: r(rev(summary.itc.cgstPaise)), samt: r(rev(summary.itc.sgstPaise)), iamt: r(rev(summary.itc.igstPaise)) }],
     },
     net_payable: {
       camt: r(Math.max(0, summary.balance.cgstPaise)),
@@ -519,8 +563,9 @@ export function gstr3bToCsv(summary: Gstr3bSummary): string {
   const rows: (string | number)[][] = [
     ["row", "cgst", "sgst", "igst", "total"],
     ["Output tax (sales)", m(summary.output.cgstPaise), m(summary.output.sgstPaise), m(summary.output.igstPaise), m(summary.outputTotalPaise)],
-    ["Eligible ITC (purchases)", m(summary.itc.cgstPaise), m(summary.itc.sgstPaise), m(summary.itc.igstPaise), m(summary.itcTotalPaise)],
-    ["Balance (output - ITC)", m(summary.balance.cgstPaise), m(summary.balance.sgstPaise), m(summary.balance.igstPaise), m(summary.outputTotalPaise - summary.itcTotalPaise)],
+    ["Gross ITC (purchases)", m(summary.itc.cgstPaise), m(summary.itc.sgstPaise), m(summary.itc.igstPaise), m(summary.itcTotalPaise)],
+    ["Less: ITC reversal (write-offs)", "", "", "", m(summary.reversalPaise)],
+    ["Net ITC (after reversal)", "", "", "", m(summary.netItcPaise)],
     ["Net payable (after set-off)", "", "", "", m(summary.netPayablePaise)],
     ["Outward taxable value", "", "", "", m(summary.outwardTaxablePaise)],
   ];
