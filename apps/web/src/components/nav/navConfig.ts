@@ -89,6 +89,7 @@ export const NAV: NavModule[] = [
       { label: "Reorder", path: "/inventory/reorder", built: true },
       { label: "Out of stock", path: "/inventory/out-of-stock", built: true },
       { label: "Turnover", path: "/inventory/turnover", built: true },
+      { label: "Adjustments", path: "/inventory/adjustments", built: true },
       { label: "Physical count", built: false },
     ],
   },
