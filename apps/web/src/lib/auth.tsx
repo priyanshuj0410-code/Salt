@@ -10,6 +10,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import { IdleWarningDialog } from "@/components/auth/IdleWarningDialog";
+import { UpdatePasswordDialog } from "@/components/auth/UpdatePasswordDialog";
 
 /**
  * Idle auto-logout (SALT-115). Shared pharmacy-counter terminals must not leave
@@ -92,6 +93,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Idle auto-logout state (SALT-115). secondsLeft is non-null only inside the
   // warning window, which drives the countdown banner.
   const [idleSecondsLeft, setIdleSecondsLeft] = useState<number | null>(null);
+  // Password-recovery overlay (SALT-114): true after a PASSWORD_RECOVERY event,
+  // until the user sets a new password (or cancels).
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const lastActivityRef = useRef(0);
   const lastWriteRef = useRef(0);
 
@@ -173,7 +177,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Supabase re-fires onAuthStateChange on tab focus / token refresh with the
     // SAME user. Only touch the loading gate when the user actually changes, so
     // refocus doesn't strand the app on a "Loading…" screen.
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, next) => {
+      if (event === "PASSWORD_RECOVERY") setRecoveryMode(true);
       setSession(next);
       const nextId = next?.user.id ?? null;
       if (nextId === currentUserId.current) return; // same user → ignore refire
@@ -280,6 +285,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
       {idleSecondsLeft !== null && (
         <IdleWarningDialog secondsLeft={idleSecondsLeft} onStay={recordActivity} />
+      )}
+      {recoveryMode && (
+        <UpdatePasswordDialog
+          onDone={() => setRecoveryMode(false)}
+          onCancel={() => {
+            setRecoveryMode(false);
+            void supabase?.auth.signOut();
+          }}
+        />
       )}
     </AuthContext.Provider>
   );
