@@ -216,6 +216,48 @@ export function sumBy<T>(rows: T[], pick: (r: T) => number): number {
   return rows.reduce((s, r) => s + pick(r), 0);
 }
 
+/** A `v_stock_on_hand` row (one batch in stock). */
+export interface StockRow {
+  item_id: string | null;
+  item_name: string;
+  qty: number;
+  mrp_paise: number;
+  ptr_paise: number;
+  stock_value_paise: number; // qty * ptr (cost), per the view
+}
+
+/** An item's stock rolled up across its batches, valued at cost (PTR) and MRP. */
+export interface StockItemAgg {
+  itemId: string | null;
+  name: string;
+  qty: number;
+  batches: number;
+  costPaise: number;
+  mrpPaise: number;
+}
+
+/**
+ * Roll batches up per item for the valuation / low-stock views. Cost is the
+ * view's `stock_value_paise` (qty × batch PTR — batch-level cost ≈ weighted
+ * average); retail is qty × batch MRP. Sorted by cost value desc.
+ */
+export function rollupStock(rows: StockRow[]): StockItemAgg[] {
+  const map = new Map<string, StockItemAgg>();
+  for (const r of rows) {
+    const key = r.item_id ?? `name:${r.item_name}`;
+    let g = map.get(key);
+    if (!g) {
+      g = { itemId: r.item_id, name: r.item_name, qty: 0, batches: 0, costPaise: 0, mrpPaise: 0 };
+      map.set(key, g);
+    }
+    g.qty += r.qty;
+    g.batches += 1;
+    g.costPaise += r.stock_value_paise;
+    g.mrpPaise += r.qty * r.mrp_paise;
+  }
+  return Array.from(map.values()).sort((a, b) => b.costPaise - a.costPaise);
+}
+
 // ---- Drug licenses ----------------------------------------------------------
 
 export interface LicenseRow {
