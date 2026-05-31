@@ -5,6 +5,7 @@ import { FORMAT_KEY } from "./prefs";
 import { stateName } from "../stateCodes";
 import { rupeesInWords } from "./words";
 import { taxSummary } from "./taxSummary";
+import { DOC_META, SALE_DOC_TYPES, type DocMeta, type DocType } from "./docType";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -38,7 +39,7 @@ function receiptTotalRow(label: string, value: string, strong = false): string {
   return `<tr class="${strong ? "tot" : ""}"><td colspan="3" class="r">${esc(label)}</td><td class="r">${esc(value)}</td></tr>`;
 }
 
-function receiptBody(d: InvoicePrintData): string {
+function receiptBody(d: InvoicePrintData, meta: DocMeta): string {
   const shopMeta = [d.shop.address, d.shop.phone && `Ph: ${d.shop.phone}`, d.shop.gstin && `GSTIN: ${d.shop.gstin}`]
     .filter(Boolean)
     .map((s) => esc(String(s)))
@@ -51,11 +52,13 @@ function receiptBody(d: InvoicePrintData): string {
     ? receiptTotalRow("IGST", formatPaise(d.igst))
     : receiptTotalRow("CGST", formatPaise(d.cgst)) + receiptTotalRow("SGST", formatPaise(d.sgst));
   const payLabel = d.payment.method === "credit" ? "Credit" : "Cash";
+  const refLine = d.reference ? `<div class="note-only ref">${esc(d.reference)}</div>` : "";
   return `<div class="receipt">
     <div class="shop"><h1>${esc(d.shop.name)}</h1><div class="meta">${shopMeta}</div></div>
     <hr>
-    <div class="row"><span>Tax Invoice</span><span>${esc(d.dateTime)}</span></div>
+    <div class="row"><span class="doctitle">${esc(meta.title)}</span><span>${esc(d.dateTime)}</span></div>
     <div class="row"><span>Ref: ${esc(d.ref)}</span><span>${esc(payLabel)}</span></div>
+    ${refLine}
     <div class="bill-to"><strong>${esc(d.customerName)}</strong>${custMeta ? `<br><span class="meta">${custMeta}</span>` : ""}</div>
     <table>
       <thead><tr><th class="l">Item</th><th class="r">Qty</th><th class="r">MRP</th><th class="r">Amt</th></tr></thead>
@@ -95,7 +98,7 @@ function sheetItemRow(l: InvoiceLine, i: number): string {
   </tr>`;
 }
 
-function sheetBody(d: InvoicePrintData): string {
+function sheetBody(d: InvoicePrintData, meta: DocMeta): string {
   const shopLines = [d.shop.address, d.shop.phone && `Ph: ${d.shop.phone}`]
     .filter(Boolean)
     .map((s) => `<div>${esc(String(s))}</div>`)
@@ -131,18 +134,19 @@ function sheetBody(d: InvoicePrintData): string {
         ${d.shop.gstin ? `<div><strong>GSTIN: ${esc(d.shop.gstin)}</strong></div>` : ""}
       </div>
       <div class="s-title">
-        <div class="s-doctype">TAX INVOICE</div>
-        <div class="s-copy">Original for Recipient</div>
+        <div class="s-doctype doctitle">${esc(meta.title)}</div>
+        <div class="s-tag b2b-only">B2B</div>
+        <div class="s-copy taxdoc-only">Original for Recipient</div>
         <table class="s-meta">
-          <tr><td>Invoice No</td><td>${esc(d.ref)}</td></tr>
+          <tr><td>Number</td><td>${esc(d.ref)}</td></tr>
           <tr><td>Date</td><td>${esc(d.dateTime)}</td></tr>
           <tr><td>Payment</td><td>${esc(payLabel)}</td></tr>
-          <tr><td>Reverse charge</td><td>No</td></tr>
+          <tr class="taxdoc-only"><td>Reverse charge</td><td>No</td></tr>
         </table>
       </div>
     </div>
     <div class="s-billto">
-      <div><span class="lbl">Bill To</span><strong>${esc(d.customerName)}</strong>${custLines ? `<div class="sub">${custLines}</div>` : ""}</div>
+      <div><span class="lbl">Bill To</span><strong>${esc(d.customerName)}</strong>${custLines ? `<div class="sub">${custLines}</div>` : ""}${d.reference ? `<div class="sub note-only">${esc(d.reference)}</div>` : ""}</div>
       <div><span class="lbl">Place of supply</span>${supply}</div>
     </div>
     <table class="s-items">
@@ -167,7 +171,7 @@ function sheetBody(d: InvoicePrintData): string {
     </div>
     <div class="s-words"><span class="lbl">Amount in words</span>${esc(rupeesInWords(d.grand))}</div>
     <div class="s-foot-row">
-      <div class="s-decl">Certified that the particulars given above are true and correct.</div>
+      <div class="s-decl taxdoc-only">Certified that the particulars given above are true and correct.</div>
       <div class="s-sign">For ${esc(d.shop.name)}<div class="s-sign-line">Authorised signatory</div></div>
     </div>
   </div>`;
@@ -201,7 +205,7 @@ function monoWrap(s: string): string[] {
   return out;
 }
 
-function monoBody(d: InvoicePrintData): string {
+function monoBody(d: InvoicePrintData, meta: DocMeta): string {
   const lines: string[] = [];
   lines.push(monoCenter(d.shop.name.toUpperCase()));
   if (d.shop.address) lines.push(monoCenter(d.shop.address));
@@ -210,9 +214,10 @@ function monoBody(d: InvoicePrintData): string {
     .join("  ");
   if (idLine) lines.push(monoCenter(idLine));
   lines.push(monoRule);
-  lines.push(monoSplit(`Invoice: ${d.ref}`, `Date: ${d.dateTime}`));
+  lines.push(monoSplit(`No: ${d.ref}`, `Date: ${d.dateTime}`));
   lines.push(`Customer: ${d.customerName}`);
   if (d.customer?.gstin) lines.push(`GSTIN   : ${d.customer.gstin}`);
+  if (d.reference) for (const wl of monoWrap(d.reference)) lines.push(wl);
   lines.push(monoDash);
   lines.push(padR("Item", 30) + " " + padL("Qty", 5) + " " + padL("MRP", 11) + " " + padL("Amount", 12));
   lines.push(monoDash);
@@ -236,7 +241,7 @@ function monoBody(d: InvoicePrintData): string {
   for (const wl of monoWrap(rupeesInWords(d.grand))) lines.push(wl);
   lines.push(monoRule);
   lines.push(monoCenter("Thank you. Get well soon."));
-  return `<pre class="mono">${esc(lines.join("\n"))}</pre>`;
+  return `<div class="mono-title doctitle">${esc(meta.title)}</div><pre class="mono">${esc(lines.join("\n"))}</pre>`;
 }
 
 // ─────────────────────────────────────────── document assembly
@@ -257,6 +262,7 @@ ${VIS_RULES}
 .toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:760px;margin:0 auto;
   padding:8px 10px;border:1px solid #d4d4d8;border-radius:8px;background:#fff}
 .toolbar .lbl{color:#71717a;font-size:12px;margin-right:2px}
+.toolbar .sep{width:1px;height:20px;background:#e4e4e7;margin:0 4px}
 .toolbar .spacer{flex:1}
 .toolbar button{font:inherit;font-size:13px;padding:5px 11px;border:1px solid #d4d4d8;border-radius:6px;background:#fff;color:#18181b;cursor:pointer}
 .toolbar button.on{background:#18181b;color:#fff;border-color:#18181b}
@@ -316,6 +322,17 @@ ${VIS_RULES}
 .sheet .s-sign-line{margin-top:26px;border-top:1px solid #888;display:inline-block;padding-top:3px;color:#555}
 /* mono */
 .mono{font-family:"Courier New",monospace;font-size:12px;line-height:1.35;white-space:pre;color:#000;margin:0}
+.mono-title{font-family:"Courier New",monospace;text-align:center;font-weight:700;font-size:13px;letter-spacing:.08em;margin:0 0 4px}
+/* document-type variants */
+.receipt .ref{font-size:10px;color:#444;margin:2px 0}
+.sheet .s-tag{display:inline-block;font-size:10px;font-weight:700;color:#2563eb;border:1px solid #2563eb;border-radius:4px;padding:0 5px;margin-bottom:6px}
+.note-only,.b2b-only{display:none}
+body[data-doctype="b2b-invoice"] .b2b-only{display:inline-block}
+body[data-doctype="credit-note"] .note-only,
+body[data-doctype="debit-note"] .note-only,
+body[data-doctype="sales-return"] .note-only{display:block}
+body[data-doctype="cash-memo"] .taxdoc-only,
+body[data-doctype="sales-return"] .taxdoc-only{display:none}
 @media print{
   body{background:#fff;padding:0}
   .toolbar{display:none!important}
@@ -329,43 +346,69 @@ ${VIS_RULES}
  * unchanged. The popup is left open so the operator can re-print in another
  * format. Written without template-literal syntax so it survives interpolation.
  */
+const DOC_TITLES = Object.fromEntries((Object.keys(DOC_META) as DocType[]).map((t) => [t, DOC_META[t].title]));
+
 const SCRIPT = `(function(){
 var FMT=${JSON.stringify(PAGE_RULE)};
 var KEY=${JSON.stringify(FORMAT_KEY)};
+var TITLES=${JSON.stringify(DOC_TITLES)};
+function setActive(sel,attr,val){
+  var bs=document.querySelectorAll(sel);
+  for(var i=0;i<bs.length;i++){bs[i].className=bs[i].getAttribute(attr)===val?"on":"";}
+}
 function setFormat(f){
   if(!FMT[f])return;
   document.body.setAttribute("data-format",f);
   document.getElementById("pagestyle").textContent=FMT[f];
   try{localStorage.setItem(KEY,f);}catch(e){}
-  var bs=document.querySelectorAll(".toolbar [data-f]");
-  for(var i=0;i<bs.length;i++){bs[i].className=bs[i].getAttribute("data-f")===f?"on":"";}
+  setActive(".toolbar [data-f]","data-f",f);
 }
-var btns=document.querySelectorAll(".toolbar [data-f]");
-for(var i=0;i<btns.length;i++){(function(b){b.onclick=function(){setFormat(b.getAttribute("data-f"));};})(btns[i]);}
+function setDoc(t){
+  if(!TITLES[t])return;
+  document.body.setAttribute("data-doctype",t);
+  var ts=document.querySelectorAll(".doctitle");
+  for(var i=0;i<ts.length;i++){ts[i].textContent=TITLES[t];}
+  setActive(".toolbar [data-d]","data-d",t);
+}
+function wire(sel,fn){
+  var bs=document.querySelectorAll(sel);
+  for(var i=0;i<bs.length;i++){(function(b){b.onclick=function(){fn(b.getAttribute(b.hasAttribute("data-f")?"data-f":"data-d"));};})(bs[i]);}
+}
+wire(".toolbar [data-f]",setFormat);
+wire(".toolbar [data-d]",setDoc);
 var go=document.getElementById("go");if(go)go.onclick=function(){window.print();};
 var cl=document.getElementById("close");if(cl)cl.onclick=function(){window.close();};
 window.onload=function(){window.focus();window.print();};
 })();`;
 
 /** Build the invoice HTML document (self-contained, inline styles, all formats). */
-export function invoiceHtml(d: InvoicePrintData, opts: { format: PrintFormat }): string {
-  const fmt = opts.format;
+export function invoiceHtml(d: InvoicePrintData, opts: { format: PrintFormat; docType: DocType }): string {
+  const { format: fmt, docType } = opts;
+  const meta = DOC_META[docType];
   const fmtButtons = PRINT_FORMATS.map(
     (f) => `<button data-f="${f}"${f === fmt ? ' class="on"' : ""}>${esc(FORMAT_LABEL[f])}</button>`,
   ).join("");
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${esc(d.ref)}</title>
+  // The document switcher is offered only for forward-sale documents the cashier
+  // may legitimately re-pick at print time; notes/returns come fixed from the caller.
+  const docButtons = (SALE_DOC_TYPES as readonly DocType[]).includes(docType)
+    ? `<span class="sep"></span><span class="lbl">Document</span>` +
+      SALE_DOC_TYPES.map(
+        (t) => `<button data-d="${t}"${t === docType ? ' class="on"' : ""}>${esc(DOC_META[t].label)}</button>`,
+      ).join("")
+    : "";
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(meta.title)} ${esc(d.ref)}</title>
 <style id="pagestyle">${PAGE_RULE[fmt]}</style>
 <style>${STYLE}</style></head>
-<body data-format="${fmt}">
+<body data-format="${fmt}" data-doctype="${docType}">
 <div class="toolbar">
-  <span class="lbl">Format</span>${fmtButtons}
+  <span class="lbl">Format</span>${fmtButtons}${docButtons}
   <span class="spacer"></span>
   <button id="go" class="go">Print</button>
   <button id="close">Close</button>
 </div>
-<div class="doc" id="doc-receipt">${receiptBody(d)}</div>
-<div class="doc" id="doc-sheet">${sheetBody(d)}</div>
-<div class="doc" id="doc-mono">${monoBody(d)}</div>
+<div class="doc" id="doc-receipt">${receiptBody(d, meta)}</div>
+<div class="doc" id="doc-sheet">${sheetBody(d, meta)}</div>
+<div class="doc" id="doc-mono">${monoBody(d, meta)}</div>
 <script>${SCRIPT}</script>
 </body></html>`;
 }

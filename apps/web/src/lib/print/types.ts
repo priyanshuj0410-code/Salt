@@ -1,4 +1,5 @@
 import type { Payment } from "../types";
+import type { DocType } from "./docType";
 
 /**
  * The physical output a bill is laid out for. Two thermal roll widths, a full A4
@@ -56,9 +57,14 @@ export interface InvoicePrintData {
   sgst: number;
   igst: number;
   grand: number;
+  /** For notes / returns: reference to the original document (e.g. "Against Invoice 1A2B3C4D"). */
+  reference?: string;
 }
 
-/** Options that steer a single print run (format defaults to the saved preference). */
+/** Options that steer a single print run. */
 export interface PrintOptions {
+  /** Paper format; defaults to the saved preference. */
   format?: PrintFormat;
+  /** Document kind; defaults to one derived from the sale (B2B when the buyer has a GSTIN). */
+  docType?: DocType;
 }
