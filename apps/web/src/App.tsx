@@ -12,6 +12,7 @@ import { GrnDetailPage } from "@/components/grn/GrnDetailPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
+import { GstLiabilityPage } from "@/components/gst/GstLiabilityPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
@@ -108,6 +109,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <Gstr3bPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/liability"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GstLiabilityPage />
           </ProtectedRoute>
         }
       />
