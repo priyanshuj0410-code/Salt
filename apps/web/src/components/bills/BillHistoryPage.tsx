@@ -20,6 +20,7 @@ interface BillRow {
   due_date: string | null;
   status: string;
   party_id: string | null;
+  posts_effects: boolean | null;
   ledgers: { name: string } | null;
 }
 
@@ -47,7 +48,7 @@ export function BillHistoryPage() {
     supabase
       .from("sales_invoices")
       .select(
-        "id,invoice_no,invoice_date,created_at,total_paise,paid_paise,payment_method,due_date,status,party_id,ledgers(name)",
+        "id,invoice_no,invoice_date,created_at,total_paise,paid_paise,payment_method,due_date,status,party_id,posts_effects,ledgers(name)",
       )
       .eq("org_id", orgId)
       .order("created_at", { ascending: false })
@@ -114,6 +115,9 @@ export function BillHistoryPage() {
                   <span className="min-w-0 truncate">
                     {b.ledgers?.name ?? "Walk-in"}
                     <span className="ml-1.5 text-xs text-muted-foreground">{invoiceNo(b)}</span>
+                    {b.posts_effects === false && (
+                      <Badge variant="outline" className="ml-1.5 text-[10px]">imported</Badge>
+                    )}
                   </span>
                   <span className="text-xs">
                     <Badge variant={b.payment_method === "credit" ? "outline" : "secondary"}>
