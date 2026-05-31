@@ -86,6 +86,7 @@ function ShopEditor({ shop }: { shop: Shop }) {
           gstin: draft.gstin?.trim() ? draft.gstin.trim().toUpperCase() : null,
           address: draft.address?.trim() || null,
           phone: draft.phone?.trim() || null,
+          upi_vpa: draft.upi_vpa?.trim() || null,
           cutover_date: draft.cutover_date || null,
         })
         .eq("id", draft.id);
@@ -143,6 +144,14 @@ function ShopEditor({ shop }: { shop: Shop }) {
         </Field>
         <Field label="Address">
           <Input value={draft.address ?? ""} onChange={(e) => edit("address", e.target.value)} placeholder="—" className="h-8" />
+        </Field>
+        <Field label="UPI ID (VPA)" hint="Adds a pay link to payment reminders, e.g. shop@okhdfcbank.">
+          <Input
+            value={draft.upi_vpa ?? ""}
+            onChange={(e) => edit("upi_vpa", e.target.value)}
+            placeholder="—"
+            className="h-8 font-mono text-xs"
+          />
         </Field>
         <Field
           label="Cutover date"

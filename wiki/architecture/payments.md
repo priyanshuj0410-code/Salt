@@ -57,6 +57,15 @@ invoices paid. So per-invoice outstanding is **derived on read** as
 - The same RPC also backs the per-party Receive/Make payment on the
   [party profile](../domain/parties.md) (PR #26) — this screen generalises it.
 
+## Collection pay-links (SALT-053)
+
+The shop carries a UPI payee address — **`shops.upi_vpa text`** (migration `0027`,
+nullable), edited in Organisation settings and exposed on `useAuth().shop`. From it,
+`lib/collection.ts` → **`upiPayUrl({ vpa, payeeName, amountPaise })`** builds a
+`upi://pay?pa=<vpa>&pn=<encoded payee>&am=<rupees>&cu=INR` deep link (paise ÷ 100 to
+2 dp; null when no VPA). The party-profile collection reminder appends it; the same
+helper is reusable for receipt pay-links (SALT-057).
+
 ## Roadmap (open tickets)
 
 Built: `record_payment` UI (**SALT-003**) + vendor make-payment with invoice
