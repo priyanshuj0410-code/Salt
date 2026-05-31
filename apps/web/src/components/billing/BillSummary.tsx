@@ -1,98 +1,49 @@
-import { useState } from "react";
-import { useHotkeys } from "react-hotkeys-hook";
 import { addDays, format } from "date-fns";
 import { Banknote, CalendarClock, Check, Printer, TrendingDown, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatPaise, formatSigned } from "@/lib/currency";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
-import { buildSalesInvoicePayload, withTimeout, TimeoutError } from "@/lib/orders";
-import { useAuth } from "@/lib/auth";
-import { useShopBlockers } from "@/lib/useShopBlockers";
-import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
-import { billTotals, useBill } from "@/store/bill";
-import { useCatalog } from "@/store/catalog";
+import { useBill } from "@/store/bill";
+import { GstinPrompt } from "./GstinPrompt";
+import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
 
-function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+export function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
   return (
     <div className="flex justify-between text-sm">
-      <span className={muted ? "text-muted-foreground" : ""}>{label}</span>
-      <span className={cn("tabular-nums", muted && "text-muted-foreground")}>{value}</span>
+      <span className={muted ? "text-text-tertiary" : ""}>{label}</span>
+      <span className={cn("tabular-nums", muted && "text-text-tertiary")}>{value}</span>
     </div>
   );
 }
 
-export function BillSummary() {
-  const lines = useBill((s) => s.lines);
-  const clear = useBill((s) => s.clear);
-  const payment = useBill((s) => s.payment);
+/**
+ * Desktop presentation of the ActionBar: a fixed right pane with the full bill
+ * breakdown, payment picker, GSTIN prompt and the Save (F9) button. All logic
+ * comes from `useCheckout` (held once in BillingScreen) via props, so this and
+ * `MobileCheckout` stay in sync. Hidden below `md` — the mobile sticky bar takes
+ * over there.
+ */
+export function BillSummary({
+  checkout,
+  customerGstin,
+  onCustomerUpdated,
+}: {
+  checkout: Checkout;
+  customerGstin: string | null;
+  onCustomerUpdated: () => void;
+}) {
   const party = useBill((s) => s.party);
-  const setPaymentMethod = useBill((s) => s.setPaymentMethod);
-  const setCreditDays = useBill((s) => s.setCreditDays);
-  const usingSeed = useCatalog((s) => s.usingSeed);
-  const shopId = useAuth().shopId;
-  const blockers = useShopBlockers();
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [setupOpen, setSetupOpen] = useState(false);
-  const t = billTotals(lines);
-  const empty = lines.length === 0;
+  const clear = useBill((s) => s.clear);
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, save, saving, saved, error, shopId } =
+    checkout;
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
 
-  async function save() {
-    // re-entry guard (also blocks F9 while saving); !shopId blocks until the
-    // multi-shop migration is applied and a primary shop resolves.
-    if (!supabase || empty || usingSeed || saving || !shopId) return;
-    // Pre-flight: shop must have state_code or `create_sales_invoice` will
-    // hit the is_interstate NOT NULL. Show the rescue dialog and bail; the
-    // dialog's onResolved will retry this save.
-    if (!blockers.ready) {
-      setError(null);
-      setSetupOpen(true);
-      return;
-    }
-    setSaving(true);
-    setError(null);
-    try {
-      const args = buildSalesInvoicePayload(shopId, party, lines, payment);
-      const { error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
-      if (err) {
-        setError(err.message);
-        return;
-      }
-      clear();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    } catch (e) {
-      // Timeout: the bill may have saved server-side — keep the lines and warn,
-      // so the cashier checks Bills rather than blindly re-saving a duplicate.
-      setError(
-        e instanceof TimeoutError
-          ? "Saving is taking too long — it may have gone through. Check Bills before saving again."
-          : "Could not save the bill. Please try again.",
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  useHotkeys(
-    "f9",
-    (e) => {
-      e.preventDefault();
-      void save();
-    },
-    { enableOnFormTags: true },
-    [lines, payment, party, usingSeed, shopId, blockers.ready],
-  );
-
   return (
-    <div className="flex flex-col gap-3 overflow-auto rounded-lg border p-4">
+    <div className="hidden flex-col gap-3 overflow-auto rounded-lg border border-border p-4 md:flex">
       <Row label="Gross (MRP)" value={formatPaise(t.gross)} muted />
       <Row
         label="Discount"
@@ -111,9 +62,7 @@ export function BillSummary() {
       <div
         className={cn(
           "flex items-center justify-between rounded-md px-3 py-2",
-          loss
-            ? "bg-destructive/10 text-destructive"
-            : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+          loss ? "bg-danger-bg text-danger" : "bg-success-bg text-success",
         )}
       >
         <span className="flex items-center gap-1.5 text-sm font-medium">
@@ -126,10 +75,12 @@ export function BillSummary() {
         </span>
       </div>
 
+      {party && !customerGstin && <GstinPrompt partyId={party.id} onSaved={onCustomerUpdated} />}
+
       <Separator />
 
       <div>
-        <p className="mb-1.5 text-xs font-medium text-muted-foreground">Payment</p>
+        <p className="mb-1.5 text-xs font-medium text-text-tertiary">Payment</p>
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant={payment.method === "cash" ? "default" : "outline"}
@@ -148,8 +99,8 @@ export function BillSummary() {
         </div>
 
         {payment.method === "credit" && (
-          <div className="mt-2 rounded-md border p-2.5">
-            <p className="mb-1.5 text-xs text-muted-foreground">Repayment period</p>
+          <div className="mt-2 rounded-md border border-border p-2.5">
+            <p className="mb-1.5 text-xs text-text-tertiary">Repayment period</p>
             <div className="flex items-center gap-1.5">
               {CREDIT_PRESETS.map((d) => (
                 <Button
@@ -169,11 +120,11 @@ export function BillSummary() {
                 aria-label="Custom repayment days"
                 className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
               />
-              <span className="text-sm text-muted-foreground">days</span>
+              <span className="text-sm text-text-tertiary">days</span>
             </div>
-            <p className="mt-1.5 text-xs text-muted-foreground">
+            <p className="mt-1.5 text-xs text-text-tertiary">
               Due by{" "}
-              <span className="font-medium text-foreground">
+              <span className="font-medium text-text-primary">
                 {format(addDays(new Date(), payment.creditDays), "d MMM yyyy")}
               </span>
             </p>
@@ -192,7 +143,7 @@ export function BillSummary() {
           {saved ? "Saved" : saving ? "Saving…" : "Save bill · F9"}
         </Button>
         {usingSeed && (
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-text-tertiary">
             Demo catalogue — import your items to save bills.
           </p>
         )}
@@ -201,12 +152,6 @@ export function BillSummary() {
           Clear bill
         </Button>
       </div>
-
-      <ShopSetupDialog
-        open={setupOpen}
-        onOpenChange={setSetupOpen}
-        onResolved={() => void save()}
-      />
     </div>
   );
 }

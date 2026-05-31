@@ -78,6 +78,13 @@ export function CustomerPicker({
             autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              // Keyboard fast-path: Enter picks the top match.
+              if (e.key === "Enter" && filtered.length > 0) {
+                e.preventDefault();
+                choose({ id: filtered[0].id, name: filtered[0].name });
+              }
+            }}
             placeholder="Search by name or phone…"
             className="pl-8"
           />
