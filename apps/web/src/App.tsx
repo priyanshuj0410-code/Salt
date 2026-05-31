@@ -10,6 +10,7 @@ import { PurchaseEntryPage } from "@/components/parties/PurchaseEntryPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
+import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -88,6 +89,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <PaymentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments/make"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <MakePaymentPage />
           </ProtectedRoute>
         }
       />
