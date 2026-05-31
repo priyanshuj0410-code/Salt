@@ -177,6 +177,7 @@ export const NAV: NavModule[] = [
       { label: "Organisation", path: "/settings/organisation", built: true },
       { label: "Drug licenses", path: "/settings/licenses", built: true },
       { label: "Print templates", built: false },
+      { label: "Data export", path: "/settings/export", built: true },
     ],
   },
 ];
