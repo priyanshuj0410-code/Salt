@@ -134,14 +134,16 @@ export const NAV: NavModule[] = [
     key: "r",
     label: "Reports",
     icon: BarChart3,
-    built: false,
+    path: "/reports",
+    built: true,
     roles: ["owner"],
     children: [
-      { label: "Dashboard", built: false },
+      { label: "Dashboard", path: "/reports", built: true },
       { label: "Sales reports", built: false },
       { label: "Purchase reports", built: false },
       { label: "Inventory reports", built: false },
       { label: "Financial reports", built: false },
+      { label: "Tax reports", built: false },
     ],
   },
   {
