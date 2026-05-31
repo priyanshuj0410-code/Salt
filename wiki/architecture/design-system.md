@@ -31,11 +31,11 @@ Refreshed after a design-system review — the earlier "the token layer is not w
 | **Tokens** | §2 | ✅ wired | `apps/web/src/index.css` `@theme` — neutrals, action, semantic on-light **and** on-dark, focus, type, radii, shadows, motion |
 | **Fonts** | §3 | ✅ wired | Geist + Geist Mono `@fontsource-variable`, imported in `main.tsx`; `.tabular-nums` helper for aligned money/qty columns |
 | **Primitives** | §5 | ✅ built | `components/ui/`: Button, Input, Badge, Kbd, Dot, Card (+ Dialog, Separator, Table). Verified token-faithful: `Dot` (§5.5 6px, `bg-success`…), `Kbd` (§5.4 mono, `surface-2`, 2px bottom-border, `md:`-only), `Badge` (§5.3 `strong` = solid `text-primary` + inverse) |
-| **Two-density switch** | §4 | 🟡 partial | the `[data-density="compact"\|default"]` selectors **are** wired in `index.css` (drive `--row-height`/`--input-height`), but **no component sets `data-density`** and no `.tsx` reads the row-height var — the mechanism exists, nothing toggles it |
-| **Patterns** | §6 | ⬜ not built | no `components/patterns/`; only the base `ui/table.tsx` primitive — **no composed DataTable** (`@tanstack/react-table`, the §6.1 base, isn't a dependency). StatCard/PageHeader/EmptyState/FormRow absent |
+| **Two-density switch** | §4 | ✅ wired | `[data-density="compact"\|default"]` selectors in `index.css` drive `--row-height`/`--input-height`; `patterns/page.tsx` now sets `data-density` from its `width`/density prop |
+| **Patterns** | §6 | ✅ built | `components/patterns/`: DataTable (hand-rolled, adaptive table↔cards), StatCard, PageHeader, EmptyState — landed in the redesign P-series. **FormRow still pending**; the new dual-modality primitives (EntityHeader, ActionBar, Sheet) are tracked in [interaction-patterns](interaction-patterns.md) |
 | **Screen migration** | §2 rule | 🟡 in progress | grep finds raw `zinc-*` / `text-[NNpx]` still in 5 files: `billing/BillingScreen`, `billing/BillTable`, `nav/Sidebar`, `import/smart/EntityStep`, `settings/OrgSettingsPage` |
 
-The foundation is real; **the gap is now downstream** — the patterns layer, the density switch, and migrating existing screens onto the tokens — not the tokens themselves.
+The foundation is real, and since this note the **patterns layer and density switch landed** (see the table). The gap is now the **dual-modality primitives** (EntityHeader, ActionBar, responsive Sheet, FormRow) and migrating every screen onto the kit so keyboard and touch are both first-class — specified in [interaction-patterns](interaction-patterns.md) and ADR [0015](../decisions/0015-dual-modality-interaction.md).
 
 ## Research-backed direction (2026-05-31)
 
