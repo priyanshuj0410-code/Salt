@@ -46,6 +46,8 @@ interface BillRow {
 interface OrderHistoryRow extends OrderRow {
   created_at: string;
   due_date: string | null;
+  /** Imported historical doc (posts_effects=false): shown in history, excluded from dues. */
+  imported: boolean;
 }
 
 interface PaymentRow {
@@ -117,11 +119,11 @@ export function PartyProfilePage() {
       // purchases table (keyed by vendor_id). Merged for history + dues.
       supabase
         .from("sales_invoices")
-        .select("id,total_paise,paid_paise,created_at,due_date")
+        .select("id,total_paise,paid_paise,created_at,due_date,posts_effects")
         .eq("party_id", id),
       supabase
         .from("purchases")
-        .select("id,total_paise,paid_paise,created_at")
+        .select("id,total_paise,paid_paise,created_at,posts_effects")
         .eq("vendor_id", id),
       supabase
         .from("payments")
@@ -139,12 +141,13 @@ export function PartyProfilePage() {
           paid_paise: number;
           created_at: string;
           due_date: string | null;
+          posts_effects: boolean | null;
         };
         const sales = ((s.data as DocRow[] | null) ?? []).map(
-          (r): OrderHistoryRow => ({ ...r, direction: "sale" }),
+          (r): OrderHistoryRow => ({ ...r, direction: "sale", imported: r.posts_effects === false }),
         );
         const purchases = ((p.data as Omit<DocRow, "due_date">[] | null) ?? []).map(
-          (r): OrderHistoryRow => ({ ...r, direction: "purchase", due_date: null }),
+          (r): OrderHistoryRow => ({ ...r, direction: "purchase", due_date: null, imported: r.posts_effects === false }),
         );
         setLedger(l.data as Ledger);
         setBills((b.data as BillRow[] | null) ?? []);
@@ -162,9 +165,14 @@ export function PartyProfilePage() {
     };
   }, [orgId, id, reloadKey]);
 
+  // Imported history (posts_effects=false) is already reflected in the opening
+  // balance, so it is excluded from the live due — only post-cutover orders count.
   const due = useMemo(
     () =>
-      ledger ? partyDue(ledger.opening_balance_paise, orders) + paymentsAdjustment(payments) : 0,
+      ledger
+        ? partyDue(ledger.opening_balance_paise, orders.filter((o) => !o.imported)) +
+          paymentsAdjustment(payments)
+        : 0,
     [ledger, orders, payments],
   );
 

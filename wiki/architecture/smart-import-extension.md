@@ -117,7 +117,7 @@ Each phase = a staged PR (+ migration where noted), verified with `pnpm lint && 
 
 - **Phase 0 — schema:** ✅ shipped (`0025_import_extension.sql`, run by user) — `shops.cutover_date` + source-doc idempotency/`posts_effects` on `purchases` + `sales_invoices`. (`doctors` + the remaining doc tables follow in their phases.)
 - **Phase 1 — Purchase/GRN history:** ✅ shipped (branch `feat/smart-import-purchases`) — `lib/smartDocument.ts` (`groupDocuments`/`preparePurchases`) + `DocumentStep.tsx`, wired into the stepper. The authentic batch + cost source.
-- **Phase 2 — Sales history.**
+- **Phase 2 — Sales history:** ✅ shipped — `SALES_DOC` config + `prepareSales` (party GSTIN→name, **walk-in allowed**; MRP-inclusive tax backed out, CGST/SGST split for display) + `prepareDocuments` dispatch; `DocCtx` generalized `vendorBy*`→`partyBy*`. **Dues fix:** `PartyProfilePage` now excludes imported (`posts_effects=false`) docs from amount-due (already in opening balance) while still listing them tagged "imported"; `BillHistoryPage` tags them too. No new migration (0025 pre-staged `sales_invoices`).
 - **Phase 3 — Returns** (credit/debit notes).
 - **Phase 4 — Payments/receipts** (+ allocations).
 - **Phase 5 — Masters expansion:** salesmen, doctors, account groups, multi-branch shops; post opening `stock_movements` for batch stock.

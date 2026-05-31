@@ -11,6 +11,7 @@ export interface DocumentConfig {
   key: string; // step key, e.g. "purchases"
   label: string; // "Purchases / GRN"
   section: string; // "History"
+  kind: "purchase" | "sales"; // selects the payload builder + party requirement
   table: string; // header table, e.g. "purchases"
   lineTable: string; // "purchase_lines"
   lineFk: string; // FK column on the line table → header, e.g. "purchase_id"
@@ -24,6 +25,7 @@ export const PURCHASE_DOC: DocumentConfig = {
   key: "purchases",
   label: "Purchases / GRN",
   section: "History",
+  kind: "purchase",
   table: "purchases",
   lineTable: "purchase_lines",
   lineFk: "purchase_id",
@@ -50,7 +52,36 @@ export const PURCHASE_DOC: DocumentConfig = {
   ],
 };
 
-export const DOCUMENTS: DocumentConfig[] = [PURCHASE_DOC];
+export const SALES_DOC: DocumentConfig = {
+  key: "sales",
+  label: "Sales register",
+  section: "History",
+  kind: "sales",
+  table: "sales_invoices",
+  lineTable: "sale_lines",
+  lineFk: "invoice_id",
+  description: "Your sales register — one row per line, grouped into invoices.",
+  tip: "Export the sale register with item + batch detail. Imported as records (no stock/ledger re-posting); unknown customers import as walk-in.",
+  headerFields: [
+    { key: "doc_no", label: "Invoice no", required: true, aliases: ["invoice no", "bill no", "voucher no", "sale no", "ref no", "invoice", "bill"] },
+    { key: "date", label: "Date", aliases: ["date", "invoice date", "bill date", "sale date"] },
+    { key: "party_name", label: "Customer", aliases: ["customer", "party", "party name", "account", "buyer", "patient"] },
+    { key: "party_gstin", label: "Customer GSTIN", aliases: ["gstin", "gst no", "gst number", "customer gstin", "party gstin"] },
+    { key: "doctor_name", label: "Doctor", aliases: ["doctor", "dr", "prescriber", "doctor name"] },
+  ],
+  lineFields: [
+    { key: "item_code", label: "Item code", aliases: ["item code", "code", "sku", "product code", "itemcode"] },
+    { key: "item_name", label: "Item", required: true, aliases: ["item", "product", "item name", "product name", "description", "particulars", "medicine"] },
+    { key: "batch_no", label: "Batch", aliases: ["batch", "batch no", "lot", "lot no"] },
+    { key: "expiry", label: "Expiry", aliases: ["expiry", "exp", "exp date", "expiry date", "expdate"] },
+    { key: "qty", label: "Qty", aliases: ["qty", "quantity", "pcs", "sold"] },
+    { key: "rate", label: "Rate / MRP", aliases: ["rate", "mrp", "sale rate", "price", "m.r.p"] },
+    { key: "gst_rate", label: "GST %", aliases: ["gst", "gst%", "gst rate", "igst", "tax", "tax%"] },
+    { key: "amount", label: "Amount", aliases: ["amount", "value", "net amount", "line total", "total", "net"] },
+  ],
+};
+
+export const DOCUMENTS: DocumentConfig[] = [PURCHASE_DOC, SALES_DOC];
 
 export interface DocGroup {
   docNo: string;
@@ -59,8 +90,9 @@ export interface DocGroup {
 }
 
 export interface DocCtx {
-  vendorByGstin: Map<string, string>;
-  vendorByName: Map<string, string>;
+  // Parties (ledgers) — used for the vendor on a purchase and the customer on a sale.
+  partyByGstin: Map<string, string>;
+  partyByName: Map<string, string>;
   itemByCode: Map<string, string>;
   itemByName: Map<string, string>;
 }
@@ -163,8 +195,8 @@ export function preparePurchases(groups: DocGroup[], ctx: DocCtx): PrepareResult
 
   for (const g of groups) {
     const gstin = (g.header.vendor_gstin ?? "").toUpperCase();
-    let vendorId = gstin && GSTIN_RE.test(gstin) ? ctx.vendorByGstin.get(gstin) : undefined;
-    if (!vendorId && g.header.vendor_name) vendorId = ctx.vendorByName.get(norm(g.header.vendor_name));
+    let vendorId = gstin && GSTIN_RE.test(gstin) ? ctx.partyByGstin.get(gstin) : undefined;
+    if (!vendorId && g.header.vendor_name) vendorId = ctx.partyByName.get(norm(g.header.vendor_name));
     if (!vendorId) {
       quarantined.push({
         docNo: g.docNo,
@@ -236,4 +268,108 @@ export function preparePurchases(groups: DocGroup[], ctx: DocCtx): PrepareResult
   }
 
   return { valid, quarantined, skippedLines };
+}
+
+/** Resolve a party (ledger) id by GSTIN → name; undefined if neither matches. */
+function resolveParty(gstinRaw: string | undefined, name: string | undefined, ctx: DocCtx): string | undefined {
+  const gstin = (gstinRaw ?? "").toUpperCase();
+  let id = gstin && GSTIN_RE.test(gstin) ? ctx.partyByGstin.get(gstin) : undefined;
+  if (!id && name) id = ctx.partyByName.get(norm(name));
+  return id;
+}
+
+/**
+ * Build DB-ready sales-invoice payloads from grouped documents. Sales are
+ * MRP-inclusive, so per-line GST is backed out of the line total (taxable + tax)
+ * and split CGST/SGST (intra-state assumption — display only, since imported
+ * history is non-posting). The customer is resolved GSTIN → name, but an unknown
+ * customer is NOT quarantined: sales_invoices.party_id is nullable, so it imports
+ * as walk-in (party_id null) with the original name kept in notes. A document
+ * with no usable lines is quarantined.
+ */
+export function prepareSales(groups: DocGroup[], ctx: DocCtx): PrepareResult {
+  const valid: PreparedDoc[] = [];
+  const quarantined: PrepareResult["quarantined"] = [];
+  let skippedLines = 0;
+
+  for (const g of groups) {
+    const partyId = resolveParty(g.header.party_gstin, g.header.party_name, ctx);
+    // Unmatched named customer → keep the name so the record isn't anonymous.
+    const unmatchedName = !partyId && g.header.party_name ? g.header.party_name.trim() : "";
+
+    const lines: Record<string, unknown>[] = [];
+    let subtotal = 0; // tax-inclusive gross
+    let taxableTot = 0;
+    let cgstTot = 0;
+    let sgstTot = 0;
+    for (const ln of g.lines) {
+      const code = (ln.item_code ?? "").trim();
+      const nm = (ln.item_name ?? "").trim();
+      let itemId = code ? ctx.itemByCode.get(code) : undefined;
+      if (!itemId && nm) itemId = ctx.itemByName.get(norm(nm));
+      if (!nm && !itemId) {
+        skippedLines++;
+        continue;
+      }
+      const qty = toInt(ln.qty);
+      const rate = toNum(ln.gst_rate);
+      const gross = ln.amount ? toPaise(ln.amount) : qty * toPaise(ln.rate);
+      // back MRP-inclusive tax out of the gross line total
+      const taxable = rate > 0 ? Math.round((gross * 100) / (100 + rate)) : gross;
+      const tax = gross - taxable;
+      const cgst = Math.floor(tax / 2);
+      const sgst = tax - cgst;
+      subtotal += gross;
+      taxableTot += taxable;
+      cgstTot += cgst;
+      sgstTot += sgst;
+      lines.push({
+        item_id: itemId ?? null,
+        name: nm || "(unnamed)",
+        batch_no: ln.batch_no || null,
+        expiry: ln.expiry || null,
+        qty,
+        rate_paise: toPaise(ln.rate),
+        taxable_paise: taxable,
+        gst_rate: rate,
+        cgst_paise: cgst,
+        sgst_paise: sgst,
+        igst_paise: 0,
+        line_total_paise: gross,
+      });
+    }
+    if (lines.length === 0) {
+      quarantined.push({ docNo: g.docNo, reason: "No usable lines", lineCount: 0 });
+      continue;
+    }
+
+    const date = toIsoDate(g.header.date ?? "");
+    const header: Record<string, unknown> = {
+      party_id: partyId ?? null,
+      invoice_no: g.docNo,
+      status: "placed",
+      is_interstate: false,
+      subtotal_paise: subtotal,
+      taxable_paise: taxableTot,
+      cgst_paise: cgstTot,
+      sgst_paise: sgstTot,
+      igst_paise: 0,
+      total_paise: subtotal,
+      paid_paise: 0,
+      doctor_name: g.header.doctor_name || null,
+      notes: unmatchedName ? `Customer: ${unmatchedName}` : null,
+      source_system: "marg",
+      source_doc_no: g.docNo,
+      posts_effects: false,
+      ...(date ? { invoice_date: date } : {}),
+    };
+    valid.push({ docNo: g.docNo, header, lines });
+  }
+
+  return { valid, quarantined, skippedLines };
+}
+
+/** Dispatch to the right payload builder for a document config. */
+export function prepareDocuments(cfg: DocumentConfig, groups: DocGroup[], ctx: DocCtx): PrepareResult {
+  return cfg.kind === "sales" ? prepareSales(groups, ctx) : preparePurchases(groups, ctx);
 }
