@@ -21,7 +21,7 @@ export function ParkedBills() {
         <Clock className="size-3.5" /> Held ({parked.length})
       </span>
       {parked.map((p) => {
-        const t = billTotals(p.lines);
+        const t = billTotals(p.lines, p.billDiscount);
         return (
           <div
             key={p.id}
