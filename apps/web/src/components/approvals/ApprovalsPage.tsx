@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { EmptyState } from "@/components/patterns/empty-state";
+import { OnlineCounters } from "@/components/presence/OnlineCounters";
 import { useAuth } from "@/lib/auth";
 import { formatPaise } from "@/lib/currency";
 import {
@@ -117,6 +118,7 @@ export function ApprovalsPage() {
         subtitle="Requests raised at the counter — approve or reject from any device, live"
         actions={
           <>
+            <OnlineCounters />
             <span className="inline-flex items-center gap-1.5 text-xs text-text-tertiary">
               <Dot variant={live ? "success" : "warning"} pulse={live} />
               {live ? "Live" : "Connecting…"}

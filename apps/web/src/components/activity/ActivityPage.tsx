@@ -17,6 +17,7 @@ import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { MessageThread } from "@/components/messages/MessageThread";
+import { OnlineCounters } from "@/components/presence/OnlineCounters";
 import { useAuth } from "@/lib/auth";
 import { formatPaise } from "@/lib/currency";
 import { fetchRecentActivity, subscribeActivity, type ActivityEvent } from "@/lib/activity";
@@ -114,10 +115,13 @@ export function ActivityPage() {
         title="Activity"
         subtitle="Every sale, payment and GRN across all counters — live"
         actions={
-          <span className="inline-flex items-center gap-1.5 text-xs text-text-tertiary">
-            <Dot variant={live ? "success" : "warning"} />
-            {live ? "Live" : "Connecting…"}
-          </span>
+          <>
+            <OnlineCounters />
+            <span className="inline-flex items-center gap-1.5 text-xs text-text-tertiary">
+              <Dot variant={live ? "success" : "warning"} />
+              {live ? "Live" : "Connecting…"}
+            </span>
+          </>
         }
       />
 

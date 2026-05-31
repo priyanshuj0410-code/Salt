@@ -46,14 +46,19 @@ A cashier raises an approval request on one device; an owner approves/rejects fr
 
 **Handoff.** Auto-raising requests from the counter (discount/credit over-limit gates, blocking checkout until approved) lands in **billing** files → **SALT-175**. `requestApproval()` is the API it calls; a small `useApprovalRequest` await-hook is suggested there.
 
+## Counter presence — SALT-101 (presence slice ✅)
+
+"Who is at the counters right now." Uses Supabase Realtime **Presence** (ephemeral — no table, no migration): each client `track()`s itself on a per-org presence channel and reads the synced state. `lib/presence.ts → usePresence(orgId, userId, name, role)` returns the de-duplicated online members; `components/presence/OnlineCounters.tsx` renders the avatars + count, shown in the `/activity` and `/approvals` headers. Droppable into the global app shell — left as a small handoff for the **nav** module (one line in `AppLayout`).
+
+SALT-101 also asks for **live stock** and **parked-bill sync**, which surface on the **billing** screen (its store/files) → handed off as **SALT-179** (live stock on the counter) and **SALT-180** (parked-bill sync). Both reuse `subscribeTableChanges`; the realtime substrate is ready for them. The "<1s on LAN / self-hosted Yjs" framing is met functionally by Supabase Realtime (server round-trip, typically <1s); true LAN-local latency would need the shop-local server (SALT-103).
+
 ## Not yet built (same module)
 
 | Ticket | What | Builds on |
 |---|---|---|
 | SALT-100 | ElectricSQL offline-first (bill through outages) | local-first; needs CRDT/Electric, beyond Realtime |
-| SALT-101 | Self-hosted Yjs presence + live stock <1s LAN + parked-bill sync | Presence + Broadcast channels (Realtime covers most) |
-| SALT-102 | Multi-counter conflict resolution (atomic last-unit) | server-authoritative stock decrement (billing RPC) |
-| SALT-103 | Shop-local server | infra |
+| SALT-102 | Multi-counter conflict resolution (atomic last-unit) | server-authoritative stock decrement (billing RPC) → billing ticket |
+| SALT-103 | Shop-local server | infra; LAN-local latency + offline gateway |
 
 Live stock (SALT-101) and atomic last-unit (SALT-102) land in **billing/inventory** files → filed as tickets for those modules rather than edited here.
 
