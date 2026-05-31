@@ -49,6 +49,13 @@ New modules from [`wiki/product/product-modules.md`](wiki/product/product-module
 - `App.tsx` + nav, `components/ui/**`, `index.css` (tokens) — central; if your task must touch one, run it solo or merge that PR first.
 - `pnpm-lock.yaml`, `package.json`, `apps/web/package.json` — regenerate via `pnpm install` after rebase; never hand-merge the lockfile.
 
+**Module locks (enforced) — two chats can never work the same module.** A `PreToolUse` hook (`.claude/settings.json` → `scripts/hooks/guard-edit.sh`) runs before every `Edit`/`Write`/`MultiEdit`. It maps the file to its module via [`scripts/module-map.txt`](scripts/module-map.txt) and, the first time your chat edits a module, **auto-claims** an exclusive lock on it. If another chat already holds that module, the edit is **refused by the harness** — you cannot silently collide. You hold a module until you give it up.
+- `scripts/wt.sh claim <module…>` — reserve a module up front, before editing, so others see it immediately (also auto-claimed by `wt.sh new <module>` when the worktree is named for a module).
+- `scripts/wt.sh release <module…>` — give it up when done; or merge the PR and `wt.sh rm <slug>`, which releases all of that worktree's locks.
+- `scripts/wt.sh locks` — see who holds what; a lock whose worktree is gone shows `STALE` and is auto-reclaimed on the next claim.
+- Blocked? Pick a different module, or have the holder `release` it (a human can `release <module> --force`).
+- Caveats: only `Edit/Write/MultiEdit` are guarded — don't hand-write files via `Bash` to dodge a lock. Unmapped files (configs, docs) are never blocked. The module table above mirrors `scripts/module-map.txt` — edit both.
+
 **Coordinating dependencies — the work queue.** `scripts/wt.sh queue` shows a shared board (`../salt-worktrees/queue.md`, **not** in git, instant across worktrees on this machine). Post with `scripts/wt.sh post "<msg>"`, tagged:
 - `BLOCK: <what you need>` — before a dependent task, post the exact need (RPC name + signature, table, migration number) and tell the user you are blocked. Do not guess the interface.
 - `DONE: <what landed> (#PR)` — the producing chat posts on merge, naming the concrete artifact, **and** updates its module's wiki page so the contract is durable, not just in the queue.
