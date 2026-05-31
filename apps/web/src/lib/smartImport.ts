@@ -300,7 +300,7 @@ export interface ValidateCtx {
 
 const GSTIN_RE = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
-function toPaise(s: string): number {
+export function toPaise(s: string): number {
   const n = Number((s || "").replace(/[,₹\s]/g, ""));
   return Number.isFinite(n) ? Math.round(n * 100) : 0;
 }

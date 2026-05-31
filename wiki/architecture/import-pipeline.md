@@ -50,7 +50,7 @@ The trial balance legitimately repeats names (one party as both debtor and credi
 
 ## Beyond the four files
 
-Today's cascade fills **masters + opening balances** only. The full model (0014–0024) is now live, so the next step is extending Smart Import to ingest Marg's transaction history, accounting and compliance exports too. The complete Marg-export → Salt-table scope — every file, its target table(s), join keys, and the decisions it forces — is mapped in [marg-import-map](marg-import-map.md).
+Today's cascade fills **masters + opening balances** only. The full model (0014–0024) is now live, so the next step is extending Smart Import to ingest Marg's transaction history, accounting and compliance exports too. The complete Marg-export → Salt-table scope — every file, its target table(s), join keys, and the decisions it forces — is mapped in [marg-import-map](marg-import-map.md). The **engineering design + phased build** for that extension is [smart-import-extension](smart-import-extension.md); operators export each file per [../domain/marg-export-guide](../domain/marg-export-guide.md).
 
 ## Related
 [marg-import-map](marg-import-map.md) · [trial-balance](../domain/trial-balance.md) · [parties](../domain/parties.md) · [data-model](data-model.md)

@@ -14,6 +14,8 @@ Two things are true at once:
 
 This page closes that gap: it lists every Marg export worth ingesting and the table(s) it lands in, so the importer can grow from four files to the whole model.
 
+> The **engineering design** for that importer — reuse, load paths, schema, phased build — is in [smart-import-extension](smart-import-extension.md); the **operator's how-to-export-from-Marg playbook** is [../domain/marg-export-guide](../domain/marg-export-guide.md).
+
 > **Caveat.** Exact Marg report names and column headers vary by edition (Marg Pharma / Excellent / ERP 9+) and version. The importer is **format-generic** (the same machinery already absorbs Saral/Marg/Tally) and column names need not match — `autoMap` in `smartImport.ts` matches headers to fields (exact > substring > fuzzy) and every step has a manual mapping fallback. So the **column→field mapping and the join keys** below matter far more than the precise header text. The one real sample on hand is a Saral export; this page is written for a Marg shop (the target persona), but the design generalizes.
 
 Status legend: **✅** imports today · **🔜** needs importer build · **⚠** needs a model or decision change first.
@@ -126,4 +128,4 @@ Decided (2026-05-31):
 
 ## Related
 
-[import-pipeline](import-pipeline.md) · [proposed-data-model](proposed-data-model.md) · [schema](schema.md) · [data-model](data-model.md) · [decision 0008 — import join keys](../decisions/0008-import-join-keys.md) · [domain/trial-balance](../domain/trial-balance.md) · [domain/medical-retail](../domain/medical-retail.md)
+[smart-import-extension](smart-import-extension.md) · [../domain/marg-export-guide](../domain/marg-export-guide.md) · [import-pipeline](import-pipeline.md) · [proposed-data-model](proposed-data-model.md) · [schema](schema.md) · [data-model](data-model.md) · [decision 0008 — import join keys](../decisions/0008-import-join-keys.md) · [domain/trial-balance](../domain/trial-balance.md) · [domain/medical-retail](../domain/medical-retail.md)

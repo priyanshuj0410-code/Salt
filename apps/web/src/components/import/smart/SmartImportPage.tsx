@@ -3,18 +3,40 @@ import { Link } from "react-router-dom";
 import { Check, Lock } from "lucide-react";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/lib/auth";
-import { ENTITIES, type EntityKey } from "@/lib/smartImport";
+import { ENTITIES, type EntityConfig } from "@/lib/smartImport";
+import { DOCUMENTS, type DocumentConfig } from "@/lib/smartDocument";
 import { cn } from "@/lib/utils";
 import { EntityStep } from "./EntityStep";
 import { LedgerStep } from "./LedgerStep";
 import { PartyGstStep } from "./PartyGstStep";
+import { DocumentStep } from "./DocumentStep";
+
+type Step =
+  | { kind: "entity"; key: string; label: string; entity: EntityConfig }
+  | { kind: "doc"; key: string; label: string; doc: DocumentConfig };
+
+const STEPS: Step[] = [
+  ...ENTITIES.map((e) => ({ kind: "entity" as const, key: e.key, label: e.label, entity: e })),
+  ...DOCUMENTS.map((d) => ({ kind: "doc" as const, key: d.key, label: d.label, doc: d })),
+];
 
 export function SmartImportPage() {
-  const orgId = useAuth().membership?.orgId;
-  const [completed, setCompleted] = useState<Set<EntityKey>>(new Set());
+  const auth = useAuth();
+  const orgId = auth.membership?.orgId;
+  const shopId = auth.shopId;
+  const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [active, setActive] = useState(0);
 
-  const allDone = completed.size === ENTITIES.length;
+  const allDone = completed.size === STEPS.length;
+
+  function renderStep(step: Step, advance: () => void) {
+    if (step.kind === "doc") {
+      return <DocumentStep key={step.key} cfg={step.doc} orgId={orgId} shopId={shopId} onComplete={advance} />;
+    }
+    if (step.key === "ledgers") return <LedgerStep key="ledgers" orgId={orgId} onComplete={advance} />;
+    if (step.key === "party_gstin") return <PartyGstStep key="party_gstin" orgId={orgId} onComplete={advance} />;
+    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} onComplete={advance} />;
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
@@ -30,16 +52,16 @@ export function SmartImportPage() {
         <h1 className="text-xl font-semibold">Smart import</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Drop your Marg/Tally export — we auto-map the columns and quarantine only the rows that
-          need a fix. Import in order: ledgers, then items, then stock.
+          need a fix. Import in order: parties, catalogue, stock, then history.
         </p>
 
         {/* Cascade stepper */}
-        <ol className="mt-5 flex items-center gap-2">
-          {ENTITIES.map((e, i) => {
-            const done = completed.has(e.key);
+        <ol className="mt-5 flex flex-wrap items-center gap-2">
+          {STEPS.map((step, i) => {
+            const done = completed.has(step.key);
             const locked = i > active && !done;
             return (
-              <li key={e.key} className="flex flex-1 items-center gap-2">
+              <li key={step.key} className="flex flex-1 items-center gap-2">
                 <button
                   disabled={locked}
                   onClick={() => !locked && setActive(i)}
@@ -57,7 +79,7 @@ export function SmartImportPage() {
                   >
                     {done ? <Check className="size-3" /> : locked ? <Lock className="size-3" /> : i + 1}
                   </span>
-                  <span className="font-medium">{e.label}</span>
+                  <span className="font-medium">{step.label}</span>
                 </button>
               </li>
             );
@@ -75,22 +97,10 @@ export function SmartImportPage() {
           ) : (
             (() => {
               const advance = () => {
-                setCompleted((prev) => new Set(prev).add(ENTITIES[active].key));
-                setActive((i) => Math.min(ENTITIES.length - 1, i + 1));
+                setCompleted((prev) => new Set(prev).add(STEPS[active].key));
+                setActive((i) => Math.min(STEPS.length - 1, i + 1));
               };
-              const key = ENTITIES[active].key;
-              return key === "ledgers" ? (
-                <LedgerStep key="ledgers" orgId={orgId} onComplete={advance} />
-              ) : key === "party_gstin" ? (
-                <PartyGstStep key="party_gstin" orgId={orgId} onComplete={advance} />
-              ) : (
-                <EntityStep
-                  key={key}
-                  entity={ENTITIES[active]}
-                  orgId={orgId}
-                  onComplete={advance}
-                />
-              );
+              return renderStep(STEPS[active], advance);
             })()
           )}
         </div>
