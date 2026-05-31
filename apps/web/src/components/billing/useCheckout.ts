@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { supabase } from "@/lib/supabase";
 import { buildSalesInvoicePayload, withTimeout, TimeoutError, type RxDetails } from "@/lib/orders";
@@ -6,6 +6,14 @@ import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { gatedLines, requiresRx } from "@/lib/billing";
 import { buildInvoiceData, printInvoice, type CustomerDetail } from "@/lib/printInvoice";
+import {
+  DEFAULT_FORMAT,
+  DEFAULT_INVOICE_TEMPLATE,
+  normalizeFormat,
+  normalizeTemplate,
+  type InvoiceTemplate,
+  type PrintFormat,
+} from "@/lib/printTemplate";
 import { billTotals, useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
 
@@ -30,7 +38,7 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
   const setCreditDays = useBill((s) => s.setCreditDays);
   const billDiscount = useBill((s) => s.billDiscount);
   const usingSeed = useCatalog((s) => s.usingSeed);
-  const { shopId, shop } = useAuth();
+  const { shopId, shop, membership } = useAuth();
   const blockers = useShopBlockers();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -44,6 +52,33 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
   const needsRx = requiresRx(lines);
   // Inter-state ⇒ IGST; intra-state (incl. walk-in / no party state) ⇒ CGST+SGST.
   const isInterstate = !!(customer?.state_code && shop?.state_code && customer.state_code !== shop.state_code);
+
+  // The org's default sales-invoice print template (Settings → Print templates, SALT-089),
+  // fetched once and cached; falls back to the built-in default when none is saved.
+  const orgId = membership?.orgId;
+  const [printTpl, setPrintTpl] = useState<{ format: PrintFormat; template: InvoiceTemplate }>({
+    format: DEFAULT_FORMAT,
+    template: DEFAULT_INVOICE_TEMPLATE,
+  });
+  useEffect(() => {
+    if (!supabase || !orgId) return;
+    let active = true;
+    void supabase
+      .from("print_templates")
+      .select("format, template")
+      .eq("org_id", orgId)
+      .eq("doc_type", "sales_invoice")
+      .eq("is_default", true)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        const row = data as { format: unknown; template: unknown } | null;
+        setPrintTpl({ format: normalizeFormat(row?.format), template: normalizeTemplate(row?.template) });
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId]);
 
   // `rx` lives in the bill store, so `clear()` (after a save, or a manual Clear)
   // resets it — one customer's prescription never carries to the next bill.
@@ -81,7 +116,19 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
       // Capture the receipt from live bill state BEFORE clear() wipes it.
       const receipt =
         printIntent.current && invoiceId && shop
-          ? buildInvoiceData({ invoiceId, shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
+          ? buildInvoiceData({
+              invoiceId,
+              format: printTpl.format,
+              template: printTpl.template,
+              shop,
+              party,
+              customer,
+              lines,
+              payment,
+              totals: t,
+              billDiscount,
+              isInterstate,
+            })
           : null;
       clear();
       setSaved(true);
@@ -116,7 +163,7 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
       void save({ print: true });
     },
     { enableOnFormTags: true },
-    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount],
+    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount, printTpl],
   );
 
   return {

@@ -3,6 +3,7 @@ import type { OrderParty } from "./orders";
 import type { BillTotals } from "@/store/bill";
 import { formatPaise } from "./currency";
 import { apportionedLineNets, gstSplit, type BillDiscount } from "./billing";
+import { type InvoiceTemplate, type PrintFormat } from "./printTemplate";
 
 /** Shop header fields printed on the invoice (structural subset of auth `Shop`). */
 export interface ShopHeader {
@@ -34,6 +35,9 @@ export interface InvoiceLine {
 export interface InvoicePrintData {
   ref: string;
   dateTime: string;
+  /** The org's default sales-invoice template (format + layout toggles). */
+  format: PrintFormat;
+  template: InvoiceTemplate;
   shop: ShopHeader;
   customerName: string;
   customer: CustomerDetail | null;
@@ -61,6 +65,8 @@ export function invoiceRef(invoiceId: string): string {
 /** Assemble the print payload from live bill state — called before `clear()` wipes it. */
 export function buildInvoiceData(args: {
   invoiceId: string;
+  format: PrintFormat;
+  template: InvoiceTemplate;
   shop: ShopHeader;
   party: OrderParty | null;
   customer: CustomerDetail | null;
@@ -70,13 +76,16 @@ export function buildInvoiceData(args: {
   billDiscount: BillDiscount;
   isInterstate: boolean;
 }): InvoicePrintData {
-  const { invoiceId, shop, party, customer, lines, payment, totals, billDiscount, isInterstate } = args;
+  const { invoiceId, format, template, shop, party, customer, lines, payment, totals, billDiscount, isInterstate } =
+    args;
   const { cgst, sgst, igst } = gstSplit(totals.gst, isInterstate);
   // Per-line amounts after the bill discount, so they sum to the printed Total.
   const nets = apportionedLineNets(lines, billDiscount);
   return {
     ref: invoiceRef(invoiceId),
     dateTime: new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }),
+    format,
+    template,
     shop,
     customerName: party?.name ?? "Walk-in customer",
     customer,
@@ -106,8 +115,11 @@ export function buildInvoiceData(args: {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-function lineRow(l: InvoiceLine): string {
-  const sub = [l.pack, l.batchNo && `B: ${l.batchNo}`, l.expiry && `Exp ${l.expiry}`]
+function lineRow(l: InvoiceLine, showBatchExpiry: boolean): string {
+  const bits = showBatchExpiry
+    ? [l.pack, l.batchNo && `B: ${l.batchNo}`, l.expiry && `Exp ${l.expiry}`]
+    : [l.pack];
+  const sub = bits
     .filter(Boolean)
     .map((s) => esc(String(s)))
     .join(" · ");
@@ -123,12 +135,22 @@ function totalRow(label: string, value: string, strong = false): string {
   return `<tr class="${strong ? "tot" : ""}"><td colspan="3" class="r">${esc(label)}</td><td class="r">${esc(value)}</td></tr>`;
 }
 
-/** Build the invoice HTML document (self-contained, inline styles for print). */
-export function invoiceHtml(d: InvoicePrintData): string {
+/** `@page` + body sizing for the chosen format (thermal width, A4 sheet, dot-matrix continuous). */
+function pageCss(format: PrintFormat, thermalWidth: 58 | 80): string {
+  if (format === "a4") return `@page { size: A4; margin: 12mm; } body { width: 100%; max-width: 186mm; font-size: 12px; }`;
+  if (format === "dotmatrix")
+    return `@page { margin: 8mm; } body { width: 100%; font-family: "Courier New", monospace; font-size: 12px; }`;
+  return `@page { size: ${thermalWidth}mm auto; margin: 4mm; } body { width: ${thermalWidth}mm; font-size: 11px; }`;
+}
+
+/** One invoice copy's inner HTML (the template toggles apply here). */
+function invoiceBody(d: InvoicePrintData): string {
+  const t = d.template;
   const shopMeta = [
+    t.header_tagline,
     d.shop.address,
     d.shop.phone && `Ph: ${d.shop.phone}`,
-    d.shop.gstin && `GSTIN: ${d.shop.gstin}`,
+    t.show_gstin && d.shop.gstin && `GSTIN: ${d.shop.gstin}`,
   ]
     .filter(Boolean)
     .map((s) => esc(String(s)))
@@ -141,30 +163,7 @@ export function invoiceHtml(d: InvoicePrintData): string {
     ? totalRow(`IGST`, formatPaise(d.igst))
     : totalRow(`CGST`, formatPaise(d.cgst)) + totalRow(`SGST`, formatPaise(d.sgst));
   const payLabel = d.payment.method === "credit" ? "Credit" : "Cash";
-
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${esc(d.ref)}</title>
-<style>
-  @page { margin: 6mm; }
-  * { box-sizing: border-box; }
-  body { width: 80mm; margin: 0 auto; font: 11px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; color: #000; }
-  .shop { text-align: center; }
-  .shop h1 { margin: 0 0 2px; font-size: 15px; }
-  .meta { font-size: 10px; color: #333; }
-  hr { border: none; border-top: 1px dashed #999; margin: 6px 0; }
-  .row { display: flex; justify-content: space-between; font-size: 10px; }
-  .bill-to { font-size: 11px; margin: 2px 0; }
-  table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-  th { font-size: 9px; text-transform: uppercase; color: #555; border-bottom: 1px solid #000; padding: 2px 0; }
-  td { padding: 3px 0; vertical-align: top; }
-  th.r, td.r { text-align: right; }
-  th.l, td.l { text-align: left; }
-  .sub { font-size: 9px; color: #555; }
-  tbody tr { border-bottom: 1px dotted #ccc; }
-  tfoot td { padding: 2px 0; }
-  tr.tot td { border-top: 1px solid #000; font-weight: 700; font-size: 13px; padding-top: 4px; }
-  .foot { text-align: center; font-size: 10px; color: #333; margin-top: 8px; }
-</style></head>
-<body>
+  return `<div class="copy">
   <div class="shop">
     <h1>${esc(d.shop.name)}</h1>
     <div class="meta">${shopMeta}</div>
@@ -175,7 +174,7 @@ export function invoiceHtml(d: InvoicePrintData): string {
   <div class="bill-to"><strong>${esc(d.customerName)}</strong>${custMeta ? `<br><span class="meta">${custMeta}</span>` : ""}</div>
   <table>
     <thead><tr><th class="l">Item</th><th class="r">Qty</th><th class="r">MRP</th><th class="r">Amt</th></tr></thead>
-    <tbody>${d.lines.map(lineRow).join("")}</tbody>
+    <tbody>${d.lines.map((l) => lineRow(l, t.show_batch_expiry)).join("")}</tbody>
     <tfoot>
       ${totalRow("Gross (MRP)", formatPaise(d.gross))}
       ${d.discount > 0 ? totalRow("Discount", `- ${formatPaise(d.discount)}`) : ""}
@@ -185,7 +184,44 @@ export function invoiceHtml(d: InvoicePrintData): string {
       ${totalRow("Total", formatPaise(d.grand), true)}
     </tfoot>
   </table>
-  <div class="foot">Thank you. Get well soon.</div>
+  ${t.footer_text ? `<div class="foot">${esc(t.footer_text)}</div>` : ""}
+  ${t.terms_text ? `<div class="terms">${esc(t.terms_text)}</div>` : ""}
+</div>`;
+}
+
+/** Build the invoice HTML document (self-contained, inline styles for print). Honors the
+ *  org's template: format/width, header tagline, GSTIN + batch/expiry toggles, footer, terms,
+ *  and `copies` (each copy on its own page). */
+export function invoiceHtml(d: InvoicePrintData): string {
+  const copies = Math.max(1, Math.min(3, d.template.copies));
+  const body = invoiceBody(d);
+  const copiesHtml = Array.from({ length: copies }, () => body).join("");
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${esc(d.ref)}</title>
+<style>
+  ${pageCss(d.format, d.template.thermal_width)}
+  * { box-sizing: border-box; }
+  body { margin: 0 auto; line-height: 1.45; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; color: #000; }
+  .copy { width: 100%; }
+  .copy + .copy { page-break-before: always; }
+  .shop { text-align: center; }
+  .shop h1 { margin: 0 0 2px; font-size: 1.35em; }
+  .meta { font-size: 0.9em; color: #333; }
+  hr { border: none; border-top: 1px dashed #999; margin: 6px 0; }
+  .row { display: flex; justify-content: space-between; font-size: 0.9em; }
+  .bill-to { font-size: 1em; margin: 2px 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  th { font-size: 0.82em; text-transform: uppercase; color: #555; border-bottom: 1px solid #000; padding: 2px 0; }
+  td { padding: 3px 0; vertical-align: top; }
+  th.r, td.r { text-align: right; }
+  th.l, td.l { text-align: left; }
+  .sub { font-size: 0.82em; color: #555; }
+  tbody tr { border-bottom: 1px dotted #ccc; }
+  tfoot td { padding: 2px 0; }
+  tr.tot td { border-top: 1px solid #000; font-weight: 700; font-size: 1.15em; padding-top: 4px; }
+  .foot { text-align: center; font-size: 0.9em; color: #333; margin-top: 8px; }
+  .terms { text-align: center; font-size: 0.8em; color: #555; margin-top: 4px; }
+</style></head>
+<body>${copiesHtml}
   <script>window.onload=function(){window.focus();window.print();};window.onafterprint=function(){window.close();};</script>
 </body></html>`;
 }
