@@ -21,6 +21,40 @@ export function Row({ label, value, muted }: { label: string; value: string; mut
   );
 }
 
+/** Whole-bill discount control (pct / flat ₹). Apportioned across lines in `billTotals`. */
+export function BillDiscountInput() {
+  const bill = useBill((s) => s.billDiscount);
+  const setBill = useBill((s) => s.setBillDiscount);
+  return (
+    <div className="flex items-center justify-between gap-2 text-sm">
+      <span className="text-text-tertiary">Bill discount</span>
+      <div className="flex items-center gap-1">
+        <input
+          type="number"
+          min={0}
+          max={bill.type === "pct" ? 100 : undefined}
+          value={bill.type === "pct" ? bill.value : bill.value / 100}
+          onChange={(e) => {
+            const v = Number(e.target.value) || 0;
+            setBill({ type: bill.type, value: bill.type === "pct" ? v : Math.round(v * 100) });
+          }}
+          aria-label="Bill-level discount"
+          className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+        />
+        <Button
+          variant="outline"
+          size="icon-xs"
+          aria-label="Toggle bill discount type"
+          title={bill.type === "pct" ? "Percent" : "Flat rupees"}
+          onClick={() => setBill({ type: bill.type === "pct" ? "flat" : "pct", value: 0 })}
+        >
+          {bill.type === "pct" ? "%" : "₹"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Desktop presentation of the ActionBar: a fixed right pane with the full bill
  * breakdown, payment picker, GSTIN prompt and the Save (F9) button. All logic
@@ -54,6 +88,10 @@ export function BillSummary({
         value={t.discount > 0 ? `− ${formatPaise(t.discount)}` : formatPaise(0)}
         muted
       />
+      <BillDiscountInput />
+      {t.billDiscount > 0 && (
+        <Row label="Bill discount applied" value={`− ${formatPaise(t.billDiscount)}`} muted />
+      )}
       <Row label="Taxable value" value={formatPaise(t.taxable)} muted />
       {isInterstate ? (
         <Row label="IGST" value={formatPaise(tax.igst)} muted />
