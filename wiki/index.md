@@ -24,6 +24,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/security-rls](architecture/security-rls.md) — Auth, per-org RLS, `is_member`, security-definer RPCs, gaps.
 - [architecture/import-pipeline](architecture/import-pipeline.md) — CSV / Go migrator / Smart Importer; trial-balance extraction; merge.
 - [architecture/marg-import-map](architecture/marg-import-map.md) — everything Marg ERP 9+ can export, mapped to every Salt table; scope for extending Smart Import past today's four files.
+- [architecture/smart-import-extension](architecture/smart-import-extension.md) — engineering design to grow Smart Import to the full Marg dataset (history + compliance): reuse, identity, non-posting load path, net-new schema, phased build.
 - [architecture/design-system](architecture/design-system.md) — `design.md` principles + tokens; the as-built-vs-spec gap.
 - [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale.
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, FEFO, stock cap, billTotals.
@@ -32,6 +33,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.
 - [domain/trial-balance](domain/trial-balance.md) — Saral/Marg/Tally export format, Dr/Cr, the reconciliation identity, bill lines.
+- [domain/marg-export-guide](domain/marg-export-guide.md) — operator playbook: how to export each file from Marg (menu paths, columns, join keys, gotchas, export-order checklist).
 - [domain/parties](domain/parties.md) — customer/vendor/other classification, balances/bills, merge flow.
 - [domain/orders](domain/orders.md) — orders/bills model, walk-in, payment/settlement, the amount-due formula.
 - [domain/persona-wholesale-owner](domain/persona-wholesale-owner.md) — deep persona: multi-counter wholesale dealer in tier 2/3 India; keyboard-first, unreliable internet, Marg power user, credit-driven business.
