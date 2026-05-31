@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { useGoToNav } from "./useGoToNav";
+import { useGlobalShortcuts } from "@/lib/useGlobalShortcuts";
+import { useUI } from "@/store/ui";
+import { CommandPalette } from "@/components/command/CommandPalette";
+import { ShortcutHelp } from "@/components/command/ShortcutHelp";
 
 /**
  * Persistent app shell for authenticated routes. Desktop (lg+): a persistent
@@ -12,6 +16,8 @@ import { useGoToNav } from "./useGoToNav";
  */
 export function AppLayout() {
   useGoToNav();
+  useGlobalShortcuts();
+  const openPalette = useUI((s) => s.openPalette);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Close the drawer on Escape (link clicks close it via the Sidebar onNavigate).
@@ -50,12 +56,24 @@ export function AppLayout() {
             <Menu className="size-5" />
           </button>
           <span className="text-base font-semibold tracking-tight">Salt</span>
+          <span className="flex-1" />
+          <button
+            type="button"
+            onClick={openPalette}
+            aria-label="Search and commands"
+            className="rounded-md p-1.5 text-text-secondary hover:bg-surface-2"
+          >
+            <Search className="size-5" />
+          </button>
         </header>
 
         <main className="min-w-0 flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>
+
+      <CommandPalette />
+      <ShortcutHelp />
     </div>
   );
 }
