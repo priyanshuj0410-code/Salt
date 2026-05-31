@@ -8,10 +8,12 @@ import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { CreatePartyDialog } from "@/components/parties/CreatePartyDialog";
+import { AgingTable } from "@/components/parties/AgingTable";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
 import { useAuth } from "@/lib/auth";
 import { suggestMerges, type MergeGroup } from "@/lib/mergeSuggest";
+import { agingFor, type AgingBuckets } from "@/lib/aging";
 import { cn } from "@/lib/utils";
 
 interface LedgerRow {
@@ -26,6 +28,16 @@ interface LedgerRow {
 interface Party extends LedgerRow {
   billRefs: string[];
   billCount: number;
+}
+
+interface BillRow {
+  ledger_id: string;
+  ref_no: string | null;
+  amount_paise: number;
+  nature: string | null;
+  due_date: string | null;
+  bill_date: string | null;
+  days_overdue: number | null;
 }
 
 const rupees = (paise: number) =>
@@ -74,6 +86,7 @@ export function PartiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
+  const [aging, setAging] = useState<{ receivable: AgingBuckets; payable: AgingBuckets } | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -88,8 +101,12 @@ export function PartiesPage() {
           .order("name")
           .range(from, to),
       ),
-      selectAll<{ ledger_id: string; ref_no: string | null }>((from, to) =>
-        supabase!.from("ledger_bills").select("ledger_id,ref_no").eq("org_id", orgId).range(from, to),
+      selectAll<BillRow>((from, to) =>
+        supabase!
+          .from("ledger_bills")
+          .select("ledger_id,ref_no,amount_paise,nature,due_date,bill_date,days_overdue")
+          .eq("org_id", orgId)
+          .range(from, to),
       ),
     ])
       .then(([ledgers, bills]) => {
@@ -105,6 +122,8 @@ export function PartiesPage() {
           return { ...l, billRefs: refs, billCount: refs.length };
         });
         setRows(parties);
+        // Org-wide aging from imported open bills (per-party view adds live orders).
+        setAging(agingFor(bills, []));
         setError(null);
         setLoading(false);
       })
@@ -197,6 +216,19 @@ export function PartiesPage() {
           <StatCard label="Receivable" value={`₹${rupees(stats.receivable)}`} tone="success" />
           <StatCard label="Payable" value={`₹${rupees(stats.payable)}`} tone="danger" />
         </div>
+
+        {/* Aging of imported open bills (per-party view also counts live orders) */}
+        {aging && (aging.receivable.total > 0 || aging.payable.total > 0) && (
+          <section className="mt-4 rounded-lg border border-border p-4">
+            <h2 className="text-sm font-medium text-text-primary">Aging of open bills</h2>
+            <p className="mt-0.5 text-xs text-text-tertiary">
+              Imported open bills by days overdue (₹). A party&rsquo;s own page also ages its live orders.
+            </p>
+            <div className="mt-3">
+              <AgingTable receivable={aging.receivable} payable={aging.payable} />
+            </div>
+          </section>
+        )}
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
 
