@@ -1,14 +1,13 @@
-import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import { subscribeTableInserts } from "./realtime";
 
 /**
  * Shop-wide activity feed (SALT-104) — data + real-time layer.
  *
  * `activity_events` is an append-only log written server-side by triggers on
  * sales / payments / purchases (migration 0028), so every counter's actions show
- * up live on every other counter. This module is the reusable real-time
- * primitive the multi-counter features build on: a per-org Postgres-changes
- * channel over Supabase Realtime.
+ * up live on every other counter. Streaming rides the shared per-org
+ * Postgres-changes primitive in `./realtime`.
  */
 
 export type ActivityKind = "sale" | "purchase" | "payment_in" | "payment_out";
@@ -57,17 +56,11 @@ export function subscribeActivity(
   onInsert: (e: ActivityEvent) => void,
   onStatus?: (connected: boolean) => void,
 ): () => void {
-  const sb = supabase;
-  if (!sb) return () => {};
-  const channel: RealtimeChannel = sb
-    .channel(`activity:${orgId}`)
-    .on(
-      "postgres_changes",
-      { event: "INSERT", schema: "public", table: "activity_events", filter: `org_id=eq.${orgId}` },
-      (payload) => onInsert(payload.new as ActivityEvent),
-    )
-    .subscribe((status) => onStatus?.(status === "SUBSCRIBED"));
-  return () => {
-    void sb.removeChannel(channel);
-  };
+  return subscribeTableInserts<ActivityEvent>({
+    channel: `activity:${orgId}`,
+    table: "activity_events",
+    filter: `org_id=eq.${orgId}`,
+    onInsert,
+    onStatus,
+  });
 }

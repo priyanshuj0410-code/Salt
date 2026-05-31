@@ -12,7 +12,7 @@ The PRD's strategic wedge (Phase 5) is **offline-first + real-time multi-counter
 
 > **PRD-vs-as-built divergence (flagged).** The PRD (§7) names **self-hosted Yjs** and **ElectricSQL** for sync. As-built rides **Supabase Realtime** (Postgres Changes + Broadcast + Presence) instead — the same reasoning as ADR [0002](../decisions/0002-stack-divergence-from-prd.md): the backend is already Supabase, so Realtime is zero new infra, RLS-aware, and ships today. Yjs/ElectricSQL remain options for the *offline* CRDT/local-first tickets (SALT-100/101) where Supabase Realtime alone is insufficient; they are not needed for server-authoritative live features (activity, presence, live stock, approvals).
 
-The reusable primitive is a **per-org Postgres-changes channel**: subscribe to `INSERT`s on a table filtered by `org_id`, RLS enforced. One small helper (`lib/activity.ts → subscribeActivity`) that the other live features re-point at their own tables.
+The reusable primitive is a **per-org Postgres-changes channel**: subscribe to `INSERT`s on a table, optionally filtered, RLS enforced. Extracted as **`lib/realtime.ts → subscribeTableInserts<T>`**; every live feature (activity feed, internal messages, future approvals) rides this one helper — point it at a table + filter.
 
 ## Activity feed — SALT-104 ✅ (first slice)
 
@@ -26,6 +26,16 @@ Capturing via triggers — rather than editing billing/payments/GRN code to emit
 
 **Stream + UI.** `lib/activity.ts` (`fetchRecentActivity` + `subscribeActivity`) and `components/activity/ActivityPage.tsx` (`/activity`, nav key `g v`, visible to owner **and** cashier — multi-counter awareness is the point). Initial 200-row fetch + live prepend (de-duped, capped 500); filters by kind (sales/purchases/payments), today-only, and free-text (party/counter/ref); a live/connecting indicator.
 
+## Internal messages — SALT-105 ✅
+
+Live staff notes/chat attached to any entity (a bill, customer or item). Same substrate.
+
+**Storage.** Migration `0029_entity_messages.sql`: `entity_messages` (a thread is `(entity_type, entity_id)`), `is_member` RLS, in the `supabase_realtime` publication, indexed `(org_id, entity_type, entity_id, created_at)`. A `before insert` trigger **stamps the author** from `auth.uid()` (can't be spoofed) and denormalizes `author_name`.
+
+**Reusable UI.** `components/messages/MessageThread.tsx` — drop `<MessageThread entityType entityId />` into any detail screen: initial fetch + live append (de-duped), a composer, own-vs-other bubble alignment. Data/realtime layer in `lib/messages.ts` (`fetchMessages` / `postMessage` / `subscribeMessages`, on `subscribeTableInserts`, filtered by `entity_id`).
+
+**Entry point (in-lane).** Wired into the `/activity` feed: click any event → a dialog opens that event's thread. So messaging is usable today without touching other modules. Embedding the same component directly on the bill / party / item detail screens is **handed off** (those files belong to other modules): tickets **SALT-160** (bills), **SALT-161** (parties), **SALT-162** (catalogue, gated on the item screen existing).
+
 ## Not yet built (same module)
 
 | Ticket | What | Builds on |
@@ -34,7 +44,6 @@ Capturing via triggers — rather than editing billing/payments/GRN code to emit
 | SALT-101 | Self-hosted Yjs presence + live stock <1s LAN + parked-bill sync | Presence + Broadcast channels (Realtime covers most) |
 | SALT-102 | Multi-counter conflict resolution (atomic last-unit) | server-authoritative stock decrement (billing RPC) |
 | SALT-103 | Shop-local server | infra |
-| SALT-105 | Internal messages on bills/customers/items | re-point `subscribeActivity` pattern at a `messages` table |
 | SALT-106 | Approve-from-manager-device flow | same channel pattern + an approvals table |
 
 Live stock (SALT-101) and atomic last-unit (SALT-102) land in **billing/inventory** files → filed as tickets for those modules rather than edited here.

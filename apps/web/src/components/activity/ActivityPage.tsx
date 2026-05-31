@@ -4,6 +4,7 @@ import {
   Activity,
   ArrowDownLeft,
   ArrowUpRight,
+  MessageSquare,
   Receipt,
   ShoppingCart,
   type LucideIcon,
@@ -11,9 +12,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dot } from "@/components/ui/dot";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { EmptyState } from "@/components/patterns/empty-state";
+import { MessageThread } from "@/components/messages/MessageThread";
 import { useAuth } from "@/lib/auth";
 import { formatPaise } from "@/lib/currency";
 import { fetchRecentActivity, subscribeActivity, type ActivityEvent } from "@/lib/activity";
@@ -89,6 +92,7 @@ export function ActivityPage() {
   const [kind, setKind] = useState<KindFilter>("all");
   const [todayOnly, setTodayOnly] = useState(false);
   const [q, setQ] = useState("");
+  const [openEvent, setOpenEvent] = useState<ActivityEvent | null>(null);
 
   const visible = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -167,39 +171,58 @@ export function ActivityPage() {
             const Icon = meta.Icon;
             const when = new Date(e.created_at);
             return (
-              <li
-                key={e.id}
-                className="flex items-center gap-3 border-b border-divider px-3 py-2.5 last:border-b-0"
-              >
-                <span className="grid size-8 shrink-0 place-items-center rounded-full border border-border bg-surface">
-                  <Icon className={`size-4 ${TONE_CLASS[meta.tone]}`} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-1.5 text-sm">
-                    <span className="font-medium text-text-primary">{e.title}</span>
-                    {e.party_name && (
-                      <span className="min-w-0 truncate text-text-secondary">· {e.party_name}</span>
-                    )}
-                    {e.ref && <span className="shrink-0 text-xs text-text-tertiary">{e.ref}</span>}
-                  </div>
-                  <div className="text-xs text-text-tertiary">
-                    {e.actor_name ?? "Counter"} ·{" "}
-                    <time dateTime={when.toISOString()} title={format(when, "d MMM yyyy, HH:mm")}>
-                      {formatDistanceToNow(when, { addSuffix: true })}
-                    </time>
-                  </div>
-                </div>
-                {e.amount_paise != null && (
-                  <span className={`shrink-0 text-sm tabular-nums ${TONE_CLASS[meta.tone]}`}>
-                    {meta.sign}
-                    {formatPaise(e.amount_paise)}
+              <li key={e.id} className="border-b border-divider last:border-b-0">
+                <button
+                  type="button"
+                  onClick={() => e.entity_id && setOpenEvent(e)}
+                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-surface"
+                >
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full border border-border bg-surface">
+                    <Icon className={`size-4 ${TONE_CLASS[meta.tone]}`} />
                   </span>
-                )}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline gap-1.5 text-sm">
+                      <span className="font-medium text-text-primary">{e.title}</span>
+                      {e.party_name && (
+                        <span className="min-w-0 truncate text-text-secondary">· {e.party_name}</span>
+                      )}
+                      {e.ref && <span className="shrink-0 text-xs text-text-tertiary">{e.ref}</span>}
+                    </div>
+                    <div className="text-xs text-text-tertiary">
+                      {e.actor_name ?? "Counter"} ·{" "}
+                      <time dateTime={when.toISOString()} title={format(when, "d MMM yyyy, HH:mm")}>
+                        {formatDistanceToNow(when, { addSuffix: true })}
+                      </time>
+                    </div>
+                  </div>
+                  {e.amount_paise != null && (
+                    <span className={`shrink-0 text-sm tabular-nums ${TONE_CLASS[meta.tone]}`}>
+                      {meta.sign}
+                      {formatPaise(e.amount_paise)}
+                    </span>
+                  )}
+                  <MessageSquare className="size-3.5 shrink-0 text-text-tertiary" />
+                </button>
               </li>
             );
           })}
         </ol>
       )}
+      <Dialog open={openEvent !== null} onOpenChange={(o) => !o && setOpenEvent(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="size-4 text-text-tertiary" />
+              {openEvent
+                ? [openEvent.title, openEvent.party_name, openEvent.ref].filter(Boolean).join(" · ")
+                : "Thread"}
+            </DialogTitle>
+          </DialogHeader>
+          {openEvent?.entity_id && (
+            <MessageThread entityType={openEvent.entity_type ?? ""} entityId={openEvent.entity_id} />
+          )}
+        </DialogContent>
+      </Dialog>
     </Page>
   );
 }
