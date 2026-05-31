@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
-import { Mail, MessageCircle, MessageSquare, Printer, Receipt, Wallet } from "lucide-react";
+import { Mail, MessageCircle, MessageSquare, Printer, Receipt, Undo2, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -218,6 +218,11 @@ export function BillHistoryPage() {
                   active ? ` of ${rows.length}` : ""
                 }`
               : "Every saved sale, newest first"
+          }
+          actions={
+            <Button variant="ghost" render={<Link to="/bills/credit-notes" />}>
+              <Undo2 className="size-4" /> Credit notes
+            </Button>
           }
         />
 
