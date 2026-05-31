@@ -16,6 +16,7 @@ import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
+import { SetupWizard } from "@/components/onboarding/SetupWizard";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/nav/AppLayout";
 
@@ -44,6 +45,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <OwnerHome />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/setup"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SetupWizard />
           </ProtectedRoute>
         }
       />

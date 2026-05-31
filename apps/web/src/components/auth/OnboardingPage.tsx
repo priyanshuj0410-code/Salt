@@ -33,12 +33,15 @@ export function OnboardingPage() {
     setError(null);
     setSubmitting(true);
     try {
+      // Owners go to the first-run setup wizard; cashiers (join) go straight to the counter.
+      let target = "/";
       if (mode === "create") {
         const { data: orgId, error } = await supabase.rpc("create_org", { p_name: name.trim() });
         if (error) {
           setError(error.message);
           return;
         }
+        target = "/setup";
         // Pre-fill the new org's primary shop from a valid GSTIN so the owner
         // skips the just-in-time ShopSetupDialog before their first bill (state
         // is billing's hard blocker). Best-effort — a failure here must not strand
@@ -57,7 +60,7 @@ export function OnboardingPage() {
         }
       }
       await refresh();
-      navigate("/", { replace: true });
+      navigate(target, { replace: true });
     } finally {
       setSubmitting(false);
     }
