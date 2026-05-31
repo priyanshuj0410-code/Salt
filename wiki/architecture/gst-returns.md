@@ -103,6 +103,13 @@ Amounts are rupees; `AMOUNT` is negative for debits (Tally's sign convention) so
 sums to zero. Cash/UPI/card bills post to **Cash**, credit bills to the party ledger. Ledgers
 are referenced by name (Tally maps/creates them on import). Same scope filters as the returns.
 
+## HSN summary (report)
+
+`buildHsnSummary(lines)` (screen `/gst/hsn`, SALT-068) aggregates sale lines by **HSN × rate**
+(qty, taxable, CGST/SGST/IGST) over a **flexible month range** — the same table GSTR-1 §12 shows
+for one month, but spanning a quarter or year for GSTR-9 / analytics. CSV export. Same scope as
+the returns (shop, `status='placed'`, `posts_effects=true`).
+
 ## Deferred
 
 Credit notes (CDNR — Returns module unbuilt) · server-side `v_gstr1_*` / `v_gstr3b_summary`
