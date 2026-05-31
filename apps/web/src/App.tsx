@@ -21,6 +21,9 @@ const GrnDetailPage = lazy(() => import("@/components/grn/GrnDetailPage").then((
 const PoListPage = lazy(() => import("@/components/grn/PoListPage").then((m) => ({ default: m.PoListPage })));
 const PoEntryPage = lazy(() => import("@/components/grn/PoEntryPage").then((m) => ({ default: m.PoEntryPage })));
 const PoDetailPage = lazy(() => import("@/components/grn/PoDetailPage").then((m) => ({ default: m.PoDetailPage })));
+const DebitNoteListPage = lazy(() => import("@/components/grn/DebitNoteListPage").then((m) => ({ default: m.DebitNoteListPage })));
+const DebitNoteEntryPage = lazy(() => import("@/components/grn/DebitNoteEntryPage").then((m) => ({ default: m.DebitNoteEntryPage })));
+const DebitNoteDetailPage = lazy(() => import("@/components/grn/DebitNoteDetailPage").then((m) => ({ default: m.DebitNoteDetailPage })));
 const BillHistoryPage = lazy(() => import("@/components/bills/BillHistoryPage").then((m) => ({ default: m.BillHistoryPage })));
 const ActivityPage = lazy(() => import("@/components/activity/ActivityPage").then((m) => ({ default: m.ActivityPage })));
 const ApprovalsPage = lazy(() => import("@/components/approvals/ApprovalsPage").then((m) => ({ default: m.ApprovalsPage })));
@@ -186,6 +189,30 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <PoDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/returns"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DebitNoteListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/returns/new"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DebitNoteEntryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/returns/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DebitNoteDetailPage />
           </ProtectedRoute>
         }
       />

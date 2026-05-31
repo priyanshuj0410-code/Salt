@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, Truck } from "lucide-react";
+import { ArrowLeft, CornerUpLeft, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
@@ -50,6 +51,7 @@ const LINE_GRID = "grid-cols-[minmax(8rem,1.6fr)_0.9fr_0.5fr_0.5fr_0.8fr_0.6fr_0
 export function GrnDetailPage() {
   const { id } = useParams<{ id: string }>();
   const orgId = useAuth().membership?.orgId;
+  const navigate = useNavigate();
   const [head, setHead] = useState<GrnHead | null>(null);
   const [lines, setLines] = useState<GrnLine[] | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -125,6 +127,13 @@ export function GrnDetailPage() {
           ) : (
             "Loading…"
           )
+        }
+        actions={
+          head ? (
+            <Button variant="outline" onClick={() => navigate(`/purchases/returns/new?purchase=${head.id}`)}>
+              <CornerUpLeft /> Return to vendor
+            </Button>
+          ) : undefined
         }
       />
 
