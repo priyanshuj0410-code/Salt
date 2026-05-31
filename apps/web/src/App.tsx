@@ -33,6 +33,7 @@ const TurnoverPage = lazy(() => import("@/components/inventory/TurnoverPage").th
 const AdjustmentsPage = lazy(() => import("@/components/inventory/AdjustmentsPage").then((m) => ({ default: m.AdjustmentsPage })));
 const PhysicalCountPage = lazy(() => import("@/components/inventory/PhysicalCountPage").then((m) => ({ default: m.PhysicalCountPage })));
 const ExpiryDestructionPage = lazy(() => import("@/components/inventory/ExpiryDestructionPage").then((m) => ({ default: m.ExpiryDestructionPage })));
+const TransfersPage = lazy(() => import("@/components/inventory/TransfersPage").then((m) => ({ default: m.TransfersPage })));
 const Gstr1Page = lazy(() => import("@/components/gst/Gstr1Page").then((m) => ({ default: m.Gstr1Page })));
 const Gstr3bPage = lazy(() => import("@/components/gst/Gstr3bPage").then((m) => ({ default: m.Gstr3bPage })));
 const GstLiabilityPage = lazy(() => import("@/components/gst/GstLiabilityPage").then((m) => ({ default: m.GstLiabilityPage })));
@@ -273,6 +274,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <ExpiryDestructionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/transfers"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <TransfersPage />
           </ProtectedRoute>
         }
       />

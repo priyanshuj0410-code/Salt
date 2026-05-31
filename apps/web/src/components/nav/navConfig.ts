@@ -112,6 +112,7 @@ export const NAV: NavModule[] = [
       { label: "Adjustments", path: "/inventory/adjustments", built: true },
       { label: "Physical count", path: "/inventory/count", built: true },
       { label: "Expiry destruction", path: "/inventory/destruction", built: true },
+      { label: "Transfers", path: "/inventory/transfers", built: true },
     ],
   },
   {
