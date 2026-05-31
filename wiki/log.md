@@ -1,6 +1,6 @@
 ---
 type: log
-updated: 2026-05-31
+updated: 2026-06-01
 ---
 
 # Log
@@ -141,3 +141,6 @@ First screen built to [architecture/interaction-patterns](architecture/interacti
 
 ## [2026-05-31] decision | Vendor ordering channel + ONDC B2B pharma deep dive
 Researched whether the `known_vendors` (pharma **manufacturers**) expose order-placing APIs. They do not — and structurally can't: the channel is **distributor-mediated** (Manufacturer → C&F → Distributor → Retailer), so a chemist never orders from a manufacturer; our own `Saral/Trial_Balance.xls` payables are to distribution entities, not HQs. No aggregator (Pharmarack/Retailio/Saveo) offers a public self-serve ordering API either — integration there is BD/partnership, on the *distributor's* billing software. The only open rail is **ONDC**, but pharmacy on ONDC is OTC/B2C-only today (no Rx, no B2B-pharma category) — "playing it safe." Decision: model ordering against **distributors**, integrate via aggregator BD **or** an ONDC buyer app (never manufacturer APIs), and ship a structured PO→WhatsApp/PDF export as the near-term stopgap; ONDC = watch-and-prototype, gated by seller liquidity + the Rx restriction. Two new pages — ADR 0016 (decision + landscape) and the ONDC/Beckn deep dive (roles, transaction flow, regulatory gate, onboarding, the two plays → Modules 18 & 21). Docs only, no code. → [decisions/0016](decisions/0016-vendor-ordering-channel.md) · [architecture/ondc-b2b-pharma](architecture/ondc-b2b-pharma.md)
+
+## [2026-06-01] build | Schedule H1/X hard gate at checkout (SALT-005)
+A bill with any Schedule **H1/X** drug can no longer be saved until the prescriber + patient are recorded (Drugs & Cosmetics Rules). Gate lives in `useCheckout.save()`, so it covers all three checkout paths (F9 · desktop **Save** · mobile **Charge**) from one guard: `requiresRx(lines)` (`lib/billing.ts`, gated = `["H1","X"]`) → opens **`H1Gate`** dialog requiring doctor name + patient name + address (doctor reg. no. optional), mirroring the server `record_h1_entry` contract. Captured Rx lives on the bill store (`useBill.rx`) so `clear()` resets it per bill; `buildSalesInvoicePayload` threads it into the **existing** `create_sales_invoice` args (`doctor_name` + `formatRxNote`→`notes`) — **no migration**. `H1Notice` (amber→green) surfaces it inline; bill lines already show `ScheduleBadge`. Server-side `h1_register` + `enforce_h1_gate` wiring deferred to SALT-148 (DB). lint + build green; pure logic smoke-tested. → [architecture/billing-screen](architecture/billing-screen.md)

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
 import { GstinPrompt } from "./GstinPrompt";
 import { Row } from "./BillSummary";
+import { H1Notice } from "./H1Gate";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -30,6 +31,7 @@ export function MobileCheckout({
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, save, saving, saved, error } = checkout;
+  const { needsRx, rxCaptured, rx, openRx } = checkout;
   const [open, setOpen] = useState(false);
   const loss = t.margin < 0;
 
@@ -97,6 +99,12 @@ export function MobileCheckout({
         </div>
       )}
 
+      {needsRx && (
+        <div className="px-3 pt-3">
+          <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
+        </div>
+      )}
+
       <div className="flex items-center gap-3 p-3">
         <button onClick={() => setOpen((v) => !v)} className="min-w-0 flex-1 text-left" aria-label="Toggle bill breakdown">
           <div className="flex items-center gap-1 text-xs text-text-tertiary">
@@ -105,7 +113,7 @@ export function MobileCheckout({
           </div>
           <div className="text-lg font-semibold tabular-nums">{formatPaise(t.grand)}</div>
         </button>
-        <Button size="lg" disabled={saving || usingSeed} onClick={save}>
+        <Button size="lg" disabled={saving || usingSeed} onClick={() => save()}>
           {saved ? (
             <>
               <Check /> Saved

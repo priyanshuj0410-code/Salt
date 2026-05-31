@@ -37,6 +37,27 @@ export interface OrderParty {
   name: string;
 }
 
+/**
+ * Prescription details captured at checkout for a Schedule H1/X sale. doctorName,
+ * patientName and patientAddress are mandatory (the H1 register requires them);
+ * doctorRegNo is optional. Persisted today on the invoice: doctorName →
+ * `sales_invoices.doctor_name`, the rest folded into `notes` via `formatRxNote`.
+ * (A follow-up DB slice will write the structured `h1_register` rows.)
+ */
+export interface RxDetails {
+  doctorName: string;
+  doctorRegNo: string;
+  patientName: string;
+  patientAddress: string;
+}
+
+/** One-line audit note for the invoice from captured Rx details. */
+export function formatRxNote(rx: RxDetails): string {
+  const parts = [`Patient: ${rx.patientName} (${rx.patientAddress})`];
+  if (rx.doctorRegNo.trim()) parts.push(`Dr reg: ${rx.doctorRegNo.trim()}`);
+  return `Schedule H1/X · ${parts.join(" · ")}`;
+}
+
 export type OrderDirection = "sale" | "purchase";
 
 /** One line in the create_sales_invoice RPC payload (snake_case to match the SQL). */
@@ -78,6 +99,7 @@ export function buildSalesInvoicePayload(
   party: OrderParty | null,
   lines: BillLine[],
   payment: Payment,
+  rx: RxDetails | null = null,
 ): SalesInvoiceArgs {
   return {
     p_shop_id: shopId,
@@ -85,8 +107,8 @@ export function buildSalesInvoicePayload(
     p_payment_method: payment.method,
     p_credit_days: payment.method === "credit" ? payment.creditDays : 0,
     p_invoice_no: null,
-    p_doctor_name: null,
-    p_notes: null,
+    p_doctor_name: rx?.doctorName.trim() || null,
+    p_notes: rx ? formatRxNote(rx) : null,
     p_lines: lines.map((l) => ({
       item_id: l.itemId,
       name: l.name,

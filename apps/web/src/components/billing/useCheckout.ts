@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { supabase } from "@/lib/supabase";
-import { buildSalesInvoicePayload, withTimeout, TimeoutError } from "@/lib/orders";
+import { buildSalesInvoicePayload, withTimeout, TimeoutError, type RxDetails } from "@/lib/orders";
 import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
+import { gatedLines, requiresRx } from "@/lib/billing";
 import { billTotals, useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
 
@@ -22,6 +23,8 @@ export function useCheckout() {
   const clear = useBill((s) => s.clear);
   const payment = useBill((s) => s.payment);
   const party = useBill((s) => s.party);
+  const rx = useBill((s) => s.rx);
+  const setRx = useBill((s) => s.setRx);
   const setPaymentMethod = useBill((s) => s.setPaymentMethod);
   const setCreditDays = useBill((s) => s.setCreditDays);
   const usingSeed = useCatalog((s) => s.usingSeed);
@@ -31,11 +34,24 @@ export function useCheckout() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
+  const [rxOpen, setRxOpen] = useState(false);
   const t = billTotals(lines);
   const empty = lines.length === 0;
+  const needsRx = requiresRx(lines);
 
-  async function save() {
+  // `rx` lives in the bill store, so `clear()` (after a save, or a manual Clear)
+  // resets it — one customer's prescription never carries to the next bill.
+  // `rxOverride` lets the gate dialog pass details on confirm without waiting for
+  // the state update; F9 / button callers omit it and fall back to captured `rx`.
+  async function save(rxOverride?: RxDetails) {
     if (!supabase || empty || usingSeed || saving || !shopId) return;
+    const rxToUse = rxOverride ?? rx;
+    // Schedule H1/X hard gate: no save until the prescriber + patient are recorded.
+    if (needsRx && !rxToUse) {
+      setError(null);
+      setRxOpen(true);
+      return;
+    }
     // Shop must have a state_code or create_sales_invoice hits is_interstate
     // NOT NULL — show the rescue dialog and bail; its onResolved retries.
     if (!blockers.ready) {
@@ -46,7 +62,7 @@ export function useCheckout() {
     setSaving(true);
     setError(null);
     try {
-      const args = buildSalesInvoicePayload(shopId, party, lines, payment);
+      const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null);
       const { error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
       if (err) {
         setError(err.message);
@@ -66,6 +82,14 @@ export function useCheckout() {
     }
   }
 
+  // Confirm from the gate dialog: keep the details, close, then save straight away
+  // (passing them through so we don't race the state update).
+  function confirmRx(details: RxDetails) {
+    setRx(details);
+    setRxOpen(false);
+    void save(details);
+  }
+
   useHotkeys(
     "f9",
     (e) => {
@@ -73,7 +97,7 @@ export function useCheckout() {
       void save();
     },
     { enableOnFormTags: true },
-    [lines, payment, party, usingSeed, shopId, blockers.ready],
+    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx],
   );
 
   return {
@@ -90,6 +114,15 @@ export function useCheckout() {
     shopId,
     setupOpen,
     setSetupOpen,
+    // Schedule H1/X gate
+    needsRx,
+    rxCaptured: rx !== null,
+    rx,
+    gatedLines: needsRx ? gatedLines(lines) : [],
+    rxOpen,
+    setRxOpen,
+    confirmRx,
+    openRx: () => setRxOpen(true),
   };
 }
 

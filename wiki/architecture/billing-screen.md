@@ -1,6 +1,6 @@
 ---
 type: architecture
-updated: 2026-05-31
+updated: 2026-06-01
 ---
 
 # Billing screen
@@ -41,7 +41,8 @@ Sub-components:
 | `GstinPrompt.tsx` | Inline "Add GSTIN" when the customer has none — writes `ledgers.gstin` mid-bill, never blocks the sale |
 | `CustomerPicker.tsx` | Choose customer (walk-in default); search by name/phone; **Enter picks the top match** |
 | `ShortcutHelp.tsx` | Modal reference (Shift+/) |
-| `ScheduleBadge.tsx` | H / H1 / X / OTC badge on search results |
+| `ScheduleBadge.tsx` | H / H1 / X / OTC badge on search results **and bill lines** |
+| `H1Gate.tsx` | Schedule H1/X checkout gate dialog + `H1Notice` inline banner — see [Schedule H1/X gate](#schedule-h1x-gate) |
 
 ## Keyboard map
 
@@ -61,6 +62,18 @@ Sub-components:
 | `F9` | Anywhere | Save the bill → `create_sales_invoice` |
 | `Shift+/` | Anywhere | Open `ShortcutHelp` dialog |
 
+## Schedule H1/X gate
+
+A **hard gate**: a bill containing any Schedule **H1** or **X** drug cannot be saved until the prescriber + patient are recorded (Drugs & Cosmetics Rules — the H1 register; plain Schedule H needs a prescription but no register, so it is **not** gated). Implemented client-side in [`useCheckout.ts`](../../apps/web/src/components/billing/useCheckout.ts), so it covers every checkout entry point (F9, desktop **Save**, mobile **Charge**) from one guard.
+
+- `requiresRx(lines)` / `gatedLines(lines)` (`lib/billing.ts`) decide if the gate fires and which lines triggered it. Gated schedules: `GATED_SCHEDULES = ["H1","X"]`, mirroring the server `record_h1_entry` / `enforce_h1_gate` contract (0022).
+- On save, if the bill needs Rx and none is captured, `save()` opens **`H1Gate`** instead of writing. The dialog requires **doctor name, patient name, patient address** (doctor reg. no. optional) — the same three the server function mandates.
+- Captured details live on the bill store (`useBill.rx`), so `clear()` resets them after a save / manual clear — one customer's prescription never carries to the next bill.
+- Persistence **today**: `buildSalesInvoicePayload` threads the details into the existing `create_sales_invoice` args — `doctorName → sales_invoices.doctor_name`, the rest formatted by `formatRxNote` into `notes`. Only attached when the bill actually has H1/X lines.
+- `H1Notice` (amber → green) surfaces the requirement inline above Save/Charge and opens the gate to add/edit.
+
+**Follow-up (DB slice, not built here):** wire `enforce_h1_gate` + `record_h1_entry` into `create_sales_invoice` so the structured `h1_register` rows are written atomically (with real `sale_line_id`s) and the server independently rejects a non-compliant H1 sale — defense in depth behind this UI gate. The proposed RPC (`supabase/proposed/0018_sales.sql`) already carries `doctor_name`/`notes` but does **not** call the gate; see ticket SALT-148 (and SALT-065 for the inspector register screen).
+
 ## useBill store (`store/bill.ts`)
 
 Zustand store managing all mutable bill state.
@@ -69,6 +82,8 @@ Zustand store managing all mutable bill state.
 ```ts
 lines: BillLine[]
 payment: { method: "cash" | "credit"; creditDays: number }
+party: OrderParty | null   // the customer; null = walk-in
+rx: RxDetails | null        // captured Schedule H1/X prescription; cleared by clear()
 ```
 
 **Actions:**

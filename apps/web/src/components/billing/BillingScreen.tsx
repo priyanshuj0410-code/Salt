@@ -7,6 +7,7 @@ import { BillSummary } from "./BillSummary";
 import { MobileCheckout } from "./MobileCheckout";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { CustomerPicker } from "./CustomerPicker";
+import { H1Gate } from "./H1Gate";
 import { useCheckout } from "./useCheckout";
 import { Kbd } from "@/components/ui/kbd";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
@@ -175,6 +176,13 @@ export function BillingScreen() {
         open={checkout.setupOpen}
         onOpenChange={checkout.setSetupOpen}
         onResolved={() => void checkout.save()}
+      />
+      <H1Gate
+        open={checkout.rxOpen}
+        onOpenChange={checkout.setRxOpen}
+        lines={checkout.gatedLines}
+        initial={checkout.rx}
+        onConfirm={checkout.confirmRx}
       />
     </div>
   );
