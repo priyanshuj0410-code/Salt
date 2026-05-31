@@ -14,6 +14,8 @@ import { selectAll } from "@/lib/selectAll";
 import { useAuth } from "@/lib/auth";
 import { suggestMerges, type MergeGroup } from "@/lib/mergeSuggest";
 import { agingFor, type AgingBuckets } from "@/lib/aging";
+import { upcomingPayments, UPCOMING_BANDS, type UpcomingBuckets } from "@/lib/cashflow";
+import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
 import { cn } from "@/lib/utils";
 
 interface LedgerRow {
@@ -22,6 +24,7 @@ interface LedgerRow {
   type: string;
   phone: string | null;
   gstin: string | null;
+  state_code: string | null;
   opening_balance_paise: number;
 }
 
@@ -40,8 +43,27 @@ interface BillRow {
   days_overdue: number | null;
 }
 
+/** A single scheduled vendor payment shown in the cash-flow panel. */
+interface NextPayment {
+  vendorId: string;
+  vendorName: string;
+  amountPaise: number;
+  dueDate: string;
+}
+
 const rupees = (paise: number) =>
   (Math.abs(paise) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+const fmtDueDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+// A GSTIN's first two digits are its GST state code. Used to backfill a missing
+// ledgers.state_code so create_sales_invoice splits CGST/SGST vs IGST correctly (SALT-054).
+const VALID_STATE_CODES = new Set(INDIAN_STATE_CODES.map((s) => s.code));
+const stateFromGstin = (gstin: string | null): string | null => {
+  const code = gstin?.trim().slice(0, 2);
+  return code && VALID_STATE_CODES.has(code) ? code : null;
+};
 
 const initials = (name: string) =>
   name
@@ -87,6 +109,8 @@ export function PartiesPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const [createOpen, setCreateOpen] = useState(false);
   const [aging, setAging] = useState<{ receivable: AgingBuckets; payable: AgingBuckets } | null>(null);
+  const [vendorPay, setVendorPay] = useState<{ buckets: UpcomingBuckets; next: NextPayment[] } | null>(null);
+  const [retagging, setRetagging] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -96,7 +120,7 @@ export function PartiesPage() {
       selectAll<LedgerRow>((from, to) =>
         supabase!
           .from("ledgers")
-          .select("id,name,type,phone,gstin,opening_balance_paise")
+          .select("id,name,type,phone,gstin,state_code,opening_balance_paise")
           .eq("org_id", orgId)
           .order("name")
           .range(from, to),
@@ -124,6 +148,22 @@ export function PartiesPage() {
         setRows(parties);
         // Org-wide aging from imported open bills (per-party view adds live orders).
         setAging(agingFor(bills, []));
+        // Upcoming vendor payments (SALT-055): dated cr payables on vendor parties.
+        const vendorName = new Map(
+          ledgers.filter((l) => l.type === "vendor").map((l) => [l.id, l.name] as const),
+        );
+        const payables: NextPayment[] = bills
+          .filter((b) => b.nature === "cr" && b.due_date && b.amount_paise > 0 && vendorName.has(b.ledger_id))
+          .map((b) => ({
+            vendorId: b.ledger_id,
+            vendorName: vendorName.get(b.ledger_id)!,
+            amountPaise: b.amount_paise,
+            dueDate: b.due_date as string,
+          }));
+        const next = [...payables]
+          .sort((a, b) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0))
+          .slice(0, 8);
+        setVendorPay({ buckets: upcomingPayments(payables), next });
         setError(null);
         setLoading(false);
       })
@@ -138,6 +178,52 @@ export function PartiesPage() {
   }, [orgId, reloadKey]);
 
   const reload = () => setReloadKey((k) => k + 1);
+
+  // Re-tag a party's type inline from the list (fix import mistags without
+  // opening the profile). Optimistic; reverts on error.
+  async function retag(id: string, type: string) {
+    if (!supabase || retagging) return;
+    const prev = rows;
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, type } : r)));
+    setRetagging(id);
+    setError(null);
+    const { error: err } = await supabase.from("ledgers").update({ type }).eq("id", id);
+    setRetagging(null);
+    if (err) {
+      setError(err.message);
+      setRows(prev);
+    }
+  }
+
+  // Backfill missing state_code from each party's GSTIN prefix, grouped into one
+  // update per state, so the sales RPC can pick CGST/SGST vs IGST (SALT-054).
+  async function fillStateFromGstin() {
+    if (!supabase || busy) return;
+    const byState = new Map<string, string[]>();
+    for (const r of rows) {
+      if (r.state_code) continue;
+      const s = stateFromGstin(r.gstin);
+      if (!s) continue;
+      const arr = byState.get(s);
+      if (arr) arr.push(r.id);
+      else byState.set(s, [r.id]);
+    }
+    if (byState.size === 0) return;
+    setBusy(true);
+    setError(null);
+    try {
+      for (const [s, ids] of byState) {
+        const { error: err } = await supabase.from("ledgers").update({ state_code: s }).in("id", ids);
+        if (err) {
+          setError(err.message);
+          break;
+        }
+      }
+      reload();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   const suggestions = useMemo(
     () =>
@@ -166,6 +252,18 @@ export function PartiesPage() {
       else customers++;
     }
     return { receivable, payable, bills, customers, vendors, others, count: rows.length };
+  }, [rows]);
+
+  // Parties with no state_code bill as intra-state (CGST+SGST) by default; count
+  // them and how many can be auto-filled from their GSTIN prefix (SALT-054).
+  const stateGap = useMemo(() => {
+    let missing = 0, fillable = 0;
+    for (const r of rows) {
+      if (r.state_code) continue;
+      missing++;
+      if (stateFromGstin(r.gstin)) fillable++;
+    }
+    return { missing, fillable };
   }, [rows]);
 
   const visible = useMemo(() => {
@@ -217,6 +315,24 @@ export function PartiesPage() {
           <StatCard label="Payable" value={`₹${rupees(stats.payable)}`} tone="danger" />
         </div>
 
+        {/* State coverage (SALT-054) — missing state_code defaults sales to intra-state CGST+SGST */}
+        {!loading && stateGap.missing > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-warning-bg/50 p-3 text-sm">
+            <span className="min-w-0 flex-1">
+              <span className="font-medium">{stateGap.missing.toLocaleString("en-IN")}</span>{" "}
+              part{stateGap.missing === 1 ? "y has" : "ies have"} no state set — their sales default to CGST+SGST (intra-state).
+              {stateGap.fillable > 0
+                ? ` ${stateGap.fillable.toLocaleString("en-IN")} can be filled from their GSTIN.`
+                : " Add a state on each party to fix the GST split."}
+            </span>
+            {stateGap.fillable > 0 && (
+              <Button size="sm" variant="outline" disabled={busy} onClick={fillStateFromGstin}>
+                Fill {stateGap.fillable.toLocaleString("en-IN")} from GSTIN
+              </Button>
+            )}
+          </div>
+        )}
+
         {/* Aging of imported open bills (per-party view also counts live orders) */}
         {aging && (aging.receivable.total > 0 || aging.payable.total > 0) && (
           <section className="mt-4 rounded-lg border border-border p-4">
@@ -227,6 +343,49 @@ export function PartiesPage() {
             <div className="mt-3">
               <AgingTable receivable={aging.receivable} payable={aging.payable} />
             </div>
+          </section>
+        )}
+
+        {/* Upcoming vendor payments (SALT-055) */}
+        {vendorPay && vendorPay.buckets.total > 0 && (
+          <section className="mt-4 rounded-lg border border-border p-4">
+            <h2 className="text-sm font-medium text-text-primary">Upcoming vendor payments</h2>
+            <p className="mt-0.5 text-xs text-text-tertiary">
+              What you owe vendors, by due date (₹). From imported open bills that carry a due date.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+              {UPCOMING_BANDS.map((b) => (
+                <div key={b.key} className="rounded-md border border-border px-3 py-2">
+                  <div className="text-xs text-text-tertiary">{b.label}</div>
+                  <div
+                    className={cn(
+                      "text-sm font-medium tabular-nums",
+                      b.key === "overdue" && vendorPay.buckets[b.key] > 0 ? "text-danger" : "",
+                    )}
+                  >
+                    ₹{rupees(vendorPay.buckets[b.key])}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {vendorPay.next.length > 0 && (
+              <div className="mt-3">
+                <div className="mb-1 text-xs font-medium text-text-tertiary">Next payments</div>
+                <div className="divide-y divide-divider">
+                  {vendorPay.next.map((p, i) => (
+                    <Link
+                      key={`${p.vendorId}-${i}`}
+                      to={`/parties/${p.vendorId}`}
+                      className="flex items-center gap-3 py-1.5 text-sm hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
+                    >
+                      <span className="min-w-0 flex-1 truncate">{p.vendorName}</span>
+                      <span className="shrink-0 text-xs text-text-tertiary">{fmtDueDate(p.dueDate)}</span>
+                      <span className="shrink-0 tabular-nums">₹{rupees(p.amountPaise)}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -313,33 +472,46 @@ export function PartiesPage() {
           ) : (
             <div className="max-h-[64vh] divide-y divide-divider overflow-auto">
               {visible.map((r) => (
-                <Link
-                  key={r.id}
-                  to={`/parties/${r.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
-                >
-                  <span
-                    className={cn(
-                      "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-                      typeTint(r.type),
-                    )}
+                <div key={r.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface">
+                  <Link
+                    to={`/parties/${r.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-3 focus-visible:outline-none"
                   >
-                    {initials(r.name)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{r.name}</div>
-                    <div className="truncate text-xs text-text-tertiary">
-                      <span className="capitalize">{r.type}</span>
-                      {r.phone ? ` · ${r.phone}` : ""}
-                      {r.gstin ? ` · ${r.gstin}` : ""}
+                    <span
+                      className={cn(
+                        "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                        typeTint(r.type),
+                      )}
+                    >
+                      {initials(r.name)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-medium">{r.name}</div>
+                      <div className="truncate text-xs text-text-tertiary">
+                        {[r.phone, r.gstin].filter(Boolean).join(" · ") || "—"}
+                      </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-right text-sm">
-                    <Balance paise={r.opening_balance_paise} />
-                    <div className="text-xs text-text-tertiary tabular-nums">{r.billCount} bills</div>
-                  </div>
-                  <ChevronRight className="size-4 shrink-0 text-text-tertiary" />
-                </Link>
+                    <div className="shrink-0 text-right text-sm">
+                      <Balance paise={r.opening_balance_paise} />
+                      <div className="text-xs text-text-tertiary tabular-nums">{r.billCount} bills</div>
+                    </div>
+                  </Link>
+                  {/* Inline re-tag (SALT-051) — fix mistags without opening the profile */}
+                  <select
+                    aria-label={`Type for ${r.name}`}
+                    value={r.type}
+                    disabled={retagging === r.id}
+                    onChange={(e) => retag(r.id, e.target.value)}
+                    className="h-8 shrink-0 rounded-md border border-input bg-background px-1.5 text-xs capitalize outline-none focus-visible:border-ring disabled:opacity-50"
+                  >
+                    <option value="customer">customer</option>
+                    <option value="vendor">vendor</option>
+                    <option value="other">other</option>
+                  </select>
+                  <Link to={`/parties/${r.id}`} className="shrink-0" aria-label={`Open ${r.name}`}>
+                    <ChevronRight className="size-4 text-text-tertiary" />
+                  </Link>
+                </div>
               ))}
             </div>
           )}
