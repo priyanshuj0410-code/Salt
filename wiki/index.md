@@ -26,6 +26,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/marg-import-map](architecture/marg-import-map.md) — everything Marg ERP 9+ can export, mapped to every Salt table; scope for extending Smart Import past today's four files.
 - [architecture/smart-import-extension](architecture/smart-import-extension.md) — engineering design to grow Smart Import to the full Marg dataset (history + compliance): reuse, identity, non-posting load path, net-new schema, phased build.
 - [architecture/design-system](architecture/design-system.md) — `design.md` principles + tokens; verified as-built status (tokens, primitives, patterns + density switch built; FormRow pending) + research-backed direction.
+- [architecture/accessibility](architecture/accessibility.md) — WCAG 2.1 AA audit (SALT-139): conforming foundations, the global reduced-motion fix, gaps handed off (skip link, muted contrast), and what needs manual browser verification.
 - [architecture/interaction-patterns](architecture/interaction-patterns.md) — the keyboard+touch contract: one model/two presentations, the seven laws, per-pattern dual-modality behaviour, the counter as worked example.
 - [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale.
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, FEFO, stock cap, billTotals, Schedule H1/X checkout gate, Save & Print + GST split.
