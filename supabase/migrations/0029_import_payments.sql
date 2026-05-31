@@ -1,4 +1,4 @@
--- 0028: Import extension for payments — provenance, idempotency, and cutover on
+-- 0029: Import extension for payments — provenance, idempotency, and cutover on
 -- the payments table, so historical receipt/payment (cash & bank book) registers
 -- import as non-posting records (Smart Import Phase 4, SALT-150).
 --
