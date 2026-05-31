@@ -1,6 +1,6 @@
 ---
 type: architecture
-updated: 2026-05-29
+updated: 2026-05-31
 ---
 
 # Billing screen
@@ -19,16 +19,27 @@ Three-pane grid rendered by `BillingScreen.tsx`:
 └──────────────────────────────────┴──────────────┘
 ```
 
-CSS: `grid-cols-[1fr_320px]`. A header bar (invoice number, walk-in label, `UserMenu`) and a footer hint bar bracket the main grid.
+The diagram is the **desktop** grid (`grid-cols-[1fr_320px]`); below `md` the panes stack and the summary
+becomes a fixed bottom **`MobileCheckout`** bar. As of PR #42 `BillingScreen.tsx` is a fixed **header →
+scrolling content → fixed checkout** shell (`h-full overflow-hidden`). The header is a prominent **customer
+bar** (`CustomerBar` — name, phone, `Ctrl K` to change) anchoring the left, with `Counter 1` muted on the
+right — **no brand mark or `UserMenu`** (both live in the sidebar). The checkout is one `useCheckout` hook in
+two presentations — `BillSummary` (desktop pane) / `MobileCheckout` (mobile bar) — the dual-modality ActionBar
+from [interaction-patterns](interaction-patterns.md) (ADR [0015](../decisions/0015-dual-modality-interaction.md)).
 
 Sub-components:
 
 | File | Role |
 |---|---|
-| `ItemSearch.tsx` | Search input + result dropdown |
-| `BillTable.tsx` | Scrollable table of bill lines; inline qty/discount inputs; `BatchPicker` trigger |
+| `BillingScreen.tsx` | Shell + header `CustomerBar`; holds the single `useCheckout`; fetches selected-customer detail (GSTIN/phone) |
+| `ItemSearch.tsx` | Search input + result dropdown (type-ahead: `↑/↓` + `Enter`) |
+| `BillTable.tsx` | Bill lines — dense **table** on desktop, tappable **cards** on mobile; inline qty/discount; `BatchPicker` trigger |
 | `BatchPicker.tsx` | Popover for switching a line to a different batch of the same item |
-| `BillSummary.tsx` | Sidebar: totals, payment method picker, credit-days selector, print button |
+| `useCheckout.ts` | Shared checkout logic: save → `create_sales_invoice`, **F9**, payment, totals, shop-setup rescue (held once) |
+| `BillSummary.tsx` | **Desktop** checkout pane: breakdown, payment, GSTIN prompt, Save · F9 — presentational (props from `useCheckout`) |
+| `MobileCheckout.tsx` | **Mobile** checkout bar: items · payment · total + **Charge ₹X**; taps to expand breakdown/payment/GSTIN |
+| `GstinPrompt.tsx` | Inline "Add GSTIN" when the customer has none — writes `ledgers.gstin` mid-bill, never blocks the sale |
+| `CustomerPicker.tsx` | Choose customer (walk-in default); search by name/phone; **Enter picks the top match** |
 | `ShortcutHelp.tsx` | Modal reference (Shift+/) |
 | `ScheduleBadge.tsx` | H / H1 / X / OTC badge on search results |
 
@@ -46,6 +57,8 @@ Sub-components:
 | `−` | Bill row focused | Decrement qty by 1 (floor 1) |
 | `Del` / `Backspace` | Bill row focused | Remove line |
 | `Tab` | Bill row focused | Move into qty / discount inline inputs |
+| `Ctrl+K` | Anywhere | Open `CustomerPicker` (type → `Enter` picks the top match) |
+| `F9` | Anywhere | Save the bill → `create_sales_invoice` |
 | `Shift+/` | Anywhere | Open `ShortcutHelp` dialog |
 
 ## useBill store (`store/bill.ts`)

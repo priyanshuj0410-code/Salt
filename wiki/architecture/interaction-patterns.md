@@ -53,17 +53,20 @@ other screen. These are the contract; the rest of this page is how to satisfy it
 | **Kbd / Dot / Badge** | shortcut chip (`md:`-only), status dot, semantic label | `ui/kbd.tsx`, `ui/dot.tsx`, `ui/badge.tsx` | built |
 | **Dual navigation** | one destination map, two front-ends: palette + chords + F-keys / drawer + Search button | `command/CommandPalette.tsx`, `nav/*`, `lib/shortcuts.ts` | built |
 | **Type-ahead entry** | search-and-add; `↑/↓`+`Enter` or tap; substitute fallback | `billing/ItemSearch.tsx` | built (counter-specific; generalise later) |
-| **EntityHeader / context bar** | prominent "what this is for" bar (customer on billing, party on profile) + one key attribute (balance/dues) + a change affordance | `patterns/entity-header.tsx` | **to build** |
-| **ActionBar** | persistent live total + primary CTA (+ secondary/meta); pane-footer with `Kbd` on desktop, `sticky bottom-0` thumb bar on mobile | `patterns/action-bar.tsx` | **to build** |
+| **EntityHeader / context bar** | prominent "what this is for" bar (customer on billing, party on profile) + one key attribute (balance/dues) + a change affordance | `patterns/entity-header.tsx` | 🟡 bespoke `CustomerBar` in the counter (#42); generic pending |
+| **ActionBar** | persistent live total + primary CTA (+ secondary/meta); pane-footer with `Kbd` on desktop, `sticky bottom-0` thumb bar on mobile | `patterns/action-bar.tsx` | 🟡 bespoke `useCheckout` + `BillSummary`/`MobileCheckout` (#42); generic pending |
 | **Responsive Sheet** | overlay that is a centered dialog on desktop and a bottom sheet on mobile; Esc / scrim closes; focus-trapped | `ui/sheet.tsx` | **to build** |
 | **FormRow** | label+control rows; tab order = visual order; stacks ≥44px on mobile (`design.md §6.5`) | `patterns/form-row.tsx` | **to build** |
 
-The four "to build" primitives carry their dual-modality contract internally, so any screen that uses
-them gets peak-both for free — that is the whole point of L7.
+These primitives carry their dual-modality contract internally, so any screen that uses them gets
+peak-both for free — the whole point of L7. **ActionBar and EntityHeader now exist bespoke in the counter**
+(PR #42); extracting them into shared `patterns/` components, plus building `Sheet` and `FormRow`, is the
+remaining work.
 
 ## Worked example — how the counter expresses every law
 
-The counter is two presentations of the same components, not two designs:
+**Built in PR #42 (2026-05-31)**, bespoke to the counter (see [billing-screen](billing-screen.md)). The
+counter is two presentations of the same components, not two designs:
 
 - **L1 / L3 — layout & primary action.** Desktop: a fixed-height two-pane grid (search + line table
   left, summary right) whose summary footer holds the **ActionBar** (total + payment + **Charge ₹X**,
