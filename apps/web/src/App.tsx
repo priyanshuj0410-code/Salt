@@ -16,6 +16,7 @@ import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { DashboardPage } from "@/components/reports/DashboardPage";
 import { SalesReportsPage } from "@/components/reports/SalesReportsPage";
+import { PurchaseReportsPage } from "@/components/reports/PurchaseReportsPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -126,6 +127,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <SalesReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/purchases"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PurchaseReportsPage />
           </ProtectedRoute>
         }
       />
