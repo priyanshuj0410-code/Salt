@@ -7,7 +7,7 @@ import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable, type Column } from "@/components/patterns/data-table";
-import { ScheduleBadge } from "@/components/catalog/ScheduleBadge";
+import { ScheduleBadge, AyushBadge } from "@/components/catalog/ScheduleBadge";
 import { mrpRange } from "@/components/catalog/format";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -30,6 +30,7 @@ function formFrom(i: Item) {
     gstRate: i.gstRate,
     schedule: i.schedule,
     barcode: i.barcode ?? "",
+    ayush: i.ayush ?? false,
   };
 }
 type Form = ReturnType<typeof formFrom>;
@@ -124,6 +125,7 @@ export function ItemDetailPage() {
           gst_rate: form.gstRate,
           schedule: form.schedule,
           barcode: form.barcode.trim() || null,
+          ayush_flag: form.ayush,
         })
         .eq("id", item!.id)
         .eq("org_id", orgId);
@@ -141,6 +143,7 @@ export function ItemDetailPage() {
         gstRate: form.gstRate,
         schedule: form.schedule,
         barcode: form.barcode.trim() || undefined,
+        ayush: form.ayush,
       });
       setEditing(false);
       setForm(null);
@@ -204,8 +207,13 @@ export function ItemDetailPage() {
       <BackLink />
       <PageHeader
         icon={Tag}
-        title={item.name}
-        subtitle={item.salt || "No salt / molecule recorded"}
+        title={
+          <span className="inline-flex items-center gap-2">
+            {item.name}
+            {item.ayush && <AyushBadge />}
+          </span>
+        }
+        subtitle={item.salt || (item.ayush ? "No ingredients recorded" : "No salt / molecule recorded")}
         actions={
           editing ? (
             <>
@@ -246,7 +254,7 @@ export function ItemDetailPage() {
               <Input value={form.name} onChange={(e) => set("name", e.target.value)} className="h-9" autoFocus />
             </EditField>
             <div className="grid gap-3 sm:grid-cols-2">
-              <EditField label="Salt / molecule">
+              <EditField label={form.ayush ? "Ingredients / contents" : "Salt / molecule"}>
                 <Input value={form.salt} onChange={(e) => set("salt", e.target.value)} className="h-9" placeholder="—" />
               </EditField>
               <EditField label="Manufacturer">
@@ -313,17 +321,42 @@ export function ItemDetailPage() {
                   </Button>
                 ))}
               </div>
+              {form.ayush && (
+                <span className="text-xs text-text-tertiary">AYUSH items are non-scheduled — leave as OTC unless a schedule applies.</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-text-tertiary">Type</span>
+              <div className="flex gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={!form.ayush ? "default" : "outline"}
+                  onClick={() => set("ayush", false)}
+                >
+                  Allopathic
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={form.ayush ? "default" : "outline"}
+                  onClick={() => set("ayush", true)}
+                >
+                  AYUSH / non-allopathic
+                </Button>
+              </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
         ) : (
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-            <ViewField label="Salt / molecule" value={item.salt} />
+            <ViewField label={item.ayush ? "Ingredients / contents" : "Salt / molecule"} value={item.salt} />
             <ViewField label="Manufacturer" value={item.manufacturer} />
             <ViewField label="Pack" value={item.pack} />
             <ViewField label="HSN" value={item.hsn} mono />
             <ViewField label="GST rate" value={`${item.gstRate}%`} />
             <ViewField label="Schedule" value={<ScheduleBadge schedule={item.schedule} />} />
+            <ViewField label="Type" value={item.ayush ? <AyushBadge /> : "Allopathic"} />
             <ViewField label="Barcode" value={item.barcode ?? ""} mono />
           </dl>
         )}

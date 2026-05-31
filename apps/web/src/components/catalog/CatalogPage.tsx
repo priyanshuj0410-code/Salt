@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { DataTable, type Column } from "@/components/patterns/data-table";
-import { ScheduleBadge } from "@/components/catalog/ScheduleBadge";
+import { ScheduleBadge, AyushBadge } from "@/components/catalog/ScheduleBadge";
 import { mrpRange } from "@/components/catalog/format";
 import { CreateItemDialog } from "@/components/grn/CreateItemDialog";
 import { useAuth } from "@/lib/auth";
@@ -40,6 +40,7 @@ export function CatalogPage() {
   const [query, setQuery] = useState("");
   const [sched, setSched] = useState<SchedFilter>("All");
   const [stock, setStock] = useState<StockFilter>("All");
+  const [ayushOnly, setAyushOnly] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
@@ -62,12 +63,13 @@ export function CatalogPage() {
       : [...items].sort((a, b) => a.name.localeCompare(b.name));
     return base.filter((i) => {
       if (sched !== "All" && i.schedule !== sched) return false;
+      if (ayushOnly && !i.ayush) return false;
       const qty = itemStock(i);
       if (stock === "In stock" && qty <= 0) return false;
       if (stock === "Out" && qty > 0) return false;
       return true;
     });
-  }, [items, query, sched, stock]);
+  }, [items, query, sched, stock, ayushOnly]);
 
   const columns: Column<Item>[] = [
     {
@@ -75,7 +77,10 @@ export function CatalogPage() {
       header: "Item",
       cell: (i) => (
         <div className="min-w-0">
-          <div className="truncate font-medium text-text-primary">{i.name}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="truncate font-medium text-text-primary">{i.name}</span>
+            {i.ayush && <AyushBadge />}
+          </div>
           <div className="truncate text-xs text-text-tertiary">
             {i.salt || "—"}
             {i.manufacturer ? ` · ${i.manufacturer}` : ""}
@@ -167,6 +172,15 @@ export function CatalogPage() {
             </Button>
           ))}
         </div>
+        <Button
+          type="button"
+          size="sm"
+          variant={ayushOnly ? "default" : "outline"}
+          onClick={() => setAyushOnly((v) => !v)}
+          title="Show only AYUSH / non-allopathic items"
+        >
+          AYUSH
+        </Button>
         <span className="ml-auto text-xs text-text-tertiary">
           {visible.length === items.length ? `${items.length}` : `${visible.length} of ${items.length}`} items
         </span>

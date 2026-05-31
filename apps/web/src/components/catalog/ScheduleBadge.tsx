@@ -21,3 +21,12 @@ export function ScheduleBadge({ schedule }: { schedule: Schedule }) {
     </Badge>
   );
 }
+
+/** AYUSH / non-allopathic marker (ayurveda, siddha, unani, homeopathy). */
+export function AyushBadge() {
+  return (
+    <Badge variant="success" title="AYUSH / non-allopathic — no Drugs-&-Cosmetics schedule">
+      AYUSH
+    </Badge>
+  );
+}
