@@ -142,7 +142,9 @@ Match strength per field (`fieldScore`):
 
 `finalScore = max(weight × fieldScore)` across all fields. Results sorted: **in-stock first**, then score descending, then sales velocity descending. Capped at `MAX_RESULTS = 8`.
 
-If the highlighted result has no stock and a same-salt substitute exists in-stock, pressing `Enter` adds the substitute.
+## Out-of-stock substitutes (`lib/search.ts: substitutes`)
+
+When a result is **out of stock**, `ItemSearch` shows its in-stock, **same-salt** alternatives inline — ranked best-first by per-unit **margin** (`itemMargin` = FEFO `mrp − ptr`) then **velocity**, capped at 3. Each is a one-tap button; the top one carries a **Best** badge. Pressing `Enter` on the out-of-stock row adds the top substitute (the keyboard fast-path), while clicking picks a specific one. If the item has no salt recorded or no same-salt peer is in stock, the row reads "no same-salt substitute available". (Substitution pivots on salt per [domain/medical-retail](../domain/medical-retail.md).)
 
 ## FEFO (`lib/search.ts: fefoBatch`)
 
