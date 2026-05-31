@@ -28,6 +28,9 @@ const DeadStockPage = lazy(() => import("@/components/inventory/DeadStockPage").
 const ReorderPage = lazy(() => import("@/components/inventory/ReorderPage").then((m) => ({ default: m.ReorderPage })));
 const OutOfStockPage = lazy(() => import("@/components/inventory/OutOfStockPage").then((m) => ({ default: m.OutOfStockPage })));
 const TurnoverPage = lazy(() => import("@/components/inventory/TurnoverPage").then((m) => ({ default: m.TurnoverPage })));
+const AdjustmentsPage = lazy(() => import("@/components/inventory/AdjustmentsPage").then((m) => ({ default: m.AdjustmentsPage })));
+const PhysicalCountPage = lazy(() => import("@/components/inventory/PhysicalCountPage").then((m) => ({ default: m.PhysicalCountPage })));
+const ExpiryDestructionPage = lazy(() => import("@/components/inventory/ExpiryDestructionPage").then((m) => ({ default: m.ExpiryDestructionPage })));
 const Gstr1Page = lazy(() => import("@/components/gst/Gstr1Page").then((m) => ({ default: m.Gstr1Page })));
 const Gstr3bPage = lazy(() => import("@/components/gst/Gstr3bPage").then((m) => ({ default: m.Gstr3bPage })));
 const GstLiabilityPage = lazy(() => import("@/components/gst/GstLiabilityPage").then((m) => ({ default: m.GstLiabilityPage })));
@@ -203,6 +206,30 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["owner"]}>
                   <TurnoverPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/adjustments"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <AdjustmentsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/count"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <PhysicalCountPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/destruction"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <ExpiryDestructionPage />
                 </ProtectedRoute>
               }
             />
