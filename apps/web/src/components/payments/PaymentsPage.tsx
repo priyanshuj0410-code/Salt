@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Plus, Wallet } from "lucide-react";
+import { Coins, FileCheck, FileText, Landmark, Plus, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,21 +14,28 @@ import { selectAll } from "@/lib/selectAll";
 import { formatPaise, formatSigned } from "@/lib/currency";
 import { signedAmount, type PaymentListRow } from "@/lib/payments";
 import { RecordPaymentDialog, type PartyLite } from "./RecordPaymentDialog";
+import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
+import { BankReconcile } from "./BankReconcile";
+import { CashDrawer } from "./CashDrawer";
+import { ChequeManager } from "./ChequeManager";
+import { CreditDebitNotes } from "./CreditDebitNotes";
 
 type DirFilter = "all" | "received" | "paid";
+type PartyRow = PartyLite & { phone: string | null };
 
 export function PaymentsPage() {
   const orgId = useAuth().membership?.orgId;
-  const navigate = useNavigate();
 
   const [payments, setPayments] = useState<PaymentListRow[]>([]);
-  const [parties, setParties] = useState<PartyLite[]>([]);
+  const [parties, setParties] = useState<PartyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [dir, setDir] = useState<DirFilter>("all");
   const [q, setQ] = useState("");
   const [recordOpen, setRecordOpen] = useState(false);
+  const [receipt, setReceipt] = useState<PaymentListRow | null>(null);
+  const [view, setView] = useState<"payments" | "reconcile" | "drawer" | "cheques" | "notes">("payments");
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -44,8 +50,8 @@ export function PaymentsPage() {
           .order("created_at", { ascending: false })
           .range(from, to),
       ),
-      selectAll<PartyLite>((from, to) =>
-        supabase!.from("ledgers").select("id,name,type").eq("org_id", orgId).order("name").range(from, to),
+      selectAll<PartyRow>((from, to) =>
+        supabase!.from("ledgers").select("id,name,type,phone").eq("org_id", orgId).order("name").range(from, to),
       ),
     ])
       .then(([pays, leds]) => {
@@ -68,6 +74,12 @@ export function PaymentsPage() {
   const nameById = useMemo(() => {
     const m = new Map<string, string>();
     for (const p of parties) m.set(p.id, p.name);
+    return m;
+  }, [parties]);
+
+  const phoneById = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const p of parties) m.set(p.id, p.phone ?? null);
     return m;
   }, [parties]);
 
@@ -96,7 +108,7 @@ export function PaymentsPage() {
       <PageHeader
         icon={Wallet}
         title="Payments"
-        subtitle="Receipts from customers and payments to vendors, recorded against their ledger."
+        subtitle="Receipts from customers and payments to vendors. Open a row for its printable / WhatsApp receipt."
         actions={
           <Button onClick={() => setRecordOpen(true)} disabled={!orgId}>
             <Plus /> Record payment
@@ -104,6 +116,59 @@ export function PaymentsPage() {
         }
       />
 
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "payments" ? "default" : "outline"}
+          onClick={() => setView("payments")}
+        >
+          <Wallet /> Payments
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "reconcile" ? "default" : "outline"}
+          onClick={() => setView("reconcile")}
+        >
+          <Landmark /> Bank reconciliation
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "drawer" ? "default" : "outline"}
+          onClick={() => setView("drawer")}
+        >
+          <Coins /> Cash drawer
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "cheques" ? "default" : "outline"}
+          onClick={() => setView("cheques")}
+        >
+          <FileCheck /> Cheques
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={view === "notes" ? "default" : "outline"}
+          onClick={() => setView("notes")}
+        >
+          <FileText /> Credit / debit notes
+        </Button>
+      </div>
+
+      {view === "reconcile" ? (
+        <BankReconcile orgId={orgId ?? null} payments={payments} nameById={nameById} />
+      ) : view === "drawer" ? (
+        <CashDrawer orgId={orgId ?? null} />
+      ) : view === "cheques" ? (
+        <ChequeManager orgId={orgId ?? null} nameById={nameById} />
+      ) : view === "notes" ? (
+        <CreditDebitNotes orgId={orgId ?? null} nameById={nameById} />
+      ) : (
+        <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Received" value={formatPaise(stats.received)} tone="success" hint="money in from customers" />
         <StatCard label="Paid" value={formatPaise(stats.paid)} tone="danger" hint="money out to vendors" />
@@ -151,7 +216,7 @@ export function PaymentsPage() {
           rows={visible}
           rowKey={(p) => p.id}
           loading={loading}
-          onRowActivate={(p) => navigate(`/parties/${p.party_id}`)}
+          onRowActivate={(p) => setReceipt(p)}
           empty={
             <p className="px-3 py-6 text-sm text-text-tertiary">
               No payments recorded yet. Use “Record payment” to add one.
@@ -188,6 +253,8 @@ export function PaymentsPage() {
           ]}
         />
       </div>
+        </>
+      )}
 
       <RecordPaymentDialog
         open={recordOpen}
@@ -197,6 +264,14 @@ export function PaymentsPage() {
           setRecordOpen(false);
           setReloadKey((k) => k + 1);
         }}
+      />
+
+      <PaymentReceiptDialog
+        open={receipt !== null}
+        onOpenChange={(v) => !v && setReceipt(null)}
+        payment={receipt}
+        partyName={receipt ? (nameById.get(receipt.party_id) ?? "—") : "—"}
+        partyPhone={receipt ? (phoneById.get(receipt.party_id) ?? null) : null}
       />
     </Page>
   );

@@ -19,8 +19,17 @@ const GrnListPage = lazy(() => import("@/components/grn/GrnListPage").then((m) =
 const GrnEntryPage = lazy(() => import("@/components/grn/GrnEntryPage").then((m) => ({ default: m.GrnEntryPage })));
 const GrnDetailPage = lazy(() => import("@/components/grn/GrnDetailPage").then((m) => ({ default: m.GrnDetailPage })));
 const BillHistoryPage = lazy(() => import("@/components/bills/BillHistoryPage").then((m) => ({ default: m.BillHistoryPage })));
+const StockLedgerPage = lazy(() => import("@/components/inventory/StockLedgerPage").then((m) => ({ default: m.StockLedgerPage })));
+const NearExpiryPage = lazy(() => import("@/components/inventory/NearExpiryPage").then((m) => ({ default: m.NearExpiryPage })));
+const DeadStockPage = lazy(() => import("@/components/inventory/DeadStockPage").then((m) => ({ default: m.DeadStockPage })));
+const ReorderPage = lazy(() => import("@/components/inventory/ReorderPage").then((m) => ({ default: m.ReorderPage })));
+const OutOfStockPage = lazy(() => import("@/components/inventory/OutOfStockPage").then((m) => ({ default: m.OutOfStockPage })));
+const TurnoverPage = lazy(() => import("@/components/inventory/TurnoverPage").then((m) => ({ default: m.TurnoverPage })));
 const Gstr1Page = lazy(() => import("@/components/gst/Gstr1Page").then((m) => ({ default: m.Gstr1Page })));
 const Gstr3bPage = lazy(() => import("@/components/gst/Gstr3bPage").then((m) => ({ default: m.Gstr3bPage })));
+const GstLiabilityPage = lazy(() => import("@/components/gst/GstLiabilityPage").then((m) => ({ default: m.GstLiabilityPage })));
+const ItcRegisterPage = lazy(() => import("@/components/gst/ItcRegisterPage").then((m) => ({ default: m.ItcRegisterPage })));
+const TallyExportPage = lazy(() => import("@/components/gst/TallyExportPage").then((m) => ({ default: m.TallyExportPage })));
 const PaymentsPage = lazy(() => import("@/components/payments/PaymentsPage").then((m) => ({ default: m.PaymentsPage })));
 const MakePaymentPage = lazy(() => import("@/components/payments/MakePaymentPage").then((m) => ({ default: m.MakePaymentPage })));
 const ImportPage = lazy(() => import("@/components/import/ImportPage").then((m) => ({ default: m.ImportPage })));
@@ -123,6 +132,54 @@ function App() {
               }
             />
             <Route
+              path="/inventory"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <StockLedgerPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/near-expiry"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <NearExpiryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/dead-stock"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <DeadStockPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/reorder"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <ReorderPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/out-of-stock"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <OutOfStockPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/inventory/turnover"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <TurnoverPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/gst"
               element={
                 <ProtectedRoute allowedRoles={["owner"]}>
@@ -135,6 +192,30 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["owner"]}>
                   <Gstr3bPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gst/liability"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <GstLiabilityPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gst/itc"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <ItcRegisterPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gst/tally"
+              element={
+                <ProtectedRoute allowedRoles={["owner"]}>
+                  <TallyExportPage />
                 </ProtectedRoute>
               }
             />

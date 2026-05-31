@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,15 +16,38 @@ function GoogleIcon() {
   );
 }
 
+type Mode = "signin" | "signup" | "reset";
+
 export function LoginPage() {
   const { session } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // If the session ended itself via idle auto-logout (SALT-115), say so once.
+  // Deferred to a microtask (not a synchronous effect setState) and the flag is
+  // cleared so the notice shows only on the visit right after the logout.
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (cancelled) return;
+      try {
+        if (sessionStorage.getItem("salt:idle-logout")) {
+          sessionStorage.removeItem("salt:idle-logout");
+          setInfo("You were signed out due to inactivity. Please sign in again.");
+        }
+      } catch {
+        /* storage unavailable */
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (session) return <Navigate to="/" replace />;
 
@@ -44,6 +67,12 @@ export function LoginPage() {
     );
   }
 
+  function switchMode(next: Mode) {
+    setMode(next);
+    setError(null);
+    setInfo(null);
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase) return;
@@ -54,7 +83,7 @@ export function LoginPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setError(error.message);
-      } else {
+      } else if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -63,10 +92,30 @@ export function LoginPage() {
         if (error) setError(error.message);
         else if (!data.session)
           setInfo("Account created. Check your email to confirm, then sign in.");
+      } else {
+        // reset — send a recovery link back to the app
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) setError(error.message);
+        else setInfo("If an account exists for that email, a password reset link is on its way.");
       }
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function onResend() {
+    if (!supabase) return;
+    if (!email) {
+      setError("Enter your email above first.");
+      return;
+    }
+    setError(null);
+    setInfo(null);
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (error) setError(error.message);
+    else setInfo("Confirmation email resent. Check your inbox.");
   }
 
   async function onGoogle() {
@@ -79,26 +128,37 @@ export function LoginPage() {
     if (error) setError(error.message);
   }
 
+  const heading =
+    mode === "signin"
+      ? "Sign in to your shop"
+      : mode === "signup"
+        ? "Create your account"
+        : "Reset your password";
+  const submitLabel =
+    mode === "signin" ? "Sign in" : mode === "signup" ? "Sign up" : "Send reset link";
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-sm">
         <div className="mb-5 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">Salt</h1>
-          <p className="text-sm text-muted-foreground">
-            {mode === "signin" ? "Sign in to your shop" : "Create your account"}
-          </p>
+          <p className="text-sm text-muted-foreground">{heading}</p>
         </div>
 
-        <Button variant="outline" className="w-full" onClick={onGoogle} type="button">
-          <GoogleIcon />
-          Continue with Google
-        </Button>
+        {mode !== "reset" && (
+          <>
+            <Button variant="outline" className="w-full" onClick={onGoogle} type="button">
+              <GoogleIcon />
+              Continue with Google
+            </Button>
 
-        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          or
-          <span className="h-px flex-1 bg-border" />
-        </div>
+            <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              or
+              <span className="h-px flex-1 bg-border" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={onSubmit} className="flex flex-col gap-3">
           {mode === "signup" && (
@@ -118,36 +178,72 @@ export function LoginPage() {
             autoComplete="email"
             required
           />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === "signin" ? "current-password" : "new-password"}
-            required
-          />
+          {mode !== "reset" && (
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              required
+            />
+          )}
+
+          {mode === "signin" && (
+            <button
+              type="button"
+              onClick={() => switchMode("reset")}
+              className="-mt-1 self-end text-xs font-medium text-primary hover:underline"
+            >
+              Forgot password?
+            </button>
+          )}
 
           {error && <p className="text-sm text-destructive">{error}</p>}
           {info && <p className="text-sm text-emerald-600 dark:text-emerald-500">{info}</p>}
 
           <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Please wait…" : mode === "signin" ? "Sign in" : "Sign up"}
+            {submitting ? "Please wait…" : submitLabel}
           </Button>
         </form>
 
+        {mode === "signup" && (
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            Didn’t get the confirmation email?{" "}
+            <button
+              type="button"
+              onClick={onResend}
+              className="font-medium text-primary hover:underline"
+            >
+              Resend
+            </button>
+          </p>
+        )}
+
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          {mode === "signin" ? "New to Salt?" : "Already have an account?"}{" "}
-          <button
-            type="button"
-            className="font-medium text-primary hover:underline"
-            onClick={() => {
-              setMode(mode === "signin" ? "signup" : "signin");
-              setError(null);
-              setInfo(null);
-            }}
-          >
-            {mode === "signin" ? "Create an account" : "Sign in"}
-          </button>
+          {mode === "reset" ? (
+            <>
+              Remembered it?{" "}
+              <button
+                type="button"
+                className="font-medium text-primary hover:underline"
+                onClick={() => switchMode("signin")}
+              >
+                Back to sign in
+              </button>
+            </>
+          ) : (
+            <>
+              {mode === "signin" ? "New to Salt?" : "Already have an account?"}{" "}
+              <button
+                type="button"
+                className="font-medium text-primary hover:underline"
+                onClick={() => switchMode(mode === "signin" ? "signup" : "signin")}
+              >
+                {mode === "signin" ? "Create an account" : "Sign in"}
+              </button>
+            </>
+          )}
         </p>
       </div>
     </div>
