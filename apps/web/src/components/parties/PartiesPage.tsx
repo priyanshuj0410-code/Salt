@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, GitMerge, Save, Users } from "lucide-react";
+import { ChevronRight, GitMerge, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
 import { useAuth } from "@/lib/auth";
 import { suggestMerges, type MergeGroup } from "@/lib/mergeSuggest";
+import { cn } from "@/lib/utils";
 
 interface LedgerRow {
   id: string;
@@ -28,6 +29,23 @@ interface Party extends LedgerRow {
 
 const rupees = (paise: number) =>
   (Math.abs(paise) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+const initials = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase() || "?";
+
+// Soft-tinted avatar by party kind — quick visual scanning, never the only signal.
+const typeTint = (type: string) =>
+  type === "vendor"
+    ? "bg-warning-bg text-warning"
+    : type === "other"
+      ? "bg-surface-2 text-text-secondary"
+      : "bg-info-bg text-info";
 
 function Balance({ paise }: { paise: number }) {
   if (paise === 0) return <span className="text-muted-foreground">₹0</span>;
@@ -48,7 +66,6 @@ const REASON_LABEL: Record<MergeGroup["reason"], string> = {
 export function PartiesPage() {
   const orgId = useAuth().membership?.orgId;
   const [rows, setRows] = useState<Party[]>([]);
-  const [dirty, setDirty] = useState<Set<string>>(new Set());
   const [survivors, setSurvivors] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState("");
   const [loading, setLoading] = useState(true);
@@ -86,7 +103,6 @@ export function PartiesPage() {
           return { ...l, billRefs: refs, billCount: refs.length };
         });
         setRows(parties);
-        setDirty(new Set());
         setError(null);
         setLoading(false);
       })
@@ -137,39 +153,6 @@ export function PartiesPage() {
     return rows.filter((r) => r.name.toLowerCase().includes(q) || r.type.includes(q) || (r.gstin ?? "").toLowerCase().includes(q));
   }, [rows, filter]);
 
-  function edit(id: string, field: "name" | "type" | "phone" | "gstin", value: string) {
-    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
-    setDirty((d) => new Set(d).add(id));
-  }
-
-  async function save() {
-    if (!supabase || dirty.size === 0) return;
-    setBusy(true);
-    setError(null);
-    try {
-      for (const id of dirty) {
-        const r = rows.find((x) => x.id === id);
-        if (!r) continue;
-        const { error: err } = await supabase
-          .from("ledgers")
-          .update({
-            name: r.name.trim(),
-            type: r.type,
-            phone: r.phone?.trim() || null,
-            gstin: r.gstin?.trim() ? r.gstin.trim().toUpperCase() : null,
-          })
-          .eq("id", id);
-        if (err) {
-          setError(err.message);
-          return;
-        }
-      }
-      reload();
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const groupKey = (g: MergeGroup) => `${g.reason}:${g.label}`;
   const defaultSurvivor = (g: MergeGroup) => [...g.parties].sort((a, b) => b.billCount - a.billCount)[0].id;
   const survivorFor = (g: MergeGroup) => survivors[groupKey(g)] ?? defaultSurvivor(g);
@@ -195,7 +178,7 @@ export function PartiesPage() {
         <PageHeader
           icon={Users}
           title="Parties"
-          subtitle="Customers and vendors with their balances. Fix mis-tagged types, merge duplicates."
+          subtitle="Customers and vendors with their balances. Open a party to see history and edit details."
         />
 
         {/* Summary */}
@@ -260,86 +243,57 @@ export function PartiesPage() {
           </div>
         )}
 
-        {/* Toolbar */}
-        <div className="mt-6 flex items-center gap-2">
+        {/* Search */}
+        <div className="mt-6 flex items-center gap-3">
           <Input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter by name, type or GSTIN…"
+            placeholder="Search by name, type or GSTIN…"
             className="h-9 max-w-xs"
           />
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-text-tertiary">
             {visible.length === rows.length ? `${rows.length}` : `${visible.length} of ${rows.length}`} parties
           </span>
-          <span className="flex-1" />
-          <Button onClick={save} disabled={busy || dirty.size === 0}>
-            <Save />
-            {busy ? "Saving…" : dirty.size > 0 ? `Save ${dirty.size} change${dirty.size > 1 ? "s" : ""}` : "Saved"}
-          </Button>
         </div>
 
-        {/* Table */}
-        <div className="mt-3 overflow-hidden rounded-lg border">
-          <div className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr_1.75rem] gap-2 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
-            <span>Name</span>
-            <span>Type</span>
-            <span>GSTIN</span>
-            <span>Phone</span>
-            <span className="text-right">Balance</span>
-            <span className="text-right">Bills</span>
-            <span />
-          </div>
+        {/* Contacts list — read-only; open a party to view history and edit details */}
+        <div className="mt-3 overflow-hidden rounded-lg border border-border">
           {loading ? (
-            <p className="p-4 text-sm text-muted-foreground">Loading…</p>
+            <p className="p-4 text-sm text-text-tertiary">Loading…</p>
           ) : visible.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">
+            <p className="p-4 text-sm text-text-tertiary">
               {rows.length === 0 ? "No parties yet — import your ledgers first." : "No parties match that filter."}
             </p>
           ) : (
-            <div className="max-h-[60vh] overflow-auto">
+            <div className="max-h-[64vh] divide-y divide-divider overflow-auto">
               {visible.map((r) => (
-                <div
+                <Link
                   key={r.id}
-                  className="grid grid-cols-[1.6fr_0.9fr_1.1fr_1fr_1fr_0.6fr_1.75rem] items-center gap-2 border-b px-3 py-1.5 text-sm last:border-b-0"
+                  to={`/parties/${r.id}`}
+                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
                 >
-                  <input
-                    value={r.name}
-                    onChange={(e) => edit(r.id, "name", e.target.value)}
-                    className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
-                  />
-                  <select
-                    value={r.type}
-                    onChange={(e) => edit(r.id, "type", e.target.value)}
-                    className="h-8 rounded-md border border-input bg-background px-1 text-sm outline-none focus-visible:border-ring"
+                  <span
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                      typeTint(r.type),
+                    )}
                   >
-                    <option value="customer">customer</option>
-                    <option value="vendor">vendor</option>
-                    <option value="other">other</option>
-                  </select>
-                  <input
-                    value={r.gstin ?? ""}
-                    onChange={(e) => edit(r.id, "gstin", e.target.value)}
-                    placeholder="—"
-                    className="h-8 rounded-md border border-input bg-background px-2 font-mono text-xs uppercase outline-none focus-visible:border-ring"
-                  />
-                  <input
-                    value={r.phone ?? ""}
-                    onChange={(e) => edit(r.id, "phone", e.target.value)}
-                    placeholder="—"
-                    className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
-                  />
-                  <span className="text-right text-xs">
-                    <Balance paise={r.opening_balance_paise} />
+                    {initials(r.name)}
                   </span>
-                  <span className="text-right text-xs tabular-nums text-muted-foreground">{r.billCount}</span>
-                  <Link
-                    to={`/parties/${r.id}`}
-                    title="Open profile"
-                    className="flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
-                  >
-                    <ChevronRight className="size-4" />
-                  </Link>
-                </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{r.name}</div>
+                    <div className="truncate text-xs text-text-tertiary">
+                      <span className="capitalize">{r.type}</span>
+                      {r.phone ? ` · ${r.phone}` : ""}
+                      {r.gstin ? ` · ${r.gstin}` : ""}
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right text-sm">
+                    <Balance paise={r.opening_balance_paise} />
+                    <div className="text-xs text-text-tertiary tabular-nums">{r.billCount} bills</div>
+                  </div>
+                  <ChevronRight className="size-4 shrink-0 text-text-tertiary" />
+                </Link>
               ))}
             </div>
           )}

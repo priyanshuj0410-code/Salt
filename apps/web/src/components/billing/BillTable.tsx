@@ -70,14 +70,136 @@ export function BillTable() {
 
   if (lines.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed text-sm text-muted-foreground">
+      <div className="flex min-h-44 flex-1 items-center justify-center rounded-lg border border-dashed border-border px-4 text-center text-sm text-text-tertiary">
         No items yet — search above and press Enter to add.
       </div>
     );
   }
 
   return (
-    <div className="flex-1 overflow-auto rounded-lg border">
+    <div className="flex flex-col md:min-h-0 md:flex-1">
+      {/* Mobile: a card per line — no horizontal scroll, touch-sized controls */}
+      <div className="flex flex-col gap-2 md:hidden">
+        {lines.map((l) => {
+          const margin = lineMargin(l);
+          const count = batchCount(l.itemId);
+          const cap = lineMaxQty(lines, l);
+          return (
+            <div key={l.key} className="rounded-lg border border-border bg-background p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{l.name}</span>
+                    <ScheduleBadge schedule={l.schedule} />
+                  </div>
+                  <div className="truncate text-xs text-text-tertiary">
+                    {l.salt} · {l.pack} · GST {l.gstRate}%
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  aria-label="Remove item"
+                  onClick={() => removeLine(l.key)}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+              <button
+                onClick={() => setPickerLine(l)}
+                className="mt-1 inline-flex items-center gap-1 rounded text-xs text-text-tertiary hover:text-text-primary"
+              >
+                Batch {l.batchNo} · Exp {l.expiry}
+                {count > 1 && (
+                  <>
+                    <ChevronsUpDown className="size-3" />
+                    <span className="text-primary">{count} batches</span>
+                  </>
+                )}
+              </button>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <div>
+                  <div className="text-[11px] text-text-tertiary">Qty</div>
+                  <div className="mt-1 flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon-xs"
+                      aria-label="Decrease quantity"
+                      onClick={() => setQty(l.key, l.qty - 1)}
+                    >
+                      <Minus />
+                    </Button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={cap}
+                      value={l.qty}
+                      onChange={(e) => setQty(l.key, Math.max(1, Number(e.target.value) || 1))}
+                      aria-label={`Quantity for ${l.name}`}
+                      className={cn(cellInput, "text-center")}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon-xs"
+                      aria-label="Increase quantity"
+                      disabled={l.qty >= cap}
+                      onClick={() => setQty(l.key, l.qty + 1)}
+                    >
+                      <Plus />
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-text-tertiary">Discount</div>
+                  <div className="mt-1 flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      max={l.discountType === "pct" ? 100 : undefined}
+                      value={l.discountType === "pct" ? l.discountValue : l.discountValue / 100}
+                      onChange={(e) => {
+                        const v = Number(e.target.value) || 0;
+                        setDiscount(
+                          l.key,
+                          l.discountType,
+                          l.discountType === "pct" ? v : Math.round(v * 100),
+                        );
+                      }}
+                      aria-label={`Discount for ${l.name}`}
+                      className={cellInput}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon-xs"
+                      aria-label="Toggle discount type"
+                      title={l.discountType === "pct" ? "Percent" : "Flat rupees"}
+                      onClick={() =>
+                        setDiscount(l.key, l.discountType === "pct" ? "flat" : "pct", 0)
+                      }
+                    >
+                      {l.discountType === "pct" ? "%" : "₹"}
+                    </Button>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="font-medium tabular-nums">{formatPaise(lineNet(l))}</div>
+                  <div
+                    className={cn(
+                      "text-xs tabular-nums",
+                      margin < 0 ? "text-destructive" : "text-success",
+                    )}
+                  >
+                    {formatSigned(margin)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop: dense keyboard-driven table (the speed benchmark — unchanged) */}
+      <div className="hidden overflow-auto rounded-lg border border-border md:block md:min-h-0 md:flex-1">
       <Table className="table-fixed">
         <TableHeader className="sticky top-0 z-10 bg-background">
           <TableRow>
@@ -223,6 +345,7 @@ export function BillTable() {
           })}
         </TableBody>
       </Table>
+      </div>
 
       <BatchPicker line={pickerLine} onOpenChange={(open) => !open && setPickerLine(null)} />
     </div>
