@@ -142,7 +142,7 @@ export const NAV: NavModule[] = [
       { label: "Sales reports", path: "/reports/sales", built: true },
       { label: "Purchase reports", path: "/reports/purchases", built: true },
       { label: "Inventory reports", path: "/reports/inventory", built: true },
-      { label: "Financial reports", built: false },
+      { label: "Financial reports", path: "/reports/financial", built: true },
       { label: "Tax reports", built: false },
     ],
   },

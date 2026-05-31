@@ -18,6 +18,7 @@ import { DashboardPage } from "@/components/reports/DashboardPage";
 import { SalesReportsPage } from "@/components/reports/SalesReportsPage";
 import { PurchaseReportsPage } from "@/components/reports/PurchaseReportsPage";
 import { InventoryReportsPage } from "@/components/reports/InventoryReportsPage";
+import { FinancialReportsPage } from "@/components/reports/FinancialReportsPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -144,6 +145,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <InventoryReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/financial"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <FinancialReportsPage />
           </ProtectedRoute>
         }
       />

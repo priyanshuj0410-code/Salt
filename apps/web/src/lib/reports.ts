@@ -343,6 +343,134 @@ export function sumAging(rows: AgingViewRow[]): AgingTotals {
   return t;
 }
 
+// ---- Accounting statements (from the double-entry ledger / views) -----------
+
+/** A `v_trial_balance` row: net balance = Σdebit − Σcredit for an account/party. */
+export interface TrialBalanceRow {
+  code: string | null;
+  name: string;
+  type: string;
+  balance_paise: number;
+}
+
+export interface TrialBalanceLine {
+  code: string | null;
+  name: string;
+  type: string;
+  debitPaise: number;
+  creditPaise: number;
+}
+
+export interface TrialBalance {
+  lines: TrialBalanceLine[];
+  totalDebitPaise: number;
+  totalCreditPaise: number;
+}
+
+/** Split each net balance into a debit/credit column (a balanced book ties). */
+export function buildTrialBalance(rows: TrialBalanceRow[]): TrialBalance {
+  const lines: TrialBalanceLine[] = rows
+    .map((r) => ({
+      code: r.code,
+      name: r.name,
+      type: r.type,
+      debitPaise: r.balance_paise > 0 ? r.balance_paise : 0,
+      creditPaise: r.balance_paise < 0 ? -r.balance_paise : 0,
+    }))
+    .filter((l) => l.debitPaise !== 0 || l.creditPaise !== 0)
+    .sort((a, b) => (a.code ?? a.name).localeCompare(b.code ?? b.name));
+  return {
+    lines,
+    totalDebitPaise: lines.reduce((s, l) => s + l.debitPaise, 0),
+    totalCreditPaise: lines.reduce((s, l) => s + l.creditPaise, 0),
+  };
+}
+
+/** A ledger entry against a chart account (party entries are excluded from P&L). */
+export interface AccountEntry {
+  debitPaise: number;
+  creditPaise: number;
+  type: string;
+  name: string;
+}
+
+export interface PnlLine {
+  name: string;
+  amountPaise: number;
+}
+
+export interface Pnl {
+  income: PnlLine[];
+  expense: PnlLine[];
+  incomeTotalPaise: number;
+  expenseTotalPaise: number;
+  netPaise: number; // income − expense (profit if > 0)
+}
+
+/**
+ * Accrual P&L from ledger entries: income accounts are credit-normal
+ * (credit − debit), expense accounts debit-normal (debit − credit). Pass entries
+ * for the period to get a period P&L.
+ */
+export function buildPnl(entries: AccountEntry[]): Pnl {
+  const inc = new Map<string, number>();
+  const exp = new Map<string, number>();
+  for (const e of entries) {
+    if (e.type === "income") inc.set(e.name, (inc.get(e.name) ?? 0) + (e.creditPaise - e.debitPaise));
+    else if (e.type === "expense") exp.set(e.name, (exp.get(e.name) ?? 0) + (e.debitPaise - e.creditPaise));
+  }
+  const toLines = (m: Map<string, number>) =>
+    Array.from(m, ([name, amountPaise]) => ({ name, amountPaise })).sort((a, b) => b.amountPaise - a.amountPaise);
+  const income = toLines(inc);
+  const expense = toLines(exp);
+  const incomeTotalPaise = income.reduce((s, l) => s + l.amountPaise, 0);
+  const expenseTotalPaise = expense.reduce((s, l) => s + l.amountPaise, 0);
+  return { income, expense, incomeTotalPaise, expenseTotalPaise, netPaise: incomeTotalPaise - expenseTotalPaise };
+}
+
+/** A `v_balance_sheet` row (asset/liability/equity accounts only). */
+export interface BalanceSheetRow {
+  type: string;
+  name: string;
+  balance_paise: number;
+}
+
+export interface BalanceSheet {
+  assets: PnlLine[];
+  liabilities: PnlLine[];
+  equity: PnlLine[];
+  assetsTotalPaise: number;
+  liabilitiesAndEquityTotalPaise: number;
+}
+
+/**
+ * Balance sheet from account balances. Assets are debit-normal (use the balance
+ * as-is); liabilities/equity are credit-normal (negate). `retainedEarningsPaise`
+ * (all-time net P&L) is folded into equity so assets ≈ liabilities + equity.
+ */
+export function buildBalanceSheet(rows: BalanceSheetRow[], retainedEarningsPaise: number): BalanceSheet {
+  const assets: PnlLine[] = [];
+  const liabilities: PnlLine[] = [];
+  const equity: PnlLine[] = [];
+  for (const r of rows) {
+    if (r.balance_paise === 0) continue;
+    if (r.type === "asset") assets.push({ name: r.name, amountPaise: r.balance_paise });
+    else if (r.type === "liability") liabilities.push({ name: r.name, amountPaise: -r.balance_paise });
+    else if (r.type === "equity") equity.push({ name: r.name, amountPaise: -r.balance_paise });
+  }
+  if (retainedEarningsPaise !== 0) equity.push({ name: "Retained earnings (P&L)", amountPaise: retainedEarningsPaise });
+  const sum = (xs: PnlLine[]) => xs.reduce((s, l) => s + l.amountPaise, 0);
+  const liabilitiesTotal = sum(liabilities);
+  const equityTotal = sum(equity);
+  return {
+    assets,
+    liabilities,
+    equity,
+    assetsTotalPaise: sum(assets),
+    liabilitiesAndEquityTotalPaise: liabilitiesTotal + equityTotal,
+  };
+}
+
 // ---- CSV export -------------------------------------------------------------
 
 /** paise → a plain rupee string with 2 decimals (for CSV/exports, no symbol). */
