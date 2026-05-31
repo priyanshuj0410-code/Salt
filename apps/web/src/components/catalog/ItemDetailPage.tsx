@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { useCatalog } from "@/store/catalog";
 import { itemStock, fefoBatch } from "@/lib/search";
 import { findSubstitutes, type Substitute } from "@/lib/substitutes";
+import { summarizePurchasePrices, type PurchasePriceRow } from "@/lib/priceHistory";
 import { formatPaise } from "@/lib/currency";
 import type { Batch, Item, Schedule } from "@/lib/types";
 
@@ -68,6 +69,7 @@ export function ItemDetailPage() {
   const [aliasKind, setAliasKind] = useState<AliasKind>("synonym");
   const [aliasBusy, setAliasBusy] = useState(false);
   const [aliasReload, setAliasReload] = useState(0);
+  const [priceRows, setPriceRows] = useState<PurchasePriceRow[]>([]);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -91,6 +93,35 @@ export function ItemDetailPage() {
     };
   }, [orgId, id, aliasReload]);
 
+  // This shop's own recent purchase (GRN) prices for the item (SALT-082, within-shop).
+  useEffect(() => {
+    if (!supabase || !orgId || !id) return;
+    let active = true;
+    supabase
+      .from("purchase_lines")
+      .select("mrp_paise,ptr_paise,qty,purchase:purchases(vendor_invoice_date,received_date,created_at)")
+      .eq("item_id", id)
+      .then(({ data }) => {
+        if (!active) return;
+        type Row = {
+          mrp_paise: number;
+          ptr_paise: number;
+          qty: number;
+          purchase: { vendor_invoice_date: string | null; received_date: string | null; created_at: string | null } | null;
+        };
+        const rows = ((data as Row[] | null) ?? []).map((r) => ({
+          mrpPaise: r.mrp_paise,
+          ptrPaise: r.ptr_paise,
+          qty: r.qty,
+          date: r.purchase?.vendor_invoice_date ?? r.purchase?.received_date ?? r.purchase?.created_at ?? "",
+        }));
+        setPriceRows(rows);
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId, id]);
+
   // Leaving one item for another resets any in-progress edit. Adjusting state
   // during render on a prop change is the React-recommended pattern (not an effect).
   const [prevId, setPrevId] = useState(id);
@@ -100,6 +131,7 @@ export function ItemDetailPage() {
     setForm(null);
     setError(null);
     setAliases([]);
+    setPriceRows([]);
   }
 
   const item = items.find((i) => i.id === id);
@@ -207,6 +239,11 @@ export function ItemDetailPage() {
   const fefo = fefoBatch(item);
   const batches = [...item.batches].sort((a, b) => a.expiry.localeCompare(b.expiry));
   const subs = findSubstitutes(item, items);
+  const prices = summarizePurchasePrices(priceRows);
+  const recentBuys = [...priceRows]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 8)
+    .map((r, i) => ({ ...r, key: String(i) }));
 
   const batchCols: Column<Batch>[] = [
     {
@@ -251,6 +288,13 @@ export function ItemDetailPage() {
       numeric: true,
       cell: (s) => (s.mrpPaise > 0 ? `${s.marginPct.toFixed(0)}%` : "—"),
     },
+  ];
+
+  const buyCols: Column<(typeof recentBuys)[number]>[] = [
+    { key: "date", header: "Date", cell: (r) => (r.date ? r.date.slice(0, 10) : "—") },
+    { key: "ptr", header: "PTR", numeric: true, cell: (r) => formatPaise(r.ptrPaise) },
+    { key: "mrp", header: "MRP", numeric: true, cell: (r) => formatPaise(r.mrpPaise) },
+    { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty.toLocaleString("en-IN") },
   ];
 
   return (
@@ -491,6 +535,48 @@ export function ItemDetailPage() {
           cols="1.2fr 0.9fr 0.6fr 0.9fr 0.9fr"
           empty={<p className="px-3 py-6 text-sm text-text-tertiary">No batches — this item has no stock yet.</p>}
         />
+      </section>
+
+      {/* Purchase prices — this shop's own recent GRN buys (SALT-082, within-shop) */}
+      <section className="mt-6">
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-text-primary">Purchase prices</h2>
+          <span className="text-xs text-text-tertiary">From your goods receipts (GRN) — to set or check the catalogue price.</span>
+        </div>
+        {usingSeed ? (
+          <p className="rounded-lg border border-border px-3 py-6 text-sm text-text-tertiary">
+            Add or import your own catalogue to see purchase price history.
+          </p>
+        ) : prices.count === 0 ? (
+          <p className="rounded-lg border border-border px-3 py-6 text-sm text-text-tertiary">
+            No purchases recorded for this item yet.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <StatCard
+                label="Last PTR"
+                value={prices.latest ? formatPaise(prices.latest.ptrPaise) : "—"}
+                hint={prices.latest?.date ? prices.latest.date.slice(0, 10) : undefined}
+              />
+              <StatCard label="Last MRP" value={prices.latest ? formatPaise(prices.latest.mrpPaise) : "—"} />
+              <StatCard
+                label="Median PTR"
+                value={formatPaise(prices.medianPtrPaise)}
+                hint={`${prices.count} buy${prices.count > 1 ? "s" : ""}`}
+              />
+              <StatCard label="Median MRP" value={formatPaise(prices.medianMrpPaise)} />
+            </div>
+            <div className="mt-3">
+              <DataTable
+                columns={buyCols}
+                rows={recentBuys}
+                rowKey={(r) => r.key}
+                cols="1.2fr 0.9fr 0.9fr 0.6fr"
+              />
+            </div>
+          </>
+        )}
       </section>
 
       {/* Substitutes — same salt, in stock, ranked by margin then velocity (SALT-083) */}
