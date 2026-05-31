@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, User } from "lucide-react";
 import { ItemSearch } from "./ItemSearch";
 import { BillTable } from "./BillTable";
 import { BillSummary } from "./BillSummary";
+import { MobileCheckout } from "./MobileCheckout";
 import { ShortcutHelp } from "./ShortcutHelp";
 import { CustomerPicker } from "./CustomerPicker";
+import { useCheckout } from "./useCheckout";
 import { Kbd } from "@/components/ui/kbd";
+import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import { useBill } from "@/store/bill";
+import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 function Hint({ keys, label }: { keys: string; label: string }) {
   return (
@@ -20,12 +25,50 @@ function Hint({ keys, label }: { keys: string; label: string }) {
   );
 }
 
+/** The prominent "who is this bill for" bar — the counter's equivalent of a
+ *  delivery app's address selector. Full-width and tappable on mobile; a compact
+ *  chip with a Ctrl+K hint on desktop. Opens the CustomerPicker. */
+function CustomerBar({
+  name,
+  phone,
+  onChange,
+  className,
+}: {
+  name: string;
+  phone: string | null;
+  onChange: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      onClick={onChange}
+      title="Change customer (Ctrl+K)"
+      className={cn(
+        "flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2 text-left hover:bg-border md:py-1.5",
+        className,
+      )}
+    >
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-info-bg text-info md:size-6">
+        <User className="size-4 md:size-3.5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] leading-tight text-text-tertiary">Billing to</span>
+        <span className="block truncate text-sm font-medium leading-tight">{name}</span>
+      </span>
+      {phone && <span className="shrink-0 text-xs text-text-tertiary md:hidden">{phone}</span>}
+      <span className="hidden shrink-0 items-center text-text-tertiary md:flex">
+        <Kbd>Ctrl K</Kbd>
+      </span>
+      <ChevronDown className="size-4 shrink-0 text-text-tertiary" />
+    </button>
+  );
+}
+
 /**
- * The counter. Desktop (md+): a fixed-height two-pane app — search + line table
- * on the left, the running total on the right — driven entirely by the keyboard
- * (the speed benchmark; do not regress it). Below md it reflows to a single
- * scrolling column for touch: customer → search → tap-to-add lines → total → Save.
- * The brand/user live in the app shell, not here.
+ * The counter. A fixed header (customer bar) over a scrolling content area, with
+ * a persistent checkout ActionBar — the right summary pane on desktop, a
+ * thumb-zone bar on mobile (`MobileCheckout`). Both are driven by one `useCheckout`
+ * so the keyboard fast-path (search → Enter → F9) and the touch flow stay in sync.
  */
 export function BillingScreen() {
   const [helpOpen, setHelpOpen] = useState(false);
@@ -34,10 +77,33 @@ export function BillingScreen() {
   const loadCatalog = useCatalog((s) => s.load);
   const party = useBill((s) => s.party);
   const setParty = useBill((s) => s.setParty);
+  const checkout = useCheckout();
+
+  // Detail for the selected customer: drives the header phone + the "Add GSTIN"
+  // prompt. Refetched after a GSTIN is saved so the prompt clears.
+  const [customer, setCustomer] = useState<{ gstin: string | null; phone: string | null } | null>(null);
+  const [custKey, setCustKey] = useState(0);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
   }, [orgId, loadCatalog]);
+
+  useEffect(() => {
+    const id = party?.id;
+    if (!supabase || !id) return;
+    let active = true;
+    void supabase
+      .from("ledgers")
+      .select("gstin,phone")
+      .eq("id", id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setCustomer((data as { gstin: string | null; phone: string | null } | null) ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [party?.id, custKey]);
 
   useHotkeys(
     "shift+/",
@@ -57,39 +123,45 @@ export function BillingScreen() {
     { enableOnFormTags: true },
   );
 
+  // Gate detail on `party` so a cleared bill (after save, or walk-in) never shows
+  // the previous customer's phone/GSTIN even if the fetched detail is briefly stale.
+  const customerGstin = party ? (customer?.gstin ?? null) : null;
+  const customerPhone = party ? (customer?.phone ?? null) : null;
+  const refetchCustomer = () => setCustKey((k) => k + 1);
+
   return (
-    <div className="flex min-h-full flex-col bg-surface md:h-full md:overflow-hidden">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-background px-3 py-2 md:px-4 md:py-2.5">
-        <div className="hidden items-baseline gap-3 md:flex">
+    <div className="flex h-full flex-col overflow-hidden bg-surface">
+      <header className="flex items-center gap-3 border-b border-border bg-background px-3 py-2 md:px-4 md:py-2.5">
+        <div className="hidden shrink-0 items-baseline gap-3 md:flex">
           <span className="text-lg font-semibold tracking-tight">Salt</span>
           <span className="text-xs text-text-tertiary">Counter 1</span>
         </div>
-        <div className="flex flex-1 items-center justify-end gap-3 text-sm md:flex-none">
-          <span className="hidden text-text-tertiary sm:inline">
-            Invoice <span className="font-medium text-text-primary">INV/2026-27/0042</span>
-          </span>
-          <button
-            onClick={() => setCustomerOpen(true)}
-            title="Change customer (Ctrl+K)"
-            className="flex items-center gap-1.5 rounded-md bg-surface-2 px-2.5 py-1.5 text-xs font-medium hover:bg-border"
-          >
-            {party?.name ?? "Walk-in Customer"}
-            <ChevronDown className="size-3 text-text-tertiary" />
-          </button>
-        </div>
+        <div className="hidden flex-1 md:block" />
+        <span className="hidden text-sm text-text-tertiary lg:block">
+          Invoice <span className="font-medium text-text-primary">INV/2026-27/0042</span>
+        </span>
+        <CustomerBar
+          name={party?.name ?? "Walk-in customer"}
+          phone={customerPhone}
+          onChange={() => setCustomerOpen(true)}
+          className="min-w-0 flex-1 md:w-64 md:flex-none"
+        />
       </header>
 
-      <main className="flex flex-col gap-3 p-3 md:grid md:flex-1 md:grid-cols-[1fr_320px] md:gap-4 md:overflow-hidden md:p-4">
+      <div className="flex-1 overflow-y-auto p-3 md:grid md:grid-cols-[1fr_320px] md:gap-4 md:overflow-hidden md:p-4">
         <div className="flex flex-col gap-3 md:min-h-0">
           <ItemSearch />
           <BillTable />
         </div>
-        <BillSummary />
-      </main>
+        <BillSummary checkout={checkout} customerGstin={customerGstin} onCustomerUpdated={refetchCustomer} />
+      </div>
+
+      <MobileCheckout checkout={checkout} customerGstin={customerGstin} onCustomerUpdated={refetchCustomer} />
 
       <footer className="hidden items-center gap-4 border-t border-border bg-background px-4 py-1.5 text-xs text-text-tertiary md:flex">
         <Hint keys="↑ ↓" label="navigate" />
         <Hint keys="Enter" label="add item" />
+        <Hint keys="F9" label="save bill" />
         <Hint keys="Esc" label="clear search" />
         <Hint keys="?" label="all shortcuts" />
       </footer>
@@ -99,7 +171,15 @@ export function BillingScreen() {
         open={customerOpen}
         onOpenChange={setCustomerOpen}
         orgId={orgId}
-        onSelect={setParty}
+        onSelect={(p) => {
+          setParty(p);
+          setCustomer(null);
+        }}
+      />
+      <ShopSetupDialog
+        open={checkout.setupOpen}
+        onOpenChange={checkout.setSetupOpen}
+        onResolved={() => void checkout.save()}
       />
     </div>
   );
