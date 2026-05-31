@@ -66,3 +66,15 @@ export function sumItemQty(lines: BillLine[], itemId: string, excludeKeys: strin
 export function lineMaxQty(lines: BillLine[], line: BillLine): number {
   return line.stock - sumItemQty(lines, line.itemId, [line.key]);
 }
+
+/**
+ * Split a total GST amount into the CGST/SGST (intra-state) or IGST (inter-state)
+ * components shown at checkout and on the invoice. Inter-state ⇒ the whole tax is
+ * IGST; intra-state ⇒ half CGST + half SGST (the remainder goes to SGST so the two
+ * always sum back to `gstPaise`). Mirrors the server split in create_sales_invoice.
+ */
+export function gstSplit(gstPaise: number, isInterstate: boolean): { cgst: number; sgst: number; igst: number } {
+  if (isInterstate) return { cgst: 0, sgst: 0, igst: gstPaise };
+  const cgst = Math.round(gstPaise / 2);
+  return { cgst, sgst: gstPaise - cgst, igst: 0 };
+}

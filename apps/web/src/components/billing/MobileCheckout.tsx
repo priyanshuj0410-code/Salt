@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { addDays, format } from "date-fns";
-import { Banknote, CalendarClock, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Banknote, CalendarClock, Check, ChevronDown, ChevronUp, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPaise, formatSigned } from "@/lib/currency";
+import { gstSplit } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
 import { GstinPrompt } from "./GstinPrompt";
@@ -30,8 +31,9 @@ export function MobileCheckout({
 }) {
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, save, saving, saved, error } = checkout;
-  const { needsRx, rxCaptured, rx, openRx } = checkout;
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error } = checkout;
+  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
+  const tax = gstSplit(t.gst, isInterstate);
   const [open, setOpen] = useState(false);
   const loss = t.margin < 0;
 
@@ -49,8 +51,14 @@ export function MobileCheckout({
             muted
           />
           <Row label="Taxable value" value={formatPaise(t.taxable)} muted />
-          <Row label="CGST" value={formatPaise(Math.round(t.gst / 2))} muted />
-          <Row label="SGST" value={formatPaise(t.gst - Math.round(t.gst / 2))} muted />
+          {isInterstate ? (
+            <Row label="IGST" value={formatPaise(tax.igst)} muted />
+          ) : (
+            <>
+              <Row label="CGST" value={formatPaise(tax.cgst)} muted />
+              <Row label="SGST" value={formatPaise(tax.sgst)} muted />
+            </>
+          )}
           <div className={cn("flex justify-between text-sm font-medium", loss ? "text-danger" : "text-success")}>
             <span>{loss ? "Est. loss" : "Est. earnings"}</span>
             <span className="tabular-nums">{formatSigned(t.margin)}</span>
@@ -93,9 +101,19 @@ export function MobileCheckout({
 
           {party && !customerGstin && <GstinPrompt partyId={party.id} onSaved={onCustomerUpdated} />}
 
-          <Button variant="ghost" size="sm" className="w-full" onClick={clear}>
-            Clear bill
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={saving || usingSeed}
+              onClick={() => saveOnly()}
+            >
+              Save only
+            </Button>
+            <Button variant="ghost" size="sm" onClick={clear}>
+              Clear bill
+            </Button>
+          </div>
         </div>
       )}
 
@@ -113,7 +131,7 @@ export function MobileCheckout({
           </div>
           <div className="text-lg font-semibold tabular-nums">{formatPaise(t.grand)}</div>
         </button>
-        <Button size="lg" disabled={saving || usingSeed} onClick={() => save()}>
+        <Button size="lg" disabled={saving || usingSeed} onClick={() => saveAndPrint()}>
           {saved ? (
             <>
               <Check /> Saved
@@ -121,7 +139,9 @@ export function MobileCheckout({
           ) : saving ? (
             "Saving…"
           ) : (
-            `Charge ${formatPaise(t.grand)}`
+            <>
+              <Printer /> {formatPaise(t.grand)}
+            </>
           )}
         </Button>
       </div>
