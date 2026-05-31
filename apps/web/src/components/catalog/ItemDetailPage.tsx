@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, PencilLine, Save, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useCatalog } from "@/store/catalog";
 import { itemStock, fefoBatch } from "@/lib/search";
+import { findSubstitutes, type Substitute } from "@/lib/substitutes";
 import { formatPaise } from "@/lib/currency";
 import type { Batch, Item, Schedule } from "@/lib/types";
 
@@ -42,6 +43,7 @@ type Form = ReturnType<typeof formFrom>;
 export function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const orgId = useAuth().membership?.orgId;
+  const navigate = useNavigate();
   const items = useCatalog((s) => s.items);
   const loading = useCatalog((s) => s.loading);
   const loaded = useCatalog((s) => s.loaded);
@@ -150,6 +152,7 @@ export function ItemDetailPage() {
   const stock = itemStock(item);
   const fefo = fefoBatch(item);
   const batches = [...item.batches].sort((a, b) => a.expiry.localeCompare(b.expiry));
+  const subs = findSubstitutes(item, items);
 
   const batchCols: Column<Batch>[] = [
     {
@@ -173,6 +176,27 @@ export function ItemDetailPage() {
     },
     { key: "mrp", header: "MRP", numeric: true, cell: (b) => formatPaise(b.mrpPaise) },
     { key: "ptr", header: "PTR", numeric: true, cell: (b) => formatPaise(b.ptrPaise) },
+  ];
+
+  const subCols: Column<Substitute>[] = [
+    {
+      key: "name",
+      header: "Item",
+      cell: (s) => (
+        <div className="min-w-0">
+          <div className="truncate font-medium text-text-primary">{s.item.name}</div>
+          <div className="truncate text-xs text-text-tertiary">{s.item.manufacturer || "—"}</div>
+        </div>
+      ),
+    },
+    { key: "stock", header: "Stock", numeric: true, cell: (s) => s.stock.toLocaleString("en-IN") },
+    { key: "mrp", header: "MRP", numeric: true, cell: (s) => formatPaise(s.mrpPaise) },
+    {
+      key: "margin",
+      header: "Margin",
+      numeric: true,
+      cell: (s) => (s.mrpPaise > 0 ? `${s.marginPct.toFixed(0)}%` : "—"),
+    },
   ];
 
   return (
@@ -318,6 +342,34 @@ export function ItemDetailPage() {
           cols="1.2fr 0.9fr 0.6fr 0.9fr 0.9fr"
           empty={<p className="px-3 py-6 text-sm text-text-tertiary">No batches — this item has no stock yet.</p>}
         />
+      </section>
+
+      {/* Substitutes — same salt, in stock, ranked by margin then velocity (SALT-083) */}
+      <section className="mt-6">
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-text-primary">Substitutes</h2>
+          <span className="text-xs text-text-tertiary">
+            {stock > 0 ? "Same salt, in stock — by margin" : "Out of stock — sell one of these instead"}
+          </span>
+        </div>
+        {!item.salt.trim() ? (
+          <p className="rounded-lg border border-border px-3 py-6 text-sm text-text-tertiary">
+            Add a salt / molecule to this item to find substitutes.
+          </p>
+        ) : (
+          <DataTable
+            columns={subCols}
+            rows={subs}
+            rowKey={(s) => s.item.id}
+            cols="minmax(0,1.8fr) 0.7fr 0.9fr 0.8fr"
+            onRowActivate={(s) => navigate(`/catalogue/${s.item.id}`)}
+            empty={
+              <p className="px-3 py-6 text-sm text-text-tertiary">
+                No other in-stock brand of {item.salt}.
+              </p>
+            }
+          />
+        )}
       </section>
     </Page>
   );
