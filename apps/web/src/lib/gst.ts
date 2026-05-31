@@ -526,3 +526,103 @@ export function gstr3bToCsv(summary: Gstr3bSummary): string {
   ];
   return rows.map((cols) => cols.map(csvCell).join(",")).join("\n");
 }
+
+// ============================================================================
+// GST liability — current-month output/ITC/net + due date + MoM/YoY trend
+// ============================================================================
+
+/** A tax-bearing document tagged with its date ('YYYY-MM-DD'); only the heads matter here. */
+export interface DatedTaxRow {
+  date: string;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+
+/** Net GST position for one month (all paise). */
+export interface MonthLiability {
+  period: string; // 'YYYY-MM'
+  outputPaise: number; // tax on sales
+  itcPaise: number; // tax credit on purchases
+  netPaise: number; // output − itc (signed; negative = surplus credit)
+  netPayablePaise: number; // max(0, net) — the cash figure
+}
+
+/** A MoM / YoY comparison of net payable. `prev` is null when that month had no documents. */
+export interface LiabilityDelta {
+  prev: MonthLiability | null;
+  deltaPaise: number; // current.netPayable − prev.netPayable
+  pct: number | null; // null when prev is absent or zero
+}
+
+export interface GstLiabilityView {
+  current: MonthLiability;
+  dueDate: string; // 'YYYY-MM-DD' — 20th of the month after `current`
+  mom: LiabilityDelta;
+  yoy: LiabilityDelta;
+  series: MonthLiability[]; // chronological ascending, one per month in the window
+}
+
+/** Shift a 'YYYY-MM' period by a (possibly negative) number of months. */
+export function shiftPeriod(period: string, deltaMonths: number): string {
+  const [y, m] = period.split("-").map(Number);
+  const idx = y * 12 + (m - 1) + deltaMonths;
+  return `${Math.floor(idx / 12)}-${String((idx % 12) + 1).padStart(2, "0")}`;
+}
+
+function sumHeads(r: DatedTaxRow): number {
+  return r.cgst_paise + r.sgst_paise + r.igst_paise;
+}
+
+function liabilityDelta(current: MonthLiability, prev: MonthLiability | null): LiabilityDelta {
+  if (!prev) return { prev: null, deltaPaise: current.netPayablePaise, pct: null };
+  const d = current.netPayablePaise - prev.netPayablePaise;
+  return { prev, deltaPaise: d, pct: prev.netPayablePaise > 0 ? (d / prev.netPayablePaise) * 100 : null };
+}
+
+/**
+ * Build the GST liability view ending at `currentPeriod`, over a window of
+ * `months` months (the series covers `currentPeriod-(months-1) … currentPeriod`;
+ * default 13 so the same month last year is in-window for YoY). Output tax comes
+ * from sales rows, ITC from purchase rows — both bucketed by month from their
+ * date. Net payable = `max(0, output − itc)`. GSTR-3B for month M is due the 20th
+ * of M+1. All money is paise.
+ */
+export function buildGstLiability(
+  currentPeriod: string,
+  sales: DatedTaxRow[],
+  purchases: DatedTaxRow[],
+  months = 13,
+): GstLiabilityView {
+  const output = new Map<string, number>();
+  const itc = new Map<string, number>();
+  for (const r of sales) {
+    const k = r.date.slice(0, 7);
+    output.set(k, (output.get(k) ?? 0) + sumHeads(r));
+  }
+  for (const r of purchases) {
+    const k = r.date.slice(0, 7);
+    itc.set(k, (itc.get(k) ?? 0) + sumHeads(r));
+  }
+
+  const monthOf = (period: string): MonthLiability => {
+    const o = output.get(period) ?? 0;
+    const i = itc.get(period) ?? 0;
+    const net = o - i;
+    return { period, outputPaise: o, itcPaise: i, netPaise: net, netPayablePaise: Math.max(0, net) };
+  };
+  const monthOrNull = (period: string): MonthLiability | null =>
+    output.has(period) || itc.has(period) ? monthOf(period) : null;
+
+  const series: MonthLiability[] = [];
+  for (let k = months - 1; k >= 0; k--) series.push(monthOf(shiftPeriod(currentPeriod, -k)));
+
+  const current = monthOf(currentPeriod);
+  return {
+    current,
+    dueDate: `${shiftPeriod(currentPeriod, 1)}-20`,
+    mom: liabilityDelta(current, monthOrNull(shiftPeriod(currentPeriod, -1))),
+    yoy: liabilityDelta(current, monthOrNull(shiftPeriod(currentPeriod, -12))),
+    series,
+  };
+}
