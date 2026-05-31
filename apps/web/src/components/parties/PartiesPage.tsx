@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Page } from "@/components/patterns/page";
+import { PageHeader } from "@/components/patterns/page-header";
+import { StatCard } from "@/components/patterns/stat-card";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
 import { useAuth } from "@/lib/auth";
@@ -190,23 +192,20 @@ export function PartiesPage() {
 
   return (
     <Page width="lg">
-        <div className="flex items-center gap-2">
-          <Users className="size-5 text-primary" />
-          <h1 className="text-xl font-semibold">Parties</h1>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Your customers and vendors with their outstanding balances. Fix any mis-tagged type, and
-          merge duplicates that are really the same party.
-        </p>
+        <PageHeader
+          icon={Users}
+          title="Parties"
+          subtitle="Customers and vendors with their balances. Fix mis-tagged types, merge duplicates."
+        />
 
         {/* Summary */}
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <Stat label="Parties" value={stats.count.toLocaleString("en-IN")} />
-          <Stat label="Customers" value={stats.customers.toLocaleString("en-IN")} />
-          <Stat label="Vendors" value={stats.vendors.toLocaleString("en-IN")} />
-          <Stat label="Other" value={stats.others.toLocaleString("en-IN")} />
-          <Stat label="Receivable" value={`₹${rupees(stats.receivable)}`} accent="emerald" />
-          <Stat label="Payable" value={`₹${rupees(stats.payable)}`} accent="red" />
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <StatCard label="Parties" value={stats.count.toLocaleString("en-IN")} />
+          <StatCard label="Customers" value={stats.customers.toLocaleString("en-IN")} />
+          <StatCard label="Vendors" value={stats.vendors.toLocaleString("en-IN")} />
+          <StatCard label="Other" value={stats.others.toLocaleString("en-IN")} />
+          <StatCard label="Receivable" value={`₹${rupees(stats.receivable)}`} tone="success" />
+          <StatCard label="Payable" value={`₹${rupees(stats.payable)}`} tone="danger" />
         </div>
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
@@ -346,28 +345,7 @@ export function PartiesPage() {
           )}
         </div>
 
-        <Link to="/owner" className="mt-5 inline-block text-sm font-medium text-primary hover:underline">
-          ← Back to owner dashboard
-        </Link>
     </Page>
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent?: "emerald" | "red" }) {
-  return (
-    <div className="rounded-md border bg-background p-3">
-      <div
-        className={
-          accent === "emerald"
-            ? "text-base font-semibold text-emerald-700 dark:text-emerald-400"
-            : accent === "red"
-              ? "text-base font-semibold text-red-600 dark:text-red-400"
-              : "text-base font-semibold tabular-nums"
-        }
-      >
-        {value}
-      </div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-    </div>
-  );
-}
