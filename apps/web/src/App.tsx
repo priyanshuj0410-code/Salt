@@ -19,6 +19,7 @@ import { TurnoverPage } from "@/components/inventory/TurnoverPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { GstLiabilityPage } from "@/components/gst/GstLiabilityPage";
+import { ItcRegisterPage } from "@/components/gst/ItcRegisterPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
@@ -171,6 +172,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <GstLiabilityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/itc"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ItcRegisterPage />
           </ProtectedRoute>
         }
       />
