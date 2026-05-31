@@ -11,6 +11,7 @@
  */
 import { supabase } from "@/lib/supabase";
 import { withTimeout } from "@/lib/orders";
+import { formatPaise } from "@/lib/currency";
 
 export type PaymentDirection = "received" | "paid";
 
@@ -134,4 +135,101 @@ export function autoAllocate(amountPaise: number, docs: OpenDoc[]): Record<strin
 /** Sum of a per-doc allocation map (paise). */
 export function allocatedTotal(alloc: Record<string, number>): number {
   return Object.values(alloc).reduce((sum, n) => sum + n, 0);
+}
+
+// --- Receipts (SALT-057) ----------------------------------------------------
+
+const ONES = [
+  "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven",
+  "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen",
+];
+const TENS = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+function under100(n: number): string {
+  return n < 20 ? ONES[n] : (TENS[Math.floor(n / 10)] + (n % 10 ? " " + ONES[n % 10] : ""));
+}
+function under1000(n: number): string {
+  const h = Math.floor(n / 100);
+  const r = n % 100;
+  return [h ? ONES[h] + " Hundred" : "", r ? under100(r) : ""].filter(Boolean).join(" ");
+}
+function rupeesToWords(n: number): string {
+  if (n === 0) return "Zero";
+  const crore = Math.floor(n / 10000000);
+  const lakh = Math.floor((n % 10000000) / 100000);
+  const thousand = Math.floor((n % 100000) / 1000);
+  const rest = n % 1000;
+  return [
+    crore ? rupeesToWords(crore) + " Crore" : "",
+    lakh ? under100(lakh) + " Lakh" : "",
+    thousand ? under100(thousand) + " Thousand" : "",
+    rest ? under1000(rest) : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Indian-system amount in words, e.g. 123450 → "One Thousand Two Hundred Thirty Four Rupees and Fifty Paise Only". */
+export function amountInWords(paise: number): string {
+  const sign = paise < 0 ? "Minus " : "";
+  const abs = Math.abs(Math.round(paise));
+  const rupees = Math.floor(abs / 100);
+  const p = abs % 100;
+  const head = `${rupeesToWords(rupees)} Rupee${rupees === 1 ? "" : "s"}`;
+  return `${sign}${head}${p ? ` and ${under100(p)} Paise` : ""} Only`;
+}
+
+/** A resolved allocation line for a receipt: which invoice, how much. */
+export interface ReceiptAllocation {
+  ref: string;
+  allocated_paise: number;
+}
+
+/** Load a payment's allocations and resolve each to a human invoice ref. */
+export async function loadPaymentAllocations(orgId: string, paymentId: string): Promise<ReceiptAllocation[]> {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from("payment_allocations")
+    .select("target_table,target_id,allocated_paise")
+    .eq("org_id", orgId)
+    .eq("payment_id", paymentId);
+  if (error || !data) return [];
+  const rows = data as { target_table: string; target_id: string; allocated_paise: number }[];
+  const refById = new Map<string, string>();
+  const purchaseIds = rows.filter((r) => r.target_table === "purchase").map((r) => r.target_id);
+  const saleIds = rows.filter((r) => r.target_table === "sales_invoice").map((r) => r.target_id);
+  if (purchaseIds.length) {
+    const { data: ps } = await supabase.from("purchases").select("id,vendor_invoice_no").in("id", purchaseIds);
+    for (const p of (ps as { id: string; vendor_invoice_no: string | null }[] | null) ?? [])
+      refById.set(p.id, p.vendor_invoice_no || "Purchase");
+  }
+  if (saleIds.length) {
+    const { data: ss } = await supabase.from("sales_invoices").select("id,invoice_no").in("id", saleIds);
+    for (const s of (ss as { id: string; invoice_no: string | null }[] | null) ?? [])
+      refById.set(s.id, s.invoice_no || "Invoice");
+  }
+  return rows.map((r) => ({ ref: refById.get(r.target_id) ?? r.target_table, allocated_paise: r.allocated_paise }));
+}
+
+/** A WhatsApp-friendly receipt summary (plain text, wa.me encodes it). */
+export function buildReceiptMessage(opts: {
+  shopName?: string | null;
+  direction: PaymentDirection;
+  partyName: string;
+  amountPaise: number;
+  mode: string;
+  reference?: string | null;
+  dateLabel: string;
+}): string {
+  const verb = opts.direction === "received" ? "Received from" : "Paid to";
+  return [
+    opts.shopName?.trim() ? `*${opts.shopName.trim()}* — Payment Receipt` : "Payment Receipt",
+    "",
+    `${verb}: ${opts.partyName}`,
+    `Amount: ${formatPaise(opts.amountPaise)}`,
+    `Mode: ${opts.mode.toUpperCase()}${opts.reference?.trim() ? ` (${opts.reference.trim()})` : ""}`,
+    `Date: ${opts.dateLabel}`,
+    "",
+    opts.direction === "received" ? "Thank you for your payment." : "Payment confirmation.",
+  ].join("\n");
 }

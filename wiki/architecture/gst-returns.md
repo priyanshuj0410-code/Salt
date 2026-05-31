@@ -4,13 +4,13 @@ updated: 2026-06-01
 tags: [gst, compliance, sales]
 ---
 
-# GST returns (GSTR-1, GSTR-3B)
+# GST returns & liability (GSTR-1, GSTR-3B, live liability)
 
-The **GST & compliance** module's filing screens (SALT-002, SALT-063; product-modules §9):
-read-only returns that aggregate one shop's month of documents into the GSTN sections and
-export portal-ready JSON + CSV. Screens under `/gst` (`components/gst/Gstr1Page.tsx`,
-`Gstr3bPage.tsx`); all aggregation in `lib/gst.ts`, which is **pure** (no Supabase) and
-unit-smoke-tested.
+The **GST & compliance** module's screens (SALT-002, SALT-063, SALT-069; product-modules §9):
+read-only views that aggregate one shop's documents into the GSTN sections / a live tax
+position, with portal-ready JSON + CSV export. Screens under `/gst`
+(`components/gst/Gstr1Page.tsx`, `Gstr3bPage.tsx`, `GstLiabilityPage.tsx`); all aggregation
+in `lib/gst.ts`, which is **pure** (no Supabase) and unit-smoke-tested.
 
 ## Read contract (as-built)
 
@@ -62,6 +62,20 @@ Section breakdowns and the headline totals both derive from the **lines**, so th
   `gstr3bToCsv` for spreadsheets.
 - **Deferred:** ITC reversal (returns / expired stock) until the Returns module exists; the
   per-head set-off is simplified (no IGST cross-utilisation optimisation).
+
+## GST liability (live)
+
+`buildGstLiability(currentPeriod, sales, purchases, months=13)` (screen `/gst/liability`,
+SALT-069) gives the owner a live tax position without picking a period:
+
+- **Current month** output tax (from `sales_invoices`), eligible ITC (from `purchases`), and
+  **net payable** = `max(0, output − ITC)` — the same per-month aggregation as GSTR-3B.
+- **Payment due date** = the 20th of the following month (`shiftPeriod(period, 1)` + `-20`);
+  the screen shows days remaining / overdue.
+- **MoM / YoY** deltas of net payable (vs the previous month and the same month last year) +
+  a **13-month trend**. Months are bucketed by document date; a month with no documents reads
+  as a null comparison (not a misleading zero). `shiftPeriod(period, n)` is the shared
+  month-arithmetic helper. Read-only — filing is SALT-072.
 
 ## Deferred
 

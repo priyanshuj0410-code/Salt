@@ -124,6 +124,7 @@ export const NAV: NavModule[] = [
     children: [
       { label: "GSTR-1", path: "/gst", built: true },
       { label: "GSTR-3B", path: "/gst/gstr3b", built: true },
+      { label: "Liability", path: "/gst/liability", built: true },
       { label: "GSTR-2B recon", built: false },
       { label: "ITC register", built: false },
       { label: "H1 / X register", built: false },
