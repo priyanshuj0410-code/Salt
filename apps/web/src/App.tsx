@@ -36,6 +36,7 @@ import { DrugLicensesPage } from "@/components/settings/DrugLicensesPage";
 import { DataExportPage } from "@/components/settings/DataExportPage";
 import { PrintTemplatesPage } from "@/components/settings/PrintTemplatesPage";
 import { AuditLogPage } from "@/components/settings/AuditLogPage";
+import { ShopsManagerPage } from "@/components/settings/ShopsManagerPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/nav/AppLayout";
 
@@ -296,6 +297,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <OrgSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/shops"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ShopsManagerPage />
           </ProtectedRoute>
         }
       />
