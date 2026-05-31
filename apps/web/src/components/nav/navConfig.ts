@@ -131,6 +131,7 @@ export const NAV: NavModule[] = [
       { label: "Liability", path: "/gst/liability", built: true },
       { label: "GSTR-2B recon", built: false },
       { label: "ITC register", path: "/gst/itc", built: true },
+      { label: "Tally export", path: "/gst/tally", built: true },
       { label: "H1 / X register", built: false },
       { label: "Drug licenses", built: false },
     ],

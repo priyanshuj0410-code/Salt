@@ -727,3 +727,131 @@ export function itcRegisterToCsv(view: ItcRegisterView): string {
   const totalRow = ["TOTAL", "", "", "", m(view.totals.taxablePaise), m(view.totals.cgstPaise), m(view.totals.sgstPaise), m(view.totals.igstPaise), m(view.totals.itcPaise)];
   return [head, ...rows, totalRow].map((c) => c.map(csvCell).join(",")).join("\n");
 }
+
+// ============================================================================
+// Tally XML export (SALT-070) — sales + purchase vouchers for the accountant
+// ============================================================================
+
+/** A sale as a Tally voucher input (`partyName` is "Cash" for walk-in / cash bills). */
+export interface TallySaleRow {
+  invoiceNo: string;
+  date: string; // 'YYYY-MM-DD'
+  partyName: string;
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  totalPaise: number;
+}
+
+/** A purchase as a Tally voucher input. */
+export interface TallyPurchaseRow {
+  invoiceNo: string;
+  date: string;
+  vendorName: string;
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  totalPaise: number;
+}
+
+const TALLY = {
+  sales: "Sales",
+  purchase: "Purchase",
+  outCgst: "Output CGST",
+  outSgst: "Output SGST",
+  outIgst: "Output IGST",
+  inCgst: "Input CGST",
+  inSgst: "Input SGST",
+  inIgst: "Input IGST",
+} as const;
+
+function xmlEscape(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c] ?? c);
+}
+
+/** paise → rupee string, 2 dp (Tally amounts are rupees). */
+function rupeeStr(paise: number): string {
+  return (Math.round(paise) / 100).toFixed(2);
+}
+
+/**
+ * One Tally ledger line. In Tally XML, AMOUNT is **negative for a debit** and
+ * positive for a credit, with ISDEEMEDPOSITIVE 'Yes' on debits. Zero is omitted.
+ */
+function ledgerEntry(name: string, debit: boolean, paise: number): string {
+  if (paise === 0) return "";
+  const amt = debit ? -Math.round(paise) : Math.round(paise);
+  return [
+    "        <ALLLEDGERENTRIES.LIST>",
+    `          <LEDGERNAME>${xmlEscape(name)}</LEDGERNAME>`,
+    `          <ISDEEMEDPOSITIVE>${debit ? "Yes" : "No"}</ISDEEMEDPOSITIVE>`,
+    `          <AMOUNT>${rupeeStr(amt)}</AMOUNT>`,
+    "        </ALLLEDGERENTRIES.LIST>",
+  ].join("\n");
+}
+
+function voucher(vchType: string, date: string, num: string, partyName: string, entries: string[]): string {
+  return [
+    "      <TALLYMESSAGE>",
+    `        <VOUCHER VCHTYPE="${xmlEscape(vchType)}" ACTION="Create">`,
+    `          <DATE>${date.replace(/-/g, "")}</DATE>`,
+    `          <VOUCHERTYPENAME>${xmlEscape(vchType)}</VOUCHERTYPENAME>`,
+    `          <VOUCHERNUMBER>${xmlEscape(num)}</VOUCHERNUMBER>`,
+    `          <PARTYLEDGERNAME>${xmlEscape(partyName)}</PARTYLEDGERNAME>`,
+    ...entries.filter(Boolean),
+    "        </VOUCHER>",
+    "      </TALLYMESSAGE>",
+  ].join("\n");
+}
+
+/**
+ * Build a Tally-importable XML envelope of the period's sales + purchase vouchers,
+ * each a balanced double entry carrying the GST split:
+ *  - Sale:     Dr party/Cash (total) · Cr Sales (taxable) · Cr Output CGST/SGST/IGST
+ *  - Purchase: Dr Purchase (taxable) · Dr Input CGST/SGST/IGST · Cr vendor (total)
+ * Ledgers are referenced by name (Tally maps/creates them on import). Amounts in rupees.
+ */
+export function buildTallyXml(companyName: string, sales: TallySaleRow[], purchases: TallyPurchaseRow[]): string {
+  const vouchers: string[] = [];
+  for (const s of sales) {
+    vouchers.push(
+      voucher("Sales", s.date, s.invoiceNo, s.partyName, [
+        ledgerEntry(s.partyName, true, s.totalPaise),
+        ledgerEntry(TALLY.sales, false, s.taxablePaise),
+        ledgerEntry(TALLY.outCgst, false, s.cgstPaise),
+        ledgerEntry(TALLY.outSgst, false, s.sgstPaise),
+        ledgerEntry(TALLY.outIgst, false, s.igstPaise),
+      ]),
+    );
+  }
+  for (const p of purchases) {
+    vouchers.push(
+      voucher("Purchase", p.date, p.invoiceNo, p.vendorName, [
+        ledgerEntry(TALLY.purchase, true, p.taxablePaise),
+        ledgerEntry(TALLY.inCgst, true, p.cgstPaise),
+        ledgerEntry(TALLY.inSgst, true, p.sgstPaise),
+        ledgerEntry(TALLY.inIgst, true, p.igstPaise),
+        ledgerEntry(p.vendorName, false, p.totalPaise),
+      ]),
+    );
+  }
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    "<ENVELOPE>",
+    "  <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>",
+    "  <BODY>",
+    "    <IMPORTDATA>",
+    "      <REQUESTDESC>",
+    "        <REPORTNAME>Vouchers</REPORTNAME>",
+    `        <STATICVARIABLES><SVCURRENTCOMPANY>${xmlEscape(companyName)}</SVCURRENTCOMPANY></STATICVARIABLES>`,
+    "      </REQUESTDESC>",
+    "      <REQUESTDATA>",
+    ...vouchers,
+    "      </REQUESTDATA>",
+    "    </IMPORTDATA>",
+    "  </BODY>",
+    "</ENVELOPE>",
+  ].join("\n");
+}
