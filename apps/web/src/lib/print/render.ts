@@ -1,15 +1,20 @@
 import type { InvoicePrintData, InvoiceLine, PrintFormat } from "./types";
 import { formatPaise, splitInclusiveGst } from "../currency";
 import { PAGE_RULE, PRINT_FORMATS, FORMAT_LABEL, FORMAT_WIDTH, FORMAT_LAYOUT } from "./format";
-import { FORMAT_KEY } from "./prefs";
+import { FORMAT_KEY, LANG_KEY } from "./prefs";
 import { stateName } from "../stateCodes";
 import { rupeesInWords } from "./words";
 import { taxSummary } from "./taxSummary";
 import { DOC_META, SALE_DOC_TYPES, type DocMeta, type DocType } from "./docType";
 import { templateStorageKey, type PrintTemplate } from "./template";
+import { pick, LABELS, LANG_LABEL, PRINT_LANGS, type PrintLang, type LabelKey } from "./i18n";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** A bilingual label span: carries both languages so the popup can switch live. */
+const L = (key: LabelKey, lang: PrintLang): string =>
+  `<span class="i18n" data-en="${esc(LABELS[key].en)}" data-hi="${esc(LABELS[key].hi)}">${esc(pick(key, lang))}</span>`;
 
 /** A per-shop template text node, hidden until it has a value (so the live editor can reveal it). */
 const tplText = (field: string, val: string | undefined, tag = "div", extra = ""): string =>
@@ -43,11 +48,12 @@ function receiptLineRow(l: InvoiceLine): string {
   </tr>`;
 }
 
+// `label` is rendered as raw HTML (callers pass bilingual <span> labels, never user data).
 function receiptTotalRow(label: string, value: string, strong = false): string {
-  return `<tr class="${strong ? "tot" : ""}"><td colspan="3" class="r">${esc(label)}</td><td class="r">${esc(value)}</td></tr>`;
+  return `<tr class="${strong ? "tot" : ""}"><td colspan="3" class="r">${label}</td><td class="r">${esc(value)}</td></tr>`;
 }
 
-function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string {
+function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: PrintLang): string {
   const shopMeta = [d.shop.address, d.shop.phone && `Ph: ${d.shop.phone}`, d.shop.gstin && `GSTIN: ${d.shop.gstin}`]
     .filter(Boolean)
     .map((s) => esc(String(s)))
@@ -57,31 +63,31 @@ function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): stri
     .map((s) => esc(String(s)))
     .join(" · ");
   const taxRows = d.isInterstate
-    ? receiptTotalRow("IGST", formatPaise(d.igst))
-    : receiptTotalRow("CGST", formatPaise(d.cgst)) + receiptTotalRow("SGST", formatPaise(d.sgst));
+    ? receiptTotalRow(L("igst", lang), formatPaise(d.igst))
+    : receiptTotalRow(L("cgst", lang), formatPaise(d.cgst)) + receiptTotalRow(L("sgst", lang), formatPaise(d.sgst));
   const payLabel = d.payment.method === "credit" ? "Credit" : "Cash";
   const refLine = d.reference ? `<div class="note-only ref">${esc(d.reference)}</div>` : "";
   return `<div class="receipt">
     <div class="shop">${tplLogo(t.logo)}<h1>${esc(d.shop.name)}</h1>${tplText("tagline", t.tagline)}<div class="meta">${shopMeta}</div>${tplText("licenses", t.licenses, "div", " meta")}</div>
     <hr>
     <div class="row"><span class="doctitle">${esc(meta.title)}</span><span>${esc(d.dateTime)}</span></div>
-    <div class="row"><span>Ref: ${esc(d.ref)}</span><span>${esc(payLabel)}</span></div>
+    <div class="row"><span>${L("ref", lang)}: ${esc(d.ref)}</span><span>${esc(payLabel)}</span></div>
     ${refLine}
     <div class="bill-to"><strong>${esc(d.customerName)}</strong>${custMeta ? `<br><span class="meta">${custMeta}</span>` : ""}</div>
     <table>
-      <thead><tr><th class="l">Item</th><th class="r">Qty</th><th class="r">MRP</th><th class="r">Amt</th></tr></thead>
+      <thead><tr><th class="l">${L("item", lang)}</th><th class="r">${L("qty", lang)}</th><th class="r">${L("mrp", lang)}</th><th class="r">${L("amt", lang)}</th></tr></thead>
       <tbody>${d.lines.map(receiptLineRow).join("")}</tbody>
       <tfoot>
-        ${receiptTotalRow("Gross (MRP)", formatPaise(d.gross))}
-        ${d.discount > 0 ? receiptTotalRow("Discount", `- ${formatPaise(d.discount)}`) : ""}
-        ${receiptTotalRow("Taxable", formatPaise(d.taxable))}
+        ${receiptTotalRow(L("grossMrp", lang), formatPaise(d.gross))}
+        ${d.discount > 0 ? receiptTotalRow(L("discount", lang), `- ${formatPaise(d.discount)}`) : ""}
+        ${receiptTotalRow(L("taxable", lang), formatPaise(d.taxable))}
         ${taxRows}
-        ${receiptTotalRow("Total", formatPaise(d.grand), true)}
+        ${receiptTotalRow(L("total", lang), formatPaise(d.grand), true)}
       </tfoot>
     </table>
     <div class="words">${esc(rupeesInWords(d.grand))}</div>
     ${tplText("terms", t.terms)}
-    <div class="foot">Thank you. Get well soon.</div>
+    <div class="foot">${L("thankYou", lang)}</div>
     ${tplText("footer", t.footer)}
   </div>`;
 }
@@ -108,7 +114,7 @@ function sheetItemRow(l: InvoiceLine, i: number): string {
   </tr>`;
 }
 
-function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string {
+function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: PrintLang): string {
   const shopLines = [d.shop.address, d.shop.phone && `Ph: ${d.shop.phone}`]
     .filter(Boolean)
     .map((s) => `<div>${esc(String(s))}</div>`)
@@ -121,14 +127,14 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string
   const posName = stateName(posCode);
   const supply = `${posName || "—"}${posCode ? ` (${esc(posCode)})` : ""} · ${d.isInterstate ? "Inter-state" : "Intra-state"}`;
   const taxRows = d.isInterstate
-    ? `<tr><td>IGST</td><td>${formatPaise(d.igst)}</td></tr>`
-    : `<tr><td>CGST</td><td>${formatPaise(d.cgst)}</td></tr><tr><td>SGST</td><td>${formatPaise(d.sgst)}</td></tr>`;
+    ? `<tr><td>${L("igst", lang)}</td><td>${formatPaise(d.igst)}</td></tr>`
+    : `<tr><td>${L("cgst", lang)}</td><td>${formatPaise(d.cgst)}</td></tr><tr><td>${L("sgst", lang)}</td><td>${formatPaise(d.sgst)}</td></tr>`;
   const payLabel = d.payment.method === "credit" ? `Credit (${d.payment.creditDays} days)` : "Cash";
   // Rate-wise tax breakup (rule 46) — taxable + tax per GST slab.
   const tax = taxSummary(d.lines, d.isInterstate);
   const taxHead = d.isInterstate
-    ? `<tr><th class="r">Taxable</th><th class="r">Rate</th><th class="r">IGST</th></tr>`
-    : `<tr><th class="r">Taxable</th><th class="r">Rate</th><th class="r">CGST</th><th class="r">SGST</th></tr>`;
+    ? `<tr><th class="r">${L("taxable", lang)}</th><th class="r">${L("rate", lang)}</th><th class="r">${L("igst", lang)}</th></tr>`
+    : `<tr><th class="r">${L("taxable", lang)}</th><th class="r">${L("rate", lang)}</th><th class="r">${L("cgst", lang)}</th><th class="r">${L("sgst", lang)}</th></tr>`;
   const taxBody = tax
     .map((r) =>
       d.isInterstate
@@ -151,41 +157,41 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string
         <div class="s-tag b2b-only">B2B</div>
         <div class="s-copy taxdoc-only">Original for Recipient</div>
         <table class="s-meta">
-          <tr><td>Number</td><td>${esc(d.ref)}</td></tr>
-          <tr><td>Date</td><td>${esc(d.dateTime)}</td></tr>
-          <tr><td>Payment</td><td>${esc(payLabel)}</td></tr>
-          <tr class="taxdoc-only"><td>Reverse charge</td><td>No</td></tr>
+          <tr><td>${L("number", lang)}</td><td>${esc(d.ref)}</td></tr>
+          <tr><td>${L("date", lang)}</td><td>${esc(d.dateTime)}</td></tr>
+          <tr><td>${L("payment", lang)}</td><td>${esc(payLabel)}</td></tr>
+          <tr class="taxdoc-only"><td>${L("reverseCharge", lang)}</td><td>No</td></tr>
         </table>
       </div>
     </div>
     <div class="s-billto">
-      <div><span class="lbl">Bill To</span><strong>${esc(d.customerName)}</strong>${custLines ? `<div class="sub">${custLines}</div>` : ""}${d.reference ? `<div class="sub note-only">${esc(d.reference)}</div>` : ""}</div>
-      <div><span class="lbl">Place of supply</span>${supply}</div>
+      <div><span class="lbl">${L("billTo", lang)}</span><strong>${esc(d.customerName)}</strong>${custLines ? `<div class="sub">${custLines}</div>` : ""}${d.reference ? `<div class="sub note-only">${esc(d.reference)}</div>` : ""}</div>
+      <div><span class="lbl">${L("placeOfSupply", lang)}</span>${supply}</div>
     </div>
     <table class="s-items">
       <thead><tr>
-        <th class="r">#</th><th>Item</th><th>HSN</th><th class="r">Qty</th>
-        <th class="r">MRP</th><th class="r">Disc</th><th class="r">Taxable</th><th class="r">GST</th><th class="r">Amount</th>
+        <th class="r">#</th><th>${L("item", lang)}</th><th>${L("hsn", lang)}</th><th class="r">${L("qty", lang)}</th>
+        <th class="r">${L("mrp", lang)}</th><th class="r">${L("disc", lang)}</th><th class="r">${L("taxable", lang)}</th><th class="r">${L("gst", lang)}</th><th class="r">${L("amount", lang)}</th>
       </tr></thead>
       <tbody>${d.lines.map(sheetItemRow).join("")}</tbody>
     </table>
     <div class="s-bottom">
       <div class="s-notes">
-        <div class="s-cap">Tax summary</div>
+        <div class="s-cap">${L("taxSummary", lang)}</div>
         <table class="s-tax"><thead>${taxHead}</thead><tbody>${taxBody}</tbody></table>
       </div>
       <table class="s-totals">
-        <tr><td>Gross (MRP)</td><td>${formatPaise(d.gross)}</td></tr>
-        ${d.discount > 0 ? `<tr><td>Discount</td><td>- ${formatPaise(d.discount)}</td></tr>` : ""}
-        <tr><td>Taxable value</td><td>${formatPaise(d.taxable)}</td></tr>
+        <tr><td>${L("grossMrp", lang)}</td><td>${formatPaise(d.gross)}</td></tr>
+        ${d.discount > 0 ? `<tr><td>${L("discount", lang)}</td><td>- ${formatPaise(d.discount)}</td></tr>` : ""}
+        <tr><td>${L("taxableValue", lang)}</td><td>${formatPaise(d.taxable)}</td></tr>
         ${taxRows}
-        <tr class="grand"><td>Grand total</td><td>${formatPaise(d.grand)}</td></tr>
+        <tr class="grand"><td>${L("grandTotal", lang)}</td><td>${formatPaise(d.grand)}</td></tr>
       </table>
     </div>
-    <div class="s-words"><span class="lbl">Amount in words</span>${esc(rupeesInWords(d.grand))}</div>
+    <div class="s-words"><span class="lbl">${L("amountInWords", lang)}</span>${esc(rupeesInWords(d.grand))}</div>
     ${tplText("terms", t.terms)}
     <div class="s-foot-row">
-      <div class="s-decl taxdoc-only">Certified that the particulars given above are true and correct.</div>
+      <div class="s-decl taxdoc-only">${L("declaration", lang)}</div>
       <div class="s-sign">For ${esc(d.shop.name)}<div class="s-sign-line"><span class="tpl-signatureLabel">${esc(t.signatureLabel ?? "Authorised signatory")}</span></div></div>
     </div>
     ${tplText("footer", t.footer)}
@@ -387,6 +393,7 @@ const DOC_TITLES = Object.fromEntries((Object.keys(DOC_META) as DocType[]).map((
 const SCRIPT = `(function(){
 var FMT=${JSON.stringify(PAGE_RULE)};
 var KEY=${JSON.stringify(FORMAT_KEY)};
+var LANGKEY=${JSON.stringify(LANG_KEY)};
 var TITLES=${JSON.stringify(DOC_TITLES)};
 function setActive(sel,attr,val){
   var bs=document.querySelectorAll(sel);
@@ -406,12 +413,20 @@ function setDoc(t){
   for(var i=0;i<ts.length;i++){ts[i].textContent=TITLES[t];}
   setActive(".toolbar [data-d]","data-d",t);
 }
-function wire(sel,fn){
-  var bs=document.querySelectorAll(sel);
-  for(var i=0;i<bs.length;i++){(function(b){b.onclick=function(){fn(b.getAttribute(b.hasAttribute("data-f")?"data-f":"data-d"));};})(bs[i]);}
+function setLang(l){
+  document.body.setAttribute("data-lang",l);
+  try{localStorage.setItem(LANGKEY,l);}catch(e){}
+  var es=document.querySelectorAll(".i18n");
+  for(var i=0;i<es.length;i++){var en=es[i].getAttribute("data-en")||"";var hi=es[i].getAttribute("data-hi")||"";es[i].textContent=(l==="hi")?hi:((l==="both")?(en+" / "+hi):en);}
+  setActive(".toolbar [data-l]","data-l",l);
 }
-wire(".toolbar [data-f]",setFormat);
-wire(".toolbar [data-d]",setDoc);
+function wire(sel,attr,fn){
+  var bs=document.querySelectorAll(sel);
+  for(var i=0;i<bs.length;i++){(function(b){b.onclick=function(){fn(b.getAttribute(attr));};})(bs[i]);}
+}
+wire(".toolbar [data-f]","data-f",setFormat);
+wire(".toolbar [data-d]","data-d",setDoc);
+wire(".toolbar [data-l]","data-l",setLang);
 var TPL=(window.__TPL||{});
 var TPL_KEY=(window.__TPL_KEY||"salt.print.template:default");
 function saveTpl(){try{localStorage.setItem(TPL_KEY,JSON.stringify(TPL));}catch(e){}}
@@ -455,13 +470,18 @@ function editorPanel(t: PrintTemplate): string {
 /** Build the invoice HTML document (self-contained, inline styles, all formats). */
 export function invoiceHtml(
   d: InvoicePrintData,
-  opts: { format: PrintFormat; docType: DocType; template: PrintTemplate },
+  opts: { format: PrintFormat; docType: DocType; template: PrintTemplate; lang: PrintLang },
 ): string {
-  const { format: fmt, docType, template } = opts;
+  const { format: fmt, docType, template, lang } = opts;
   const meta = DOC_META[docType];
   const fmtButtons = PRINT_FORMATS.map(
     (f) => `<button data-f="${f}"${f === fmt ? ' class="on"' : ""}>${esc(FORMAT_LABEL[f])}</button>`,
   ).join("");
+  const langButtons =
+    `<span class="sep"></span><span class="lbl">Lang</span>` +
+    PRINT_LANGS.map(
+      (l) => `<button data-l="${l}"${l === lang ? ' class="on"' : ""}>${esc(LANG_LABEL[l])}</button>`,
+    ).join("");
   // The document switcher is offered only for forward-sale documents the cashier
   // may legitimately re-pick at print time; notes/returns come fixed from the caller.
   const docButtons = (SALE_DOC_TYPES as readonly DocType[]).includes(docType)
@@ -476,17 +496,17 @@ export function invoiceHtml(
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(meta.title)} ${esc(d.ref)}</title>
 <style id="pagestyle">${PAGE_RULE[fmt]}</style>
 <style>${STYLE}</style></head>
-<body data-format="${fmt}" data-doctype="${docType}">
+<body data-format="${fmt}" data-doctype="${docType}" data-lang="${lang}">
 <div class="toolbar">
-  <span class="lbl">Format</span>${fmtButtons}${docButtons}
+  <span class="lbl">Format</span>${fmtButtons}${docButtons}${langButtons}
   <span class="spacer"></span>
   <button id="customise">Customise</button>
   <button id="go" class="go">Print</button>
   <button id="close">Close</button>
 </div>
 ${editorPanel(template)}
-<div class="doc" id="doc-receipt">${receiptBody(d, meta, template)}</div>
-<div class="doc" id="doc-sheet">${sheetBody(d, meta, template)}</div>
+<div class="doc" id="doc-receipt">${receiptBody(d, meta, template, lang)}</div>
+<div class="doc" id="doc-sheet">${sheetBody(d, meta, template, lang)}</div>
 <div class="doc" id="doc-mono">${monoBody(d, meta, template)}</div>
 ${dataScript}
 <script>${SCRIPT}</script>

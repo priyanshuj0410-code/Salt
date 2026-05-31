@@ -1,5 +1,6 @@
 import type { Payment } from "../types";
 import type { DocType } from "./docType";
+import type { PrintLang } from "./i18n";
 
 /**
  * The physical output a bill is laid out for. Two thermal roll widths, a full A4
@@ -69,4 +70,6 @@ export interface PrintOptions {
   format?: PrintFormat;
   /** Document kind; defaults to one derived from the sale (B2B when the buyer has a GSTIN). */
   docType?: DocType;
+  /** Label language; defaults to the saved preference (English). */
+  lang?: PrintLang;
 }

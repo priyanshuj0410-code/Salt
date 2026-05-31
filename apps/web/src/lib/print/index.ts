@@ -1,5 +1,5 @@
 import { invoiceHtml } from "./render";
-import { loadDefaultFormat } from "./prefs";
+import { loadDefaultFormat, loadDefaultLang } from "./prefs";
 import { deriveDocType } from "./docType";
 import { loadTemplate } from "./template";
 import type { InvoicePrintData, PrintOptions } from "./types";
@@ -10,6 +10,7 @@ export * from "./prefs";
 export * from "./build";
 export * from "./docType";
 export * from "./template";
+export * from "./i18n";
 export { invoiceHtml } from "./render";
 
 /**
@@ -22,6 +23,7 @@ export { invoiceHtml } from "./render";
 export function printInvoice(d: InvoicePrintData, opts: PrintOptions = {}): void {
   const format = opts.format ?? loadDefaultFormat();
   const docType = opts.docType ?? deriveDocType(!!d.customer?.gstin);
+  const lang = opts.lang ?? loadDefaultLang();
   const template = loadTemplate(d.shop.id);
   // A fixed window name reuses one popup across bills (no pile-up at a busy
   // counter); the switchers keep it open for re-prints, so we reset its
@@ -29,6 +31,6 @@ export function printInvoice(d: InvoicePrintData, opts: PrintOptions = {}): void
   const w = window.open("", "salt-print", "width=520,height=760");
   if (!w) return; // popup blocked — the sale is already saved; user can reprint later
   w.document.open();
-  w.document.write(invoiceHtml(d, { format, docType, template }));
+  w.document.write(invoiceHtml(d, { format, docType, template, lang }));
   w.document.close();
 }
