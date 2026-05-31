@@ -7,7 +7,7 @@ import { gstSplit } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
 import { GstinPrompt } from "./GstinPrompt";
-import { Row } from "./BillSummary";
+import { Row, BillDiscountInput } from "./BillSummary";
 import { H1Notice } from "./H1Gate";
 import type { Checkout } from "./useCheckout";
 
@@ -51,6 +51,10 @@ export function MobileCheckout({
             value={t.discount > 0 ? `− ${formatPaise(t.discount)}` : formatPaise(0)}
             muted
           />
+          <BillDiscountInput />
+          {t.billDiscount > 0 && (
+            <Row label="Bill discount applied" value={`− ${formatPaise(t.billDiscount)}`} muted />
+          )}
           <Row label="Taxable value" value={formatPaise(t.taxable)} muted />
           {isInterstate ? (
             <Row label="IGST" value={formatPaise(tax.igst)} muted />

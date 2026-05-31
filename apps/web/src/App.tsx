@@ -36,11 +36,26 @@ const Gstr3bPage = lazy(() => import("@/components/gst/Gstr3bPage").then((m) => 
 const GstLiabilityPage = lazy(() => import("@/components/gst/GstLiabilityPage").then((m) => ({ default: m.GstLiabilityPage })));
 const ItcRegisterPage = lazy(() => import("@/components/gst/ItcRegisterPage").then((m) => ({ default: m.ItcRegisterPage })));
 const TallyExportPage = lazy(() => import("@/components/gst/TallyExportPage").then((m) => ({ default: m.TallyExportPage })));
+const HsnReportPage = lazy(() => import("@/components/gst/HsnReportPage").then((m) => ({ default: m.HsnReportPage })));
 const PaymentsPage = lazy(() => import("@/components/payments/PaymentsPage").then((m) => ({ default: m.PaymentsPage })));
 const MakePaymentPage = lazy(() => import("@/components/payments/MakePaymentPage").then((m) => ({ default: m.MakePaymentPage })));
+const DashboardPage = lazy(() => import("@/components/reports/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const SalesReportsPage = lazy(() => import("@/components/reports/SalesReportsPage").then((m) => ({ default: m.SalesReportsPage })));
+const PurchaseReportsPage = lazy(() => import("@/components/reports/PurchaseReportsPage").then((m) => ({ default: m.PurchaseReportsPage })));
+const InventoryReportsPage = lazy(() => import("@/components/reports/InventoryReportsPage").then((m) => ({ default: m.InventoryReportsPage })));
+const FinancialReportsPage = lazy(() => import("@/components/reports/FinancialReportsPage").then((m) => ({ default: m.FinancialReportsPage })));
+const TaxReportsPage = lazy(() => import("@/components/reports/TaxReportsPage").then((m) => ({ default: m.TaxReportsPage })));
 const ImportPage = lazy(() => import("@/components/import/ImportPage").then((m) => ({ default: m.ImportPage })));
-const SmartImportPage = lazy(() => import("@/components/import/smart/SmartImportPage").then((m) => ({ default: m.SmartImportPage })));
+const PurchaseInvoiceImportPage = lazy(() => import("@/components/import/PurchaseInvoiceImportPage").then((m) => ({ default: m.PurchaseInvoiceImportPage })));
+const GlOpeningImportPage = lazy(() => import("@/components/import/GlOpeningImportPage").then((m) => ({ default: m.GlOpeningImportPage })));
 const OrgSettingsPage = lazy(() => import("@/components/settings/OrgSettingsPage").then((m) => ({ default: m.OrgSettingsPage })));
+const SetupWizard = lazy(() => import("@/components/onboarding/SetupWizard").then((m) => ({ default: m.SetupWizard })));
+const DrugLicensesPage = lazy(() => import("@/components/settings/DrugLicensesPage").then((m) => ({ default: m.DrugLicensesPage })));
+const DataExportPage = lazy(() => import("@/components/settings/DataExportPage").then((m) => ({ default: m.DataExportPage })));
+const PrintTemplatesPage = lazy(() => import("@/components/settings/PrintTemplatesPage").then((m) => ({ default: m.PrintTemplatesPage })));
+const AuditLogPage = lazy(() => import("@/components/settings/AuditLogPage").then((m) => ({ default: m.AuditLogPage })));
+const ShopsManagerPage = lazy(() => import("@/components/settings/ShopsManagerPage").then((m) => ({ default: m.ShopsManagerPage })));
+const SmartImportPage = lazy(() => import("@/components/import/smart/SmartImportPage").then((m) => ({ default: m.SmartImportPage })));
 
 function PageFallback() {
   return (
@@ -69,252 +84,372 @@ function App() {
     <ErrorBoundary>
       <OfflineBanner />
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/onboarding" element={<OnboardingPage />} />
-        <Route element={<AppLayout />}>
-          <Route element={<AppContent />}>
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <BillingScreen />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/owner"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <OwnerHome />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/parties"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <PartiesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/parties/:id"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <PartyProfilePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchases"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <GrnListPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchases/new"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <GrnEntryPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchases/orders"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <PoListPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchases/orders/new"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <PoEntryPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchases/orders/:id"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <PoDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/purchases/:id"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <GrnDetailPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/bills"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <BillHistoryPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <StockLedgerPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/near-expiry"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <NearExpiryPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/dead-stock"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <DeadStockPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/reorder"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <ReorderPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/out-of-stock"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <OutOfStockPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/turnover"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <TurnoverPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/adjustments"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <AdjustmentsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/count"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <PhysicalCountPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/inventory/destruction"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <ExpiryDestructionPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/gst"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <Gstr1Page />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/gst/gstr3b"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <Gstr3bPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/gst/liability"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <GstLiabilityPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/gst/itc"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <ItcRegisterPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/gst/tally"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <TallyExportPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/payments"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <PaymentsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/payments/make"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <MakePaymentPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/import"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <ImportPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/import/smart"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <SmartImportPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings/organisation"
-              element={
-                <ProtectedRoute allowedRoles={["owner"]}>
-                  <OrgSettingsPage />
-                </ProtectedRoute>
-              }
-            />
-          </Route>
-        </Route>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route element={<AppLayout />}>
+      <Route element={<AppContent />}>
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <BillingScreen />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/owner"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <OwnerHome />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/setup"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SetupWizard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/parties"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PartiesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/parties/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PartyProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GrnListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/new"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GrnEntryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders/new"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoEntryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GrnDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bills"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <BillHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <StockLedgerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/near-expiry"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <NearExpiryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/dead-stock"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DeadStockPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/reorder"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ReorderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/out-of-stock"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <OutOfStockPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/turnover"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <TurnoverPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/adjustments"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <AdjustmentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/count"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PhysicalCountPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/destruction"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ExpiryDestructionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <Gstr1Page />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/gstr3b"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <Gstr3bPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/liability"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GstLiabilityPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/itc"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ItcRegisterPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/tally"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <TallyExportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/hsn"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <HsnReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/sales"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SalesReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/purchases"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PurchaseReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/inventory"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <InventoryReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/financial"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <FinancialReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/tax"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <TaxReportsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PaymentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments/make"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <MakePaymentPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import/smart"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SmartImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import/purchases"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PurchaseInvoiceImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/import/gl"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <GlOpeningImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/organisation"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <OrgSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/shops"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ShopsManagerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/licenses"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DrugLicensesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/export"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DataExportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/print"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PrintTemplatesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/audit"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <AuditLogPage />
+          </ProtectedRoute>
+        }
+      />
+      </Route>
+      </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ErrorBoundary>

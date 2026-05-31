@@ -28,6 +28,7 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
   const setRx = useBill((s) => s.setRx);
   const setPaymentMethod = useBill((s) => s.setPaymentMethod);
   const setCreditDays = useBill((s) => s.setCreditDays);
+  const billDiscount = useBill((s) => s.billDiscount);
   const usingSeed = useCatalog((s) => s.usingSeed);
   const { shopId, shop } = useAuth();
   const blockers = useShopBlockers();
@@ -38,7 +39,7 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
   const [rxOpen, setRxOpen] = useState(false);
   // Remembered across the H1 gate / shop-setup detours so a resumed save still prints.
   const printIntent = useRef(false);
-  const t = billTotals(lines);
+  const t = billTotals(lines, billDiscount);
   const empty = lines.length === 0;
   const needsRx = requiresRx(lines);
   // Inter-state ⇒ IGST; intra-state (incl. walk-in / no party state) ⇒ CGST+SGST.
@@ -70,7 +71,7 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
     setSaving(true);
     setError(null);
     try {
-      const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null);
+      const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount);
       const { data, error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
       if (err) {
         setError(err.message);
@@ -80,7 +81,7 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
       // Capture the receipt from live bill state BEFORE clear() wipes it.
       const receipt =
         printIntent.current && invoiceId && shop
-          ? buildInvoiceData({ invoiceId, shop, party, customer, lines, payment, totals: t, isInterstate })
+          ? buildInvoiceData({ invoiceId, shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
           : null;
       clear();
       setSaved(true);
@@ -115,7 +116,7 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
       void save({ print: true });
     },
     { enableOnFormTags: true },
-    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop],
+    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount],
   );
 
   return {

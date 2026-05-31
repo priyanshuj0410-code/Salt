@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import { PhoneLogin } from "@/components/auth/PhoneLogin";
 
 function GoogleIcon() {
   return (
@@ -16,7 +18,7 @@ function GoogleIcon() {
   );
 }
 
-type Mode = "signin" | "signup" | "reset";
+type Mode = "signin" | "signup" | "reset" | "phone";
 
 export function LoginPage() {
   const { session } = useAuth();
@@ -133,7 +135,9 @@ export function LoginPage() {
       ? "Sign in to your shop"
       : mode === "signup"
         ? "Create your account"
-        : "Reset your password";
+        : mode === "reset"
+          ? "Reset your password"
+          : "Sign in with your phone";
   const submitLabel =
     mode === "signin" ? "Sign in" : mode === "signup" ? "Sign up" : "Send reset link";
 
@@ -145,106 +149,121 @@ export function LoginPage() {
           <p className="text-sm text-muted-foreground">{heading}</p>
         </div>
 
-        {mode !== "reset" && (
+        {mode === "phone" ? (
+          <PhoneLogin onBack={() => switchMode("signin")} />
+        ) : (
           <>
-            <Button variant="outline" className="w-full" onClick={onGoogle} type="button">
-              <GoogleIcon />
-              Continue with Google
-            </Button>
+            {mode !== "reset" && (
+              <>
+                <Button variant="outline" className="w-full" onClick={onGoogle} type="button">
+                  <GoogleIcon />
+                  Continue with Google
+                </Button>
+                <Button
+                  variant="outline"
+                  className="mt-2 w-full"
+                  onClick={() => switchMode("phone")}
+                  type="button"
+                >
+                  <Phone />
+                  Continue with phone
+                </Button>
 
-            <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-              <span className="h-px flex-1 bg-border" />
-              or
-              <span className="h-px flex-1 bg-border" />
-            </div>
+                <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" />
+                  or
+                  <span className="h-px flex-1 bg-border" />
+                </div>
+              </>
+            )}
+
+            <form onSubmit={onSubmit} className="flex flex-col gap-3">
+              {mode === "signup" && (
+                <Input
+                  type="text"
+                  placeholder="Full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  autoComplete="name"
+                />
+              )}
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+              />
+              {mode !== "reset" && (
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                  required
+                />
+              )}
+
+              {mode === "signin" && (
+                <button
+                  type="button"
+                  onClick={() => switchMode("reset")}
+                  className="-mt-1 self-end text-xs font-medium text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              )}
+
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              {info && <p className="text-sm text-emerald-600 dark:text-emerald-500">{info}</p>}
+
+              <Button type="submit" disabled={submitting} className="w-full">
+                {submitting ? "Please wait…" : submitLabel}
+              </Button>
+            </form>
+
+            {mode === "signup" && (
+              <p className="mt-3 text-center text-xs text-muted-foreground">
+                Didn’t get the confirmation email?{" "}
+                <button
+                  type="button"
+                  onClick={onResend}
+                  className="font-medium text-primary hover:underline"
+                >
+                  Resend
+                </button>
+              </p>
+            )}
+
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              {mode === "reset" ? (
+                <>
+                  Remembered it?{" "}
+                  <button
+                    type="button"
+                    className="font-medium text-primary hover:underline"
+                    onClick={() => switchMode("signin")}
+                  >
+                    Back to sign in
+                  </button>
+                </>
+              ) : (
+                <>
+                  {mode === "signin" ? "New to Salt?" : "Already have an account?"}{" "}
+                  <button
+                    type="button"
+                    className="font-medium text-primary hover:underline"
+                    onClick={() => switchMode(mode === "signin" ? "signup" : "signin")}
+                  >
+                    {mode === "signin" ? "Create an account" : "Sign in"}
+                  </button>
+                </>
+              )}
+            </p>
           </>
         )}
-
-        <form onSubmit={onSubmit} className="flex flex-col gap-3">
-          {mode === "signup" && (
-            <Input
-              type="text"
-              placeholder="Full name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              autoComplete="name"
-            />
-          )}
-          <Input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            required
-          />
-          {mode !== "reset" && (
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              required
-            />
-          )}
-
-          {mode === "signin" && (
-            <button
-              type="button"
-              onClick={() => switchMode("reset")}
-              className="-mt-1 self-end text-xs font-medium text-primary hover:underline"
-            >
-              Forgot password?
-            </button>
-          )}
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          {info && <p className="text-sm text-emerald-600 dark:text-emerald-500">{info}</p>}
-
-          <Button type="submit" disabled={submitting} className="w-full">
-            {submitting ? "Please wait…" : submitLabel}
-          </Button>
-        </form>
-
-        {mode === "signup" && (
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Didn’t get the confirmation email?{" "}
-            <button
-              type="button"
-              onClick={onResend}
-              className="font-medium text-primary hover:underline"
-            >
-              Resend
-            </button>
-          </p>
-        )}
-
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          {mode === "reset" ? (
-            <>
-              Remembered it?{" "}
-              <button
-                type="button"
-                className="font-medium text-primary hover:underline"
-                onClick={() => switchMode("signin")}
-              >
-                Back to sign in
-              </button>
-            </>
-          ) : (
-            <>
-              {mode === "signin" ? "New to Salt?" : "Already have an account?"}{" "}
-              <button
-                type="button"
-                className="font-medium text-primary hover:underline"
-                onClick={() => switchMode(mode === "signin" ? "signup" : "signin")}
-              >
-                {mode === "signin" ? "Create an account" : "Sign in"}
-              </button>
-            </>
-          )}
-        </p>
       </div>
     </div>
   );
