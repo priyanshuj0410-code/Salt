@@ -176,3 +176,58 @@ export function isInterstate(
   if (!vendorStateCode) return false;
   return vendorStateCode !== shopStateCode;
 }
+
+// ── Purchase orders (PO) ─────────────────────────────────────────────────────
+// A PO is *intent to order* placed before goods arrive: it moves no stock and
+// posts no accounting (unlike a GRN). It is finalised into a GRN via
+// `receive_purchase(p_po_id)` (the match/discrepancy half is SALT-024). The
+// `purchase_orders` + `po_lines` tables are live; there is no `create_po` RPC,
+// so a PO is inserted directly (client-side UUID, ADR 0007) like a party/item.
+
+/** One line entered in the PO form. */
+export interface PoLine {
+  itemId: string;
+  name: string;
+  qty: number;
+  /** Expected cost per unit (PTR), tax-exclusive, in paise. */
+  ptrPaise: number;
+  gstRate: number;
+}
+
+/** One `po_lines` row for insert (snake_case to match the table). */
+export interface PoLinePayload {
+  id: string;
+  org_id: string;
+  po_id: string;
+  item_id: string;
+  name: string;
+  qty: number;
+  ptr_paise: number;
+  gst_rate: number;
+  line_total_paise: number;
+}
+
+/** Committed value of a PO line = qty × PTR (tax-exclusive; GST is settled at GRN). */
+export function poLineTotal(line: { qty: number; ptrPaise: number }): number {
+  return Math.max(0, Math.round((line.qty || 0) * (line.ptrPaise || 0)));
+}
+
+/** PO total = Σ line totals. */
+export function poTotal(lines: { qty: number; ptrPaise: number }[]): number {
+  return lines.reduce((sum, l) => sum + poLineTotal(l), 0);
+}
+
+/** Build the `po_lines` insert rows for a PO (each row carries org_id + po_id). */
+export function buildPoLineRows(poId: string, orgId: string, lines: PoLine[]): PoLinePayload[] {
+  return lines.map((l) => ({
+    id: crypto.randomUUID(),
+    org_id: orgId,
+    po_id: poId,
+    item_id: l.itemId,
+    name: l.name,
+    qty: l.qty,
+    ptr_paise: l.ptrPaise,
+    gst_rate: l.gstRate,
+    line_total_paise: poLineTotal(l),
+  }));
+}

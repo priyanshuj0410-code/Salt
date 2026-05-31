@@ -9,6 +9,9 @@ import { PartyProfilePage } from "@/components/parties/PartyProfilePage";
 import { GrnListPage } from "@/components/grn/GrnListPage";
 import { GrnEntryPage } from "@/components/grn/GrnEntryPage";
 import { GrnDetailPage } from "@/components/grn/GrnDetailPage";
+import { PoListPage } from "@/components/grn/PoListPage";
+import { PoEntryPage } from "@/components/grn/PoEntryPage";
+import { PoDetailPage } from "@/components/grn/PoDetailPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
 import { StockLedgerPage } from "@/components/inventory/StockLedgerPage";
 import { NearExpiryPage } from "@/components/inventory/NearExpiryPage";
@@ -83,6 +86,30 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <GrnEntryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders/new"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoEntryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PoDetailPage />
           </ProtectedRoute>
         }
       />
