@@ -39,6 +39,7 @@ export function BillSummary({
 }) {
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
+  const parkBill = useBill((s) => s.parkBill);
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
   const tax = gstSplit(t.gst, isInterstate);
@@ -169,10 +170,13 @@ export function BillSummary({
           >
             Save only
           </Button>
-          <Button variant="ghost" size="sm" disabled={empty} onClick={clear}>
-            Clear bill
+          <Button variant="outline" size="sm" disabled={empty} onClick={parkBill}>
+            Hold · F4
           </Button>
         </div>
+        <Button variant="ghost" size="sm" disabled={empty} onClick={clear}>
+          Clear bill
+        </Button>
       </div>
     </div>
   );

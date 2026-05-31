@@ -17,6 +17,38 @@ export interface BillTotals {
   margin: number;
 }
 
+/** A bill set aside on this counter to be resumed later (SALT-008, local/in-memory). */
+export interface ParkedBill {
+  id: string;
+  /** Display label — the customer name, or "Walk-in". */
+  label: string;
+  parkedAt: number;
+  lines: BillLine[];
+  payment: Payment;
+  party: OrderParty | null;
+  rx: RxDetails | null;
+}
+
+/** Snapshot the bill-defining fields of the current state into a parked bill. */
+function makeParked(s: Pick<BillState, "lines" | "payment" | "party" | "rx">): ParkedBill {
+  return {
+    id: crypto.randomUUID(),
+    label: s.party?.name ?? "Walk-in",
+    parkedAt: Date.now(),
+    lines: s.lines,
+    payment: s.payment,
+    party: s.party,
+    rx: s.rx,
+  };
+}
+
+const freshFields = () => ({
+  lines: [] as BillLine[],
+  payment: { method: "cash" as PaymentMethod, creditDays: 30 },
+  party: null as OrderParty | null,
+  rx: null as RxDetails | null,
+});
+
 const lineKey = (itemId: string, batchNo: string) => `${itemId}:${batchNo}`;
 
 function makeLine(item: Item, batch: Batch): BillLine {
@@ -48,6 +80,14 @@ interface BillState {
   /** Captured prescription for a Schedule H1/X sale; null until the gate is filled. */
   rx: RxDetails | null;
   setRx: (rx: RxDetails | null) => void;
+  /** Bills held aside on this counter, newest first (SALT-008). */
+  parked: ParkedBill[];
+  /** Hold the current bill aside and start a fresh one. No-op on an empty bill. */
+  parkBill: () => void;
+  /** Resume a held bill onto the counter; any current bill is held in its place. */
+  resumeBill: (id: string) => void;
+  /** Drop a held bill without resuming it. */
+  discardPark: (id: string) => void;
   /** Add an item; defaults to its FEFO batch. Re-adding the same batch increments qty. */
   addItem: (item: Item, batchNo?: string) => void;
   setQty: (key: string, qty: number) => void;
@@ -65,9 +105,28 @@ export const useBill = create<BillState>((set) => ({
   payment: { method: "cash", creditDays: 30 },
   party: null,
   rx: null,
+  parked: [],
 
   setParty: (party) => set({ party }),
   setRx: (rx) => set({ rx }),
+
+  parkBill: () =>
+    set((state) => {
+      if (state.lines.length === 0) return state;
+      return { parked: [makeParked(state), ...state.parked], ...freshFields() };
+    }),
+
+  resumeBill: (id) =>
+    set((state) => {
+      const target = state.parked.find((p) => p.id === id);
+      if (!target) return state;
+      const rest = state.parked.filter((p) => p.id !== id);
+      // Hold the in-progress bill (if any) in the resumed one's place — never lose a bill.
+      const parked = state.lines.length > 0 ? [makeParked(state), ...rest] : rest;
+      return { lines: target.lines, payment: target.payment, party: target.party, rx: target.rx, parked };
+    }),
+
+  discardPark: (id) => set((state) => ({ parked: state.parked.filter((p) => p.id !== id) })),
 
   addItem: (item, batchNo) =>
     set((state) => {
