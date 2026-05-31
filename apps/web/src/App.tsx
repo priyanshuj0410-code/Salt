@@ -10,6 +10,12 @@ import { GrnListPage } from "@/components/grn/GrnListPage";
 import { GrnEntryPage } from "@/components/grn/GrnEntryPage";
 import { GrnDetailPage } from "@/components/grn/GrnDetailPage";
 import { BillHistoryPage } from "@/components/bills/BillHistoryPage";
+import { StockLedgerPage } from "@/components/inventory/StockLedgerPage";
+import { NearExpiryPage } from "@/components/inventory/NearExpiryPage";
+import { DeadStockPage } from "@/components/inventory/DeadStockPage";
+import { ReorderPage } from "@/components/inventory/ReorderPage";
+import { OutOfStockPage } from "@/components/inventory/OutOfStockPage";
+import { TurnoverPage } from "@/components/inventory/TurnoverPage";
 import { Gstr1Page } from "@/components/gst/Gstr1Page";
 import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
@@ -92,6 +98,54 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <BillHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <StockLedgerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/near-expiry"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <NearExpiryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/dead-stock"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DeadStockPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/reorder"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ReorderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/out-of-stock"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <OutOfStockPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/inventory/turnover"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <TurnoverPage />
           </ProtectedRoute>
         }
       />
