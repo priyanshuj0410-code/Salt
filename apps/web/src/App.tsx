@@ -27,10 +27,15 @@ import { Gstr3bPage } from "@/components/gst/Gstr3bPage";
 import { GstLiabilityPage } from "@/components/gst/GstLiabilityPage";
 import { ItcRegisterPage } from "@/components/gst/ItcRegisterPage";
 import { TallyExportPage } from "@/components/gst/TallyExportPage";
+import { HsnReportPage } from "@/components/gst/HsnReportPage";
 import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
+import { DrugLicensesPage } from "@/components/settings/DrugLicensesPage";
+import { DataExportPage } from "@/components/settings/DataExportPage";
+import { PrintTemplatesPage } from "@/components/settings/PrintTemplatesPage";
+import { AuditLogPage } from "@/components/settings/AuditLogPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/nav/AppLayout";
 
@@ -247,6 +252,14 @@ function App() {
         }
       />
       <Route
+        path="/gst/hsn"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <HsnReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/payments"
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
@@ -283,6 +296,38 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <OrgSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/licenses"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DrugLicensesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/export"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DataExportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/print"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PrintTemplatesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/audit"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <AuditLogPage />
           </ProtectedRoute>
         }
       />

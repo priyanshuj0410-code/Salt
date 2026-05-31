@@ -96,6 +96,7 @@ lines: BillLine[]
 payment: { method: "cash" | "credit"; creditDays: number }
 party: OrderParty | null   // the customer; null = walk-in
 rx: RxDetails | null        // captured Schedule H1/X prescription; cleared by clear()
+billDiscount: BillDiscount  // whole-bill discount (pct|flat), on top of line discounts
 parked: ParkedBill[]        // bills held aside on this counter, newest first
 ```
 
@@ -103,11 +104,23 @@ parked: ParkedBill[]        // bills held aside on this counter, newest first
 - `addItem(item, batchNo?)` — selects FEFO batch if `batchNo` is omitted; merges qty into an existing line for the same key; no-op if no stock remains
 - `setQty(key, qty)` — updates qty, enforces per-item stock cap via `lineMaxQty()`; removes line if qty ≤ 0
 - `setBatch(key, item, batch)` — re-keys the line to `itemId:newBatchNo`; if that key already exists, merges qty (capped by stock) and drops the old line
-- `setDiscount(key, type, value)` — `"pct"` (0–100) or `"flat"` (paise, capped at line gross)
+- `setDiscount(key, type, value)` — line discount: `"pct"` (0–100) or `"flat"` (paise, capped at line gross)
+- `setBillDiscount(d)` — whole-bill discount — see [Bill-level discount](#bill-level-discount)
 - `parkBill()` / `resumeBill(id)` / `discardPark(id)` — see [Parked / held bills](#parked--held-bills)
 - `removeLine(key)`, `setPaymentMethod()`, `setCreditDays()`, `clear()`
 
 **Line key:** `itemId:batchNo` — stable across qty changes, changes only when the batch is swapped.
+
+## Bill-level discount
+
+On top of per-line discounts, the checkout pane carries a **whole-bill discount** (`BillDiscountInput`: pct **or** flat ₹, in `useBill.billDiscount`). To keep GST correct it is **apportioned across lines pro-rata by line net** — `apportionedLineNets(lines, bill)` in `lib/billing.ts` uses the **largest-remainder** method so the per-line shares sum to the discount **exactly**, and each line's taxable / CGST / SGST / IGST is recomputed from its post-discount net.
+
+The **same** helper feeds all three surfaces, so the client and server never disagree:
+- `billTotals(lines, bill)` (the displayed breakdown — adds `billDiscount` to `BillTotals`),
+- `buildSalesInvoicePayload(..., billDiscount)` (the `line_total_paise` sent to `create_sales_invoice`, which backs the GST split out of it),
+- `buildInvoiceData(..., billDiscount)` (the printed receipt — per-line amounts + a "Bill discount" row).
+
+Held bills (below) snapshot their `billDiscount`; `clear()` resets it. All money integer paise; the apportionment is smoke-tested for exact-sum + bounds.
 
 ## Parked / held bills
 
