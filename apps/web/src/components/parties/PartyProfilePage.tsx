@@ -10,6 +10,7 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
+import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
 import {
   partyDue,
   paymentsAdjustment,
@@ -27,6 +28,7 @@ interface Ledger {
   phone: string | null;
   gstin: string | null;
   address: string | null;
+  state_code: string | null;
   credit_limit_paise: number;
   opening_balance_paise: number;
 }
@@ -102,7 +104,7 @@ export function PartyProfilePage() {
     Promise.all([
       supabase
         .from("ledgers")
-        .select("id,name,type,phone,gstin,address,credit_limit_paise,opening_balance_paise")
+        .select("id,name,type,phone,gstin,address,state_code,credit_limit_paise,opening_balance_paise")
         .eq("org_id", orgId)
         .eq("id", id)
         .maybeSingle(),
@@ -184,6 +186,7 @@ export function PartyProfilePage() {
           phone: ledger.phone?.trim() || null,
           gstin: ledger.gstin?.trim() ? ledger.gstin.trim().toUpperCase() : null,
           address: ledger.address?.trim() || null,
+          state_code: ledger.state_code || null,
           credit_limit_paise: ledger.credit_limit_paise,
         })
         .eq("id", ledger.id);
@@ -319,6 +322,20 @@ export function PartyProfilePage() {
               placeholder="—"
               className="h-8 font-mono text-xs uppercase"
             />
+          </Field>
+          <Field label="State">
+            <select
+              value={ledger.state_code ?? ""}
+              onChange={(e) => edit("state_code", e.target.value || null)}
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+            >
+              <option value="">—</option>
+              {INDIAN_STATE_CODES.map((s) => (
+                <option key={s.code} value={s.code}>
+                  {s.code} · {s.name}
+                </option>
+              ))}
+            </select>
           </Field>
           <Field label="Phone">
             <Input value={ledger.phone ?? ""} onChange={(e) => edit("phone", e.target.value)} placeholder="—" className="h-8" />

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/lib/auth";
+import { useShopBlockers } from "@/lib/useShopBlockers";
+import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { searchCatalog } from "@/lib/search";
@@ -26,12 +28,14 @@ export function PurchaseEntryPage() {
   const usingSeed = useCatalog((s) => s.usingSeed);
   const loadCatalog = useCatalog((s) => s.load);
 
+  const blockers = useShopBlockers();
   const [vendor, setVendor] = useState<{ id: string; name: string } | null>(null);
   const [query, setQuery] = useState("");
   const [lines, setLines] = useState<PurchaseLine[]>([]);
   const [payment, setPayment] = useState<Payment>({ method: "credit", creditDays: 30 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -84,6 +88,14 @@ export function PurchaseEntryPage() {
   async function save() {
     // re-entry guard; !shopId blocks until a primary shop resolves (multi-shop)
     if (!supabase || !vendor || lines.length === 0 || usingSeed || saving || !shopId) return;
+    // Pre-flight: shop must have state_code or `receive_purchase` will hit
+    // the is_interstate NOT NULL. Show the rescue dialog and bail; the
+    // dialog's onResolved retries this save.
+    if (!blockers.ready) {
+      setError(null);
+      setSetupOpen(true);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -237,6 +249,12 @@ export function PurchaseEntryPage() {
           </Button>
         </div>
       </main>
+
+      <ShopSetupDialog
+        open={setupOpen}
+        onOpenChange={setSetupOpen}
+        onResolved={() => void save()}
+      />
     </div>
   );
 }

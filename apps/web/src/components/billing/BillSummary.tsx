@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { buildSalesInvoicePayload, withTimeout, TimeoutError } from "@/lib/orders";
 import { useAuth } from "@/lib/auth";
+import { useShopBlockers } from "@/lib/useShopBlockers";
+import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { billTotals, useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
 
@@ -32,9 +34,11 @@ export function BillSummary() {
   const setCreditDays = useBill((s) => s.setCreditDays);
   const usingSeed = useCatalog((s) => s.usingSeed);
   const shopId = useAuth().shopId;
+  const blockers = useShopBlockers();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
   const t = billTotals(lines);
   const empty = lines.length === 0;
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
@@ -44,6 +48,14 @@ export function BillSummary() {
     // re-entry guard (also blocks F9 while saving); !shopId blocks until the
     // multi-shop migration is applied and a primary shop resolves.
     if (!supabase || empty || usingSeed || saving || !shopId) return;
+    // Pre-flight: shop must have state_code or `create_sales_invoice` will
+    // hit the is_interstate NOT NULL. Show the rescue dialog and bail; the
+    // dialog's onResolved will retry this save.
+    if (!blockers.ready) {
+      setError(null);
+      setSetupOpen(true);
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -76,7 +88,7 @@ export function BillSummary() {
       void save();
     },
     { enableOnFormTags: true },
-    [lines, payment, party, usingSeed, shopId],
+    [lines, payment, party, usingSeed, shopId, blockers.ready],
   );
 
   return (
@@ -189,6 +201,12 @@ export function BillSummary() {
           Clear bill
         </Button>
       </div>
+
+      <ShopSetupDialog
+        open={setupOpen}
+        onOpenChange={setSetupOpen}
+        onResolved={() => void save()}
+      />
     </div>
   );
 }

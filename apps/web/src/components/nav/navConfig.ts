@@ -162,7 +162,7 @@ export const NAV: NavModule[] = [
     children: [
       { label: "Users & invites", path: "/owner", built: true },
       { label: "Import / migration", path: "/import", built: true },
-      { label: "Organisation", built: false },
+      { label: "Organisation", path: "/settings/organisation", built: true },
       { label: "Drug licenses", built: false },
       { label: "Print templates", built: false },
     ],
