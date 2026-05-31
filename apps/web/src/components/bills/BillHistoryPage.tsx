@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { format } from "date-fns";
-import { Printer, Receipt } from "lucide-react";
+import { Mail, MessageCircle, MessageSquare, Printer, Receipt, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Dot } from "@/components/ui/dot";
+import { Input } from "@/components/ui/input";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { DataTable } from "@/components/patterns/data-table";
@@ -13,7 +15,17 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { buildSavedInvoicePrintData, printSavedBill } from "@/lib/billPrint";
+import { buildBillShareSubject, buildBillShareText, mailtoLink, smsLink } from "@/lib/billShare";
+import { normalizePhoneForWa, whatsappUrl } from "@/lib/collection";
 import type { CustomerDetail } from "@/lib/printInvoice";
+import {
+  DATE_PRESETS,
+  PAYMENT_MODE_OPTIONS,
+  filterBills,
+  hasActiveFilter,
+  type BillFilters,
+  type DatePreset,
+} from "@/lib/billFilters";
 
 interface BillRow {
   id: string;
@@ -116,7 +128,83 @@ export function BillHistoryPage() {
     setReprintErr(ok ? null : "Allow pop-ups for this site, then reprint.");
   }
 
-  const totalSales = useMemo(() => rows.reduce((s, r) => s + r.total_paise, 0), [rows]);
+  // --- SALT-030: history filters + search, synced to the URL ---
+  const [params, setParams] = useSearchParams();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const q = params.get("q") ?? "";
+  const datePreset = (params.get("date") as DatePreset) ?? "";
+  const party = params.get("party") ?? "";
+  const mode = params.get("mode") ?? "";
+  const filters: BillFilters = useMemo(
+    () => ({ q, preset: datePreset, party, mode }),
+    [q, datePreset, party, mode],
+  );
+  const active = hasActiveFilter(filters);
+
+  function setFilter(key: string, value: string) {
+    const next = new URLSearchParams(params);
+    if (value) next.set(key, value);
+    else next.delete(key);
+    setParams(next, { replace: true });
+  }
+
+  // Customer options are derived from the loaded bills (every party that appears).
+  const partyOptions = useMemo(() => {
+    const byId = new Map<string, string>();
+    let hasWalkin = false;
+    for (const r of rows) {
+      if (r.party_id) byId.set(r.party_id, r.ledgers?.name ?? "—");
+      else hasWalkin = true;
+    }
+    const named = [...byId.entries()]
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([id, name]) => ({ value: id, label: name }));
+    return [
+      { value: "", label: "All customers" },
+      ...(hasWalkin ? [{ value: "walkin", label: "Walk-in" }] : []),
+      ...named,
+    ];
+  }, [rows]);
+
+  const filtered = useMemo(() => filterBills(rows, filters), [rows, filters]);
+  const filteredTotal = useMemo(() => filtered.reduce((s, r) => s + r.total_paise, 0), [filtered]);
+
+  // "/" focuses search unless already typing in a field.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null;
+      const typing =
+        !!t && (t.tagName === "INPUT" || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // --- SALT-029: share message + deep links, customer auto-filled as recipient ---
+  const shopName = shop?.name ?? "Our store";
+  const shareText = openBill
+    ? buildBillShareText({
+        shopName,
+        ref: invoiceNo(openBill),
+        dateLabel: format(new Date(openBill.created_at), "d MMM yyyy"),
+        totalPaise: openBill.total_paise,
+        paidPaise: openBill.paid_paise,
+        dueDateLabel:
+          openBill.due_date && openBill.paid_paise < openBill.total_paise
+            ? format(new Date(openBill.due_date), "d MMM yyyy")
+            : null,
+      })
+    : "";
+  const waPhone = normalizePhoneForWa(customer?.phone);
+  const waUrl = openBill && waPhone ? whatsappUrl(waPhone, shareText) : null;
+  const smsUrl = openBill ? smsLink(customer?.phone, shareText) : undefined;
+  const mailUrl = openBill
+    ? mailtoLink(null, buildBillShareSubject(shopName, invoiceNo(openBill)), shareText)
+    : undefined;
 
   return (
     <>
@@ -126,19 +214,51 @@ export function BillHistoryPage() {
           title="Bills"
           subtitle={
             rows.length > 0
-              ? `${rows.length} bills · ${formatPaise(totalSales)}`
+              ? `${filtered.length} ${filtered.length === 1 ? "bill" : "bills"} · ${formatPaise(filteredTotal)}${
+                  active ? ` of ${rows.length}` : ""
+                }`
               : "Every saved sale, newest first"
           }
         />
 
+        {rows.length > 0 && (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <Input
+              ref={searchRef}
+              value={q}
+              onChange={(e) => setFilter("q", e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setFilter("q", "");
+                  e.currentTarget.blur();
+                }
+              }}
+              placeholder="Search bill no or customer  ( / )"
+              className="w-full sm:w-64"
+            />
+            <FilterSelect label="Date range" value={datePreset} onChange={(v) => setFilter("date", v)} options={DATE_PRESETS} />
+            <FilterSelect label="Customer" value={party} onChange={(v) => setFilter("party", v)} options={partyOptions} />
+            <FilterSelect label="Payment mode" value={mode} onChange={(v) => setFilter("mode", v)} options={PAYMENT_MODE_OPTIONS} />
+            {active && (
+              <Button variant="ghost" onClick={() => setParams(new URLSearchParams(), { replace: true })}>
+                Clear
+              </Button>
+            )}
+          </div>
+        )}
+
         <DataTable<BillRow>
-          rows={rows}
+          rows={filtered}
           rowKey={(b) => b.id}
           cols="1fr 1.4fr 0.8fr 0.9fr 0.9fr"
           onRowActivate={viewBill}
           loading={loading}
           empty={
-            <EmptyState icon={Receipt} title="No bills yet" hint="Save a bill from the counter to see it here." />
+            active ? (
+              <EmptyState icon={Receipt} title="No matching bills" hint="Try clearing or widening the filters." />
+            ) : (
+              <EmptyState icon={Receipt} title="No bills yet" hint="Save a bill from the counter to see it here." />
+            )
           }
           columns={[
             {
@@ -228,7 +348,7 @@ export function BillHistoryPage() {
             </div>
           )}
           {reprintErr && <p className="text-sm text-text-tertiary">{reprintErr}</p>}
-          <DialogFooter>
+          <DialogFooter className="flex-wrap">
             <Button
               variant="outline"
               onClick={reprint}
@@ -237,9 +357,56 @@ export function BillHistoryPage() {
             >
               <Printer className="size-4" /> Reprint
             </Button>
+            {openBill?.party_id && openBill.paid_paise < openBill.total_paise && (
+              <Button variant="outline" render={<Link to={`/parties/${openBill.party_id}?receive=1`} />}>
+                <Wallet className="size-4" /> Record receipt
+              </Button>
+            )}
+            {waUrl ? (
+              <Button variant="outline" render={<a href={waUrl} target="_blank" rel="noopener noreferrer" />}>
+                <MessageCircle className="size-4" /> WhatsApp
+              </Button>
+            ) : (
+              <Button variant="outline" disabled title="Add a phone number to the customer to share on WhatsApp">
+                <MessageCircle className="size-4" /> WhatsApp
+              </Button>
+            )}
+            <Button variant="outline" render={<a href={smsUrl} />}>
+              <MessageSquare className="size-4" /> SMS
+            </Button>
+            <Button variant="outline" render={<a href={mailUrl} />}>
+              <Mail className="size-4" /> Email
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly { value: string; label: string }[];
+}) {
+  return (
+    <select
+      aria-label={label}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
+      ))}
+    </select>
   );
 }
