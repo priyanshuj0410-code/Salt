@@ -32,6 +32,11 @@ import { PaymentsPage } from "@/components/payments/PaymentsPage";
 import { MakePaymentPage } from "@/components/payments/MakePaymentPage";
 import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
+import { DrugLicensesPage } from "@/components/settings/DrugLicensesPage";
+import { DataExportPage } from "@/components/settings/DataExportPage";
+import { PrintTemplatesPage } from "@/components/settings/PrintTemplatesPage";
+import { AuditLogPage } from "@/components/settings/AuditLogPage";
+import { ShopsManagerPage } from "@/components/settings/ShopsManagerPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/nav/AppLayout";
 
@@ -292,6 +297,46 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <OrgSettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/shops"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <ShopsManagerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/licenses"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DrugLicensesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/export"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DataExportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/print"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PrintTemplatesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/audit"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <AuditLogPage />
           </ProtectedRoute>
         }
       />
