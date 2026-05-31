@@ -34,6 +34,7 @@ import { ImportPage } from "@/components/import/ImportPage";
 import { OrgSettingsPage } from "@/components/settings/OrgSettingsPage";
 import { DrugLicensesPage } from "@/components/settings/DrugLicensesPage";
 import { DataExportPage } from "@/components/settings/DataExportPage";
+import { PrintTemplatesPage } from "@/components/settings/PrintTemplatesPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/nav/AppLayout";
 
@@ -310,6 +311,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <DataExportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/print"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PrintTemplatesPage />
           </ProtectedRoute>
         }
       />
