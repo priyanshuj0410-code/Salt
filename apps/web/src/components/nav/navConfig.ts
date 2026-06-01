@@ -79,6 +79,7 @@ export const NAV: NavModule[] = [
       { label: "Receive stock (GRN)", path: "/purchases/new", built: true },
       { label: "GRN history", path: "/purchases", built: true },
       { label: "Purchase orders", path: "/purchases/orders", built: true },
+      { label: "Reorder suggestions", path: "/purchases/orders/suggest", built: true },
       { label: "Debit notes", path: "/purchases/returns", built: true },
     ],
   },
