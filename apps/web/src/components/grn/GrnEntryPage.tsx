@@ -29,6 +29,8 @@ import {
 } from "@/lib/grn";
 import { useCatalog } from "@/store/catalog";
 import type { Item, Payment } from "@/lib/types";
+import { gstRateForOn, type GstRateRow } from "@/lib/gst";
+import { selectAll } from "@/lib/selectAll";
 import { CreateItemDialog } from "./CreateItemDialog";
 import { VendorPicker, type PickedVendor } from "./VendorPicker";
 
@@ -37,8 +39,8 @@ const toRupees = (paise: number) => (paise ? paise / 100 : 0);
 const toPaise = (rupees: string | number) => Math.round((Number(rupees) || 0) * 100);
 const MAX_RESULTS = 8;
 
-/** GRN line grid: Item · Batch · Exp · Qty · Free · PTR · Disc% · MRP · Total · ✕ */
-const GRID = "grid-cols-[minmax(9rem,1.6fr)_0.9fr_0.8fr_0.5fr_0.5fr_0.8fr_0.6fr_0.8fr_0.9fr_2rem]";
+/** GRN line grid: Item · Batch · Exp · Qty · Free · PTR · Disc% · GST% · MRP · Total · ✕ */
+const GRID = "grid-cols-[minmax(9rem,1.6fr)_0.9fr_0.8fr_0.5fr_0.5fr_0.8fr_0.6fr_0.6fr_0.8fr_0.9fr_2rem]";
 
 interface PoLineRow {
   item_id: string | null;
@@ -82,6 +84,10 @@ export function GrnEntryPage() {
   const [poRef, setPoRef] = useState<string | null>(null);
   // Active schemes for the chosen vendor (SALT-026) — auto-applied + flagged.
   const [schemes, setSchemes] = useState<VendorScheme[]>([]);
+  // Date-effective GST (SALT-212): the rate schedule + each item's master rate
+  // class, so a new line defaults to the rate in force on the invoice date.
+  const [rateSchedule, setRateSchedule] = useState<GstRateRow[]>([]);
+  const [rateClassByItem, setRateClassByItem] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -196,6 +202,60 @@ export function GrnEntryPage() {
     };
   }, [orgId, vendor]);
 
+  // Load the date-effective GST schedule once (SALT-212). Defensive: if migration
+  // 0046 is unapplied the select errors and lines keep the item's own rate.
+  useEffect(() => {
+    if (!supabase) return;
+    let active = true;
+    supabase
+      .from("gst_rate_schedule")
+      .select("rate_class,rate,effective_from,effective_to")
+      .then(({ data, error }) => {
+        if (!active || error || !data) return;
+        setRateSchedule(
+          (data as { rate_class: string; rate: number | string; effective_from: string; effective_to: string | null }[]).map((r) => ({
+            rateClass: r.rate_class,
+            rate: Number(r.rate) || 0,
+            effectiveFrom: r.effective_from,
+            effectiveTo: r.effective_to,
+          })),
+        );
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Map each item to its master rate class (items.master_item_id ->
+  // master_items.gst_rate_class) so addItem can resolve the date-effective rate.
+  // Unlinked items are absent from the map and fall back to the item's own rate.
+  useEffect(() => {
+    if (!supabase || !orgId) return;
+    let active = true;
+    (async () => {
+      try {
+        const rows = await selectAll<{
+          id: string;
+          master_items: { gst_rate_class: string | null } | { gst_rate_class: string | null }[] | null;
+        }>((from, to) =>
+          supabase!.from("items").select("id,master_items(gst_rate_class)").eq("org_id", orgId).range(from, to),
+        );
+        if (!active) return;
+        const m = new Map<string, string>();
+        for (const row of rows) {
+          const master = Array.isArray(row.master_items) ? row.master_items[0] : row.master_items;
+          if (master?.gst_rate_class) m.set(row.id, master.gst_rate_class);
+        }
+        setRateClassByItem(m);
+      } catch {
+        // master link / schedule unavailable — lines fall back to the item rate.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [orgId]);
+
   const interstate = isInterstate(vendor?.stateCode, shopState);
   const results = useMemo(() => (query ? searchCatalog(query, items).slice(0, MAX_RESULTS) : []), [query, items]);
   const hasExactMatch = useMemo(
@@ -232,6 +292,11 @@ export function GrnEntryPage() {
     // until qty rises, recomputed live in the flag). onDate = invoice date or today.
     const onDate = invoiceDate || new Date().toISOString().slice(0, 10);
     const scheme = activeSchemeFor(schemes, vendor?.id ?? "", item.id, onDate);
+    // Default GST to the rate in force on the invoice date for this item's master
+    // rate class (SALT-212); fall back to the item's own snapshot rate when the
+    // item is not master-linked or the schedule is unavailable. Operator can override.
+    const rateClass = rateClassByItem.get(item.id);
+    const datedRate = rateClass ? gstRateForOn(rateSchedule, rateClass, onDate) : null;
     setLines((ls) => [
       ...ls,
       {
@@ -243,7 +308,7 @@ export function GrnEntryPage() {
         freeQty: scheme ? schemeFreeQtyFor(scheme, 1) : 0,
         ptrPaise: b?.ptrPaise ?? 0,
         mrpPaise: b?.mrpPaise ?? 0,
-        gstRate: item.gstRate,
+        gstRate: datedRate ?? item.gstRate,
         discountType: scheme?.discountType ?? "pct",
         discountValue: scheme?.discountType ? scheme.discountValue : 0,
       },
@@ -428,7 +493,7 @@ export function GrnEntryPage() {
 
       {/* Lines */}
       <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-        <div className="min-w-[52rem]">
+        <div className="min-w-[56rem]">
           <div className={`grid ${GRID} gap-2 border-b border-border bg-surface px-3 py-2 text-[0.6875rem] font-medium tracking-wide text-text-tertiary uppercase`}>
             <span>Item</span>
             <span>Batch</span>
@@ -437,6 +502,7 @@ export function GrnEntryPage() {
             <span className="text-right">Free</span>
             <span className="text-right">PTR ₹</span>
             <span className="text-right">Disc %</span>
+            <span className="text-right">GST %</span>
             <span className="text-right">MRP ₹</span>
             <span className="text-right">Total</span>
             <span />
@@ -476,6 +542,7 @@ export function GrnEntryPage() {
                   <Input type="number" min={0} value={l.freeQty || ""} onChange={(e) => patch(i, { freeQty: Math.max(0, Math.floor(Number(e.target.value) || 0)) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
                   <Input type="number" min={0} value={toRupees(l.ptrPaise) || ""} onChange={(e) => patch(i, { ptrPaise: toPaise(e.target.value) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
                   <Input type="number" min={0} max={100} value={l.discountValue || ""} onChange={(e) => patch(i, { discountType: "pct", discountValue: Math.max(0, Math.min(100, Number(e.target.value) || 0)) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
+                  <Input type="number" min={0} max={28} value={l.gstRate || ""} onChange={(e) => patch(i, { gstRate: Math.max(0, Math.min(28, Number(e.target.value) || 0)) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
                   <Input type="number" min={0} value={toRupees(l.mrpPaise) || ""} onChange={(e) => patch(i, { mrpPaise: toPaise(e.target.value) })} placeholder="0" className="h-7 px-1 text-right text-xs tabular-nums" />
                   <span className="text-right text-xs tabular-nums">{formatPaise(c.lineTotalPaise)}</span>
                   <button onClick={() => setLines((ls) => ls.filter((_, idx) => idx !== i))} className="text-text-tertiary hover:text-destructive" aria-label="Remove line">
