@@ -16,6 +16,8 @@ const RULE_TYPES: { value: RuleType; label: string }[] = [
 
 interface PriceRule {
   id: string;
+  party_id: string | null;
+  customer_group: string | null;
   item_id: string | null;
   hsn: string | null;
   rule_type: RuleType;
@@ -38,11 +40,11 @@ function ruleSummary(rt: RuleType, value: number): string {
 }
 
 /**
- * Per-party pricing rules (SALT-049) on top of the SALT-010 backbone
- * (`price_rules` + `resolve_price`, migration 0039). Create/list/delete rules
- * for this customer (item-specific or all items) and live-preview the effective
- * price for an item. Self-contained + defensive: if 0039 is not applied yet the
- * section hides itself rather than breaking the profile.
+ * Pricing rules on top of the SALT-010 backbone (`price_rules` + `resolve_price`,
+ * migration 0039). Create/list/delete rules for this customer (SALT-049) or for
+ * the customer's group (SALT-050, via `ledgers.customer_group`), item-specific or
+ * all items, and live-preview the effective price for an item. Self-contained +
+ * defensive: if 0039 is not applied yet the section hides itself.
  */
 export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
   const orgId = useAuth().membership?.orgId;
@@ -50,6 +52,8 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
   const [available, setAvailable] = useState(true);
   const [loading, setLoading] = useState(true);
   const [rules, setRules] = useState<PriceRule[]>([]);
+  const [group, setGroup] = useState<string | null>(null); // this party's customer_group (SALT-050)
+  const [scope, setScope] = useState<"customer" | "group">("customer");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,13 +68,16 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
   const [value, setValue] = useState("");
   const [priority, setPriority] = useState("0");
 
-  const loadRules = async () => {
+  // Rules that apply to this party: its own (party_id) + its group's (customer_group).
+  const loadRules = async (grp: string | null) => {
     if (!supabase) return;
-    const { data, error: err } = await supabase
+    const base = supabase
       .from("price_rules")
-      .select("id,item_id,hsn,rule_type,rule_value,label,priority,active")
-      .eq("party_id", ledgerId)
+      .select("id,party_id,customer_group,item_id,hsn,rule_type,rule_value,label,priority,active")
       .order("priority", { ascending: false });
+    const { data, error: err } = await (grp
+      ? base.or(`party_id.eq.${ledgerId},customer_group.eq.${grp}`)
+      : base.eq("party_id", ledgerId));
     if (err) {
       setAvailable(false); // table absent (0039 unapplied) → hide
       return;
@@ -80,8 +87,15 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
 
   useEffect(() => {
     let active = true;
-    (async () => {
-      await loadRules();
+    void (async () => {
+      // the party's group drives group-scoped rules + the scope toggle
+      let grp: string | null = null;
+      if (supabase) {
+        const g = await supabase.from("ledgers").select("customer_group").eq("id", ledgerId).maybeSingle();
+        grp = (g.data as { customer_group?: string | null } | null)?.customer_group ?? null;
+        if (active) setGroup(grp);
+      }
+      await loadRules(grp);
       if (active) setLoading(false);
     })();
     return () => {
@@ -149,11 +163,13 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
     }
     // flat price is entered in rupees, stored in paise; others are percentages.
     const ruleValue = ruleType === "flat_price_paise" ? Math.round(num * 100) : num;
+    const asGroup = scope === "group" && !!group;
     setBusy(true);
     setError(null);
     const { error: err } = await supabase.from("price_rules").insert({
       org_id: orgId,
-      party_id: ledgerId,
+      party_id: asGroup ? null : ledgerId,
+      customer_group: asGroup ? group : null,
       item_id: item?.id ?? null,
       rule_type: ruleType,
       rule_value: ruleValue,
@@ -167,7 +183,7 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
       return;
     }
     setValue("");
-    await loadRules();
+    await loadRules(group);
   }
 
   async function removeRule(id: string) {
@@ -199,7 +215,12 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
               <Badge variant="neutral" className="shrink-0 tabular-nums">P{r.priority}</Badge>
               <span className="min-w-0 flex-1 truncate">
                 {r.label || ruleSummary(r.rule_type, r.rule_value)}
-                <span className="text-text-tertiary"> · {r.item_id ? "this item" : r.hsn ? `HSN ${r.hsn}` : "all items"}</span>
+                <span className="text-text-tertiary">
+                  {" · "}
+                  {r.party_id ? "this customer" : r.customer_group ? `${r.customer_group} group` : "all parties"}
+                  {" · "}
+                  {r.item_id ? "this item" : r.hsn ? `HSN ${r.hsn}` : "all items"}
+                </span>
                 {!r.active && <span className="text-text-tertiary"> · inactive</span>}
               </span>
               <Button size="icon-sm" variant="ghost" disabled={busy} onClick={() => removeRule(r.id)} aria-label="Delete rule">
@@ -247,6 +268,19 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
         </p>
       )}
 
+      {/* scope: this customer vs the customer's group (SALT-050) */}
+      {group && (
+        <div className="mt-3 flex items-center gap-1.5 text-xs text-text-tertiary">
+          <span>Applies to</span>
+          <Button type="button" size="sm" variant={scope === "customer" ? "default" : "outline"} onClick={() => setScope("customer")}>
+            This customer
+          </Button>
+          <Button type="button" size="sm" variant={scope === "group" ? "default" : "outline"} onClick={() => setScope("group")}>
+            {group} group
+          </Button>
+        </div>
+      )}
+
       {/* new rule */}
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <div className="flex gap-1.5">
@@ -280,7 +314,7 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
           />
         </label>
         <Button size="sm" disabled={busy || !value} onClick={addRule}>
-          <Plus /> Add rule {item ? "for this item" : "for all items"}
+          <Plus /> Add {scope === "group" && group ? "group" : "customer"} rule · {item ? "this item" : "all items"}
         </Button>
       </div>
       {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
