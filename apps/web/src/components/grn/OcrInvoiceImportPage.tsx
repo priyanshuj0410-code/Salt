@@ -80,13 +80,28 @@ export function OcrInvoiceImportPage() {
         body: { file_base64: b64, mime: file.type || "application/octet-stream" },
       });
       if (fnErr) {
-        // The function returns 501 {error:"ocr_not_configured"} when no key is set.
-        const ctx = (fnErr as { context?: { status?: number } }).context;
-        if (ctx?.status === 501) {
+        // On a non-2xx, supabase-js puts the Response in `context` but does NOT read
+        // its body into fnErr.message — so the function's real error (e.g. the Gemini
+        // status + detail, or ocr_not_configured) is only in the body. Read it.
+        const ctx = (fnErr as { context?: Response }).context;
+        let bodyError: string | null = null;
+        try {
+          const j = await ctx?.clone().json();
+          bodyError = j?.error ?? null;
+        } catch {
+          bodyError = null;
+        }
+        if (ctx?.status === 501 || bodyError === "ocr_not_configured") {
           setNotConfigured(true);
           return;
         }
-        setError(`Extraction failed: ${fnErr.message}. Is the extract-invoice function deployed?`);
+        // Surface the function's actual message (Gemini status/detail) so failures are
+        // diagnosable from the page, not just "non-2xx".
+        setError(
+          bodyError
+            ? `Extraction failed: ${bodyError}`
+            : `Extraction failed: ${fnErr.message}. Is the extract-invoice function deployed?`,
+        );
         return;
       }
       if (data?.error === "ocr_not_configured") {
