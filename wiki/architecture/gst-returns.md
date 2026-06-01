@@ -4,13 +4,14 @@ updated: 2026-06-01
 tags: [gst, compliance, sales]
 ---
 
-# GST returns & liability (GSTR-1, GSTR-3B, live liability)
+# GST & compliance — returns, liability, ITC, exports
 
-The **GST & compliance** module's screens (SALT-002, SALT-063, SALT-069; product-modules §9):
-read-only views that aggregate one shop's documents into the GSTN sections / a live tax
-position, with portal-ready JSON + CSV export. Screens under `/gst`
-(`components/gst/Gstr1Page.tsx`, `Gstr3bPage.tsx`, `GstLiabilityPage.tsx`); all aggregation
-in `lib/gst.ts`, which is **pure** (no Supabase) and unit-smoke-tested.
+The **GST & compliance** module's six screens (SALT-002/063/064/068/069/070/170; product-modules §9):
+read-only views that aggregate one shop's documents into the GSTN sections, a live tax position,
+the ITC ledger, and accountant exports — all with portal-ready JSON / CSV / Tally XML. Screens
+under `/gst` (`Gstr1Page`, `Gstr3bPage`, `GstLiabilityPage`, `ItcRegisterPage`, `TallyExportPage`,
+`HsnReportPage` in `components/gst/`); all aggregation in `lib/gst.ts`, which is **pure** (no
+Supabase) and unit-smoke-tested.
 
 ## Read contract (as-built)
 
@@ -49,15 +50,16 @@ Section breakdowns and the headline totals both derive from the **lines**, so th
 
 ## GSTR-3B (summary return)
 
-`buildGstr3b(period, sales, purchases)` (screen `/gst/gstr3b`) nets the month's tax:
+`buildGstr3b(period, sales, purchases, reversalPaise)` (screen `/gst/gstr3b`) nets the month's tax:
 
 - **Output tax** — summed per head (CGST/SGST/IGST) from the period's `sales_invoices`
   (same scope as GSTR-1: shop, `status='placed'`, `posts_effects=true`).
-- **Eligible ITC** — summed per head from `purchases` (`status='received'`,
+- **Gross ITC** — summed per head from `purchases` (`status='received'`,
   `posts_effects=true`, `received_date` in month); `receive_purchase` stores the split the
   same way `create_sales_invoice` does.
-- **Net payable** = `max(0, output − ITC)` after full credit set-off (the cash figure);
-  per-head `balance` is shown for detail; surplus ITC is reported as credit carried forward.
+- **Net payable** = `max(0, output − net ITC)` after full credit set-off (the cash figure),
+  where net ITC = gross ITC − the Table-4B reversal below; per-head `balance` is shown for
+  detail; surplus ITC is reported as credit carried forward.
 - `buildGstr3bJson` → GSTN-style `{ gstin, ret_period, sup_details, itc_elg, net_payable }`;
   `gstr3bToCsv` for spreadsheets.
 - **ITC reversal (Table 4B)** is wired from **expiry write-offs** (`stock_movements`,
@@ -112,12 +114,21 @@ are referenced by name (Tally maps/creates them on import). Same scope filters a
 for one month, but spanning a quarter or year for GSTR-9 / analytics. CSV export. Same scope as
 the returns (shop, `status='placed'`, `posts_effects=true`).
 
-## Deferred
+## Status & next
 
-Credit notes (CDNR — Returns module unbuilt) · server-side `v_gstr1_*` / `v_gstr3b_summary`
-views (proposed `0022_gst_compliance.sql` matches the live schema and can be promoted by the
-database chat) · GSTR-2B recon (SALT-007, smart-import), ITC register, H1/X register,
-drug-license alerts (other GST slices).
+**Shipped** (all in-lane GST filing/insight work): GSTR-1, GSTR-3B (+ Table-4B write-off
+reversal), live liability, ITC register, Tally export, HSN summary.
+
+**Newly unblocked** (DB schema landed): **H1/X register** (SALT-065 — `h1_register` /
+`enforce_h1_gate` live, migration `0032`) and **multiple GST series per shop** (SALT-067 —
+series schema, `0033`).
+
+**Elsewhere / handed off:** GSTR-2B recon (SALT-007, smart-import lane) · the drug-license
+renewal banner (SALT-066, owner lane — store + 90/60/30-day alerts already ship in
+`settings/DrugLicensesPage`) · e-invoicing IRN/QR (SALT-071) and direct GSTN filing (SALT-072)
+await GSP/IRP credentials. Sales credit-note GST reversal rides the Returns engine
+(`lib/returns.ts`); the Reports lane also exposes a Tax-reports suite at `/reports/tax` over the
+`v_*` views — complementary to these filing screens.
 
 Links: [product/product-modules](../product/product-modules.md) §9 ·
 [domain/orders](../domain/orders.md) ·
