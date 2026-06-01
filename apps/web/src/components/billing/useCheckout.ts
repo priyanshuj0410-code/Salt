@@ -77,6 +77,10 @@ export function useCheckout({
   const [approval, setApproval] = useState<
     { status: "pending" | "approved" | "rejected"; id: string; approverName: string | null; coversPaise: number } | null
   >(null);
+  // Per-bill GST series (SALT-209): the shop's active named series + the one chosen for this
+  // bill (null = the shop default). Sticky across bills.
+  const [series, setSeries] = useState<{ id: string; code: string; is_default: boolean }[]>([]);
+  const [seriesId, setSeriesId] = useState<string | null>(null);
   // Remembered across the H1 gate / shop-setup detours so a resumed save still prints.
   const printIntent = useRef(false);
   // Always points at the latest `save` so the realtime approval handler can resume it.
@@ -104,6 +108,7 @@ export function useCheckout({
   // Credit-limit warning (SALT-004): advisory, non-blocking. Only for a credit sale to a
   // party with a limit set, where dues + this bill exceed it.
   const creditWarn = creditCheck(payment.method, credit?.creditLimitPaise ?? 0, credit?.duePaise ?? 0, t.grand);
+  const defaultSeriesId = series.find((s) => s.is_default)?.id ?? series[0]?.id ?? null;
   const needsRx = requiresRx(lines);
   // Inter-state ⇒ IGST; intra-state (incl. walk-in / no party state) ⇒ CGST+SGST.
   const isInterstate = !!(customer?.state_code && shop?.state_code && customer.state_code !== shop.state_code);
@@ -140,6 +145,34 @@ export function useCheckout({
       if (e) throw e;
     });
   }, []);
+
+  // Load the shop's active sales-invoice series (SALT-209), deduped by code across FYs — the
+  // RPC only needs a row of the desired code (it allocates the current-FY number from it).
+  useEffect(() => {
+    if (!supabase || !shopId) return;
+    let active = true;
+    void supabase
+      .from("invoice_series")
+      .select("id,code,is_default,financial_year")
+      .eq("shop_id", shopId)
+      .eq("doc_type", "sales_invoice")
+      .eq("active", true)
+      .order("financial_year", { ascending: false })
+      .then(({ data }) => {
+        if (!active) return;
+        setSeriesId(null); // a (possibly new) shop's series loaded → fall back to its default
+        const byCode = new Map<string, { id: string; code: string; is_default: boolean }>();
+        for (const r of (data as { id: string; code: string; is_default: boolean }[] | null) ?? []) {
+          const cur = byCode.get(r.code);
+          if (!cur) byCode.set(r.code, { id: r.id, code: r.code, is_default: r.is_default });
+          else if (r.is_default) cur.is_default = true; // keep the latest-FY id, OR the default flag
+        }
+        setSeries([...byCode.values()].sort((a, b) => a.code.localeCompare(b.code)));
+      });
+    return () => {
+      active = false;
+    };
+  }, [shopId]);
 
   // While a discount override is pending, watch the org's approvals live. On approval,
   // resume the save the cashier already asked for (override passed explicitly to dodge
@@ -218,7 +251,9 @@ export function useCheckout({
     }
     const tenders = splitMode ? activeTenders(tenderAmounts) : null;
     const notes = override ? `Discount override approved by ${override.approverName ?? "manager"}` : null;
-    const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes);
+    // Only thread a non-default series (SALT-209); the default path sends no p_series_id.
+    const seriesArg = seriesId && seriesId !== defaultSeriesId ? seriesId : null;
+    const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes, seriesArg);
 
     // Offline (SALT-205): queue the write and complete the bill locally rather than block the
     // counter on a dead link. At-least-once — the outbox auto-flushes on reconnect, and the real
@@ -364,6 +399,11 @@ export function useCheckout({
       if (approval?.status === "pending") void cancelApproval(approval.id);
       setApproval(null);
     },
+    // Per-bill GST series (SALT-209): `series` for the picker (shown only when >1), the
+    // effective selection, and the setter.
+    series,
+    seriesId: seriesId ?? defaultSeriesId,
+    setSeriesId,
     saveAndPrint: () => save({ print: true }),
     saveOnly: () => save({ print: false }),
     resumeSave: () => save(),

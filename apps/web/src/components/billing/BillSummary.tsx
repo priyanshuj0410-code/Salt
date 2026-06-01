@@ -12,6 +12,7 @@ import { H1Notice } from "./H1Gate";
 import { CreditNotice } from "./CreditNotice";
 import { SplitTender } from "./SplitTender";
 import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
+import { SeriesPicker } from "./SeriesPicker";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -82,6 +83,7 @@ export function BillSummary({
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
   const { discountGate, cancelDiscountApproval } = checkout;
+  const { series, seriesId, setSeriesId } = checkout;
   // Save is blocked while a split does not balance, or while an over-limit discount is
   // awaiting manager approval (the server / gate would reject it anyway).
   const blockSave =
@@ -136,6 +138,8 @@ export function BillSummary({
       {party && !customerGstin && <GstinPrompt partyId={party.id} onSaved={onCustomerUpdated} />}
 
       <Separator />
+
+      <SeriesPicker series={series} value={seriesId} onChange={setSeriesId} />
 
       <div>
         <div className="mb-1.5 flex items-center justify-between">
