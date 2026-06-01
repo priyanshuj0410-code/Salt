@@ -10,7 +10,14 @@
 // DEPLOY (user/infra — the agent cannot do this):
 //   supabase functions deploy extract-invoice
 //   supabase secrets set GEMINI_API_KEY=AIza...   # vision key, server-side only
-// Optional overrides: OCR_MODEL (default gemini-flash-latest).
+// Optional: OCR_MODEL overrides the fallback chain (comma-separated for a custom
+//   order, or a single id to pin one). Default chain below.
+//
+// RELIABILITY: a 503 "high demand" is Google shedding FREE-TIER traffic under
+// load — not a code bug. The chain + retry below ride out transient spikes, but
+// the production fix for sustained 503s is to ENABLE BILLING on the API key's
+// Google Cloud project (free quotas stay free; you only pay past them). The
+// scan-history Retry (SALT-221) is the safety net so a 503 never loses the file.
 //
 // Auth: requires the caller's Supabase JWT (verify_jwt defaults on). The vision
 // key never leaves the server. No Storage bucket — the file is processed inline.
@@ -21,7 +28,15 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const MODEL = Deno.env.get("OCR_MODEL") ?? "gemini-flash-latest";
+// Model fallback chain. Each model has independent capacity, so when one returns
+// a transient 503/429 we try the next before failing — this rides out capacity
+// spikes that no per-model retry can. OCR_MODEL overrides the chain (comma-
+// separated for a custom order, or a single id to pin one). The real production
+// fix for sustained 503s is enabling billing on the key (free tier is shed first).
+const MODELS = (Deno.env.get("OCR_MODEL") ?? "gemini-flash-latest,gemini-2.5-flash,gemini-2.5-flash-lite")
+  .split(",")
+  .map((m) => m.trim())
+  .filter(Boolean);
 
 /** The columns the CSV importer understands (PURCHASE_IMPORT_COLUMNS). The model
  *  is told to use exactly these keys per line so the client maps 1:1. */
@@ -57,43 +72,68 @@ Money is per-unit in rupees, not paise.`;
  * same `inline_data` part (unlike Anthropic's document-vs-image split), and
  * `responseMimeType: application/json` makes the model emit bare JSON.
  */
-async function callGemini(key: string, b64: string, mime: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-  const body = {
-    contents: [
-      {
-        parts: [
-          { inline_data: { mime_type: mime, data: b64 } },
-          { text: PROMPT },
-        ],
-      },
-    ],
-    generationConfig: { responseMimeType: "application/json", temperature: 0 },
-  };
-  // Retry transient capacity errors (503 UNAVAILABLE, 429 RESOURCE_EXHAUSTED) with
-  // exponential backoff — a freshly-released model can spike. Other 4xx/5xx (bad
-  // key, blocked, model not found) are returned immediately. Honours Retry-After
-  // when present, else 0.5s → 1s → 2s.
-  const RETRYABLE = new Set([429, 503]);
-  const MAX_ATTEMPTS = 3;
-  let res: Response | null = null;
+const RETRYABLE = new Set([429, 503]); // transient capacity — retry, then fall to next model
+const MAX_ATTEMPTS = 3;
+
+/** Thrown when a model exhausts its retries on a transient (503/429) error — the
+ *  caller falls through to the next model in the chain. */
+class TransientModelError extends Error {}
+
+/** Call one model with backoff retry on 503/429. Resolves to the raw Response on
+ *  any non-retryable outcome (incl. 2xx); throws TransientModelError when the
+ *  model keeps returning 503/429 through all attempts. */
+async function fetchModel(model: string, key: string, payload: string): Promise<Response> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   let lastDetail = "";
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    res = await fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "content-type": "application/json", "x-goog-api-key": key },
-      body: JSON.stringify(body),
+      body: payload,
     });
-    if (res.ok) break;
+    if (res.ok || !RETRYABLE.has(res.status)) return res; // success or a hard error → caller decides
     lastDetail = await res.text();
-    if (!RETRYABLE.has(res.status) || attempt === MAX_ATTEMPTS) {
-      throw new Error(`Gemini API ${res.status}: ${lastDetail.slice(0, 300)}`);
-    }
+    if (attempt === MAX_ATTEMPTS) throw new TransientModelError(`${res.status}: ${lastDetail.slice(0, 200)}`);
     const retryAfter = Number(res.headers.get("retry-after"));
     const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 500 * 2 ** (attempt - 1);
     await new Promise((r) => setTimeout(r, waitMs));
   }
-  if (!res || !res.ok) throw new Error(`Gemini API error: ${lastDetail.slice(0, 300)}`);
+  throw new TransientModelError(lastDetail.slice(0, 200)); // unreachable, satisfies the type
+}
+
+async function callGemini(key: string, b64: string, mime: string): Promise<string> {
+  const payload = JSON.stringify({
+    contents: [{ parts: [{ inline_data: { mime_type: mime, data: b64 } }, { text: PROMPT }] }],
+    generationConfig: { responseMimeType: "application/json", temperature: 0 },
+  });
+  // Walk the model chain: each model gets its own backoff retry; on a transient
+  // exhaustion fall to the next model (separate capacity). A hard error (bad key,
+  // blocked, model not found) returns immediately — except 404 "model not found",
+  // which we also skip past (a chain may list a model this key can't use).
+  let res: Response | null = null;
+  let transientDetail = "";
+  for (const model of MODELS) {
+    try {
+      const r = await fetchModel(model, key, payload);
+      if (r.ok) {
+        res = r;
+        break;
+      }
+      // Non-retryable, non-ok. 404 = this key can't use this model → try the next.
+      const detail = await r.text();
+      if (r.status === 404 && MODELS.indexOf(model) < MODELS.length - 1) continue;
+      throw new Error(`Gemini API ${r.status}: ${detail.slice(0, 300)}`);
+    } catch (e) {
+      if (e instanceof TransientModelError) {
+        transientDetail = e.message;
+        continue; // this model is capacity-shedding — try the next
+      }
+      throw e; // a real error message we built above
+    }
+  }
+  if (!res) {
+    throw new Error(`Gemini API 503: all models busy (${MODELS.join(", ")}). Last: ${transientDetail}`);
+  }
   const data = await res.json();
   // generateContent → candidates[].content.parts[].text; concatenate the text parts.
   const parts = data?.candidates?.[0]?.content?.parts ?? [];
