@@ -17,6 +17,7 @@ import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import { useBill } from "@/store/bill";
 import { useHeldBills } from "@/store/heldBills";
+import { useKeymap } from "@/store/shortcuts";
 import { useOutbox } from "@/lib/outbox";
 import { supabase } from "@/lib/supabase";
 import { fetchPartyCredit } from "@/lib/credit";
@@ -92,6 +93,10 @@ export function BillingScreen() {
   const { online, pending: pendingWrites } = useOutbox();
   // Resolve customer pricing for the bill's lines (SALT-191A) — re-prices on party change.
   usePriceResolution(shopId, party?.id ?? null);
+  // Rebindable action shortcuts (SALT-178) — the counter reads keys from the keymap.
+  const helpKey = useKeymap((s) => s.keymap.help);
+  const customerKey = useKeymap((s) => s.keymap.customer);
+  const holdKey = useKeymap((s) => s.keymap.hold);
 
   // Detail for the selected customer: drives the header phone, the "Add GSTIN"
   // prompt, and the intra/inter-state GST split. Refetched after a GSTIN is saved.
@@ -166,32 +171,34 @@ export function BillingScreen() {
   }, [party?.id, orgId, custKey]);
 
   useHotkeys(
-    "shift+/",
+    helpKey,
     (e) => {
       e.preventDefault();
       setHelpOpen(true);
     },
     { enableOnFormTags: true },
+    [helpKey],
   );
 
   useHotkeys(
-    "mod+k",
+    customerKey,
     (e) => {
       e.preventDefault();
       setCustomerOpen(true);
     },
     { enableOnFormTags: true },
+    [customerKey],
   );
 
-  // F4 — hold the current bill aside (Marg-style), start a fresh one.
+  // Hold the current bill aside (Marg-style), start a fresh one.
   useHotkeys(
-    "f4",
+    holdKey,
     (e) => {
       e.preventDefault();
       if (shopId) void hold(shopId);
     },
     { enableOnFormTags: true },
-    [hold, shopId],
+    [holdKey, hold, shopId],
   );
 
   const refetchCustomer = () => setCustKey((k) => k + 1);
