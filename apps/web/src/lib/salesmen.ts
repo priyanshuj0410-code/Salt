@@ -5,8 +5,8 @@ import { fetchAllPaged } from "@/lib/reportData";
  * Salesman management (SALT-128) — data layer for the field-salesman master and
  * the per-salesman performance view (orders, commission, collections).
  *
- * Schema: `salesmen` (0024 + `commission_pct` in 0032), `sales_invoices.salesman_id`
- * (the order's salesman, 0024), `payments.salesman_id` (who collected, 0032).
+ * Schema: `salesmen` (0024 + `commission_pct` in 0039), `sales_invoices.salesman_id`
+ * (the order's salesman, 0024), `payments.salesman_id` (who collected, 0039).
  * Everything is per-org via RLS (`is_member`), so callers pass `orgId` only to
  * scope the read, never to bypass the policy.
  *
@@ -154,7 +154,7 @@ export async function deleteSalesman(id: string): Promise<void> {
  * Two paged reads (invoices, payments) grouped in JS — cheaper than N queries.
  * Every salesman in `salesmen` gets an entry (zeroed) so inactive / idle people
  * still render. Collections degrade to zero if `payments.salesman_id` is absent
- * (0032 not yet applied) rather than failing the whole view.
+ * (0039 not yet applied) rather than failing the whole view.
  */
 export async function fetchPerf(
   orgId: string,
@@ -204,7 +204,7 @@ export async function fetchPerf(
       if (p) p.collectionsPaise += r.amount_paise ?? 0;
     }
   } catch {
-    // payments.salesman_id missing (0032 unapplied) — leave collections at 0.
+    // payments.salesman_id missing (0039 unapplied) — leave collections at 0.
   }
 
   for (const s of salesmen) {
@@ -283,7 +283,7 @@ export async function listSalesmanCollections(
     if (error) throw new Error(error.message);
     return (data as unknown as SalesmanCollection[] | null) ?? [];
   } catch {
-    return []; // payments.salesman_id missing (0032 unapplied)
+    return []; // payments.salesman_id missing (0039 unapplied)
   }
 }
 

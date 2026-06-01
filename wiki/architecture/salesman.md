@@ -22,15 +22,15 @@ Routes (owner-only, nav `g e`):
 ## Data model
 
 Built on tables that already existed in the applied model; this slice adds two columns
-(migration **`0032_salesman.sql`**, user-run).
+(migration **`0039_salesman.sql`**, user-run).
 
 | Table | Column | Source | Meaning |
 |---|---|---|---|
 | `salesmen` | `id, org_id, name, phone, territory, is_active` | 0024_settings | the master |
 | `salesmen` | `source jsonb` | 0030_masters_expansion | verbatim imported row (faithful capture) |
-| `salesmen` | **`commission_pct numeric`** | **0032** | commission rate (percent of net sales) |
+| `salesmen` | **`commission_pct numeric`** | **0039** | commission rate (percent of net sales) |
 | `sales_invoices` | `salesman_id → salesmen` | 0024_settings | the order's salesman |
-| `payments` | **`salesman_id → salesmen`** | **0032** | who collected the receipt |
+| `payments` | **`salesman_id → salesmen`** | **0039** | who collected the receipt |
 
 All per-org via RLS (`is_member`); `salesman_id` is nullable / `on delete set null`, so
 deleting a salesman keeps the history (orders/collections just lose their attribution).
@@ -51,7 +51,7 @@ modules, so capture there is filed as tickets (SALT-192, SALT-193). Until then �
 for back-filling history — the detail page offers **"Attribute orders / collections"**:
 multi-select recent rows with no salesman and set `salesman_id` directly (an RLS-guarded
 update; nothing else about the document changes). The performance reads degrade
-gracefully if `payments.salesman_id` is absent (0032 unapplied): collections show zero
+gracefully if `payments.salesman_id` is absent (0039 unapplied): collections show zero
 rather than erroring.
 
 ## Code

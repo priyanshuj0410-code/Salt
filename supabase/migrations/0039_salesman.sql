@@ -1,4 +1,4 @@
--- 0032: Salesman management (SALT-128).
+-- 0039: Salesman management (SALT-128).
 --   * commission_pct on salesmen — the commission rate (percent of net sales)
 --     the salesman performance + commission report multiplies the period net
 --     sales by. Net sales = sum of taxable value (ex-GST) of placed invoices.
