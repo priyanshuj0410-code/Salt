@@ -148,16 +148,16 @@ export function PaymentStep({
       <div className="rounded-lg border p-5">
         <div className="mb-4">
           <p className="text-sm">{cfg.description}</p>
-          <p className="mt-2 text-xs font-medium text-muted-foreground">Columns we look for:</p>
+          <p className="mt-2 text-xs font-medium text-text-tertiary">Columns we look for:</p>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {cfg.fields.map((f) => (
-              <span key={f.key} className="rounded-md border bg-muted/40 px-2 py-0.5 text-xs">
+              <span key={f.key} className="rounded-md border bg-surface-2/40 px-2 py-0.5 text-xs">
                 {f.label}
                 {f.required && <span className="text-destructive"> *</span>}
               </span>
             ))}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">{cfg.tip}</p>
+          <p className="mt-2 text-xs text-text-tertiary">{cfg.tip}</p>
         </div>
 
         <label
@@ -167,7 +167,7 @@ export function PaymentStep({
             const file = e.dataTransfer.files?.[0];
             if (file) onFile(file);
           }}
-          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground hover:bg-muted/40"
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-text-tertiary hover:bg-surface-2/40"
         >
           <FileUp className="size-6" />
           <span>
@@ -184,7 +184,7 @@ export function PaymentStep({
         </label>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-3 text-center">
-          <button onClick={onComplete} className="text-xs text-muted-foreground hover:text-foreground">
+          <button onClick={onComplete} className="text-xs text-text-tertiary hover:text-foreground">
             Skip this step
           </button>
         </div>
@@ -202,7 +202,7 @@ export function PaymentStep({
         <div className="flex items-center gap-2 text-sm">
           <Wand2 className="size-4 text-primary" />
           <span className="font-medium">Check the column mapping</span>
-          <span className="text-muted-foreground">— {parsed?.rows.length ?? 0} rows.</span>
+          <span className="text-text-tertiary">— {parsed?.rows.length ?? 0} rows.</span>
         </div>
 
         <MapGroup
@@ -214,8 +214,8 @@ export function PaymentStep({
         />
 
         <div className="mt-4">
-          <p className="text-xs font-medium text-muted-foreground">Default direction</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs font-medium text-text-tertiary">Default direction</p>
+          <p className="text-xs text-text-tertiary">
             Used when a row has no Type column and no separate received/paid amount.
           </p>
           <div className="mt-1.5 inline-flex rounded-md border p-0.5">
@@ -225,7 +225,7 @@ export function PaymentStep({
                 onClick={() => setDefaultDirection(d)}
                 className={cn(
                   "rounded px-3 py-1 text-sm capitalize",
-                  defaultDirection === d ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                  defaultDirection === d ? "bg-primary text-primary-foreground" : "text-text-tertiary",
                 )}
               >
                 {d}
@@ -269,7 +269,7 @@ export function PaymentStep({
           {result?.imported ?? 0} payments imported
         </span>
         {(result?.skippedDocs ?? 0) > 0 && (
-          <span className="text-muted-foreground">{result?.skippedDocs} already imported (skipped)</span>
+          <span className="text-text-tertiary">{result?.skippedDocs} already imported (skipped)</span>
         )}
         {(result?.quarantined.length ?? 0) > 0 && (
           <span className="font-medium text-amber-600 dark:text-amber-500">
@@ -280,7 +280,7 @@ export function PaymentStep({
 
       {(result?.quarantined.length ?? 0) > 0 && (
         <>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-text-tertiary">
             These vouchers could not be imported (see reasons). If parties are missing, import your
             ledgers/party-GST first; then re-run — already-imported vouchers are skipped.
           </p>
@@ -288,18 +288,18 @@ export function PaymentStep({
             {result?.quarantined.slice(0, 50).map((q, i) => (
               <div key={`${q.docNo}-${i}`} className="flex justify-between gap-3 py-0.5">
                 <span className="truncate">{q.docNo}</span>
-                <span className="shrink-0 text-muted-foreground">{q.reason}</span>
+                <span className="shrink-0 text-text-tertiary">{q.reason}</span>
               </div>
             ))}
             {(result?.quarantined.length ?? 0) > 50 && (
-              <p className="pt-1 text-muted-foreground">+{(result?.quarantined.length ?? 0) - 50} more</p>
+              <p className="pt-1 text-text-tertiary">+{(result?.quarantined.length ?? 0) - 50} more</p>
             )}
           </div>
         </>
       )}
 
       {(result?.skipped ?? 0) > 0 && (
-        <p className="mt-2 text-xs text-muted-foreground">{result?.skipped} blank rows were skipped.</p>
+        <p className="mt-2 text-xs text-text-tertiary">{result?.skipped} blank rows were skipped.</p>
       )}
 
       <div className="mt-4">

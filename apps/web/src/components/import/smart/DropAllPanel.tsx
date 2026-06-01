@@ -57,7 +57,7 @@ export function DropAllPanel({ onRoute }: { onRoute: (stepKey: string, file: Fil
     <div className="rounded-lg border bg-background p-4">
       <div className="mb-3">
         <p className="text-sm font-medium">Drop everything</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
+        <p className="mt-0.5 text-xs text-text-tertiary">
           Drop all your Marg exports at once — we detect what each file is and send it to the right step.
           Anything we are unsure about, you place yourself.
         </p>
@@ -69,7 +69,7 @@ export function DropAllPanel({ onRoute }: { onRoute: (stepKey: string, file: Fil
           e.preventDefault();
           if (e.dataTransfer.files?.length) add(e.dataTransfer.files);
         }}
-        className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground hover:bg-muted/40"
+        className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed py-6 text-center text-sm text-text-tertiary hover:bg-surface-2/40"
       >
         <FileUp className="size-5" />
         <span>{busy ? "Detecting…" : "Drop multiple files here, or click to choose"}</span>
@@ -122,14 +122,14 @@ export function DropAllPanel({ onRoute }: { onRoute: (stepKey: string, file: Fil
                     Open <ArrowRight className="size-3.5" />
                   </Button>
                 ) : (
-                  <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                  <span className="flex shrink-0 items-center gap-1 text-xs text-text-tertiary">
                     <CircleHelp className="size-3.5" /> use a step
                   </span>
                 )}
               </div>
             );
           })}
-          <p className="pt-1 text-xs text-muted-foreground">
+          <p className="pt-1 text-xs text-text-tertiary">
             Open each file in cascade order (top to bottom). Trial-balance &amp; party-GST files: pick the
             step, then drop the file there.
           </p>

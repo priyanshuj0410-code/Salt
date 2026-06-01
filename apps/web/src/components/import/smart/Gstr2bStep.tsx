@@ -143,16 +143,16 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
             Your <span className="font-medium">GSTR-2B</span> (from the GST portal — not Marg). We import the
             B2B invoices and reconcile them against your purchases to flag ITC gaps.
           </p>
-          <p className="mt-2 text-xs font-medium text-muted-foreground">Columns we look for:</p>
+          <p className="mt-2 text-xs font-medium text-text-tertiary">Columns we look for:</p>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {GSTR2B_FIELDS.map((f) => (
-              <span key={f.key} className="rounded-md border bg-muted/40 px-2 py-0.5 text-xs">
+              <span key={f.key} className="rounded-md border bg-surface-2/40 px-2 py-0.5 text-xs">
                 {f.label}
                 {f.required && <span className="text-destructive"> *</span>}
               </span>
             ))}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-text-tertiary">
             Export the B2B sheet of your GSTR-2B (Excel/CSV). Re-importing a period replaces it.
           </p>
         </div>
@@ -163,7 +163,7 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
             const file = e.dataTransfer.files?.[0];
             if (file) onFile(file);
           }}
-          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground hover:bg-muted/40"
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-text-tertiary hover:bg-surface-2/40"
         >
           <FileUp className="size-6" />
           <span>Drop your GSTR-2B file here, or click to choose</span>
@@ -177,7 +177,7 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
         </label>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-3 text-center">
-          <button onClick={onComplete} className="text-xs text-muted-foreground hover:text-foreground">
+          <button onClick={onComplete} className="text-xs text-text-tertiary hover:text-foreground">
             Skip this step
           </button>
         </div>
@@ -193,7 +193,7 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
         <div className="flex items-center gap-2 text-sm">
           <Wand2 className="size-4 text-primary" />
           <span className="font-medium">Check the column mapping</span>
-          <span className="text-muted-foreground">— {parsed?.rows.length ?? 0} rows.</span>
+          <span className="text-text-tertiary">— {parsed?.rows.length ?? 0} rows.</span>
         </div>
 
         <div className="mt-4 grid grid-cols-[1fr_1.5fr] items-center gap-3 text-sm">
@@ -244,7 +244,7 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
         <Stat label="Missing in books" value={r?.missingInBooks ?? 0} tone={r && r.missingInBooks > 0 ? "warn" : "muted"} />
         <Stat label="Missing in 2B" value={r?.missingIn2b ?? 0} tone={r && r.missingIn2b > 0 ? "warn" : "muted"} />
       </div>
-      <p className="mt-3 text-sm text-muted-foreground">
+      <p className="mt-3 text-sm text-text-tertiary">
         ITC in 2B: <span className="font-medium text-foreground">{inr(r?.itc2bPaise ?? 0)}</span> · reconciled
         to books: <span className="font-medium text-foreground">{inr(r?.itcMatchedPaise ?? 0)}</span>
       </p>
@@ -258,7 +258,7 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
 function Stat({ label, value, tone }: { label: string; value: number; tone: "ok" | "warn" | "muted" }) {
   return (
     <div className="rounded-md border p-2">
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xs text-text-tertiary">{label}</div>
       <div
         className={
           tone === "ok"

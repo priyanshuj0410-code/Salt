@@ -280,7 +280,7 @@ export function PartyGstStep({
           <p className="text-sm">
             Enrich your imported parties with GSTIN, address, phone and state from your GST master.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-text-tertiary">
             Drop your <span className="font-medium text-foreground">Party GST master</span> export
             (the &ldquo;partygstmaster&rdquo; file from Marg/Saral). We match by name and fill in any
             missing details — existing data is never overwritten.
@@ -294,7 +294,7 @@ export function PartyGstStep({
             const f = e.dataTransfer.files?.[0];
             if (f) onFile(f);
           }}
-          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground hover:bg-muted/40"
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-text-tertiary hover:bg-surface-2/40"
         >
           <FileUp className="size-6" />
           <span>
@@ -310,10 +310,10 @@ export function PartyGstStep({
           />
         </label>
 
-        {busy && <p className="mt-3 text-sm text-muted-foreground">Reading file…</p>}
+        {busy && <p className="mt-3 text-sm text-text-tertiary">Reading file…</p>}
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-3 text-center">
-          <button onClick={onComplete} className="text-xs text-muted-foreground hover:text-foreground">
+          <button onClick={onComplete} className="text-xs text-text-tertiary hover:text-foreground">
             Skip this step
           </button>
         </div>
@@ -348,7 +348,7 @@ export function PartyGstStep({
             {stateCount > 0 && <QaLine text={`${stateCount} existing parties will get a state code`} />}
             {phoneCount > 0 && <QaLine text={`${phoneCount} existing parties will get a phone number`} />}
             {addressCount > 0 && <QaLine text={`${addressCount} existing parties will get an address`} />}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-tertiary">
               Missing fields are filled (existing values never overwritten); the full master row is
               saved to each party so no column is lost.
             </p>
@@ -357,21 +357,21 @@ export function PartyGstStep({
 
         {unmatched.length > 0 && (
           <details className="mt-4">
-            <summary className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+            <summary className="flex cursor-pointer items-center gap-2 text-sm text-text-tertiary">
               <UserPlus className="size-4 text-primary" />
               {unmatched.length} new parties will be added (not in your ledgers yet)
             </summary>
-            <div className="mt-2 max-h-40 overflow-auto rounded-md border bg-muted/30 p-2 text-xs">
+            <div className="mt-2 max-h-40 overflow-auto rounded-md border bg-surface-2/30 p-2 text-xs">
               {unmatched.slice(0, 30).map((u, i) => (
-                <div key={i} className="py-0.5 text-muted-foreground">
+                <div key={i} className="py-0.5 text-text-tertiary">
                   {u.name}
                 </div>
               ))}
               {unmatched.length > 30 && (
-                <p className="pt-1 text-muted-foreground">+{unmatched.length - 30} more</p>
+                <p className="pt-1 text-text-tertiary">+{unmatched.length - 30} more</p>
               )}
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-text-tertiary">
               The trial balance only lists parties with an open balance; these are the rest of your
               customers and suppliers from the GST master. They&apos;re added with no opening balance
               and auto-tagged customer/vendor — fix any tags later from the Parties screen.
@@ -408,7 +408,7 @@ export function PartyGstStep({
           {addedCount > 0 && ` and added ${addedCount} new ${addedCount === 1 ? "party" : "parties"}`}
         </span>
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <p className="mt-2 text-sm text-text-tertiary">
         You can review and edit party details any time from the Parties screen.
       </p>
       <div className="mt-4">
@@ -427,9 +427,9 @@ function importLabel(matched: number, added: number): string {
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border bg-muted/30 p-3">
+    <div className="rounded-md border bg-surface-2/30 p-3">
       <div className="text-lg font-semibold tabular-nums">{value.toLocaleString("en-IN")}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xs text-text-tertiary">{label}</div>
     </div>
   );
 }
@@ -438,7 +438,7 @@ function QaLine({ text }: { text: string }) {
   return (
     <div className="flex items-center gap-2">
       <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
-      <span className="text-muted-foreground">{text}</span>
+      <span className="text-text-tertiary">{text}</span>
     </div>
   );
 }

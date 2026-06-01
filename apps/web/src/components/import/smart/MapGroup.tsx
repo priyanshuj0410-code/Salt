@@ -15,7 +15,7 @@ export function MapGroup({
 }) {
   return (
     <div className="mt-4">
-      <p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p>
+      <p className="mb-1 text-xs font-medium text-text-tertiary">{title}</p>
       <div className="space-y-2">
         {fields.map((f) => (
           <div key={f.key} className="grid grid-cols-[1fr_1.5fr] items-center gap-3 text-sm">

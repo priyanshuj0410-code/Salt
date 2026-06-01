@@ -121,7 +121,7 @@ export function OpeningStockStep({
           <Boxes className="size-4 text-primary" />
           Opening stock ledger
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-text-tertiary">
           Post an opening balance to the stock movement ledger for every imported batch, so your
           inventory movement history reconciles to current stock. On-hand is unchanged — this only fills
           in the audit ledger. Run once after importing batches; safe to re-run.
@@ -129,7 +129,7 @@ export function OpeningStockStep({
       </div>
 
       {loading ? (
-        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+        <p className="flex items-center gap-2 text-sm text-text-tertiary">
           <RotateCw className="size-4 animate-spin" /> Scanning your stock…
         </p>
       ) : (
@@ -137,10 +137,10 @@ export function OpeningStockStep({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             <span className="font-medium">{need} batches need an opening movement</span>
             {(plan?.skippedExisting ?? 0) > 0 && (
-              <span className="text-muted-foreground">{plan?.skippedExisting} already posted</span>
+              <span className="text-text-tertiary">{plan?.skippedExisting} already posted</span>
             )}
             {(plan?.skippedZero ?? 0) > 0 && (
-              <span className="text-muted-foreground">{plan?.skippedZero} zero-stock (skipped)</span>
+              <span className="text-text-tertiary">{plan?.skippedZero} zero-stock (skipped)</span>
             )}
           </div>
           {(plan?.skippedNoShop ?? 0) > 0 && (
@@ -167,7 +167,7 @@ export function OpeningStockStep({
             </Button>
           </div>
           <div className="mt-3 text-center">
-            <button onClick={onComplete} className="text-xs text-muted-foreground hover:text-foreground">
+            <button onClick={onComplete} className="text-xs text-text-tertiary hover:text-foreground">
               Skip this step
             </button>
           </div>

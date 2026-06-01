@@ -181,20 +181,20 @@ export function EntityStep({
       <div className="rounded-lg border p-5">
         <div className="mb-4">
           <p className="text-sm">{entity.description}</p>
-          <p className="mt-2 text-xs font-medium text-muted-foreground">Columns we look for:</p>
+          <p className="mt-2 text-xs font-medium text-text-tertiary">Columns we look for:</p>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {entity.fields.map((f) => (
-              <span key={f.key} className="rounded-md border bg-muted/40 px-2 py-0.5 text-xs">
+              <span key={f.key} className="rounded-md border bg-surface-2/40 px-2 py-0.5 text-xs">
                 {f.label}
                 {f.required && <span className="text-destructive"> *</span>}
               </span>
             ))}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-text-tertiary">
             <span className="text-destructive">*</span> required · others optional · column names
             need not match — we auto-map them.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">{entity.tip}</p>
+          <p className="mt-1 text-xs text-text-tertiary">{entity.tip}</p>
         </div>
 
         <label
@@ -204,7 +204,7 @@ export function EntityStep({
             const f = e.dataTransfer.files?.[0];
             if (f) onFile(f);
           }}
-          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground hover:bg-muted/40"
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-text-tertiary hover:bg-surface-2/40"
         >
           <FileUp className="size-6" />
           <span>
@@ -221,7 +221,7 @@ export function EntityStep({
         </label>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-3 text-center">
-          <button onClick={onComplete} className="text-xs text-muted-foreground hover:text-foreground">
+          <button onClick={onComplete} className="text-xs text-text-tertiary hover:text-foreground">
             Skip this step
           </button>
         </div>
@@ -236,7 +236,7 @@ export function EntityStep({
         <div className="flex items-center gap-2 text-sm">
           <Wand2 className="size-4 text-primary" />
           <span className="font-medium">Check the column mapping</span>
-          <span className="text-muted-foreground">
+          <span className="text-text-tertiary">
             — {parsed?.rows.length ?? 0} rows. We pre-matched columns; adjust any that are off.
           </span>
         </div>
@@ -295,14 +295,14 @@ export function EntityStep({
 
       {quarantine.length > 0 ? (
         <>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-text-tertiary">
             Fix the highlighted cells (or apply a default to all), then re-process. Valid rows are
             already saved.
           </p>
 
           {/* Bulk apply-default */}
-          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md bg-muted/50 p-2 text-sm">
-            <span className="text-xs text-muted-foreground">Set all</span>
+          <div className="mt-3 flex flex-wrap items-center gap-2 rounded-md bg-surface-2/50 p-2 text-sm">
+            <span className="text-xs text-text-tertiary">Set all</span>
             <select
               value={bulkField}
               onChange={(e) => setBulkField(e.target.value)}
@@ -314,7 +314,7 @@ export function EntityStep({
                 </option>
               ))}
             </select>
-            <span className="text-xs text-muted-foreground">to</span>
+            <span className="text-xs text-text-tertiary">to</span>
             <Input
               value={bulkValue}
               onChange={(e) => setBulkValue(e.target.value)}
@@ -341,7 +341,7 @@ export function EntityStep({
                   <div className="flex flex-wrap gap-2">
                     {entity.fields.map((f) => (
                       <label key={f.key} className="flex flex-col gap-0.5">
-                        <span className="text-[10px] text-muted-foreground">{f.label}</span>
+                        <span className="text-[10px] text-text-tertiary">{f.label}</span>
                         <input
                           value={row.data[f.key] ?? ""}
                           onChange={(e) =>
