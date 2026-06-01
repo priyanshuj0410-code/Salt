@@ -244,7 +244,7 @@ export function OcrInvoiceImportPage() {
           <p className="font-medium">OCR isn't set up yet.</p>
           <p className="mt-1 text-xs">
             The <code>extract-invoice</code> Edge Function needs to be deployed and a vision API key set
-            (<code>supabase functions deploy extract-invoice</code> + <code>supabase secrets set ANTHROPIC_API_KEY=…</code>).
+            (<code>supabase functions deploy extract-invoice</code> + <code>supabase secrets set GEMINI_API_KEY=…</code>).
             Until then, use the{" "}
             <Link to="/import/purchases" className="font-medium underline">CSV importer</Link>.
           </p>
