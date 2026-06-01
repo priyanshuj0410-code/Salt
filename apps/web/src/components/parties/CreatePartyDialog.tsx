@@ -3,6 +3,7 @@ import { UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { FormRow } from "@/components/patterns/form-row";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
@@ -139,7 +140,7 @@ export function CreatePartyDialog({
           <DialogDescription>Add a customer or vendor that is not in your imported ledgers.</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-3">
-          <Field label="Name">
+          <FormRow label="Name">
             <Input
               autoFocus
               value={form.name}
@@ -147,7 +148,7 @@ export function CreatePartyDialog({
               placeholder="Party name"
               className="h-9"
             />
-          </Field>
+          </FormRow>
 
           <div className="flex flex-col gap-1">
             <span className="text-xs text-text-tertiary">Type</span>
@@ -167,18 +168,18 @@ export function CreatePartyDialog({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Phone">
+            <FormRow label="Phone">
               <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="—" className="h-9" />
-            </Field>
-            <Field label="GSTIN">
+            </FormRow>
+            <FormRow label="GSTIN">
               <Input
                 value={form.gstin}
                 onChange={(e) => onGstin(e.target.value)}
                 placeholder="—"
                 className="h-9 font-mono text-xs uppercase"
               />
-            </Field>
-            <Field label="State">
+            </FormRow>
+            <FormRow label="State">
               <select
                 value={form.stateCode}
                 onChange={(e) => set("stateCode", e.target.value)}
@@ -191,8 +192,8 @@ export function CreatePartyDialog({
                   </option>
                 ))}
               </select>
-            </Field>
-            <Field label="Credit limit (₹)">
+            </FormRow>
+            <FormRow label="Credit limit (₹)">
               <Input
                 type="number"
                 min={0}
@@ -201,9 +202,9 @@ export function CreatePartyDialog({
                 placeholder="0"
                 className="h-9 text-right tabular-nums"
               />
-            </Field>
+            </FormRow>
             {groupsEnabled && (
-              <Field label="Group">
+              <FormRow label="Group">
                 <select
                   value={form.group}
                   onChange={(e) => set("group", e.target.value)}
@@ -216,13 +217,13 @@ export function CreatePartyDialog({
                     </option>
                   ))}
                 </select>
-              </Field>
+              </FormRow>
             )}
           </div>
 
-          <Field label="Address">
+          <FormRow label="Address">
             <Input value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="—" className="h-9" />
-          </Field>
+          </FormRow>
 
           <div className="flex flex-col gap-1">
             <span className="text-xs text-text-tertiary">Opening balance (₹)</span>
@@ -264,14 +265,5 @@ export function CreatePartyDialog({
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs text-text-tertiary">{label}</span>
-      {children}
-    </label>
   );
 }
