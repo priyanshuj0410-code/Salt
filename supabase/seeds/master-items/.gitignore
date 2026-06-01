@@ -1,0 +1,6 @@
+# Raw downloaded government sources — never commit (large; fetch locally, attribute via `source`).
+*.pdf
+*.xls
+*.xlsx
+# Bulk extracts the user generates locally from the PDFs — regenerated, not committed.
+inputs/parsed_*.csv

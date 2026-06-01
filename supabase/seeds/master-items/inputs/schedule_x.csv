@@ -1,0 +1,15 @@
+molecule,note
+# Schedule X molecule keywords (Drugs & Cosmetics Rules, Schedule X — narcotics /
+# psychotropics needing a Form 20F/21F licence + special record-keeping).
+# STARTER list — reconcile with the official Schedule X of the D&C Rules / NDPS before
+# relying on it for compliance.
+Phenobarbitone,barbiturate
+Pentobarbital,barbiturate
+Amobarbital,barbiturate
+Secobarbital,barbiturate
+Amphetamine,stimulant
+Methamphetamine,stimulant
+Methylphenidate,stimulant
+Pentazocine,opioid analgesic
+Buprenorphine,opioid (also NDPS)
+Oseltamivir,restricted (Schedule X distribution control)
