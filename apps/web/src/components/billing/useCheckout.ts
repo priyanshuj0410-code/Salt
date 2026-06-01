@@ -6,6 +6,14 @@ import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { gatedLines, requiresRx } from "@/lib/billing";
 import { creditCheck } from "@/lib/credit";
+import {
+  activeTenders,
+  checkTenders,
+  tenderSum,
+  NO_TENDERS,
+  type TenderAmounts,
+  type TenderMode,
+} from "@/lib/tenders";
 import { buildInvoiceData, printInvoice, type CustomerDetail } from "@/lib/printInvoice";
 import { billTotals, useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
@@ -46,10 +54,25 @@ export function useCheckout({
   const [error, setError] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
   const [rxOpen, setRxOpen] = useState(false);
+  // Split-tender state (SALT-198): off by default → the single `payment.method` path.
+  // When on, the bill is settled by per-mode legs that must sum to the total.
+  const [splitMode, setSplitMode] = useState(false);
+  const [tenderAmounts, setTenderAmounts] = useState<TenderAmounts>(NO_TENDERS);
   // Remembered across the H1 gate / shop-setup detours so a resumed save still prints.
   const printIntent = useRef(false);
   const t = billTotals(lines, billDiscount);
   const empty = lines.length === 0;
+  // Live split check (mirrors the server guards) — drives the remainder readout + Save gate.
+  const tenderChk = checkTenders(tenderAmounts, t.grand, party !== null);
+  const setTenderAmount = (mode: TenderMode, paise: number) =>
+    setTenderAmounts((a) => ({ ...a, [mode]: Math.max(0, Math.floor(paise || 0)) }));
+  // Drop the rest of the bill into one leg — the common "cash covers the remainder" tap.
+  const fillRemainder = (mode: TenderMode) =>
+    setTenderAmounts((a) => ({ ...a, [mode]: Math.max(0, t.grand - tenderSum({ ...a, [mode]: 0 })) }));
+  const setSplit = (on: boolean) => {
+    setSplitMode(on);
+    if (!on) setTenderAmounts(NO_TENDERS);
+  };
   // Credit-limit warning (SALT-004): advisory, non-blocking. Only for a credit sale to a
   // party with a limit set, where dues + this bill exceed it.
   const creditWarn = creditCheck(payment.method, credit?.creditLimitPaise ?? 0, credit?.duePaise ?? 0, t.grand);
@@ -80,10 +103,20 @@ export function useCheckout({
       setSetupOpen(true);
       return null;
     }
+    // Split-tender gate (SALT-198): the legs must sum to the total and a credit leg
+    // needs a party, before we send p_tenders (the server re-validates the same).
+    if (splitMode) {
+      const chk = checkTenders(tenderAmounts, t.grand, party !== null);
+      if (!chk.ok) {
+        setError(chk.reason);
+        return null;
+      }
+    }
     setSaving(true);
     setError(null);
     try {
-      const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount);
+      const tenders = splitMode ? activeTenders(tenderAmounts) : null;
+      const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders);
       const { data, error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
       if (err) {
         // Oversell guard fired (another counter took the last unit): the server rejects
@@ -115,6 +148,7 @@ export function useCheckout({
         if (invoiceNo) receipt.ref = invoiceNo;
       }
       clear();
+      setSplit(false); // back to single-payment for the next bill
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       printIntent.current = false;
@@ -147,7 +181,7 @@ export function useCheckout({
       void save({ print: true });
     },
     { enableOnFormTags: true },
-    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount],
+    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount, splitMode, tenderAmounts],
   );
 
   return {
@@ -165,6 +199,14 @@ export function useCheckout({
     setSetupOpen,
     isInterstate,
     creditWarn,
+    // Split-tender (SALT-198): the panes render the pane when `splitMode`, edit legs via
+    // `setTenderAmount`/`fillRemainder`, and read `tenderChk` for the live remainder + gate.
+    splitMode,
+    setSplit,
+    tenderAmounts,
+    setTenderAmount,
+    fillRemainder,
+    tenderChk,
     saveAndPrint: () => save({ print: true }),
     saveOnly: () => save({ print: false }),
     resumeSave: () => save(),
