@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Copy, FlaskConical, GitMerge, PackagePlus, Sparkles, Tag } from "lucide-react";
+import { Copy, FlaskConical, GitMerge, PackagePlus, RefreshCw, Sparkles, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,8 +29,10 @@ import { findDuplicateGroups, type DuplicateGroup } from "@/lib/itemDupes";
 import {
   planEnrichment,
   planSaltReplacements,
+  planMasterUpdates,
   type EnrichPlanRow,
   type SaltReplaceRow,
+  type MasterUpdateRow,
   type MasterRow,
   type BrandAliasRow,
 } from "@/lib/masterEnrich";
@@ -76,6 +78,12 @@ export function CatalogPage() {
   const [saltSel, setSaltSel] = useState<Set<string>>(new Set());
   const [saltError, setSaltError] = useState<string | null>(null);
   const [saltDone, setSaltDone] = useState<number | null>(null);
+  const [updOpen, setUpdOpen] = useState(false);
+  const [updBusy, setUpdBusy] = useState(false);
+  const [updRows, setUpdRows] = useState<MasterUpdateRow[] | null>(null);
+  const [updSel, setUpdSel] = useState<Set<string>>(new Set());
+  const [updError, setUpdError] = useState<string | null>(null);
+  const [updDone, setUpdDone] = useState<number | null>(null);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -191,6 +199,51 @@ export function CatalogPage() {
     }
   }
 
+  // "Master updates" (SALT-084): where the master's current schedule / GST / HSN differs
+  // from a matching item, push the master value onto the item (overwrite, per-item review).
+  async function runMasterUpdates() {
+    if (!supabase || !orgId || usingSeed) return;
+    setUpdOpen(true);
+    setUpdBusy(true);
+    setUpdError(null);
+    setUpdDone(null);
+    setUpdRows(null);
+    try {
+      const master = await selectAll<MasterRow>((from, to) =>
+        supabase!.from("master_items").select("id,name,salt,hsn,gst_rate,schedule").range(from, to).returns<MasterRow[]>(),
+      );
+      const rows = planMasterUpdates(items, master);
+      setUpdRows(rows);
+      setUpdSel(new Set(rows.map((r) => r.itemId)));
+    } catch (e) {
+      setUpdError(e instanceof Error ? e.message : "Could not load the drug master.");
+    } finally {
+      setUpdBusy(false);
+    }
+  }
+
+  async function applyMasterUpdates() {
+    if (!supabase || !orgId || !updRows || updBusy) return;
+    const rows = updRows.filter((r) => updSel.has(r.itemId));
+    if (rows.length === 0) return;
+    setUpdBusy(true);
+    setUpdError(null);
+    try {
+      for (let i = 0; i < rows.length; i += 25) {
+        await Promise.all(
+          rows.slice(i, i + 25).map((r) => supabase!.from("items").update(r.patch).eq("id", r.itemId).eq("org_id", orgId)),
+        );
+      }
+      await loadCatalog(orgId);
+      setUpdDone(rows.length);
+      setUpdRows(null);
+    } catch (e) {
+      setUpdError(e instanceof Error ? e.message : "Could not apply the changes.");
+    } finally {
+      setUpdBusy(false);
+    }
+  }
+
   // Default survivor: the item carrying the most stock, then most batches, then name.
   const defaultSurvivor = (g: DuplicateGroup) =>
     [...g.items].sort(
@@ -300,6 +353,14 @@ export function CatalogPage() {
               title={usingSeed ? "Add or import your own catalogue first" : "Review & replace salt where an item name matches the master"}
             >
               <FlaskConical /> Review salt
+            </Button>
+            <Button
+              variant="outline"
+              onClick={runMasterUpdates}
+              disabled={usingSeed}
+              title={usingSeed ? "Add or import your own catalogue first" : "Push the master's current GST / schedule / HSN onto matching items"}
+            >
+              <RefreshCw /> Master updates
             </Button>
             <Button onClick={() => setCreateOpen(true)}>
               <PackagePlus /> New item
@@ -617,6 +678,88 @@ export function CatalogPage() {
                 </Button>
                 <Button onClick={applySaltReplace} disabled={saltBusy || !saltRows || saltSel.size === 0}>
                   {saltBusy ? "Applying…" : `Replace ${saltSel.size}`}
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={updOpen} onOpenChange={setUpdOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Master updates</DialogTitle>
+            <DialogDescription>
+              Where the drug master&rsquo;s current GST, schedule or HSN differs from a matching item, push the
+              master value onto the item. Review each change and uncheck any to skip — this overwrites the item.
+            </DialogDescription>
+          </DialogHeader>
+
+          {updError && <p className="text-sm text-destructive">{updError}</p>}
+
+          {updBusy && !updRows ? (
+            <p className="py-6 text-center text-sm text-text-tertiary">Comparing against the drug master…</p>
+          ) : updDone != null ? (
+            <p className="py-6 text-center text-sm text-text-primary">
+              Updated {updDone} item{updDone === 1 ? "" : "s"} from the master.
+            </p>
+          ) : updRows ? (
+            updRows.length === 0 ? (
+              <p className="py-6 text-center text-sm text-text-tertiary">
+                Every matching item already agrees with the master — nothing to push.
+              </p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between text-xs text-text-tertiary">
+                  <span>
+                    {updSel.size} of {updRows.length} selected
+                  </span>
+                  <div className="flex gap-2">
+                    <button type="button" className="hover:text-text-primary" onClick={() => setUpdSel(new Set(updRows.map((r) => r.itemId)))}>
+                      All
+                    </button>
+                    <button type="button" className="hover:text-text-primary" onClick={() => setUpdSel(new Set())}>
+                      None
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-1 max-h-80 divide-y divide-divider overflow-y-auto rounded-lg border border-border">
+                  {updRows.map((r) => (
+                    <label key={r.itemId} className="flex items-start gap-2 px-3 py-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="mt-1"
+                        checked={updSel.has(r.itemId)}
+                        onChange={() =>
+                          setUpdSel((s) => {
+                            const n = new Set(s);
+                            if (n.has(r.itemId)) n.delete(r.itemId);
+                            else n.add(r.itemId);
+                            return n;
+                          })
+                        }
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{r.itemName}</span>
+                        <span className="block truncate text-xs text-text-tertiary">{r.changes.join(" · ")}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </>
+            )
+          ) : null}
+
+          <DialogFooter>
+            {updDone != null ? (
+              <Button onClick={() => setUpdOpen(false)}>Done</Button>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setUpdOpen(false)} disabled={updBusy}>
+                  Cancel
+                </Button>
+                <Button onClick={applyMasterUpdates} disabled={updBusy || !updRows || updSel.size === 0}>
+                  {updBusy ? "Applying…" : `Update ${updSel.size}`}
                 </Button>
               </>
             )}

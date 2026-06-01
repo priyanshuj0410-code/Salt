@@ -231,3 +231,45 @@ export function planSaltReplacements(items: Item[], master: MasterRow[]): SaltRe
   }
   return out;
 }
+
+export interface MasterUpdateRow {
+  itemId: string;
+  itemName: string;
+  /** Fields to set on the item — the master's current compliance values + the link. */
+  patch: { master_item_id: string; schedule?: string; gst_rate?: number; hsn?: string };
+  /** Human-readable diffs for the review UI, e.g. ["GST 12%→5%", "schedule H→H1"]. */
+  changes: string[];
+}
+
+/**
+ * Plan master→shop pushes (SALT-084): for each item that matches a master entry (by salt,
+ * then name — the same basis as "Fill from master"), where the master's CURRENT schedule /
+ * GST / HSN differs from the item's, propose updating the item to match. The master is the
+ * source of truth for these compliance fields, so this OVERWRITES — callers present per-item
+ * accept/ignore (never auto-apply). Items already in sync are skipped.
+ */
+export function planMasterUpdates(items: Item[], master: MasterRow[]): MasterUpdateRow[] {
+  const idx = buildMasterIndex(master);
+  const out: MasterUpdateRow[] = [];
+  for (const it of items) {
+    const m = matchMaster(it, idx);
+    if (!m) continue;
+    const patch: MasterUpdateRow["patch"] = { master_item_id: m.id };
+    const changes: string[] = [];
+    if (m.schedule?.trim() && m.schedule.trim() !== it.schedule) {
+      patch.schedule = m.schedule.trim();
+      changes.push(`schedule ${it.schedule}→${m.schedule.trim()}`);
+    }
+    const mRate = Number(m.gst_rate);
+    if (mRate > 0 && mRate !== it.gstRate) {
+      patch.gst_rate = mRate;
+      changes.push(`GST ${it.gstRate}%→${mRate}%`);
+    }
+    if (m.hsn?.trim() && m.hsn.trim() !== (it.hsn?.trim() ?? "")) {
+      patch.hsn = m.hsn.trim();
+      changes.push(`HSN ${it.hsn?.trim() || "—"}→${m.hsn.trim()}`);
+    }
+    if (changes.length) out.push({ itemId: it.id, itemName: it.name, patch, changes });
+  }
+  return out;
+}
