@@ -42,7 +42,7 @@ export function SmartImportPage() {
     }
     if (step.key === "ledgers") return <LedgerStep key="ledgers" orgId={orgId} onComplete={advance} />;
     if (step.key === "party_gstin") return <PartyGstStep key="party_gstin" orgId={orgId} onComplete={advance} />;
-    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} onComplete={advance} />;
+    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} shopId={shopId} onComplete={advance} />;
   }
 
   return (
