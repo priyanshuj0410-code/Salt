@@ -12,14 +12,14 @@ Catalog of every page. Read this first when answering a question, then drill in.
 
 ## Product
 - [product/prd](product/prd.md) — vision, customer, goals/non-goals, functional surfaces, pricing (synthesis of `salt-prd-v0.3.md`).
-- [product/roadmap](product/roadmap.md) — PRD phases vs as-built; the big gaps (offline/real-time, sales/GRN/tax); market-informed priority additions.
+- [product/roadmap](product/roadmap.md) — PRD phases vs as-built (refreshed 2026-06-01: Phases 1–3 largely shipped on the `create_sales_invoice` + 0014–0024 backbone); the remaining gap is offline-first / live-multi-counter; market-informed priority additions.
 - [product/market-research](product/market-research.md) — competitor matrix (Marg/GoFrugal/RetailGraph/eVitalRx/Tally), GST pharma rules, Schedule H/H1/X requirements, pain points, modern trends, competitive gaps Salt can fill.
 - [product/product-modules](product/product-modules.md) — full platform module map (21 modules across 4 tiers); dependency graph; recommended build sequence.
 
 ## Architecture
 - [architecture/stack](architecture/stack.md) — monorepo, Vite/React/Tailwind, Supabase backend, deploy/CI, conventions.
 - [architecture/data-model](architecture/data-model.md) — tables, migrations 0001–0013, key RPCs, what's not modeled yet.
-- [architecture/proposed-data-model](architecture/proposed-data-model.md) — draft SQL (0014–0024) giving every nav module a clean model on a shared stock + double-entry backbone; multi-shop; unrun.
+- [architecture/proposed-data-model](architecture/proposed-data-model.md) — the target model (0014–0024): every nav module on a shared stock + double-entry backbone; multi-shop; **applied & promoted to `supabase/migrations/`** (SALT-140).
 - [architecture/schema](architecture/schema.md) — exact table + column definitions (types, nullability, defaults, FKs) for every table.
 - [architecture/security-rls](architecture/security-rls.md) — Auth, per-org RLS, `is_member`, security-definer RPCs, gaps.
 - [architecture/import-pipeline](architecture/import-pipeline.md) — CSV / Go migrator / Smart Importer; trial-balance extraction; merge.
@@ -28,16 +28,19 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/design-system](architecture/design-system.md) — `design.md` principles + tokens; verified as-built status (tokens, primitives, patterns + density switch built; FormRow pending) + research-backed direction.
 - [architecture/accessibility](architecture/accessibility.md) — WCAG 2.1 AA audit (SALT-139): conforming foundations, the global reduced-motion fix, gaps handed off (skip link, muted contrast), and what needs manual browser verification.
 - [architecture/interaction-patterns](architecture/interaction-patterns.md) — the keyboard+touch contract: one model/two presentations, the seven laws, per-pattern dual-modality behaviour, the counter as worked example.
-- [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale.
+- [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale; the CI-guarded nav↔route invariant (SALT-142).
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, ranked OOS substitutes, FEFO, stock cap, billTotals, line + apportioned bill-level discount, parked/held bills, Schedule H1/X checkout gate, Save & Print + GST split.
 - [architecture/gst-returns](architecture/gst-returns.md) — the GST & compliance screens: GSTR-1, GSTR-3B, live liability, ITC register (+ expired-stock reversal), Tally XML export, and a range HSN-summary report, over `sales_invoices`/`sale_lines`/`purchases`/`batches`; GSTN JSON + CSV + Tally XML.
 - [architecture/grn](architecture/grn.md) — GRN / purchase (inbound): `purchases`/`purchase_lines` + `receive_purchase`, scheme free goods + multi-rate GST + trade discount economics (`lib/grn.ts`), effective cost + ITC, new-item review, the `/purchases` screens.
 - [architecture/inventory](architecture/inventory.md) — stock ledger + read views (near-expiry, dead/slow, reorder, out-of-stock, turnover) on `lib/inventory.ts` over `stock_movements`/`batches.qty`; write paths (adjustments, physical count, expiry destruction + ITC reversal) via the `0028` `adjust_stock`/`finalize_physical_count` RPCs.
+- [architecture/returns](architecture/returns.md) — partial-return recomputation engine (`lib/returns.ts`, SALT-099): net value / GST / revised ITC on the **effective-cost** basis (taxable ÷ received units, so scheme free-goods + trade discount are honoured), cumulative-rounding so sequential returns leak no paise; one engine for purchase returns (debit note, ITC reversal) and sales returns (credit note, outward-tax reversal).
 - [architecture/information-architecture](architecture/information-architecture.md) — full navigation tree, screen inventory, keyboard shortcut system, 7 key user journeys, role-based access, URL structure.
 - [architecture/ondc-b2b-pharma](architecture/ondc-b2b-pharma.md) — ONDC/Beckn deep dive for vendor ordering: roles, transaction flow, the OTC-only pharma gate, the two plays (buyer-app procurement vs seller-app retail), onboarding; why it's watch-and-prototype.
 - [architecture/payments](architecture/payments.md) — money in/out on the payments ledger: the `record_payment` RPC + tables contract, the as-built `/payments` UI (SALT-003), the allocation/back-dating gaps, and the module roadmap.
 - [architecture/realtime](architecture/realtime.md) — the real-time / multi-counter substrate: Supabase Realtime (vs PRD's Yjs/ElectricSQL), the per-org Postgres-changes primitive, and the shop-wide activity feed (`activity_events` + triggers, `/activity`, SALT-104).
 - [architecture/reports](architecture/reports.md) — the Reports module (SALT-073…078): dashboard + sales/purchase/inventory/financial/tax suites over the `v_*` views (0023); the operational-basis filter, `lib/reports.ts` + `fetchAllPaged`, per-suite views, and the org-level financials decision.
+- [architecture/operations](architecture/operations.md) — NFR & ops posture (SALT-134/136/137/138): Supabase backup/PITR + restore runbook, at-rest/transit/RLS + no-PII-logs, India residency, audit-trail ownership, and the scale load-test method; with an account-owner action-items table.
+- [architecture/salesman](architecture/salesman.md) — field-salesman management (SALT-128): the `salesmen` master + `commission_pct`/`payments.salesman_id` (0032), commission on net sales, the `/salesmen` master+report and `/salesmen/:id` detail, and order/collection attribution back-fill in `lib/salesmen.ts`.
 
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.

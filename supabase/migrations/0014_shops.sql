@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0014: Multi-shop foundation.
 -- An org is the business/firm; a shop is a physical outlet under it. Stock and
 -- every document become shop-scoped via shop_id, while RLS stays org-level

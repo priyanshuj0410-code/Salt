@@ -29,5 +29,8 @@ jobs:
       - name: Lint
         run: pnpm turbo lint
 
+      - name: Nav route invariant (SALT-142)
+        run: node apps/web/scripts/check-nav.mjs
+
       - name: Build
         run: pnpm turbo build

@@ -1,6 +1,6 @@
 ---
 type: architecture
-updated: 2026-05-31
+updated: 2026-06-01
 tags: [import, marg, smart-import, design]
 ---
 
@@ -8,9 +8,9 @@ tags: [import, marg, smart-import, design]
 
 Design for growing [Smart Import](import-pipeline.md) from the **four-file cascade** (masters + opening balances) to **the whole live model** — every Marg export, including transaction history and compliance. Companion to the data map ([marg-import-map](marg-import-map.md)) and the operator playbook ([../domain/marg-export-guide](../domain/marg-export-guide.md)); governed by ADRs [0010](../decisions/0010-gstin-canonical-party-identity.md)–[0014](../decisions/0014-doctors-master.md).
 
-**Status: design only — no code yet.**
+**Status: shipped — Phases 0–7 are built (see §9); this page is the as-built design.**
 - **UX:** the cascade stepper (all phases shipped) **plus** a drop-all auto-detect router that classifies & routes a whole batch of files (SALT-153, see §9).
-- **Schema:** the import-extension columns/tables below are **net-new** — nothing is scaffolded today (`supabase/migrations/` stops at `0013`; the live model is `supabase/proposed/0014–0024` applied via `full_data_model.sql`).
+- **Schema:** the import-extension columns/tables shipped across migrations `0025`–`0031`; the live core model is `supabase/migrations/0014–0024` (promoted from `proposed/`, applied via `full_data_model.sql`).
 - **Mappings:** designed from the known Marg ERP 9+ structure; tuned when a real sample arrives (auto-map tolerates header variance meanwhile).
 
 ## 1. Goal & scope
@@ -109,7 +109,7 @@ The opening snapshot (trial balance + batch stock) is **authoritative** for bala
 - Parse/map/validate: `lib/smartParse.ts`, `lib/smartImport.ts`, `lib/smartLedger.ts`.
 - Helpers: `lib/classifyParties.ts` (`classify_parties`), `lib/selectAll.ts` (1000-row pagination), chunked inserts (`CHUNK = 500`).
 - UI: `components/import/smart/{SmartImportPage,LedgerStep,PartyGstStep,EntityStep}.tsx`.
-- SQL precedent: `supabase/proposed/0018_sales.sql` (historical insert without re-posting); `0019–0024` define the live doc tables + the posting RPCs (NOT for history).
+- SQL precedent: `supabase/migrations/0018_sales.sql` (historical insert without re-posting); `0019–0024` define the live doc tables + the posting RPCs (NOT for history).
 
 ## 9. Phased build roadmap
 

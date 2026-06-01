@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0020: Returns & notes.
 --   credit_notes = sales return: stock back in, reverse Sales + GST output, Cr party/cash.
 --   debit_notes  = purchase/expiry return to vendor: stock out, reverse Purchase +

@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0021: Payments & receipts.
 -- record_payment posts the cash/bank <-> party double entry and optionally allocates
 -- the amount across specific open bills. 'received' = money in from a customer

@@ -21,6 +21,7 @@ const GrnDetailPage = lazy(() => import("@/components/grn/GrnDetailPage").then((
 const PoListPage = lazy(() => import("@/components/grn/PoListPage").then((m) => ({ default: m.PoListPage })));
 const PoEntryPage = lazy(() => import("@/components/grn/PoEntryPage").then((m) => ({ default: m.PoEntryPage })));
 const PoDetailPage = lazy(() => import("@/components/grn/PoDetailPage").then((m) => ({ default: m.PoDetailPage })));
+const AutoPoPage = lazy(() => import("@/components/grn/AutoPoPage").then((m) => ({ default: m.AutoPoPage })));
 const DebitNoteListPage = lazy(() => import("@/components/grn/DebitNoteListPage").then((m) => ({ default: m.DebitNoteListPage })));
 const DebitNoteEntryPage = lazy(() => import("@/components/grn/DebitNoteEntryPage").then((m) => ({ default: m.DebitNoteEntryPage })));
 const DebitNoteDetailPage = lazy(() => import("@/components/grn/DebitNoteDetailPage").then((m) => ({ default: m.DebitNoteDetailPage })));
@@ -48,6 +49,8 @@ const PaymentsPage = lazy(() => import("@/components/payments/PaymentsPage").the
 const MakePaymentPage = lazy(() => import("@/components/payments/MakePaymentPage").then((m) => ({ default: m.MakePaymentPage })));
 const CatalogPage = lazy(() => import("@/components/catalog/CatalogPage").then((m) => ({ default: m.CatalogPage })));
 const ItemDetailPage = lazy(() => import("@/components/catalog/ItemDetailPage").then((m) => ({ default: m.ItemDetailPage })));
+const SalesmenPage = lazy(() => import("@/components/salesmen/SalesmenPage").then((m) => ({ default: m.SalesmenPage })));
+const SalesmanDetailPage = lazy(() => import("@/components/salesmen/SalesmanDetailPage").then((m) => ({ default: m.SalesmanDetailPage })));
 const DashboardPage = lazy(() => import("@/components/reports/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const SalesReportsPage = lazy(() => import("@/components/reports/SalesReportsPage").then((m) => ({ default: m.SalesReportsPage })));
 const PurchaseReportsPage = lazy(() => import("@/components/reports/PurchaseReportsPage").then((m) => ({ default: m.PurchaseReportsPage })));
@@ -182,6 +185,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <PoEntryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/orders/suggest"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <AutoPoPage />
           </ProtectedRoute>
         }
       />
@@ -446,6 +457,22 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <ItemDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/salesmen"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SalesmenPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/salesmen/:id"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <SalesmanDetailPage />
           </ProtectedRoute>
         }
       />

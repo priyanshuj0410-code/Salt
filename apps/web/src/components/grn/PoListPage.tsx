@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { ClipboardList, Plus } from "lucide-react";
+import { ClipboardList, Plus, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
@@ -78,9 +78,14 @@ export function PoListPage() {
         title="Purchase orders"
         subtitle={rows.length > 0 ? `${rows.length} orders` : "Orders raised to vendors, newest first"}
         actions={
-          <Button onClick={() => navigate("/purchases/orders/new")}>
-            <Plus /> New order
-          </Button>
+          <>
+            <Button variant="outline" onClick={() => navigate("/purchases/orders/suggest")}>
+              <Sparkles /> Suggestions
+            </Button>
+            <Button onClick={() => navigate("/purchases/orders/new")}>
+              <Plus /> New order
+            </Button>
+          </>
         }
       />
 

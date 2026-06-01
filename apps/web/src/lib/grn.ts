@@ -427,3 +427,144 @@ export function buildDebitNoteLines(lines: DebitNoteLine[], interstate: boolean)
     taxable_paise: computeGrnLine({ qty: l.qty, ptrPaise: l.ptrPaise, gstRate: l.gstRate }, interstate).taxablePaise,
   }));
 }
+
+// ── Auto-PO / reorder suggestions (SALT-022) ─────────────────────────────────
+// Surface items that need reordering and propose an order quantity, so the user
+// turns the picks into draft POs (one per vendor) instead of eyeballing stock.
+// Two triggers: (1) at/below the reorder level, (2) "fast-moving" — selling fast
+// enough that current stock covers fewer than the target window. Pure: the page
+// feeds it current stock (Σ batch qty), units sold in a window, and the last
+// vendor/PTR per item (most recent purchase); no Supabase here.
+
+/** Per-item inputs for a reorder suggestion. */
+export interface ReorderItemInput {
+  itemId: string;
+  name: string;
+  gstRate: number;
+  /** items.reorder_level (0/absent = no explicit threshold). */
+  reorderLevel: number;
+  /** Current stock = Σ batches.qty for the item in this shop. */
+  stockQty: number;
+  /** Units sold in the lookback window (posted, non-imported sales). */
+  soldInWindow: number;
+  /** Most recent purchase vendor for this item, if any. */
+  lastVendorId?: string | null;
+  lastVendorName?: string | null;
+  /** Most recent PTR (cost/unit, paise) — seeds the PO line price. */
+  lastPtrPaise?: number | null;
+}
+
+export type ReorderReason = "below-reorder" | "fast-moving";
+
+export interface ReorderSuggestion {
+  itemId: string;
+  name: string;
+  gstRate: number;
+  reorderLevel: number;
+  stockQty: number;
+  soldInWindow: number;
+  /** Units sold per day over the window. */
+  perDay: number;
+  /** Days the current stock lasts at this velocity (Infinity if no sales). */
+  daysOfCover: number;
+  /** Proposed order quantity (≥ 1). */
+  suggestedQty: number;
+  reason: ReorderReason;
+  lastVendorId: string | null;
+  lastVendorName: string | null;
+  lastPtrPaise: number | null;
+}
+
+export interface ReorderOptions {
+  /** Lookback window for velocity, in days (e.g. 30/60/90). */
+  windowDays: number;
+  /** Target days of stock to reorder up to (the coverage horizon). Default 30. */
+  targetDays?: number;
+}
+
+/**
+ * Compute reorder suggestions. An item is suggested when stock is at/below its
+ * reorder level, OR it is fast-moving (days-of-cover < targetDays). Suggested qty
+ * tops stock up to cover `targetDays` of demand, and at least to the reorder
+ * level — then rounds up to a whole unit (min 1). Inactive items are filtered by
+ * the caller. Sorted most-urgent first (lowest days-of-cover).
+ */
+export function suggestReorders(items: ReorderItemInput[], opts: ReorderOptions): ReorderSuggestion[] {
+  const windowDays = Math.max(1, opts.windowDays || 30);
+  const targetDays = Math.max(1, opts.targetDays ?? 30);
+  const out: ReorderSuggestion[] = [];
+
+  for (const it of items) {
+    const stock = Math.max(0, it.stockQty || 0);
+    const sold = Math.max(0, it.soldInWindow || 0);
+    const perDay = sold / windowDays;
+    const daysOfCover = perDay > 0 ? stock / perDay : Infinity;
+    const reorderLevel = Math.max(0, it.reorderLevel || 0);
+
+    const belowReorder = reorderLevel > 0 && stock <= reorderLevel;
+    const fastMoving = perDay > 0 && daysOfCover < targetDays;
+    if (!belowReorder && !fastMoving) continue;
+
+    // Top up to cover targetDays of demand, but never below the reorder level.
+    const targetStock = Math.max(Math.ceil(perDay * targetDays), reorderLevel);
+    const suggestedQty = Math.max(1, Math.ceil(targetStock - stock));
+
+    out.push({
+      itemId: it.itemId,
+      name: it.name,
+      gstRate: it.gstRate,
+      reorderLevel,
+      stockQty: stock,
+      soldInWindow: sold,
+      perDay,
+      daysOfCover,
+      suggestedQty,
+      reason: belowReorder ? "below-reorder" : "fast-moving",
+      lastVendorId: it.lastVendorId ?? null,
+      lastVendorName: it.lastVendorName ?? null,
+      lastPtrPaise: it.lastPtrPaise ?? null,
+    });
+  }
+
+  return out.sort((a, b) => a.daysOfCover - b.daysOfCover);
+}
+
+// ── Send PO (SALT-023) ───────────────────────────────────────────────────────
+// Vendor ordering is distributor-mediated with no self-serve API (ADR 0016), so
+// "send" means a formatted plain-text PO the user pushes over WhatsApp / email /
+// copy / print. Pure formatter; the channel deep-links live in the dialog.
+
+export interface PoTextLine {
+  name: string;
+  qty: number;
+  ptrPaise: number;
+}
+
+export interface PoTextInput {
+  shopName?: string | null;
+  vendorName: string;
+  poRef: string;
+  /** Human date string (already formatted by the caller). */
+  date: string;
+  expectedDate?: string | null;
+  lines: PoTextLine[];
+  totalPaise: number;
+}
+
+/** A clean plain-text purchase order for WhatsApp / email body / clipboard. */
+export function formatPoText(po: PoTextInput): string {
+  const inr = (p: number) => `₹${(p / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const from = po.shopName?.trim() ? ` from ${po.shopName.trim()}` : "";
+  const out = [
+    `Purchase Order ${po.poRef}${from}`,
+    `To: ${po.vendorName}`,
+    `Date: ${po.date}`,
+  ];
+  if (po.expectedDate) out.push(`Expected delivery: ${po.expectedDate}`);
+  out.push("", "Items:");
+  po.lines.forEach((l, i) => {
+    out.push(`${i + 1}. ${l.name} — ${l.qty} @ ${inr(l.ptrPaise)} = ${inr(Math.round(l.qty * l.ptrPaise))}`);
+  });
+  out.push("", `Total (excl. GST): ${inr(po.totalPaise)}`, "", "Please confirm availability and dispatch. Thank you.");
+  return out.join("\n");
+}

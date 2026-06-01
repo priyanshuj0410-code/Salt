@@ -19,8 +19,8 @@ sub-views built.
 ## The stock ledger (model)
 
 > ⚠️ **Stale-wiki flag.** The stock backbone is the [proposed model](proposed-data-model.md)
-> (`supabase/proposed/0016_inventory_backbone.sql`), **applied** despite the "DO NOT RUN"
-> label — same situation [grn.md](grn.md)/[gst-returns.md](gst-returns.md) found.
+> (`supabase/migrations/0016_inventory_backbone.sql`), **applied** and now promoted into the
+> migration history (SALT-140) — same situation [grn.md](grn.md)/[gst-returns.md](gst-returns.md) found.
 > [data-model.md](data-model.md) (migrations 0001–0013) predates it. Verified live by
 > PostgREST probe 2026-06-01. Reconciling data-model.md is its own ticket.
 

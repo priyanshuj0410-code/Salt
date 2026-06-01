@@ -12,7 +12,7 @@ shared `payments` ledger with server-side double-entry. The module owns
 
 ## Backend contract (live)
 
-Defined in `supabase/proposed/0021_payments.sql` — **applied to the live DB** (the
+Defined in `supabase/migrations/0021_payments.sql` — **applied to the live DB** (the
 app calls it); only the `supabase/migrations/` mirror is pending (hygiene task
 HYG-1). Money is integer paise.
 

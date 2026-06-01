@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0024: Settings + forward hooks.
 -- Invoice numbering per shop/series, print templates, org/shop settings, salesmen,
 -- and thin Tier-4 stub tables (ABHA patients, purchase-OCR, ONDC, B2B) so those

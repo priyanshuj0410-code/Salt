@@ -15,7 +15,15 @@ interface ItemRow {
   schedule: string;
   barcode: string | null;
   ayush_flag: boolean | null;
+  reorder_level: number | null;
+  /** Optional: present only once migration 0033 (cold_chain) is applied. */
+  cold_chain?: boolean | null;
 }
+
+// items column sets: the rich set includes cold_chain (migration 0033); the base
+// set omits it so the catalogue still loads if that migration has not run yet.
+const ITEM_COLS_BASE = "id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode,ayush_flag,reorder_level";
+const ITEM_COLS = `${ITEM_COLS_BASE},cold_chain`;
 
 interface BatchRow {
   item_id: string;
@@ -63,6 +71,8 @@ function mapRows(items: ItemRow[], batches: BatchRow[]): Item[] {
     schedule: r.schedule as Schedule,
     barcode: r.barcode ?? undefined,
     ayush: r.ayush_flag ?? false,
+    reorderLevel: r.reorder_level ?? 0,
+    coldChain: r.cold_chain ?? false,
     velocity: 0,
     batches: byItem.get(r.id) ?? [],
   }));
@@ -79,22 +89,28 @@ export const useCatalog = create<CatalogState>((set) => ({
     set({ loading: true });
     try {
       // Page past PostgREST's 1000-row cap so large catalogues load in full.
-      const [items, batches] = await Promise.all([
+      const batchesPromise = selectAll<BatchRow>((from, to) =>
+        supabase!
+          .from("batches")
+          .select("item_id,batch_no,expiry,qty,mrp_paise,ptr_paise")
+          .eq("org_id", orgId)
+          .range(from, to),
+      );
+      const loadItems = (cols: string) =>
         selectAll<ItemRow>((from, to) =>
-          supabase!
-            .from("items")
-            .select("id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode,ayush_flag")
-            .eq("org_id", orgId)
-            .range(from, to),
-        ),
-        selectAll<BatchRow>((from, to) =>
-          supabase!
-            .from("batches")
-            .select("item_id,batch_no,expiry,qty,mrp_paise,ptr_paise")
-            .eq("org_id", orgId)
-            .range(from, to),
-        ),
-      ]);
+          // A dynamic column string defeats PostgREST type inference, so assert the row shape.
+          supabase!.from("items").select(cols).eq("org_id", orgId).range(from, to).returns<ItemRow[]>(),
+        );
+      // Try the rich column set; if cold_chain (migration 0033) is not applied
+      // yet the query errors — fall back to the base set so real data still loads
+      // (never silently drop to the demo seed for a connected org).
+      let items: ItemRow[];
+      try {
+        items = await loadItems(ITEM_COLS);
+      } catch {
+        items = await loadItems(ITEM_COLS_BASE);
+      }
+      const batches = await batchesPromise;
       if (items.length === 0) {
         set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true });
         return;

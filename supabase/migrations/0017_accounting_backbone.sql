@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0017: Accounting backbone — double-entry on a light chart of accounts.
 -- Every document (sale, purchase, note, payment) posts balanced ledger_entries.
 -- Party balance, trial balance, P&L, balance sheet, and GST liability all become
