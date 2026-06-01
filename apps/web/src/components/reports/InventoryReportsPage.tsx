@@ -6,7 +6,8 @@ import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
-import { ViewTabs, RangeControls, ExportButton, type ReportView } from "@/components/reports/report-controls";
+import { ViewTabs, RangeControls, ExportButton, ShopSelect, type ReportView } from "@/components/reports/report-controls";
+import { useOrgShops, scopeLabelFor, ALL_SHOPS } from "@/components/reports/useOrgShops";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
@@ -97,8 +98,10 @@ const bucketTone = (bucket: string, days: number) =>
         : undefined;
 
 export function InventoryReportsPage() {
-  const { membership, shopId, shop, loading: authLoading } = useAuth();
+  const { membership, shop } = useAuth();
   const orgId = membership?.orgId;
+  const { shops } = useOrgShops();
+  const [shopFilter, setShopFilter] = useState<string>(ALL_SHOPS);
   const [range, setRange] = useState(() => presetRange("month"));
   const [view, setView] = useState<ViewKey>("stock");
   const [stock, setStock] = useState<StockOnHandRow[]>([]);
@@ -112,40 +115,38 @@ export function InventoryReportsPage() {
 
   // Snapshot views — current stock, independent of the date range.
   useEffect(() => {
-    if (!supabase || !orgId || !shopId) return;
+    if (!supabase || !orgId) return;
     let active = true;
     const db = supabase;
+    const oneShop = shopFilter === ALL_SHOPS ? null : shopFilter;
     (async () => {
       setSnapLoading(true);
       const [st, ex, dd, it] = await Promise.all([
-        fetchAllPaged<StockOnHandRow>((f, t) =>
-          db
+        fetchAllPaged<StockOnHandRow>((f, t) => {
+          let q = db
             .from("v_stock_on_hand")
             .select("item_id,item_name,batch_no,expiry_date,qty,mrp_paise,ptr_paise,stock_value_paise")
-            .eq("org_id", orgId)
-            .eq("shop_id", shopId)
-            .order("stock_value_paise", { ascending: false })
-            .range(f, t),
-        ),
-        fetchAllPaged<NearExpiryRow>((f, t) =>
-          db
+            .eq("org_id", orgId);
+          if (oneShop) q = q.eq("shop_id", oneShop);
+          return q.order("stock_value_paise", { ascending: false }).range(f, t);
+        }),
+        fetchAllPaged<NearExpiryRow>((f, t) => {
+          let q = db
             .from("v_near_expiry")
             .select("item_name,batch_no,expiry_date,qty,days_to_expiry,bucket,stock_value_paise")
             .eq("org_id", orgId)
-            .eq("shop_id", shopId)
-            .lte("days_to_expiry", 90)
-            .order("days_to_expiry", { ascending: true })
-            .range(f, t),
-        ),
-        fetchAllPaged<DeadRow>((f, t) =>
-          db
+            .lte("days_to_expiry", 90);
+          if (oneShop) q = q.eq("shop_id", oneShop);
+          return q.order("days_to_expiry", { ascending: true }).range(f, t);
+        }),
+        fetchAllPaged<DeadRow>((f, t) => {
+          let q = db
             .from("v_dead_stock")
             .select("item_name,qty,stock_value_paise,last_sold_at")
-            .eq("org_id", orgId)
-            .eq("shop_id", shopId)
-            .order("stock_value_paise", { ascending: false })
-            .range(f, t),
-        ),
+            .eq("org_id", orgId);
+          if (oneShop) q = q.eq("shop_id", oneShop);
+          return q.order("stock_value_paise", { ascending: false }).range(f, t);
+        }),
         fetchAllPaged<ItemReorderRow>((f, t) =>
           db
             .from("items")
@@ -166,38 +167,39 @@ export function InventoryReportsPage() {
     return () => {
       active = false;
     };
-  }, [orgId, shopId]);
+  }, [orgId, shopFilter]);
 
   // Time-based views — stock movements + physical-count variance in the range.
   useEffect(() => {
-    if (!supabase || !orgId || !shopId) return;
+    if (!supabase || !orgId) return;
     let active = true;
     const db = supabase;
     const { from, to } = range;
+    const oneShop = shopFilter === ALL_SHOPS ? null : shopFilter;
     (async () => {
       setRangeLoading(true);
       const [mv, ct] = await Promise.all([
-        fetchAllPaged<MovementRow>((f, t) =>
-          db
+        fetchAllPaged<MovementRow>((f, t) => {
+          let q = db
             .from("stock_movements")
             .select("created_at,qty_delta,reason,unit_cost_paise,ref_table,items(name),batches(batch_no)")
             .eq("org_id", orgId)
-            .eq("shop_id", shopId)
             .gte("created_at", from)
-            .lte("created_at", `${to}T23:59:59`)
-            .order("created_at", { ascending: false })
-            .range(f, t),
-        ),
-        fetchAllPaged<CountLineRow>((f, t) =>
-          db
+            .lte("created_at", `${to}T23:59:59`);
+          if (oneShop) q = q.eq("shop_id", oneShop);
+          return q.order("created_at", { ascending: false }).range(f, t);
+        }),
+        fetchAllPaged<CountLineRow>((f, t) => {
+          let q = db
             .from("physical_count_lines")
             .select("system_qty,counted_qty,variance,items(name),physical_counts!inner(count_date,status)")
             .eq("org_id", orgId)
             .eq("physical_counts.status", "finalized")
             .gte("physical_counts.count_date", from)
-            .lte("physical_counts.count_date", to)
-            .range(f, t),
-        ),
+            .lte("physical_counts.count_date", to);
+          if (oneShop) q = q.eq("physical_counts.shop_id", oneShop);
+          return q.range(f, t);
+        }),
       ]);
       if (!active) return;
       setMoves(mv);
@@ -207,7 +209,7 @@ export function InventoryReportsPage() {
     return () => {
       active = false;
     };
-  }, [orgId, shopId, range]);
+  }, [orgId, shopFilter, range]);
 
   const byItem = useMemo(() => rollupStock(stock), [stock]);
   const onHandByItem = useMemo(() => {
@@ -288,18 +290,17 @@ export function InventoryReportsPage() {
       <PageHeader
         icon={Package}
         title="Inventory reports"
-        subtitle={shop?.name ?? "This shop"}
+        subtitle={scopeLabelFor(shops, shopFilter, shop?.name)}
         actions={
           <>
+            <ShopSelect shops={shops} value={shopFilter} onChange={setShopFilter} />
             {isRanged && <RangeControls from={range.from} to={range.to} onChange={setRange} />}
             <ExportButton onExport={exporters[view]} disabled={!hasExport} />
           </>
         }
       />
 
-      {!authLoading && !shopId ? (
-        <EmptyState title="No shop selected" hint="Inventory reports summarise one shop. Pick a shop to continue." />
-      ) : (
+      {
         <div className="flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard label="SKUs in stock" value={stockKpis.skus} hint={`${stockKpis.batches} batches`} />
@@ -462,7 +463,7 @@ export function InventoryReportsPage() {
             date range. Cost uses batch PTR; valuation at batch cost ≈ weighted average.
           </p>
         </div>
-      )}
+      }
     </Page>
   );
 }

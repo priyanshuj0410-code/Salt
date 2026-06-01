@@ -4,6 +4,39 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { presetRange, type RangePreset } from "@/lib/reports";
+import { ALL_SHOPS, type OrgShop } from "@/components/reports/useOrgShops";
+
+/**
+ * Shop scope selector for the report suites (SALT-118): "All shops" (org-wide,
+ * consolidated) or a single shop. Renders nothing for single-shop orgs — the
+ * report already runs org-wide, so there is nothing to switch.
+ */
+export function ShopSelect({
+  shops,
+  value,
+  onChange,
+}: {
+  shops: OrgShop[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  if (shops.length <= 1) return null;
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label="Shop scope"
+      className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+    >
+      <option value={ALL_SHOPS}>All shops</option>
+      {shops.map((s) => (
+        <option key={s.id} value={s.id}>
+          {s.name}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 /** A switchable view in a report suite (segmented control). */
 export interface ReportView<T extends string> {
