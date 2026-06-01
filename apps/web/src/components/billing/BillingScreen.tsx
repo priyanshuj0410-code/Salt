@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { ChevronDown, CloudOff, RefreshCw, User } from "lucide-react";
+import { CloudOff, RefreshCw, User } from "lucide-react";
 import { ItemSearch } from "./ItemSearch";
 import { BillTable } from "./BillTable";
 import { BillSummary } from "./BillSummary";
@@ -12,6 +12,7 @@ import { ParkedBills } from "./ParkedBills";
 import { useCheckout } from "./useCheckout";
 import { usePriceResolution } from "./usePriceResolution";
 import { Kbd } from "@/components/ui/kbd";
+import { EntityHeader } from "@/components/patterns/entity-header";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
@@ -22,7 +23,6 @@ import { useOutbox, outbox } from "@/lib/outbox";
 import { supabase } from "@/lib/supabase";
 import { fetchPartyCredit } from "@/lib/credit";
 import { subscribeTableChanges } from "@/lib/realtime";
-import { cn } from "@/lib/utils";
 
 function Hint({ keys, label }: { keys: string; label: string }) {
   return (
@@ -30,45 +30,6 @@ function Hint({ keys, label }: { keys: string; label: string }) {
       <Kbd>{keys}</Kbd>
       <span>{label}</span>
     </span>
-  );
-}
-
-/** The prominent "who is this bill for" bar — the counter's equivalent of a
- *  delivery app's address selector. Full-width and tappable on mobile; a compact
- *  chip with a Ctrl+K hint on desktop. Opens the CustomerPicker. */
-function CustomerBar({
-  name,
-  phone,
-  onChange,
-  className,
-}: {
-  name: string;
-  phone: string | null;
-  onChange: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      onClick={onChange}
-      title="Change customer (Ctrl+K)"
-      className={cn(
-        "flex items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2 text-left hover:bg-border md:py-1.5",
-        className,
-      )}
-    >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-info-bg text-info md:size-6">
-        <User className="size-4 md:size-3.5" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[11px] leading-tight text-text-tertiary">Billing to</span>
-        <span className="block truncate text-sm font-medium leading-tight">{name}</span>
-      </span>
-      {phone && <span className="shrink-0 text-xs text-text-tertiary md:hidden">{phone}</span>}
-      <span className="hidden shrink-0 items-center text-text-tertiary md:flex">
-        <Kbd>Ctrl K</Kbd>
-      </span>
-      <ChevronDown className="size-4 shrink-0 text-text-tertiary" />
-    </button>
   );
 }
 
@@ -233,10 +194,14 @@ export function BillingScreen() {
       {/* Customer is the primary context, so it anchors the header (left); the
           brand lives in the sidebar, not here. */}
       <header className="flex items-center gap-3 border-b border-border bg-background px-3 py-2 md:px-4 md:py-2.5">
-        <CustomerBar
+        <EntityHeader
+          icon={User}
+          label="Billing to"
           name={party?.name ?? "Walk-in customer"}
-          phone={customerPhone}
+          attribute={customerPhone}
           onChange={() => setCustomerOpen(true)}
+          shortcut="Ctrl K"
+          tone="info"
           className="min-w-0 flex-1 md:w-72 md:flex-none"
         />
         <div className="ml-auto flex shrink-0 items-center gap-2">
