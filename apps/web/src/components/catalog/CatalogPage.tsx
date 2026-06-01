@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Copy, PackagePlus, Tag } from "lucide-react";
+import { Copy, GitMerge, PackagePlus, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
@@ -12,9 +13,10 @@ import { ScheduleBadge, AyushBadge } from "@/components/catalog/ScheduleBadge";
 import { mrpRange } from "@/components/catalog/format";
 import { CreateItemDialog } from "@/components/grn/CreateItemDialog";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { useCatalog } from "@/store/catalog";
 import { searchCatalog, itemStock } from "@/lib/search";
-import { findDuplicateGroups } from "@/lib/itemDupes";
+import { findDuplicateGroups, type DuplicateGroup } from "@/lib/itemDupes";
 import type { Item } from "@/lib/types";
 
 const SCHED_FILTERS = ["All", "OTC", "H", "H1", "X"] as const;
@@ -43,10 +45,36 @@ export function CatalogPage() {
   const [stock, setStock] = useState<StockFilter>("All");
   const [ayushOnly, setAyushOnly] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [survivors, setSurvivors] = useState<Record<string, string>>({});
+  const [merging, setMerging] = useState<string | null>(null);
+  const [mergeError, setMergeError] = useState<string | null>(null);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
   }, [orgId, loadCatalog]);
+
+  // Default survivor: the item carrying the most stock, then most batches, then name.
+  const defaultSurvivor = (g: DuplicateGroup) =>
+    [...g.items].sort(
+      (a, b) => itemStock(b) - itemStock(a) || b.batches.length - a.batches.length || a.name.localeCompare(b.name),
+    )[0].id;
+  const survivorFor = (g: DuplicateGroup) => survivors[g.key] ?? defaultSurvivor(g);
+
+  async function mergeGroup(g: DuplicateGroup) {
+    if (!supabase || !orgId || merging) return;
+    const survivorId = survivorFor(g);
+    const mergedIds = g.items.map((i) => i.id).filter((id) => id !== survivorId);
+    if (mergedIds.length === 0) return;
+    setMerging(g.key);
+    setMergeError(null);
+    try {
+      const { error } = await supabase.rpc("merge_items", { p_survivor: survivorId, p_merged: mergedIds });
+      if (error) setMergeError(error.message);
+      else await loadCatalog(orgId); // merged items disappear; the dupes list recomputes
+    } finally {
+      setMerging(null);
+    }
+  }
 
   const stats = useMemo(() => {
     let inStock = 0;
@@ -141,35 +169,66 @@ export function CatalogPage() {
         </p>
       )}
 
-      {/* Possible duplicates — same name + manufacturer entered more than once */}
+      {/* Possible duplicates — same name + manufacturer entered more than once.
+          Pick the one to keep; merge re-points stock/sales/purchase history to it. */}
       {dupes.length > 0 && (
         <div className="mt-6">
           <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
             <Copy className="size-4 text-warning" />
             {dupes.length} possible duplicate{dupes.length > 1 ? "s" : ""} to review
           </div>
+          {mergeError && <p className="mt-1 text-sm text-destructive">{mergeError}</p>}
           <div className="mt-2 space-y-2">
-            {dupes.map((g) => (
-              <div key={g.key} className="rounded-lg border border-warning-border bg-warning-bg/40 p-3">
-                <div className="mb-1.5 text-xs text-text-secondary">
-                  {g.items.length} items look like <span className="font-medium">{g.label}</span> — open each to compare.
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {g.items.map((i) => (
-                    <Link
-                      key={i.id}
-                      to={`/catalogue/${i.id}`}
-                      className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs hover:bg-surface"
+            {dupes.map((g) => {
+              const survivorId = survivorFor(g);
+              return (
+                <div key={g.key} className="rounded-lg border border-warning-border bg-warning-bg/40 p-3">
+                  <div className="mb-2 flex items-center gap-2 text-xs">
+                    <Badge variant="warning">{g.items.length} duplicates</Badge>
+                    <span className="text-text-secondary">
+                      look like <span className="font-medium">{g.label}</span> — pick the one to keep
+                    </span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {g.items.map((i) => (
+                      <label key={i.id} className="flex items-center gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name={`dup-${g.key}`}
+                          checked={i.id === survivorId}
+                          onChange={() => setSurvivors((s) => ({ ...s, [g.key]: i.id }))}
+                          disabled={usingSeed || merging === g.key}
+                        />
+                        <Link to={`/catalogue/${i.id}`} className="min-w-0 flex-1 truncate font-medium hover:underline">
+                          {i.name}
+                        </Link>
+                        <span className="hidden w-40 truncate text-right text-xs text-text-tertiary sm:block">
+                          {i.manufacturer || "—"}
+                        </span>
+                        <span className="w-16 text-right text-xs tabular-nums text-text-tertiary">
+                          {itemStock(i)} stk
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={usingSeed || merging === g.key}
+                      onClick={() => mergeGroup(g)}
                     >
-                      <span className="font-medium">{i.name}</span>
-                      <span className="text-text-tertiary">
-                        {i.manufacturer || "—"} · {itemStock(i)} in stock
-                      </span>
-                    </Link>
-                  ))}
+                      <GitMerge /> {merging === g.key ? "Merging…" : `Merge ${g.items.length} into 1`}
+                    </Button>
+                    <span className="text-xs text-text-tertiary">
+                      {usingSeed
+                        ? "Add your own catalogue to merge."
+                        : "stock, sales and purchase history move to the kept item"}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
