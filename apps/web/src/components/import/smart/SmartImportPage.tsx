@@ -42,10 +42,16 @@ export function SmartImportPage() {
   const auth = useAuth();
   const orgId = auth.membership?.orgId;
   const shopId = auth.shopId;
+  const shops = auth.shops;
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [active, setActive] = useState(0);
   // A file routed in from the drop-all panel: jump to its step, pre-loaded.
   const [routed, setRouted] = useState<{ key: string; file: File } | null>(null);
+  // Multi-branch (SALT-184): the shop this import run targets. Defaults to the
+  // active shop; the shop-scoped steps (stock, documents, payments, compliance)
+  // tag this shop_id, so a multi-shop org imports one branch's export set at a time.
+  const [overrideShopId, setOverrideShopId] = useState<string | null>(null);
+  const importShopId = overrideShopId ?? shopId;
 
   const allDone = completed.size === STEPS.length;
 
@@ -59,20 +65,20 @@ export function SmartImportPage() {
   function renderStep(step: Step, advance: () => void) {
     const initialFile = routed?.key === step.key ? routed.file : null;
     if (step.kind === "doc") {
-      return <DocumentStep key={step.key} cfg={step.doc} orgId={orgId} shopId={shopId} initialFile={initialFile} onComplete={advance} />;
+      return <DocumentStep key={step.key} cfg={step.doc} orgId={orgId} shopId={importShopId} initialFile={initialFile} onComplete={advance} />;
     }
     if (step.kind === "payment") {
-      return <PaymentStep key={step.key} orgId={orgId} shopId={shopId} initialFile={initialFile} onComplete={advance} />;
+      return <PaymentStep key={step.key} orgId={orgId} shopId={importShopId} initialFile={initialFile} onComplete={advance} />;
     }
     if (step.kind === "opening") {
-      return <OpeningStockStep key={step.key} orgId={orgId} shopId={shopId} onComplete={advance} />;
+      return <OpeningStockStep key={step.key} orgId={orgId} shopId={importShopId} onComplete={advance} />;
     }
     if (step.kind === "gstr2b") {
       return <Gstr2bStep key={step.key} orgId={orgId} onComplete={advance} />;
     }
     if (step.key === "ledgers") return <LedgerStep key="ledgers" orgId={orgId} onComplete={advance} />;
     if (step.key === "party_gstin") return <PartyGstStep key="party_gstin" orgId={orgId} onComplete={advance} />;
-    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} shopId={shopId} initialFile={initialFile} onComplete={advance} />;
+    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} shopId={importShopId} initialFile={initialFile} onComplete={advance} />;
   }
 
   return (
@@ -91,6 +97,29 @@ export function SmartImportPage() {
           Drop your Marg/Tally export — we auto-map the columns and quarantine only the rows that
           need a fix. Import in order: parties, catalogue, stock, then history.
         </p>
+
+        {/* Multi-branch target (SALT-184): only shown for multi-shop orgs. */}
+        {shops.length > 1 && (
+          <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border bg-background p-3 text-sm">
+            <span className="font-medium">Importing into branch:</span>
+            <select
+              value={importShopId ?? ""}
+              onChange={(e) => setOverrideShopId(e.target.value || null)}
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+            >
+              {shops.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                  {s.id === shopId ? " (active)" : ""}
+                </option>
+              ))}
+            </select>
+            <span className="text-xs text-muted-foreground">
+              Stock, documents, payments &amp; compliance import under this branch — do one branch&apos;s
+              export set, then switch. Parties &amp; items are shared org-wide.
+            </span>
+          </div>
+        )}
 
         {/* Drop-all auto-detect router (SALT-153) */}
         <div className="mt-5">
