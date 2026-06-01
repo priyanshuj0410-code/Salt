@@ -25,6 +25,27 @@ const str = (v: unknown): string => {
   return String(v).trim();
 };
 
+/**
+ * Pharma invoices print expiry as MM/YYYY (e.g. "08/2027"), and the OCR prompt
+ * asks for that — but the purchase importer validates `YYYY-MM`. Normalise the
+ * common printed forms to `YYYY-MM` here (the OCR→rows boundary) so valid dates
+ * aren't flagged. Two-digit years map to 2000+YY. Anything we can't confidently
+ * parse passes through unchanged, so the importer still warns on true garbage.
+ */
+export function normalizeExpiry(raw: string): string {
+  const v = raw.trim();
+  if (v === "" || /^\d{4}-\d{2}$/.test(v)) return v; // empty or already YYYY-MM
+  const sep = v.match(/^(\d{1,2})[/-](\d{2}|\d{4})$/); // MM/YYYY, MM-YY, M/YYYY
+  if (sep) {
+    const mm = sep[1].padStart(2, "0");
+    const yyyy = sep[2].length === 2 ? `20${sep[2]}` : sep[2];
+    if (Number(mm) >= 1 && Number(mm) <= 12) return `${yyyy}-${mm}`;
+  }
+  const ym = v.match(/^(\d{4})[/-](\d{1,2})$/); // YYYY/MM or YYYY/M
+  if (ym && Number(ym[2]) >= 1 && Number(ym[2]) <= 12) return `${ym[1]}-${ym[2].padStart(2, "0")}`;
+  return v; // unrecognised → leave as-is; importer flags it
+}
+
 export interface OcrMapResult {
   rows: PurchaseRawRow[];
   /** Non-fatal notes for the UI (e.g. "no line items found"). */
@@ -57,7 +78,7 @@ export function ocrInvoiceToRows(json: OcrInvoiceJson): OcrMapResult {
     item_code: str(l.item_code),
     hsn: str(l.hsn),
     batch_no: str(l.batch_no),
-    expiry: str(l.expiry),
+    expiry: normalizeExpiry(str(l.expiry)),
     qty: str(l.qty),
     free_qty: str(l.free_qty),
     ptr: str(l.ptr),
