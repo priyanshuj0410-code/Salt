@@ -9,7 +9,7 @@ import { useBill } from "@/store/bill";
 import { useHeldBills } from "@/store/heldBills";
 import { GstinPrompt } from "./GstinPrompt";
 import { H1Notice } from "./H1Gate";
-import { CreditNotice } from "./CreditNotice";
+import { CreditApprovalNotice } from "./CreditApprovalNotice";
 import { SplitTender } from "./SplitTender";
 import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
 import { SeriesPicker } from "./SeriesPicker";
@@ -80,14 +80,20 @@ export function BillSummary({
   const clear = useBill((s) => s.clear);
   const hold = useHeldBills((s) => s.hold);
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, savedOffline, error, shopId } = checkout;
-  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
+  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
-  const { discountGate, cancelDiscountApproval } = checkout;
+  const { discountGate, cancelDiscountApproval, creditGate, cancelCreditApproval } = checkout;
   const { series, seriesId, setSeriesId } = checkout;
-  // Save is blocked while a split does not balance, or while an over-limit discount is
-  // awaiting manager approval (the server / gate would reject it anyway).
+  // Save is blocked while a split does not balance, or while an over-limit discount/credit sale
+  // is awaiting manager approval (the server / gate would reject it anyway).
   const blockSave =
-    empty || saving || usingSeed || !shopId || (splitMode && !tenderChk.ok) || discountGate.status === "pending";
+    empty ||
+    saving ||
+    usingSeed ||
+    !shopId ||
+    (splitMode && !tenderChk.ok) ||
+    discountGate.status === "pending" ||
+    creditGate.status === "pending";
   const tax = gstSplit(t.gst, isInterstate);
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
@@ -225,7 +231,7 @@ export function BillSummary({
           <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
         )}
         <DiscountApprovalNotice gate={discountGate} onCancel={cancelDiscountApproval} />
-        {creditWarn.over && <CreditNotice check={creditWarn} />}
+        <CreditApprovalNotice gate={creditGate} onCancel={cancelCreditApproval} />
         <Button
           size="lg"
           disabled={blockSave}

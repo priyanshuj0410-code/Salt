@@ -77,6 +77,12 @@ export function useCheckout({
   const [approval, setApproval] = useState<
     { status: "pending" | "approved" | "rejected"; id: string; approverName: string | null; coversPaise: number } | null
   >(null);
+  // Credit-limit override gate (SALT-175): a parallel approval slot, so a bill over BOTH the
+  // discount cap and the customer's credit limit gets both overrides without one clobbering the
+  // other. `coversPaise` = the bill total this override was granted for.
+  const [creditApproval, setCreditApproval] = useState<
+    { status: "pending" | "approved" | "rejected"; id: string; approverName: string | null; coversPaise: number } | null
+  >(null);
   // Per-bill GST series (SALT-209): the shop's active named series + the one chosen for this
   // bill (null = the shop default). Sticky across bills.
   const [series, setSeries] = useState<{ id: string; code: string; is_default: boolean }[]>([]);
@@ -89,6 +95,7 @@ export function useCheckout({
         rx?: RxDetails;
         print?: boolean;
         approval?: { approverName: string | null; coversPaise: number };
+        creditApproval?: { approverName: string | null; coversPaise: number };
       }) => Promise<string | null>)
     | null
   >(null);
@@ -118,6 +125,7 @@ export function useCheckout({
   const discountPaise = t.discount + t.billDiscount;
   const discChk = checkDiscountLimit(discountLimits, t.gross, discountPaise);
   const discountApproved = approval?.status === "approved" && approval.coversPaise >= discountPaise;
+  const creditApproved = creditApproval?.status === "approved" && creditApproval.coversPaise >= t.grand;
 
   // Load the org's discount policy once (cached for the session's billing screen).
   useEffect(() => {
@@ -192,6 +200,22 @@ export function useCheckout({
     });
   }, [orgId, approval?.status, approval?.id]);
 
+  // Mirror of the discount subscription for the credit-limit override (SALT-175).
+  useEffect(() => {
+    if (!orgId || creditApproval?.status !== "pending") return;
+    const reqId = creditApproval.id;
+    return subscribeApprovals(orgId, (r) => {
+      if (r.id !== reqId) return;
+      if (r.status === "approved") {
+        setCreditApproval({ status: "approved", id: r.id, approverName: r.decided_by_name, coversPaise: r.amount_paise ?? 0 });
+        void saveRef.current?.({ creditApproval: { approverName: r.decided_by_name, coversPaise: r.amount_paise ?? 0 } });
+      } else if (r.status === "rejected" || r.status === "cancelled") {
+        setCreditApproval({ status: "rejected", id: r.id, approverName: r.decided_by_name, coversPaise: 0 });
+        setError("Manager declined the credit override. Take payment or reduce the bill.");
+      }
+    });
+  }, [orgId, creditApproval?.status, creditApproval?.id]);
+
   // `rx` lives in the bill store, so `clear()` (after a save, or a manual Clear)
   // resets it — one customer's prescription never carries to the next bill.
   // `opts.rx` lets the gate dialog pass details on confirm without waiting for the
@@ -199,7 +223,12 @@ export function useCheckout({
   // keeps the prior intent through the H1 gate / shop-setup detours). Returns the
   // new invoice id on success, else null.
   async function save(
-    opts: { rx?: RxDetails; print?: boolean; approval?: { approverName: string | null; coversPaise: number } } = {},
+    opts: {
+      rx?: RxDetails;
+      print?: boolean;
+      approval?: { approverName: string | null; coversPaise: number };
+      creditApproval?: { approverName: string | null; coversPaise: number };
+    } = {},
   ): Promise<string | null> {
     if (!supabase || empty || usingSeed || saving || !shopId) return null;
     if (opts.print !== undefined) printIntent.current = opts.print;
@@ -249,8 +278,34 @@ export function useCheckout({
       }
       return null; // waiting on the manager (request just raised, or still pending)
     }
+    // Credit-limit gate (SALT-175): an over-limit credit sale needs a manager override too — same
+    // flow as the discount gate, through the parallel credit approval slot.
+    const creditOverride =
+      opts.creditApproval ??
+      (creditApproved && creditApproval ? { approverName: creditApproval.approverName, coversPaise: creditApproval.coversPaise } : null);
+    if (creditWarn.over && !(creditOverride && creditOverride.coversPaise >= t.grand)) {
+      if (orgId && creditApproval?.status !== "pending") {
+        setError(null);
+        try {
+          const req = await requestApproval({
+            orgId,
+            kind: "credit_override",
+            summary: `Credit sale ${formatPaise(t.grand)} over ${party?.name ?? "the customer"}'s limit`,
+            amountPaise: t.grand,
+            context: { grandPaise: t.grand, duePaise: credit?.duePaise ?? 0, limitPaise: credit?.creditLimitPaise ?? 0, party: party?.name ?? null },
+          });
+          if (req) setCreditApproval({ status: "pending", id: req.id, approverName: null, coversPaise: t.grand });
+        } catch {
+          setError("Could not send the approval request. Please try again.");
+        }
+      }
+      return null;
+    }
     const tenders = splitMode ? activeTenders(tenderAmounts) : null;
-    const notes = override ? `Discount override approved by ${override.approverName ?? "manager"}` : null;
+    const noteParts: string[] = [];
+    if (override) noteParts.push(`discount by ${override.approverName ?? "manager"}`);
+    if (creditOverride) noteParts.push(`credit by ${creditOverride.approverName ?? "manager"}`);
+    const notes = noteParts.length ? `Manager override — ${noteParts.join("; ")}` : null;
     // Only thread a non-default series (SALT-209); the default path sends no p_series_id.
     const seriesArg = seriesId && seriesId !== defaultSeriesId ? seriesId : null;
     const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes, seriesArg);
@@ -269,6 +324,7 @@ export function useCheckout({
       clear();
       setSplit(false);
       setApproval(null);
+      setCreditApproval(null);
       setSavedOffline(true);
       setTimeout(() => setSavedOffline(false), 3000);
       printIntent.current = false;
@@ -312,6 +368,7 @@ export function useCheckout({
       clear();
       setSplit(false); // back to single-payment for the next bill
       setApproval(null); // each new bill re-gates from scratch
+      setCreditApproval(null);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       printIntent.current = false;
@@ -398,6 +455,27 @@ export function useCheckout({
     cancelDiscountApproval: () => {
       if (approval?.status === "pending") void cancelApproval(approval.id);
       setApproval(null);
+    },
+    // Credit-limit override gate (SALT-175). Same status vocabulary as discountGate.
+    creditGate: {
+      over: creditWarn.over,
+      status: !creditWarn.over
+        ? ("ok" as const)
+        : creditApproval?.status === "pending"
+          ? ("pending" as const)
+          : creditApproved
+            ? ("approved" as const)
+            : creditApproval?.status === "rejected"
+              ? ("rejected" as const)
+              : ("needed" as const),
+      approverName: creditApproval?.approverName ?? null,
+      grandPaise: t.grand,
+      duePaise: credit?.duePaise ?? 0,
+      limitPaise: credit?.creditLimitPaise ?? 0,
+    },
+    cancelCreditApproval: () => {
+      if (creditApproval?.status === "pending") void cancelApproval(creditApproval.id);
+      setCreditApproval(null);
     },
     // Per-bill GST series (SALT-209): `series` for the picker (shown only when >1), the
     // effective selection, and the setter.
