@@ -20,6 +20,8 @@ import {
   type PurchaseImportResult,
 } from "@/lib/importPurchaseInvoice";
 import { createScan, invokeExtract, updateScan, vendorGuess } from "@/lib/invoiceScans";
+import { useShopBlockers } from "@/lib/useShopBlockers";
+import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 
 interface VendorRow { id: string; name: string; gstin: string | null }
 interface ItemRow { id: string; name: string; item_code: string | null; barcode: string | null }
@@ -55,6 +57,7 @@ export function OcrInvoiceImportPage() {
   const { membership, shopId } = useAuth();
   const orgId = membership?.orgId;
   const loadCatalog = useCatalog((s) => s.load);
+  const blockers = useShopBlockers();
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
@@ -67,6 +70,7 @@ export function OcrInvoiceImportPage() {
   // The audit record for the current upload (SALT-221) — links the file + outcome,
   // and its id ties the posted GRN back to the scan.
   const [scanId, setScanId] = useState<string | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -120,8 +124,11 @@ export function OcrInvoiceImportPage() {
 
   async function doImport() {
     if (!supabase || !orgId || !result) return;
-    if (!shopId) {
-      setError("Set up your shop (state) before importing purchases.");
+    // Pre-flight: the shop needs a state_code or receive_purchase trips the
+    // is_interstate NOT NULL. Pop the rescue dialog and bail; it retries the import.
+    if (!blockers.ready || !shopId) {
+      setError(null);
+      setSetupOpen(true);
       return;
     }
     setImporting(true);
@@ -340,6 +347,8 @@ export function OcrInvoiceImportPage() {
       )}
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+
+      <ShopSetupDialog open={setupOpen} onOpenChange={setSetupOpen} onResolved={() => void doImport()} />
     </Page>
   );
 }
