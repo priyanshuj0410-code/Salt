@@ -80,6 +80,7 @@ export const NAV: NavModule[] = [
       { label: "GRN history", path: "/purchases", built: true },
       { label: "Purchase orders", path: "/purchases/orders", built: true },
       { label: "Reorder suggestions", path: "/purchases/orders/suggest", built: true },
+      { label: "Vendor schemes", path: "/purchases/schemes", built: true },
       { label: "Debit notes", path: "/purchases/returns", built: true },
     ],
   },
