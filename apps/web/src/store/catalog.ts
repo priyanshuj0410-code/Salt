@@ -4,6 +4,7 @@ import { catalog as seedCatalog } from "@/data/catalog";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
 import { cacheKey, cacheGet, cachePut } from "@/lib/offline/cache";
+import { gstRateForClass, todayIso, type GstScheduleRow } from "@/lib/gstSchedule";
 
 interface ItemRow {
   id: string;
@@ -20,13 +21,16 @@ interface ItemRow {
   therapeutic_category: string | null;
   /** Optional: present only once migration 0033 (cold_chain) is applied. */
   cold_chain?: boolean | null;
+  /** Embedded from the linked master item via master_item_id (SALT-211) — the date-effective GST
+   *  rate class. Absent (old DB / unlinked / master_items unreadable) ⇒ fall back to flat gst_rate. */
+  master_items?: { gst_rate_class: string | null } | null;
 }
 
-// items column sets: the rich set includes cold_chain (migration 0033); the base
-// set omits it so the catalogue still loads if that migration has not run yet.
+// items column sets: the rich set includes cold_chain (migration 0033) + the master GST-rate-class
+// embed (SALT-211); the base set omits both so the catalogue still loads if those are unavailable.
 const ITEM_COLS_BASE =
   "id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode,ayush_flag,reorder_level,therapeutic_category";
-const ITEM_COLS = `${ITEM_COLS_BASE},cold_chain`;
+const ITEM_COLS = `${ITEM_COLS_BASE},cold_chain,master_items(gst_rate_class)`;
 
 interface BatchRow {
   item_id: string;
@@ -55,7 +59,10 @@ interface CatalogState {
   applyBatchQty: (itemId: string, batchNo: string, qty: number) => void;
 }
 
-function mapRows(items: ItemRow[], batches: BatchRow[]): Item[] {
+function mapRows(items: ItemRow[], batches: BatchRow[], schedule: GstScheduleRow[]): Item[] {
+  // Resolve each line's GST rate by today's invoice date from the schedule (SALT-211), via the
+  // linked master item's rate class; fall back to the item's flat gst_rate when unresolved.
+  const today = todayIso();
   const byItem = new Map<string, Item["batches"]>();
   for (const b of batches) {
     const list = byItem.get(b.item_id) ?? [];
@@ -75,7 +82,7 @@ function mapRows(items: ItemRow[], batches: BatchRow[]): Item[] {
     manufacturer: r.manufacturer ?? "",
     pack: r.pack ?? "",
     hsn: r.hsn ?? "",
-    gstRate: Number(r.gst_rate) || 0,
+    gstRate: gstRateForClass(r.master_items?.gst_rate_class, today, schedule) ?? (Number(r.gst_rate) || 0),
     schedule: r.schedule as Schedule,
     barcode: r.barcode ?? undefined,
     ayush: r.ayush_flag ?? false,
@@ -106,6 +113,11 @@ export const useCatalog = create<CatalogState>((set) => ({
           .eq("org_id", orgId)
           .range(from, to),
       );
+      // Date-effective GST schedule (SALT-211) — small, org-agnostic, auth-readable; [] on error
+      // so the rate resolution simply falls back to each item's flat gst_rate.
+      const schedulePromise = supabase!
+        .from("gst_rate_schedule")
+        .select("rate_class,rate,effective_from,effective_to");
       const loadItems = (cols: string) =>
         selectAll<ItemRow>((from, to) =>
           // A dynamic column string defeats PostgREST type inference, so assert the row shape.
@@ -121,11 +133,12 @@ export const useCatalog = create<CatalogState>((set) => ({
         items = await loadItems(ITEM_COLS_BASE);
       }
       const batches = await batchesPromise;
+      const schedule = ((await schedulePromise).data as GstScheduleRow[] | null) ?? [];
       if (items.length === 0) {
         set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true, cachedAt: null });
         return;
       }
-      const mapped = mapRows(items, batches);
+      const mapped = mapRows(items, batches, schedule);
       set({ items: mapped, usingSeed: false, loading: false, loaded: true, cachedAt: null });
       // Persist the working set so the counter can bill offline (SALT-204 / ADR 0017).
       void cachePut(cacheKey("catalog", orgId), mapped);
