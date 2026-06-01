@@ -52,6 +52,16 @@ export interface BillLine {
   expiry: string;
   mrpPaise: number;
   ptrPaise: number;
+  /** Billed unit rate in paise (SALT-191A). Defaults to MRP; a customer pricing rule
+   *  (`resolve_price`) or a manual edit can lower it. Absent (e.g. an older held bill)
+   *  ⇒ the math falls back to `mrpPaise`, i.e. today's behaviour. */
+  ratePaise?: number;
+  /** Why this rate — the winning price rule's label, or "MRP" / "Manual". */
+  ruleLabel?: string;
+  /** A manual rate edit sticks: price resolution will not overwrite it. */
+  priceOverridden?: boolean;
+  /** The party the rate was resolved for ("" = walk-in); null/undefined = not yet resolved. */
+  pricedForParty?: string | null;
   /** Total available stock for the item across all batches — the per-item cap. */
   stock: number;
   qty: number;

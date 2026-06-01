@@ -23,8 +23,13 @@ export function gatedLines(lines: BillLine[]): BillLine[] {
   return lines.filter((l) => isGatedSchedule(l.schedule));
 }
 
+/** Per-unit billed rate: the customer-pricing rate (SALT-191A) when set, else MRP. */
+export function lineRate(l: BillLine): number {
+  return l.ratePaise ?? l.mrpPaise;
+}
+
 export function lineGross(l: BillLine): number {
-  return l.mrpPaise * l.qty;
+  return lineRate(l) * l.qty;
 }
 
 /** Discount amount in paise: percentage of gross, or a flat paise amount capped at gross. */

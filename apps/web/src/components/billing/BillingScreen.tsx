@@ -10,6 +10,7 @@ import { CustomerPicker } from "./CustomerPicker";
 import { H1Gate } from "./H1Gate";
 import { ParkedBills } from "./ParkedBills";
 import { useCheckout } from "./useCheckout";
+import { usePriceResolution } from "./usePriceResolution";
 import { Kbd } from "@/components/ui/kbd";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { useAuth } from "@/lib/auth";
@@ -89,6 +90,8 @@ export function BillingScreen() {
   // Mount the offline outbox here (SALT-205): this drives the auto-flush on reconnect and the
   // "waiting to sync" count. The sales handler is registered in useCheckout.
   const { online, pending: pendingWrites } = useOutbox();
+  // Resolve customer pricing for the bill's lines (SALT-191A) — re-prices on party change.
+  usePriceResolution(shopId, party?.id ?? null);
 
   // Detail for the selected customer: drives the header phone, the "Add GSTIN"
   // prompt, and the intra/inter-state GST split. Refetched after a GSTIN is saved.
