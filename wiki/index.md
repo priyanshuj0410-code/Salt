@@ -42,6 +42,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/operations](architecture/operations.md) — NFR & ops posture (SALT-134/136/137/138): Supabase backup/PITR + restore runbook, at-rest/transit/RLS + no-PII-logs, India residency, audit-trail ownership, and the scale load-test method; with an account-owner action-items table.
 - [architecture/salesman](architecture/salesman.md) — field-salesman management (SALT-128): the `salesmen` master + `commission_pct`/`payments.salesman_id` (0032), commission on net sales, the `/salesmen` master+report and `/salesmen/:id` detail, and order/collection attribution back-fill in `lib/salesmen.ts`.
 - [architecture/offline-first](architecture/offline-first.md) — the offline-first substrate spike + design (SALT-135 / ADR 0017): why a custom IndexedDB read-cache + RPC write-queue (the writes are all RPCs, not rows), the Phase-1 design, and the deferred multi-counter Phase 2.
+- [architecture/integrations-whatsapp](architecture/integrations-whatsapp.md) — WhatsApp send infra (SALT-107): one `sendWhatsApp` seam over two transports (click-to-chat today, opt-in Business/Cloud API via the `whatsapp-send` edge function), a typed template registry for the four Module-14 use cases (reusing the existing `collection`/`billShare` builders), and the `WhatsAppButton` atom.
 
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.
