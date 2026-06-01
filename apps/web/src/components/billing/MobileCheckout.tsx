@@ -12,6 +12,7 @@ import { Row, BillDiscountInput } from "./BillSummary";
 import { H1Notice } from "./H1Gate";
 import { CreditNotice } from "./CreditNotice";
 import { SplitTender } from "./SplitTender";
+import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -38,8 +39,9 @@ export function MobileCheckout({
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
-  // Block charging while a split is unbalanced (the server would reject it anyway).
-  const blockSave = saving || usingSeed || (splitMode && !tenderChk.ok);
+  const { discountGate, cancelDiscountApproval } = checkout;
+  // Block charging while a split is unbalanced or an over-limit discount awaits approval.
+  const blockSave = saving || usingSeed || (splitMode && !tenderChk.ok) || discountGate.status === "pending";
   const tax = gstSplit(t.gst, isInterstate);
   const [open, setOpen] = useState(false);
   const loss = t.margin < 0;
@@ -166,6 +168,11 @@ export function MobileCheckout({
       {needsRx && (
         <div className="px-3 pt-3">
           <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
+        </div>
+      )}
+      {discountGate.over && (
+        <div className="px-3 pt-3">
+          <DiscountApprovalNotice gate={discountGate} onCancel={cancelDiscountApproval} />
         </div>
       )}
       {creditWarn.over && (

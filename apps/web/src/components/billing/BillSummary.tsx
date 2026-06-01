@@ -11,6 +11,7 @@ import { GstinPrompt } from "./GstinPrompt";
 import { H1Notice } from "./H1Gate";
 import { CreditNotice } from "./CreditNotice";
 import { SplitTender } from "./SplitTender";
+import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -80,8 +81,11 @@ export function BillSummary({
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
-  // Save is blocked while a split does not balance (the server would reject it anyway).
-  const blockSave = empty || saving || usingSeed || !shopId || (splitMode && !tenderChk.ok);
+  const { discountGate, cancelDiscountApproval } = checkout;
+  // Save is blocked while a split does not balance, or while an over-limit discount is
+  // awaiting manager approval (the server / gate would reject it anyway).
+  const blockSave =
+    empty || saving || usingSeed || !shopId || (splitMode && !tenderChk.ok) || discountGate.status === "pending";
   const tax = gstSplit(t.gst, isInterstate);
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
@@ -216,6 +220,7 @@ export function BillSummary({
         {needsRx && (
           <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
         )}
+        <DiscountApprovalNotice gate={discountGate} onCancel={cancelDiscountApproval} />
         {creditWarn.over && <CreditNotice check={creditWarn} />}
         <Button
           size="lg"
