@@ -67,7 +67,7 @@ export function OwnerHome() {
     <Page width="sm">
         <SetupChecklist />
         <h1 className="text-xl font-semibold">Owner dashboard</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-text-tertiary">
           Reporting and inventory health will live here. For now, manage your team.
         </p>
 
@@ -75,41 +75,41 @@ export function OwnerHome() {
 
         <Link
           to="/parties"
-          className="mt-5 flex items-center justify-between rounded-lg border p-4 hover:bg-muted/40"
+          className="mt-5 flex items-center justify-between rounded-lg border p-4 hover:bg-surface"
         >
           <div className="flex items-center gap-3">
             <Users className="size-5 text-primary" />
             <div>
               <h2 className="text-sm font-medium">Parties</h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-tertiary">
                 Customers and vendors, balances, re-tagging and merging duplicates.
               </p>
             </div>
           </div>
-          <span className="text-muted-foreground">→</span>
+          <span className="text-text-tertiary">→</span>
         </Link>
 
         <Link
           to="/bills"
-          className="mt-3 flex items-center justify-between rounded-lg border p-4 hover:bg-muted/40"
+          className="mt-3 flex items-center justify-between rounded-lg border p-4 hover:bg-surface"
         >
           <div className="flex items-center gap-3">
             <Receipt className="size-5 text-primary" />
             <div>
               <h2 className="text-sm font-medium">Bills</h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-tertiary">
                 Every saved sale, with customer, payment and totals.
               </p>
             </div>
           </div>
-          <span className="text-muted-foreground">→</span>
+          <span className="text-text-tertiary">→</span>
         </Link>
 
         <div className="mt-5 rounded-lg border">
           <div className="flex items-center justify-between border-b p-4">
             <div>
               <h2 className="text-sm font-medium">Cashiers</h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-tertiary">
                 Generate a code and share it with a cashier — they enter it when they sign up.
               </p>
             </div>
@@ -122,7 +122,7 @@ export function OwnerHome() {
           {error && <p className="px-4 pt-3 text-sm text-destructive">{error}</p>}
 
           {invites.length === 0 ? (
-            <p className="p-4 text-sm text-muted-foreground">No invites yet.</p>
+            <p className="p-4 text-sm text-text-tertiary">No invites yet.</p>
           ) : (
             <ul className="divide-y">
               {invites.map((inv) => {
