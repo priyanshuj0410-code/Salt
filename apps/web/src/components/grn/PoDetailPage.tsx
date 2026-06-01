@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, ClipboardList, Truck } from "lucide-react";
+import { ArrowLeft, ClipboardList, Send, Truck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
@@ -10,6 +10,7 @@ import { StatCard } from "@/components/patterns/stat-card";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
+import { SendPoDialog } from "./SendPoDialog";
 
 interface PoHead {
   id: string;
@@ -21,7 +22,7 @@ interface PoHead {
   status: string;
   notes: string | null;
   vendor_id: string | null;
-  vendor: { name: string } | null;
+  vendor: { name: string; phone: string | null } | null;
 }
 
 interface PoLineRow {
@@ -47,17 +48,19 @@ const STATUS_VARIANT: Record<string, "neutral" | "info" | "warning" | "success" 
 export function PoDetailPage() {
   const { id } = useParams<{ id: string }>();
   const orgId = useAuth().membership?.orgId;
+  const shopName = useAuth().shop?.name ?? null;
   const navigate = useNavigate();
   const [head, setHead] = useState<PoHead | null>(null);
   const [lines, setLines] = useState<PoLineRow[] | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
 
   useEffect(() => {
     if (!supabase || !orgId || !id) return;
     let active = true;
     supabase
       .from("purchase_orders")
-      .select("id,po_no,po_date,created_at,expected_date,total_paise,status,notes,vendor_id,vendor:ledgers(name)")
+      .select("id,po_no,po_date,created_at,expected_date,total_paise,status,notes,vendor_id,vendor:ledgers(name,phone)")
       .eq("org_id", orgId)
       .eq("id", id)
       .maybeSingle()
@@ -94,6 +97,18 @@ export function PoDetailPage() {
 
   const ref = head?.po_no ?? (id ? `#${id.slice(0, 8)}` : "PO");
   const canReceive = head ? !["received", "closed", "cancelled"].includes(head.status) : false;
+  const canSend = head ? !["received", "closed", "cancelled"].includes(head.status) : false;
+
+  // Flip draft → sent after a WhatsApp/email send (idempotent; only from draft).
+  async function markSent() {
+    if (!supabase || !head || head.status !== "draft") return;
+    const { error } = await supabase
+      .from("purchase_orders")
+      .update({ status: "sent" })
+      .eq("id", head.id)
+      .eq("org_id", orgId!);
+    if (!error) setHead((h) => (h ? { ...h, status: "sent" } : h));
+  }
 
   return (
     <Page width="lg">
@@ -122,10 +137,19 @@ export function PoDetailPage() {
           )
         }
         actions={
-          head && canReceive ? (
-            <Button onClick={() => navigate(`/purchases/new?po=${head.id}`)}>
-              <Truck /> Receive against this PO
-            </Button>
+          head ? (
+            <>
+              {canSend && (
+                <Button variant="outline" onClick={() => setSendOpen(true)}>
+                  <Send /> Send to vendor
+                </Button>
+              )}
+              {canReceive && (
+                <Button onClick={() => navigate(`/purchases/new?po=${head.id}`)}>
+                  <Truck /> Receive against this PO
+                </Button>
+              )}
+            </>
           ) : undefined
         }
       />
@@ -172,6 +196,22 @@ export function PoDetailPage() {
           )}
         </div>
       </div>
+
+      {head && lines && (
+        <SendPoDialog
+          open={sendOpen}
+          onOpenChange={setSendOpen}
+          shopName={shopName}
+          vendorName={head.vendor?.name ?? "Vendor"}
+          vendorPhone={head.vendor?.phone ?? null}
+          poRef={ref}
+          date={format(new Date(head.po_date ?? head.created_at), "d MMM yyyy")}
+          expectedDate={head.expected_date ? format(new Date(head.expected_date), "d MMM yyyy") : null}
+          lines={lines.map((l) => ({ name: l.name, qty: l.qty, ptrPaise: l.ptr_paise }))}
+          totalPaise={head.total_paise}
+          onSent={markSent}
+        />
+      )}
     </Page>
   );
 }

@@ -1,6 +1,7 @@
 import {
   Activity,
   BarChart3,
+  Contact,
   FileText,
   Keyboard,
   Landmark,
@@ -79,6 +80,7 @@ export const NAV: NavModule[] = [
       { label: "Receive stock (GRN)", path: "/purchases/new", built: true },
       { label: "GRN history", path: "/purchases", built: true },
       { label: "Purchase orders", path: "/purchases/orders", built: true },
+      { label: "Reorder suggestions", path: "/purchases/orders/suggest", built: true },
       { label: "Debit notes", path: "/purchases/returns", built: true },
     ],
   },
@@ -184,6 +186,15 @@ export const NAV: NavModule[] = [
     built: true,
     roles: ["owner"],
     children: [{ label: "Items", path: "/catalogue", built: true }],
+  },
+  {
+    key: "e",
+    label: "Salesmen",
+    icon: Contact,
+    path: "/salesmen",
+    built: true,
+    roles: ["owner"],
+    children: [{ label: "All salesmen", path: "/salesmen", built: true }],
   },
   {
     key: ",",

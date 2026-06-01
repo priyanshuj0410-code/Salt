@@ -42,8 +42,9 @@ export interface OrderParty {
  * Prescription details captured at checkout for a Schedule H1/X sale. doctorName,
  * patientName and patientAddress are mandatory (the H1 register requires them);
  * doctorRegNo is optional. Persisted today on the invoice: doctorName →
- * `sales_invoices.doctor_name`, the rest folded into `notes` via `formatRxNote`.
- * (A follow-up DB slice will write the structured `h1_register` rows.)
+ * `sales_invoices.doctor_name` + `doctor_reg_no` / `patient_name` / `patient_address`,
+ * sent **structured** to `create_sales_invoice`, which writes the `h1_register` row and
+ * enforces the gate server-side (migration 0032 / SALT-148 / SALT-185) — not folded into notes.
  */
 export interface RxDetails {
   doctorName: string;
@@ -52,7 +53,8 @@ export interface RxDetails {
   patientAddress: string;
 }
 
-/** One-line audit note for the invoice from captured Rx details. */
+/** One-line human summary of the Rx — for **display** only (e.g. a receipt line).
+ *  No longer the persistence path: structured params now go to `create_sales_invoice`. */
 export function formatRxNote(rx: RxDetails): string {
   const parts = [`Patient: ${rx.patientName} (${rx.patientAddress})`];
   if (rx.doctorRegNo.trim()) parts.push(`Dr reg: ${rx.doctorRegNo.trim()}`);
@@ -85,7 +87,12 @@ export interface SalesInvoiceArgs {
   p_credit_days: number;
   p_lines: OrderLinePayload[];
   p_invoice_no: string | null;
+  /** Schedule H1/X prescription, sent structured so the server writes the h1_register row
+   *  + passes enforce_h1_gate (SALT-148/185); the gate rolls the invoice back if incomplete. */
   p_doctor_name: string | null;
+  p_doctor_reg_no: string | null;
+  p_patient_name: string | null;
+  p_patient_address: string | null;
   p_notes: string | null;
 }
 
@@ -112,8 +119,13 @@ export function buildSalesInvoicePayload(
     p_payment_method: payment.method,
     p_credit_days: payment.method === "credit" ? payment.creditDays : 0,
     p_invoice_no: null,
+    // Structured Rx params (not folded into notes) — the server backs the h1_register
+    // row out of these and enforce_h1_gate rejects the invoice if any is missing.
     p_doctor_name: rx?.doctorName.trim() || null,
-    p_notes: rx ? formatRxNote(rx) : null,
+    p_doctor_reg_no: rx?.doctorRegNo.trim() || null,
+    p_patient_name: rx?.patientName.trim() || null,
+    p_patient_address: rx?.patientAddress.trim() || null,
+    p_notes: null,
     p_lines: lines.map((l, i) => ({
       item_id: l.itemId,
       name: l.name,

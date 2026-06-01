@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
+import { CUSTOMER_GROUPS } from "@/lib/partyGroups";
 
 export interface CreatedParty {
   id: string;
@@ -27,6 +28,7 @@ const blank = {
   gstin: "",
   stateCode: "",
   address: "",
+  group: "",
   // Rupee strings (not paise) — converted on submit.
   creditLimit: "",
   opening: "",
@@ -45,12 +47,15 @@ export function CreatePartyDialog({
   onOpenChange,
   onCreated,
   defaultType,
+  groupsEnabled = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (party: CreatedParty) => void;
   /** Pre-select the party kind (e.g. CustomerPicker passes "customer"). */
   defaultType?: PartyType;
+  /** Show + persist the customer group (only when the customer_group column exists). */
+  groupsEnabled?: boolean;
 }) {
   const orgId = useAuth().membership?.orgId;
   const [form, setForm] = useState(() => ({ ...blank, type: defaultType ?? "customer" }));
@@ -111,6 +116,9 @@ export function CreatePartyDialog({
         state_code: form.stateCode || null,
         credit_limit_paise: Math.round((Number(form.creditLimit) || 0) * 100),
         opening_balance_paise,
+        // Only send customer_group when the column exists (parent probed it),
+        // so a pre-migration create still succeeds.
+        ...(groupsEnabled ? { customer_group: form.group || null } : {}),
       });
       if (err) {
         setError(err.message);
@@ -194,6 +202,22 @@ export function CreatePartyDialog({
                 className="h-9 text-right tabular-nums"
               />
             </Field>
+            {groupsEnabled && (
+              <Field label="Group">
+                <select
+                  value={form.group}
+                  onChange={(e) => set("group", e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                >
+                  <option value="">—</option>
+                  {CUSTOMER_GROUPS.map((g) => (
+                    <option key={g} value={g}>
+                      {g}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
           </div>
 
           <Field label="Address">

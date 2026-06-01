@@ -93,6 +93,12 @@ don't post to the ledger; the lone exception is the destruction ITC reversal (be
   variance (`ref_table='physical_count', ref_id=count`); mark the count `finalized`. Count
   lines are inserted/edited **client-side** (RLS-gated) while a draft; only the posting is
   centralised.
+- **`receive_transfer(p_from_shop, p_to_shop, p_lines, …)` → transfer id** (migration `0030`).
+  Moves stock between two shops in one org: locks + decrements the source-shop batch,
+  increments (or creates) the matching destination-shop batch (same item + batch_no, carrying
+  expiry/MRP/PTR), records `stock_transfers` + `stock_transfer_lines`, and posts paired
+  `transfer_out` / `transfer_in` movements. Guards: shops differ, both in org, sufficient
+  source on-hand.
 
 ## Write screens
 
@@ -110,6 +116,10 @@ don't post to the ledger; the lone exception is the destruction ITC reversal (be
   off via `adjust_stock(writeoff)` (reversal + witness in the note) and opens a printable,
   witnessed **Certificate of Destruction** (`lib/destruction.ts`, `window.print` like
   [printInvoice](billing-screen.md)).
+- **TransfersPage** (`/inventory/transfers`, SALT-042) — From/To shop pickers, a searchable
+  picker over the **source shop's** on-hand batches, per-line qty (capped at available), and a
+  transfer history. Calls `receive_transfer` (`lib/transfers.ts`); graceful single-shop empty
+  state pointing at Settings → Shops. Unblocked once multi-shop management shipped (SALT-090).
 
 ## Contract for other modules
 
@@ -122,14 +132,17 @@ don't post to the ledger; the lone exception is the destruction ITC reversal (be
 - **GRN** ([grn.md](grn.md)): each receipt posts `reason='purchase'`; the inbound side of the
   same ledger.
 
-## Not built yet
+## Reassigned out of the lane
 
-- **SALT-041** Atomic multi-counter stock (no over-commit) — needs real-time; belongs with
-  the sale RPC's decrement path, not a read view.
-- **SALT-042** Inter-shop transfers — `stock_transfers`/`stock_transfer_lines` tables are
-  live, but a `receive_transfer` RPC (post `transfer_out` + `transfer_in`) is unwritten.
-- **SALT-045** Cold-chain flag + IoT temp-log hook — a new `items` attribute; touches the
-  catalogue master.
+The two remaining backlog items are owned by other modules, not inventory:
+
+- **SALT-041** Atomic multi-counter stock (no over-commit) → **billing** lane. The no-oversell
+  guarantee lives in the sale RPC (`create_sales_invoice`) — a batch row-lock / `qty ≥ 0`
+  guard — and the live cross-counter reflection rides the [realtime substrate](realtime.md)
+  (SALT-104), not an inventory screen.
+- **SALT-045** Cold-chain flag + IoT temp-log hook → **catalogue** lane. `cold_chain` is an
+  `items`-master attribute, edited on the `/catalogue` item screen; inventory can then surface
+  a cold-chain badge/filter on the stock ledger. The IoT temperature log is a future hook.
 
 ## Related
 [product/product-modules §4](../product/product-modules.md) · [grn](grn.md) ·
