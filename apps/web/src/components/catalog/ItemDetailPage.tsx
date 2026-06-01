@@ -7,7 +7,8 @@ import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable, type Column } from "@/components/patterns/data-table";
-import { ScheduleBadge, AyushBadge } from "@/components/catalog/ScheduleBadge";
+import { ScheduleBadge, AyushBadge, ColdChainBadge } from "@/components/catalog/ScheduleBadge";
+import { MessageThread } from "@/components/messages/MessageThread";
 import { mrpRange } from "@/components/catalog/format";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -39,6 +40,8 @@ function formFrom(i: Item) {
     schedule: i.schedule,
     barcode: i.barcode ?? "",
     ayush: i.ayush ?? false,
+    reorderLevel: i.reorderLevel ?? 0,
+    coldChain: i.coldChain ?? false,
   };
 }
 type Form = ReturnType<typeof formFrom>;
@@ -177,21 +180,28 @@ export function ItemDetailPage() {
     setBusy(true);
     setError(null);
     try {
-      const { error: err } = await supabase
-        .from("items")
-        .update({
-          name,
-          salt: form.salt.trim() || null,
-          manufacturer: form.manufacturer.trim() || null,
-          pack: form.pack.trim() || null,
-          hsn: form.hsn.trim() || null,
-          gst_rate: form.gstRate,
-          schedule: form.schedule,
-          barcode: form.barcode.trim() || null,
-          ayush_flag: form.ayush,
-        })
-        .eq("id", item!.id)
-        .eq("org_id", orgId);
+      const base = {
+        name,
+        salt: form.salt.trim() || null,
+        manufacturer: form.manufacturer.trim() || null,
+        pack: form.pack.trim() || null,
+        hsn: form.hsn.trim() || null,
+        gst_rate: form.gstRate,
+        schedule: form.schedule,
+        barcode: form.barcode.trim() || null,
+        ayush_flag: form.ayush,
+        reorder_level: form.reorderLevel,
+      };
+      const update = (patch: Record<string, unknown>) =>
+        supabase!.from("items").update(patch).eq("id", item!.id).eq("org_id", orgId);
+      // cold_chain only exists once migration 0033 is applied; if it is missing,
+      // save everything else rather than failing the whole edit.
+      let { error: err } = await update({ ...base, cold_chain: form.coldChain });
+      let coldSaved = !err;
+      if (err && /cold_chain/i.test(err.message)) {
+        ({ error: err } = await update(base));
+        coldSaved = false;
+      }
       if (err) {
         setError(err.message);
         return;
@@ -207,6 +217,8 @@ export function ItemDetailPage() {
         schedule: form.schedule,
         barcode: form.barcode.trim() || undefined,
         ayush: form.ayush,
+        reorderLevel: form.reorderLevel,
+        coldChain: coldSaved ? form.coldChain : (item!.coldChain ?? false),
       });
       setEditing(false);
       setForm(null);
@@ -306,6 +318,7 @@ export function ItemDetailPage() {
           <span className="inline-flex items-center gap-2">
             {item.name}
             {item.ayush && <AyushBadge />}
+            {item.coldChain && <ColdChainBadge />}
           </span>
         }
         subtitle={item.salt || (item.ayush ? "No ingredients recorded" : "No salt / molecule recorded")}
@@ -384,6 +397,16 @@ export function ItemDetailPage() {
                   placeholder="—"
                 />
               </EditField>
+              <EditField label="Reorder level">
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.reorderLevel}
+                  onChange={(e) => set("reorderLevel", Math.max(0, Math.floor(Number(e.target.value) || 0)))}
+                  className="h-9"
+                  placeholder="0"
+                />
+              </EditField>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-xs text-text-tertiary">GST rate</span>
@@ -441,6 +464,27 @@ export function ItemDetailPage() {
                 </Button>
               </div>
             </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-text-tertiary">Storage</span>
+              <div className="flex gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={!form.coldChain ? "default" : "outline"}
+                  onClick={() => set("coldChain", false)}
+                >
+                  Ambient
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={form.coldChain ? "default" : "outline"}
+                  onClick={() => set("coldChain", true)}
+                >
+                  Cold chain
+                </Button>
+              </div>
+            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </div>
         ) : (
@@ -453,6 +497,8 @@ export function ItemDetailPage() {
             <ViewField label="Schedule" value={<ScheduleBadge schedule={item.schedule} />} />
             <ViewField label="Type" value={item.ayush ? <AyushBadge /> : "Allopathic"} />
             <ViewField label="Barcode" value={item.barcode ?? ""} mono />
+            <ViewField label="Reorder level" value={item.reorderLevel ? item.reorderLevel.toLocaleString("en-IN") : ""} />
+            <ViewField label="Storage" value={item.coldChain ? <ColdChainBadge /> : "Ambient"} />
           </dl>
         )}
       </section>
@@ -605,6 +651,15 @@ export function ItemDetailPage() {
             }
           />
         )}
+      </section>
+
+      {/* Internal team notes for this item (SALT-162), live across counters */}
+      <section className="mt-6 rounded-lg border border-border p-4">
+        <div className="mb-1 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-text-primary">Notes</h2>
+          <span className="text-xs text-text-tertiary">Internal team messages about this item — synced across counters.</span>
+        </div>
+        <MessageThread entityType="item" entityId={item.id} />
       </section>
     </Page>
   );
