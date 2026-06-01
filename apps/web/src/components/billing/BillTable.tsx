@@ -26,6 +26,7 @@ export function BillTable() {
   const setQty = useBill((s) => s.setQty);
   const setDiscount = useBill((s) => s.setDiscount);
   const setRate = useBill((s) => s.setRate);
+  const setLoose = useBill((s) => s.setLoose);
   const removeLine = useBill((s) => s.removeLine);
   const catalog = useCatalog((s) => s.items);
   const [pickerLine, setPickerLine] = useState<BillLine | null>(null);
@@ -33,6 +34,28 @@ export function BillTable() {
 
   const batchCount = (itemId: string): number =>
     (catalog.find((c) => c.id === itemId)?.batches ?? []).filter((b) => b.qty > 0).length;
+
+  // Loose-unit sale (SALT-164): a line is divisible only when the item declares >1 base unit
+  // per pack. `qty` then means base units (e.g. 4 tablets), so the on-hand cap is packs × upp.
+  const uppOf = (l: BillLine): number => (l.unitsPerPack && l.unitsPerPack >= 1 ? l.unitsPerPack : 1);
+  const divisible = (l: BillLine): boolean => uppOf(l) > 1;
+  const LooseToggle = ({ l }: { l: BillLine }) =>
+    divisible(l) ? (
+      <button
+        type="button"
+        onClick={() => setLoose(l.key, !l.loose)}
+        aria-pressed={l.loose}
+        title={l.loose ? `Selling loose units — ${uppOf(l)} per pack` : "Selling whole packs — tap to sell loose units"}
+        className={cn(
+          "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+          l.loose
+            ? "bg-primary/15 text-primary"
+            : "bg-muted text-muted-foreground hover:text-foreground",
+        )}
+      >
+        {l.loose ? "loose" : "pack"}
+      </button>
+    ) : null;
 
   function focusRow(i: number) {
     const clamped = Math.max(0, Math.min(lines.length - 1, i));
@@ -142,7 +165,10 @@ export function BillTable() {
               </div>
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
-                  <div className="text-[11px] text-text-tertiary">Qty</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] text-text-tertiary">{l.loose ? "Qty (units)" : "Qty"}</span>
+                    <LooseToggle l={l} />
+                  </div>
                   <div className="mt-1 flex items-center gap-1">
                     <Button
                       variant="outline"
@@ -319,8 +345,15 @@ export function BillTable() {
                       <Plus />
                     </Button>
                   </div>
-                  <div className="mt-0.5 text-center text-[11px] text-muted-foreground">
-                    {l.qty >= cap ? "max" : `of ${l.stock}`}
+                  <div className="mt-0.5 flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span>
+                      {l.qty >= cap
+                        ? "max"
+                        : l.loose
+                          ? `of ${l.stock * uppOf(l)} u`
+                          : `of ${l.stock}`}
+                    </span>
+                    <LooseToggle l={l} />
                   </div>
                 </TableCell>
                 <TableCell className="align-top">

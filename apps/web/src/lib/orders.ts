@@ -70,7 +70,11 @@ export interface OrderLinePayload {
   name: string;
   batch_no: string;
   expiry: string;
+  /** Whole packs sold. A loose-unit line (SALT-164) sends 0 here and carries the count in `loose_units`. */
   qty: number;
+  /** Base units sold from an open pack (SALT-164 / migration 0057). Omitted for whole-pack lines; the
+   *  server decrements stock by `qty × units_per_pack + loose_units` and trusts `line_total_paise` for money. */
+  loose_units?: number;
   rate_paise: number;
   discount_type: string;
   discount_value: number;
@@ -150,7 +154,9 @@ export function buildSalesInvoicePayload(
       name: l.name,
       batch_no: l.batchNo,
       expiry: l.expiry,
-      qty: l.qty,
+      // A loose line's `qty` is base units (SALT-164) — re-express as 0 packs + loose_units so the
+      // server's base-unit stock math holds. Whole-pack lines stay byte-identical (loose_units omitted).
+      qty: l.loose ? 0 : l.qty,
       // The billed unit rate (SALT-191A) — the customer-pricing rate when set, else MRP.
       // line_total_paise (the net) already reflects it; the server backs GST out of that.
       rate_paise: l.ratePaise ?? l.mrpPaise,
@@ -158,6 +164,7 @@ export function buildSalesInvoicePayload(
       discount_value: l.discountValue,
       gst_rate: l.gstRate,
       line_total_paise: nets[i],
+      ...(l.loose ? { loose_units: l.qty } : {}),
     })),
   };
   // Only attach p_tenders for a real split — a single-payment bill omits the key so

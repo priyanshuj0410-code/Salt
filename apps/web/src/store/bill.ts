@@ -53,6 +53,9 @@ function makeLine(item: Item, batch: Batch): BillLine {
     pricedForParty: null,
     stock: itemStock(item),
     qty: 1,
+    // Whole-pack by default; `setLoose` flips to per-unit when the item is divisible (SALT-164).
+    loose: false,
+    unitsPerPack: item.unitsPerPack,
     discountType: "pct",
     discountValue: 0,
   };
@@ -88,6 +91,8 @@ interface BillState {
   applyResolvedPrice: (key: string, pricePaise: number, ruleLabel: string, partyKey: string) => void;
   /** Manually set a line's billed rate — a sticky override that resolution won't overwrite. */
   setRate: (key: string, pricePaise: number) => void;
+  /** Toggle a line between whole-pack and loose-unit entry (SALT-164); resets qty to 1 in the new unit. */
+  setLoose: (key: string, loose: boolean) => void;
   /** Move a line to a different batch of the same item (re-keys, merges if needed). */
   setBatch: (key: string, item: Item, batch: Batch) => void;
   removeLine: (key: string) => void;
@@ -166,6 +171,13 @@ export const useBill = create<BillState>((set) => ({
           ? { ...l, ratePaise: Math.max(0, Math.round(pricePaise)), priceOverridden: true, ruleLabel: "Manual" }
           : l,
       ),
+    })),
+
+  setLoose: (key, loose) =>
+    set((state) => ({
+      // Switching the entry unit changes what `qty` means (packs ⇄ base units), so reset
+      // it to 1 in the new unit rather than carry a now-misinterpreted number across.
+      lines: state.lines.map((l) => (l.key === key ? { ...l, loose, qty: 1 } : l)),
     })),
 
   setBatch: (key, item, batch) =>

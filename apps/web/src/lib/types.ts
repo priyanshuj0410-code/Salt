@@ -9,6 +9,8 @@ export interface Batch {
   mrpPaise: number;
   /** Price to retailer per pack in paise — what the shop paid (landed cost). */
   ptrPaise: number;
+  /** Base units in the currently-open pack (SALT-164 / migration 0057); absent ⇒ 0. */
+  looseUnits?: number;
 }
 
 export interface Item {
@@ -27,6 +29,9 @@ export interface Item {
    *  unlinked / pre-schedule item ⇒ fall back to the flat `gstRate`. */
   gstRateClass?: string;
   schedule: Schedule;
+  /** Base units per pack, e.g. 10 tablets per strip (`items.units_per_pack`, migration 0057).
+   *  Enables loose-unit (part-strip) sale at the counter; absent / null ⇒ 1 (sold whole only). */
+  unitsPerPack?: number;
   barcode?: string;
   /** AYUSH / non-allopathic item (ayurveda, siddha, unani, homeopathy). These
    *  carry no Drugs-&-Cosmetics schedule and describe contents, not a salt. */
@@ -74,6 +79,11 @@ export interface BillLine {
   /** Total available stock for the item across all batches — the per-item cap. */
   stock: number;
   qty: number;
+  /** Loose-unit (part-strip) line (SALT-164): when true, `qty` is base UNITS, not packs —
+   *  e.g. 4 tablets from a strip of 10. Priced per unit (rate ÷ unitsPerPack). Absent ⇒ whole packs. */
+  loose?: boolean;
+  /** Base units per pack, snapshot from the item; absent ⇒ 1 (not divisible). */
+  unitsPerPack?: number;
   /** "pct" = percentage of line gross; "flat" = rupees off the line, in paise. */
   discountType: DiscountType;
   discountValue: number;
