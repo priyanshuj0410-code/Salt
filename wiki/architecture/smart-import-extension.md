@@ -130,7 +130,7 @@ Each phase = a staged PR (+ migration where noted), verified with `pnpm lint && 
 - **Volume** — registers can be lakhs of rows; reuse chunking + `selectAll`; consider the `import_document` RPC if client inserts are too slow.
 - **Column variance** — mitigated by `autoMap` + the manual mapping step + tuning once samples land.
 - **GST splits** — trust Marg's figures for history; only the live RPCs compute splits.
-- **GSTR-2B** — comes from the GST portal, not Marg.
+- **GSTR-2B** — comes from the GST portal, not Marg; ✅ imported + reconciled against purchases anyway (SALT-007) via `lib/gstr2b.ts` + `Gstr2bStep` (a Smart Import cascade step): B2B sheet → `gstr2b_imports`/`gstr2b_lines`, matched on supplier-GSTIN + invoice-no → `gstr2b_matches` (matched/mismatch/missing) + an ITC summary. The detailed match-browsing UI is GST-module work (SALT-078).
 
 ## Related
 
