@@ -48,6 +48,9 @@ interface CatalogState {
   /** Add or replace a single item (e.g. one just created at GRN entry) without a
    *  full reload. The first real item also drops the demo seed. */
   upsertItem: (item: Item) => void;
+  /** Patch one batch's on-hand qty in place — driven by the live-stock realtime feed (SALT-179)
+   *  so another counter's sale/receipt reflects on this counter's search + FEFO without a reload. */
+  applyBatchQty: (itemId: string, batchNo: string, qty: number) => void;
 }
 
 function mapRows(items: ItemRow[], batches: BatchRow[]): Item[] {
@@ -143,5 +146,22 @@ export const useCatalog = create<CatalogState>((set) => ({
       const idx = base.findIndex((i) => i.id === item.id);
       const items = idx >= 0 ? base.map((i, k) => (k === idx ? item : i)) : [...base, item];
       return { items, usingSeed: false, loaded: true };
+    }),
+
+  applyBatchQty: (itemId, batchNo, qty) =>
+    set((s) => {
+      if (s.usingSeed) return s; // the demo seed has no real batches to sync
+      return {
+        items: s.items.map((it) =>
+          it.id === itemId
+            ? {
+                ...it,
+                batches: it.batches.map((b) =>
+                  b.batchNo === batchNo ? { ...b, qty: Math.max(0, Math.floor(qty)) } : b,
+                ),
+              }
+            : it,
+        ),
+      };
     }),
 }));
