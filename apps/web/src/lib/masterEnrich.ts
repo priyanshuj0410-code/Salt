@@ -82,3 +82,43 @@ export function planEnrichment(items: Item[], master: MasterRow[]): EnrichPlanRo
   }
   return plan;
 }
+
+export interface SaltReplaceRow {
+  itemId: string;
+  itemName: string;
+  /** Current salt on the item ("" when blank). */
+  fromSalt: string;
+  /** The master's salt that would replace it. */
+  toSalt: string;
+  masterId: string;
+}
+
+/** Index master rows by NAME key only (the trigger for salt review is a name match). */
+function nameIndex(master: MasterRow[]): Map<string, MasterRow> {
+  const idx = new Map<string, MasterRow>();
+  for (const m of master) {
+    const k = key(m.name);
+    if (k && !idx.has(k)) idx.set(k, m);
+  }
+  return idx;
+}
+
+/**
+ * Plan salt corrections: where an item's NAME matches a master entry and the master
+ * carries a salt that DIFFERS from the item's (ignoring case/spacing), propose replacing
+ * the item's salt with the master's. Unlike planEnrichment (fill-only), this overwrites an
+ * existing value, so callers must present it for per-item review/approval. Rows whose salt
+ * already equals the master (case/space-insensitive) are skipped.
+ */
+export function planSaltReplacements(items: Item[], master: MasterRow[]): SaltReplaceRow[] {
+  const idx = nameIndex(master);
+  const out: SaltReplaceRow[] = [];
+  for (const it of items) {
+    const m = idx.get(key(it.name));
+    if (!m || !m.salt?.trim()) continue;
+    const cur = it.salt?.trim() ?? "";
+    if (key(cur) === key(m.salt)) continue; // already equivalent
+    out.push({ itemId: it.id, itemName: it.name, fromSalt: cur, toSalt: m.salt.trim(), masterId: m.id });
+  }
+  return out;
+}
