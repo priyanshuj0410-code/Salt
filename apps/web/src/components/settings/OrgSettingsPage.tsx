@@ -1,58 +1,41 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Building2, Save } from "lucide-react";
+import { Building2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Page } from "@/components/patterns/page";
+import { PageHeader } from "@/components/patterns/page-header";
 import { FormRow } from "@/components/patterns/form-row";
-import { UserMenu } from "@/components/auth/UserMenu";
 import { supabase } from "@/lib/supabase";
 import { useAuth, type Shop } from "@/lib/auth";
 import { INDIAN_STATE_CODES, stateName } from "@/lib/stateCodes";
 
-/** Editable settings for the org's primary shop — used by GST/RPC flows. */
+const selectCls =
+  "h-8 rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+
+/** Editable settings for the org's active shop — used by GST/RPC flows. */
 export function OrgSettingsPage() {
   const { membership, shop } = useAuth();
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-      <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
-        <div className="flex items-baseline gap-3">
-          <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-muted-foreground">Settings · Organisation</span>
-        </div>
-        <UserMenu />
-      </header>
+    <Page width="md">
+      <PageHeader
+        icon={Building2}
+        title="Organisation"
+        subtitle="Your shop's identity — printed on every tax invoice, and required to compute CGST/SGST vs IGST at billing time."
+        actions={membership ? <Badge variant="secondary">{membership.orgName}</Badge> : undefined}
+      />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 p-6">
-        <Link
-          to="/owner"
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-3.5" /> Settings
-        </Link>
-
-        <div className="mt-2 flex items-center gap-2">
-          <Building2 className="size-6 text-primary" />
-          <h1 className="text-xl font-semibold">Organisation</h1>
-          {membership && <Badge variant="secondary">{membership.orgName}</Badge>}
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Your shop&apos;s identity — used on every tax invoice, and required to compute CGST/SGST
-          vs IGST at billing time.
+      {/* Form remounts (fresh defaults) whenever a different shop loads. */}
+      {shop ? (
+        <ShopEditor key={shop.id} shop={shop} />
+      ) : (
+        <p className="rounded-lg border border-warning-border bg-warning-bg px-3 py-2 text-sm text-warning">
+          No shop is set up for your organisation yet. Until a shop row exists, sales and purchases
+          can&apos;t be saved.
         </p>
-
-        {/* Form remounts (fresh defaults) whenever a different shop loads. */}
-        {shop ? (
-          <ShopEditor key={shop.id} shop={shop} />
-        ) : (
-          <p className="mt-6 rounded-md bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-500">
-            No shop is set up for your organisation yet. The multi-shop migration may not be
-            applied; until a primary shop row exists, sales and purchases can&apos;t be saved.
-          </p>
-        )}
-      </main>
-    </div>
+      )}
+    </Page>
   );
 }
 
@@ -105,9 +88,9 @@ function ShopEditor({ shop }: { shop: Shop }) {
   }
 
   return (
-    <section className="mt-6 rounded-lg border bg-background p-4">
-      <h2 className="text-sm font-medium">Shop details</h2>
-      <p className="mt-1 text-xs text-muted-foreground">
+    <section className="rounded-lg border bg-background p-4">
+      <h2 className="text-sm font-medium text-text-primary">Shop details</h2>
+      <p className="mt-1 text-xs text-text-tertiary">
         State is required — without it, the GST split on every invoice fails.
       </p>
 
@@ -115,11 +98,11 @@ function ShopEditor({ shop }: { shop: Shop }) {
         <FormRow label="Shop name" required>
           <Input value={draft.name ?? ""} onChange={(e) => edit("name", e.target.value)} className="h-8" />
         </FormRow>
-        <FormRow label="State" required>
+        <FormRow label="State" required helper={draft.state_code ? stateName(draft.state_code) : undefined}>
           <select
             value={draft.state_code ?? ""}
             onChange={(e) => edit("state_code", e.target.value || null)}
-            className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+            className={selectCls}
           >
             <option value="">— select —</option>
             {INDIAN_STATE_CODES.map((s) => (
@@ -128,9 +111,6 @@ function ShopEditor({ shop }: { shop: Shop }) {
               </option>
             ))}
           </select>
-          {draft.state_code && (
-            <span className="text-[11px] text-muted-foreground">{stateName(draft.state_code)}</span>
-          )}
         </FormRow>
         <FormRow label="GSTIN">
           <Input
@@ -167,7 +147,7 @@ function ShopEditor({ shop }: { shop: Shop }) {
         </FormRow>
       </div>
 
-      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+      {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
       <div className="mt-4">
         <Button onClick={save} disabled={busy || !dirty}>
