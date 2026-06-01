@@ -193,3 +193,17 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* Respect a reduced-motion preference (WCAG 2.3.3). Neutralises the
+   tw-animate-css / base-ui transitions for users who opt out of motion at the
+   OS level. Kept outside @layer so the !important reliably wins. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

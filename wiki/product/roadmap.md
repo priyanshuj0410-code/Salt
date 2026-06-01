@@ -1,6 +1,6 @@
 ---
 type: product
-updated: 2026-05-29
+updated: 2026-06-01
 ---
 
 # Roadmap — planned vs as-built
@@ -18,7 +18,7 @@ The PRD (§7) sequences four phases over 9–12 months. This page tracks what th
 
 ## PRD Phase 2 — Multi-user & inventory health (4–6)
 
-- ⬜ Real-time sync (presence, live stock, parked bills), multi-counter conflict resolution
+- 🟡 Real-time sync (presence, live stock, parked bills), multi-counter conflict resolution — a **realtime substrate** on **Supabase Realtime** now carries three live-across-counters features: the **activity feed** (`/activity`, SALT-104), **internal messages** (SALT-105), and **manager approvals** (`/approvals`, SALT-106). Still ⬜: presence, live stock, parked bills, offline-first, atomic conflict resolution. See [../architecture/realtime.md](../architecture/realtime.md)
 - ⬜ Inventory health dashboards (near-expiry / low / dead stock)
 - ⬜ Customer pricing rules engine
 - ⬜ Schedule H/H1 capture at billing
@@ -43,7 +43,7 @@ The PRD (§7) sequences four phases over 9–12 months. This page tracks what th
 
 ## Biggest gaps to be honest about
 
-The **offline-first + real-time multi-counter** substrate — the entire strategic wedge — is not built. The app is currently an online-only Supabase SPA. Sales now persist (0010), but GRN/purchases, payments settlement, and tax are still unbuilt. See [../decisions/0002-stack-divergence-from-prd.md](../decisions/0002-stack-divergence-from-prd.md).
+The **offline-first + real-time multi-counter** substrate — the entire strategic wedge — is barely started. The app is online-only; the first live slice landed (the cross-counter [activity feed](../architecture/realtime.md), SALT-104, on Supabase Realtime), but **offline-first** (bill through outages), **live stock**, **presence**, and **multi-counter conflict resolution** are still unbuilt. See [../decisions/0002-stack-divergence-from-prd.md](../decisions/0002-stack-divergence-from-prd.md).
 
 ## Market-informed priority additions
 

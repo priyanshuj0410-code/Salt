@@ -11,10 +11,19 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
-import { buildGstr3b, buildGstr3bJson, gstr3bToCsv, type Gstr3bOutwardRow, type Gstr3bItcRow } from "@/lib/gst";
+import { buildGstr3b, buildGstr3bJson, gstr3bToCsv, buildWriteoffReversal, type Gstr3bOutwardRow, type Gstr3bItcRow, type WriteoffRow, type WriteoffReversalRow } from "@/lib/gst";
 
 const OUTWARD_COLS = "taxable_paise,cgst_paise,sgst_paise,igst_paise";
 const ITC_COLS = "cgst_paise,sgst_paise,igst_paise";
+const WO_COLS = "qty_delta,unit_cost_paise,created_at,items(name,gst_rate),batches(batch_no)";
+
+interface WoFetch {
+  qty_delta: number;
+  unit_cost_paise: number;
+  created_at: string;
+  items: { name: string | null; gst_rate: number } | null;
+  batches: { batch_no: string | null } | null;
+}
 
 /** Trigger a client-side file download (same blob pattern as the importer). */
 function download(filename: string, text: string, mime: string) {
@@ -40,6 +49,7 @@ export function Gstr3bPage() {
   const [period, setPeriod] = useState(() => new Date().toISOString().slice(0, 7)); // 'YYYY-MM'
   const [sales, setSales] = useState<Gstr3bOutwardRow[]>([]);
   const [purchases, setPurchases] = useState<Gstr3bItcRow[]>([]);
+  const [writeoffs, setWriteoffs] = useState<WriteoffRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,10 +81,29 @@ export function Gstr3bPage() {
         .eq("posts_effects", true)
         .gte("received_date", start)
         .lt("received_date", end);
-      const [salesRes, purchasesRes] = await Promise.all([salesQ, purchasesQ]);
+      // ITC reversal: expiry destructions / write-offs in the month (stock_movements, reason=writeoff).
+      const writeoffsQ = supabase
+        .from("stock_movements")
+        .select(WO_COLS)
+        .eq("org_id", orgId)
+        .eq("shop_id", shopId)
+        .eq("reason", "writeoff")
+        .gte("created_at", start)
+        .lt("created_at", end);
+      const [salesRes, purchasesRes, writeoffsRes] = await Promise.all([salesQ, purchasesQ, writeoffsQ]);
       if (!active) return;
       setSales((salesRes.data as unknown as Gstr3bOutwardRow[] | null) ?? []);
       setPurchases((purchasesRes.data as unknown as Gstr3bItcRow[] | null) ?? []);
+      setWriteoffs(
+        ((writeoffsRes.data as unknown as WoFetch[] | null) ?? []).map((r) => ({
+          itemName: r.items?.name ?? "—",
+          batchNo: r.batches?.batch_no ?? "",
+          date: (r.created_at ?? "").slice(0, 10),
+          qty: Math.abs(r.qty_delta),
+          ptrPaise: r.unit_cost_paise,
+          gstRate: r.items?.gst_rate ?? 0,
+        })),
+      );
       setLoading(false);
     })();
 
@@ -83,8 +112,9 @@ export function Gstr3bPage() {
     };
   }, [orgId, shopId, period]);
 
-  const summary = useMemo(() => buildGstr3b(period, sales, purchases), [period, sales, purchases]);
-  const hasData = summary.invoiceCount > 0 || summary.purchaseCount > 0;
+  const reversal = useMemo(() => buildWriteoffReversal(writeoffs), [writeoffs]);
+  const summary = useMemo(() => buildGstr3b(period, sales, purchases, reversal.totalPaise), [period, sales, purchases, reversal.totalPaise]);
+  const hasData = summary.invoiceCount > 0 || summary.purchaseCount > 0 || summary.reversalPaise > 0;
   const filerGstin = shop?.gstin ?? "";
 
   const headRows: HeadRow[] = [
@@ -139,15 +169,21 @@ export function Gstr3bPage() {
         <EmptyState title="No GST activity this period" hint={`No placed sales or received purchases for ${period}. Pick another month.`} />
       ) : (
         <div className="flex flex-col gap-7">
-          <div hidden={!hasData} className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard label="Outward taxable value" value={formatPaise(summary.outwardTaxablePaise)} hint={`${summary.invoiceCount} invoices`} />
-            <StatCard label="Output tax" value={formatPaise(summary.outputTotalPaise)} />
-            <StatCard label="Eligible ITC" value={formatPaise(summary.itcTotalPaise)} hint={`${summary.purchaseCount} purchases`} />
+          <div hidden={!hasData} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <StatCard label="Output tax" value={formatPaise(summary.outputTotalPaise)} hint={`${summary.invoiceCount} invoices`} />
+            <StatCard label="Gross ITC" value={formatPaise(summary.itcTotalPaise)} hint={`${summary.purchaseCount} purchases`} />
+            <StatCard
+              label="ITC reversal"
+              value={formatPaise(summary.reversalPaise)}
+              tone={summary.reversalPaise > 0 ? "danger" : "default"}
+              hint={`${reversal.rows.length} write-offs`}
+            />
+            <StatCard label="Net ITC" value={formatPaise(summary.netItcPaise)} hint="gross − reversal" />
             <StatCard
               label="Net payable"
               value={formatPaise(summary.netPayablePaise)}
               tone={summary.netPayablePaise > 0 ? "danger" : "success"}
-              hint={summary.creditCarryPaise > 0 ? `${formatPaise(summary.creditCarryPaise)} credit c/f` : "after full set-off"}
+              hint={summary.creditCarryPaise > 0 ? `${formatPaise(summary.creditCarryPaise)} credit c/f` : "after set-off"}
             />
           </div>
 
@@ -174,9 +210,30 @@ export function Gstr3bPage() {
             />
             <p className="mt-2 text-xs text-text-tertiary">
               Balance = output − ITC per head (negative = credit available). Net payable applies full credit set-off
-              across heads. ITC reversal (returns / expired stock) is excluded until the Returns module exists.
+              across heads, after subtracting the ITC reversal on expiry write-offs (Section 17(5)(h), Table 4B).
             </p>
           </section>
+
+          {reversal.rows.length > 0 && (
+            <section>
+              <h2 className="mb-2 text-sm font-semibold text-text-secondary">
+                ITC reversal — expiry write-offs <span className="ml-1 font-normal text-text-tertiary">({reversal.rows.length})</span>
+              </h2>
+              <DataTable<WriteoffReversalRow>
+                cols="1.6fr 1fr 0.8fr 0.6fr 1fr"
+                rows={reversal.rows}
+                rowKey={(r) => `${r.itemName}|${r.batchNo}|${r.date}`}
+                loading={loading}
+                columns={[
+                  { key: "item", header: "Item", cell: (r) => r.itemName },
+                  { key: "batch", header: "Batch", cell: (r) => <span className="tabular-nums">{r.batchNo || "—"}</span> },
+                  { key: "date", header: "Date", cell: (r) => r.date },
+                  { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty },
+                  { key: "rev", header: "ITC reversed", numeric: true, cell: (r) => formatPaise(r.reverseItcPaise) },
+                ]}
+              />
+            </section>
+          )}
         </div>
       )}
     </Page>

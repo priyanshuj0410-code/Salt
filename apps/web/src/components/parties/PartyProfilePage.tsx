@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, MessageCircle, Receipt, Save, ShoppingCart, User, Wallet } from "lucide-react";
+import { ArrowLeft, MessageCircle, MessageSquare, Receipt, Save, ShoppingCart, User, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
 import { agingFor } from "@/lib/aging";
 import { normalizePhoneForWa, reminderMessage, whatsappUrl } from "@/lib/collection";
 import { AgingTable } from "@/components/parties/AgingTable";
+import { MessageThread } from "@/components/messages/MessageThread";
 import {
   partyDue,
   paymentsAdjustment,
@@ -63,6 +64,8 @@ interface PaymentRow {
   mode: string;
   reference: string | null;
   created_at: string;
+  /** Imported historical voucher (posts_effects=false): listed, but excluded from dues. */
+  posts_effects?: boolean | null;
 }
 
 const PAY_MODES = ["cash", "upi", "bank"] as const;
@@ -135,10 +138,10 @@ export function PartyProfilePage() {
         .eq("vendor_id", id),
       supabase
         .from("payments")
-        .select("id,direction,amount_paise,mode,reference,created_at")
+        .select("id,direction,amount_paise,mode,reference,created_at,posts_effects")
         .eq("party_id", id)
         .order("created_at", { ascending: false }),
-    ]).then(([l, b, s, p, pay]) => {
+    ]).then(async ([l, b, s, p, pay]) => {
       if (!active) return;
       if (!l.data) {
         setNotFound(true);
@@ -159,7 +162,20 @@ export function PartyProfilePage() {
         );
         setLedger(l.data as Ledger);
         setBills((b.data as BillRow[] | null) ?? []);
-        setPayments((pay.data as PaymentRow[] | null) ?? []);
+        // payments.posts_effects ships in migration 0029; if it is not applied
+        // yet the select errors — fall back to the column-less query so the page
+        // still loads (all payments then count as live, matching prior behaviour).
+        let payRows = (pay.data as PaymentRow[] | null) ?? [];
+        if (pay.error) {
+          const fb = await supabase!
+            .from("payments")
+            .select("id,direction,amount_paise,mode,reference,created_at")
+            .eq("party_id", id)
+            .order("created_at", { ascending: false });
+          if (!active) return;
+          payRows = (fb.data as PaymentRow[] | null) ?? [];
+        }
+        setPayments(payRows);
         setOrders(
           [...sales, ...purchases].sort((x, y) =>
             x.created_at < y.created_at ? 1 : x.created_at > y.created_at ? -1 : 0,
@@ -173,13 +189,14 @@ export function PartyProfilePage() {
     };
   }, [orgId, id, reloadKey]);
 
-  // Imported history (posts_effects=false) is already reflected in the opening
-  // balance, so it is excluded from the live due — only post-cutover orders count.
+  // Imported docs (posts_effects=false) are already reflected in the opening
+  // balance, so they are excluded from the live due — only post-cutover orders
+  // and live payments count (SALT-166).
   const due = useMemo(
     () =>
       ledger
         ? partyDue(ledger.opening_balance_paise, orders.filter((o) => !o.imported)) +
-          paymentsAdjustment(payments)
+          paymentsAdjustment(payments.filter((p) => p.posts_effects !== false))
         : 0,
     [ledger, orders, payments],
   );
@@ -417,6 +434,14 @@ export function PartyProfilePage() {
         </div>
       </section>
 
+      {/* Internal notes (SALT-161) — live message thread, shared across counters */}
+      <section className="mt-6 rounded-lg border border-border p-4">
+        <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
+          <MessageSquare className="size-4 text-text-tertiary" /> Internal notes
+        </h2>
+        <MessageThread entityType="customer" entityId={ledger.id} />
+      </section>
+
       {/* Order history */}
       <section className="mt-6">
         <h2 className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
@@ -464,7 +489,18 @@ export function PartyProfilePage() {
             maxHeight="none"
             columns={[
               { key: "date", header: "Date", cell: (p) => <span className="text-text-tertiary">{format(new Date(p.created_at), "d MMM yyyy")}</span> },
-              { key: "mode", header: "Mode", cell: (p) => <Badge variant="neutral" className="uppercase">{p.mode}</Badge> },
+              {
+                key: "mode",
+                header: "Mode",
+                cell: (p) => (
+                  <span className="flex items-center gap-1.5">
+                    <Badge variant="neutral" className="uppercase">{p.mode}</Badge>
+                    {p.posts_effects === false && (
+                      <Badge variant="outline" className="text-text-tertiary">imported</Badge>
+                    )}
+                  </span>
+                ),
+              },
               { key: "ref", header: "Reference", cell: (p) => <span className="text-text-tertiary">{p.reference || "—"}</span> },
               {
                 key: "amount",

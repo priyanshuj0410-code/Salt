@@ -14,6 +14,7 @@ interface ItemRow {
   gst_rate: number | string;
   schedule: string;
   barcode: string | null;
+  ayush_flag: boolean | null;
 }
 
 interface BatchRow {
@@ -61,6 +62,7 @@ function mapRows(items: ItemRow[], batches: BatchRow[]): Item[] {
     gstRate: Number(r.gst_rate) || 0,
     schedule: r.schedule as Schedule,
     barcode: r.barcode ?? undefined,
+    ayush: r.ayush_flag ?? false,
     velocity: 0,
     batches: byItem.get(r.id) ?? [],
   }));
@@ -81,7 +83,7 @@ export const useCatalog = create<CatalogState>((set) => ({
         selectAll<ItemRow>((from, to) =>
           supabase!
             .from("items")
-            .select("id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode")
+            .select("id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode,ayush_flag")
             .eq("org_id", orgId)
             .range(from, to),
         ),

@@ -123,7 +123,7 @@ export function BillHistoryPage() {
 
   function reprint() {
     if (!openBill || !lines || lines.length === 0 || !shop) return;
-    const ok = printSavedBill(
+    printSavedBill(
       buildSavedInvoicePrintData({
         invoice: openBill,
         lines,
@@ -132,7 +132,6 @@ export function BillHistoryPage() {
         customer,
       }),
     );
-    setReprintErr(ok ? null : "Allow pop-ups for this site, then reprint.");
   }
 
   async function doVoid() {

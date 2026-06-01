@@ -1,6 +1,6 @@
 import {
-  invoiceHtml,
   invoiceRef,
+  printInvoice,
   type CustomerDetail,
   type InvoiceLine,
   type InvoicePrintData,
@@ -8,12 +8,12 @@ import {
 } from "@/lib/printInvoice";
 import type { Payment, PaymentMethod } from "@/lib/types";
 
-// SALT-028 — reprint a PERSISTED bill from history. buildInvoiceData (in
-// printInvoice.ts) reads live bill-store state at save time; that is gone by the
+// SALT-028 — reprint a PERSISTED bill from history. buildInvoiceData (in the
+// print module) reads live bill-store state at save time; that is gone by the
 // time we reprint, so this rebuilds the same print payload from the stored
 // sales_invoices + sale_lines rows. Stored paise are used verbatim — the GST
 // split, taxable and total are never recomputed, so a reprint is faithful to the
-// original.
+// original. Rendering (format/template/docType) is owned by printInvoice.
 
 /** Persisted sales-invoice header — the fields a reprint needs. */
 export interface SavedInvoice {
@@ -49,8 +49,9 @@ function asPaymentMethod(m: string | null): PaymentMethod {
 
 /**
  * Assemble the printable invoice payload from a stored bill. The original
- * timestamp is printed (not "now"), and interstate is inferred from a non-zero
- * IGST so the CGST/SGST-vs-IGST presentation matches what was charged.
+ * timestamp is printed (not "now"), interstate is inferred from a non-zero IGST
+ * so the CGST/SGST-vs-IGST presentation matches what was charged, and the receipt
+ * is flagged as a duplicate via the reference line.
  */
 export function buildSavedInvoicePrintData(args: {
   invoice: SavedInvoice;
@@ -65,6 +66,11 @@ export function buildSavedInvoicePrintData(args: {
     creditDays: invoice.credit_days ?? 0,
   };
   const gross = lines.reduce((s, l) => s + Math.round(l.qty * l.rate_paise), 0);
+  const lineSum = lines.reduce((s, l) => s + l.line_total_paise, 0);
+  const billDiscount = invoice.discount_paise;
+  // Whatever MRP gross is not in the line totals or the bill discount is the
+  // per-line discount the customer got off MRP.
+  const discount = Math.max(0, gross - lineSum - billDiscount);
   return {
     ref: invoice.invoice_no?.trim() || invoiceRef(invoice.id),
     dateTime: new Date(invoice.created_at).toLocaleString("en-IN", {
@@ -87,33 +93,23 @@ export function buildSavedInvoicePrintData(args: {
       gstRate: l.gst_rate,
     })),
     gross,
-    discount: invoice.discount_paise,
+    discount,
+    billDiscount,
     taxable: invoice.taxable_paise,
     cgst: invoice.cgst_paise,
     sgst: invoice.sgst_paise,
     igst: invoice.igst_paise,
     grand: invoice.total_paise,
+    reference: "DUPLICATE / REPRINT",
   };
 }
 
-/** Stamp the invoice HTML as a duplicate (ribbon just after <body>). */
-function withReprintMark(html: string): string {
-  const ribbon =
-    '<div style="text-align:center;border:1px dashed #000;font-weight:700;' +
-    'font-size:11px;letter-spacing:1px;padding:2px;margin-bottom:4px;">DUPLICATE / REPRINT</div>';
-  return html.replace("<body>", `<body>${ribbon}`);
-}
-
 /**
- * Open a reprint of a saved bill in a new window and trigger the print dialog
- * (the user can pick a printer or "Save as PDF"). Mirrors printInvoice but
- * stamps the receipt as a duplicate. Returns false if the popup was blocked —
- * the bill is already saved, so the caller can surface a retry hint.
+ * Reprint a saved bill: open the print window via the shared printInvoice (which
+ * applies the operator's saved format/template/doc-type), flagged as a duplicate.
+ * PDF = the print dialog Save-as-PDF. Popup-blocked is swallowed by printInvoice;
+ * the bill is already saved, so the user can simply reprint after allowing popups.
  */
-export function printSavedBill(data: InvoicePrintData): boolean {
-  const w = window.open("", "_blank", "width=380,height=640");
-  if (!w) return false;
-  w.document.write(withReprintMark(invoiceHtml(data)));
-  w.document.close();
-  return true;
+export function printSavedBill(data: InvoicePrintData): void {
+  printInvoice(data);
 }

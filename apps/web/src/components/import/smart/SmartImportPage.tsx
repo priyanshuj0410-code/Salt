@@ -5,19 +5,23 @@ import { UserMenu } from "@/components/auth/UserMenu";
 import { useAuth } from "@/lib/auth";
 import { ENTITIES, type EntityConfig } from "@/lib/smartImport";
 import { DOCUMENTS, type DocumentConfig } from "@/lib/smartDocument";
+import { PAYMENT_CONFIG } from "@/lib/smartPayment";
 import { cn } from "@/lib/utils";
 import { EntityStep } from "./EntityStep";
 import { LedgerStep } from "./LedgerStep";
 import { PartyGstStep } from "./PartyGstStep";
 import { DocumentStep } from "./DocumentStep";
+import { PaymentStep } from "./PaymentStep";
 
 type Step =
   | { kind: "entity"; key: string; label: string; entity: EntityConfig }
-  | { kind: "doc"; key: string; label: string; doc: DocumentConfig };
+  | { kind: "doc"; key: string; label: string; doc: DocumentConfig }
+  | { kind: "payment"; key: string; label: string };
 
 const STEPS: Step[] = [
   ...ENTITIES.map((e) => ({ kind: "entity" as const, key: e.key, label: e.label, entity: e })),
   ...DOCUMENTS.map((d) => ({ kind: "doc" as const, key: d.key, label: d.label, doc: d })),
+  { kind: "payment" as const, key: PAYMENT_CONFIG.key, label: PAYMENT_CONFIG.label },
 ];
 
 export function SmartImportPage() {
@@ -33,9 +37,12 @@ export function SmartImportPage() {
     if (step.kind === "doc") {
       return <DocumentStep key={step.key} cfg={step.doc} orgId={orgId} shopId={shopId} onComplete={advance} />;
     }
+    if (step.kind === "payment") {
+      return <PaymentStep key={step.key} orgId={orgId} shopId={shopId} onComplete={advance} />;
+    }
     if (step.key === "ledgers") return <LedgerStep key="ledgers" orgId={orgId} onComplete={advance} />;
     if (step.key === "party_gstin") return <PartyGstStep key="party_gstin" orgId={orgId} onComplete={advance} />;
-    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} onComplete={advance} />;
+    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} shopId={shopId} onComplete={advance} />;
   }
 
   return (

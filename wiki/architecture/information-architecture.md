@@ -661,7 +661,11 @@ Icon + label in expanded mode. Icon only in collapsed mode. Letter shortcut show
 | `/parties/:id` Party Profile | ✅ built |
 | `/owner` Settings → Users & invites | ✅ built |
 | `/import`, `/import/smart` Settings → Import | ✅ built |
-| Purchases · Inventory · Payments · GST · Reports · Catalogue (+ unbuilt sub-items) | ⬜ visible but disabled in the sidebar |
+| `/purchases` Purchases / GRN (+ history, detail) | ✅ built |
+| `/payments`, `/payments/make` Payments | ✅ built |
+| `/gst`, `/gst/gstr3b` GST → GSTR-1 / GSTR-3B | ✅ built |
+| `/reports` (+ `/sales` `/purchases` `/inventory` `/financial` `/tax`) Reports | ✅ built (dashboard + 5 suites, SALT-073…078) |
+| Inventory · Catalogue (+ unbuilt sub-items) | ⬜ visible but disabled in the sidebar |
 
 ## Related
 [architecture/billing-screen](billing-screen.md) · [architecture/screens-routing](screens-routing.md) · [domain/persona-wholesale-owner](../domain/persona-wholesale-owner.md) · [product/product-modules](../product/product-modules.md) · [domain/orders](../domain/orders.md)

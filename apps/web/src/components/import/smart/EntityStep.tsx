@@ -21,10 +21,12 @@ const CHUNK = 500;
 export function EntityStep({
   entity,
   orgId,
+  shopId,
   onComplete,
 }: {
   entity: EntityConfig;
   orgId: string | undefined;
+  shopId?: string | null;
   onComplete: () => void;
 }) {
   const [phase, setPhase] = useState<"upload" | "map" | "result">("upload");
@@ -69,7 +71,7 @@ export function EntityStep({
     for (let i = 0; i < payloads.length; i += CHUNK) {
       const chunk: Record<string, unknown>[] = payloads
         .slice(i, i + CHUNK)
-        .map((p) => ({ ...p, org_id: orgId }));
+        .map((p) => ({ ...p, org_id: orgId, ...(entity.shopScoped ? { shop_id: shopId } : {}) }));
       if (entity.key === "items") {
         // Rows with a product code upsert (idempotent re-import); the rest insert.
         const withCode = chunk.filter((p) => p.item_code);
@@ -84,6 +86,10 @@ export function EntityStep({
           const { error: e2 } = await supabase.from("items").insert(withoutCode);
           if (e2) return e2.message;
         }
+      } else if (entity.upsertOn) {
+        // Keyed records (invoice series, filed returns) upsert for idempotent re-import.
+        const { error: err } = await supabase.from(entity.key).upsert(chunk, { onConflict: entity.upsertOn });
+        if (err) return err.message;
       } else {
         const { error: err } = await supabase.from(entity.key).insert(chunk);
         if (err) return err.message;
@@ -94,6 +100,10 @@ export function EntityStep({
 
   async function runImport() {
     if (!parsed) return;
+    if (entity.shopScoped && !shopId) {
+      setError("No active shop — set a primary shop before importing this register.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {

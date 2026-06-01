@@ -233,3 +233,140 @@ export function buildReceiptMessage(opts: {
     opts.direction === "received" ? "Thank you for your payment." : "Payment confirmation.",
   ].join("\n");
 }
+
+// --- Bank reconciliation (SALT-058) -----------------------------------------
+
+/** A row of `bank_statement_lines` (the subset the recon UI reads). */
+export interface BankStatementLine {
+  id: string;
+  txn_date: string | null;
+  amount_paise: number; // signed: +credit / −debit
+  description: string | null;
+  reference: string | null;
+}
+
+/** A parsed-but-not-yet-saved statement line from an imported CSV. */
+export type ParsedStatementLine = Omit<BankStatementLine, "id">;
+
+function splitCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let cur = "";
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quoted) {
+      if (c === '"') {
+        if (line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else quoted = false;
+      } else cur += c;
+    } else if (c === ",") {
+      out.push(cur);
+      cur = "";
+    } else if (c === '"') quoted = true;
+    else cur += c;
+  }
+  out.push(cur);
+  return out.map((s) => s.trim());
+}
+
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/** Parse the common Indian bank-statement date shapes into YYYY-MM-DD. */
+export function parseStatementDate(raw: string): string | null {
+  const t = (raw || "").trim();
+  if (!t) return null;
+  let m = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = t.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})/);
+  if (m) {
+    const y = m[3].length === 2 ? "20" + m[3] : m[3];
+    return `${y}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  }
+  m = t.match(/^(\d{1,2})[- ]([A-Za-z]{3})[- ](\d{2,4})/);
+  if (m) {
+    const mi = MONTHS.indexOf(m[2].toLowerCase());
+    if (mi >= 0) {
+      const y = m[3].length === 2 ? "20" + m[3] : m[3];
+      return `${y}-${String(mi + 1).padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    }
+  }
+  const d = new Date(t);
+  return isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+}
+
+function csvToPaise(raw: string): number {
+  const n = Number((raw || "").replace(/[^0-9.-]/g, ""));
+  return isNaN(n) ? 0 : Math.round(n * 100);
+}
+
+/**
+ * Parse a bank-statement CSV into signed paise lines. Detects a header row with
+ * date / amount (or separate debit & credit) / description / reference columns;
+ * credit is +, debit is −. Best-effort across the messy formats Indian banks export.
+ */
+export function parseStatementCsv(text: string): ParsedStatementLine[] {
+  const rows = text.split(/\r?\n/).filter((l) => l.trim());
+  if (!rows.length) return [];
+  const header = splitCsvLine(rows[0]).map((h) => h.toLowerCase());
+  const find = (re: RegExp) => header.findIndex((h) => re.test(h));
+  const di = find(/date/);
+  const amtI = find(/amount|amt/);
+  const debI = find(/debit|withdrawal/);
+  const credI = find(/credit|deposit/);
+  const descI = find(/desc|narration|particular|details|remark/);
+  const refI = find(/ref|cheque|chq|utr|txn|transaction/);
+  const hasHeader = di >= 0 || amtI >= 0 || debI >= 0 || credI >= 0;
+  const body = hasHeader ? rows.slice(1) : rows;
+  const out: ParsedStatementLine[] = [];
+  for (const r of body) {
+    const c = splitCsvLine(r);
+    const txn_date = di >= 0 ? parseStatementDate(c[di] ?? "") : null;
+    let amount_paise: number;
+    if (amtI >= 0 && (c[amtI] ?? "").trim()) amount_paise = csvToPaise(c[amtI]);
+    else amount_paise = (credI >= 0 ? csvToPaise(c[credI] ?? "") : 0) - (debI >= 0 ? csvToPaise(c[debI] ?? "") : 0);
+    if (amount_paise === 0 && !txn_date) continue;
+    out.push({
+      txn_date,
+      amount_paise,
+      description: descI >= 0 ? c[descI] || null : null,
+      reference: refI >= 0 ? c[refI] || null : null,
+    });
+  }
+  return out;
+}
+
+function dayGap(a: string | null, b: string | null): number {
+  if (!a || !b) return 1e9;
+  return Math.abs(new Date(a).getTime() - new Date(b).getTime()) / 86400000;
+}
+
+export interface ReconResult {
+  matched: { line: BankStatementLine; payment: PaymentListRow }[];
+  unmatchedLines: BankStatementLine[];
+  unmatchedPayments: PaymentListRow[];
+}
+
+/**
+ * One-to-one auto-match of statement lines to recorded payments by signed
+ * amount (a received payment is a bank credit; a paid payment, a debit), with
+ * nearest payment-date as the tie-break. Leftovers are flagged on both sides.
+ */
+export function reconcile(lines: BankStatementLine[], payments: PaymentListRow[]): ReconResult {
+  const used = new Set<string>();
+  const matched: ReconResult["matched"] = [];
+  const unmatchedLines: BankStatementLine[] = [];
+  for (const line of lines) {
+    const cands = payments
+      .filter((p) => !used.has(p.id) && signedAmount(p) === line.amount_paise)
+      .sort((a, b) => dayGap(a.payment_date, line.txn_date) - dayGap(b.payment_date, line.txn_date));
+    if (cands.length === 0) {
+      unmatchedLines.push(line);
+      continue;
+    }
+    used.add(cands[0].id);
+    matched.push({ line, payment: cands[0] });
+  }
+  return { matched, unmatchedLines, unmatchedPayments: payments.filter((p) => !used.has(p.id)) };
+}

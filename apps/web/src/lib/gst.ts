@@ -433,9 +433,11 @@ export interface Gstr3bSummary {
   itc: HeadAmounts; // eligible ITC from purchases
   balance: HeadAmounts; // output − itc per head (negative = credit available)
   outputTotalPaise: number;
-  itcTotalPaise: number;
-  netPayablePaise: number; // max(0, output − itc) after full set-off — the cash figure
-  creditCarryPaise: number; // max(0, itc − output) carried forward
+  itcTotalPaise: number; // gross ITC from purchases
+  reversalPaise: number; // ITC reversed on write-offs / expiry destruction (Table 4B)
+  netItcPaise: number; // itcTotal − reversal — the ITC actually available
+  netPayablePaise: number; // max(0, output − netItc) after full set-off — the cash figure
+  creditCarryPaise: number; // max(0, netItc − output) carried forward
   invoiceCount: number;
   purchaseCount: number;
 }
@@ -450,7 +452,7 @@ const emptyHead = (): HeadAmounts => ({ cgstPaise: 0, sgstPaise: 0, igstPaise: 0
  * for detail. ITC reversal (returns / expired stock) is deferred until the Returns
  * module exists. All money is paise.
  */
-export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases: Gstr3bItcRow[]): Gstr3bSummary {
+export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases: Gstr3bItcRow[], reversalPaise = 0): Gstr3bSummary {
   const output = emptyHead();
   let outwardTaxable = 0;
   for (const s of sales) {
@@ -472,6 +474,7 @@ export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases
   };
   const outputTotal = output.cgstPaise + output.sgstPaise + output.igstPaise;
   const itcTotal = itc.cgstPaise + itc.sgstPaise + itc.igstPaise;
+  const netItc = itcTotal - reversalPaise; // ITC available after the Table 4B reversal
   return {
     period,
     outwardTaxablePaise: outwardTaxable,
@@ -480,16 +483,56 @@ export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases
     balance,
     outputTotalPaise: outputTotal,
     itcTotalPaise: itcTotal,
-    netPayablePaise: Math.max(0, outputTotal - itcTotal),
-    creditCarryPaise: Math.max(0, itcTotal - outputTotal),
+    reversalPaise,
+    netItcPaise: netItc,
+    netPayablePaise: Math.max(0, outputTotal - netItc),
+    creditCarryPaise: Math.max(0, netItc - outputTotal),
     invoiceCount: sales.length,
     purchaseCount: purchases.length,
   };
 }
 
 /** GSTN-style GSTR-3B JSON (key sections: 3.1(a) outward, 4 ITC, net payable). */
+/** A write-off / expiry-destruction stock movement fed to the GSTR-3B reversal. */
+export interface WriteoffRow {
+  itemName: string;
+  batchNo: string;
+  date: string; // 'YYYY-MM-DD'
+  qty: number; // positive units written off
+  ptrPaise: number; // unit cost (GST-exclusive)
+  gstRate: number;
+}
+
+export interface WriteoffReversalRow extends WriteoffRow {
+  reverseItcPaise: number;
+}
+
+export interface WriteoffReversalView {
+  rows: WriteoffReversalRow[];
+  totalPaise: number;
+}
+
+/**
+ * ITC to reverse for the period's write-offs / expiry destructions (GSTR-3B Table 4B,
+ * Section 17(5)(h)). Per-unit ITC = PTR × the item's GST rate — the same figure
+ * `lib/destruction.ts` recorded at destruction time. Paise.
+ */
+export function buildWriteoffReversal(rows: WriteoffRow[]): WriteoffReversalView {
+  const out: WriteoffReversalRow[] = [];
+  let total = 0;
+  for (const r of rows) {
+    const reverseItcPaise = Math.round((r.qty * r.ptrPaise * r.gstRate) / 100);
+    out.push({ ...r, reverseItcPaise });
+    total += reverseItcPaise;
+  }
+  out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return { rows: out, totalPaise: total };
+}
+
 export function buildGstr3bJson(summary: Gstr3bSummary, gstin: string) {
   const r = (p: number) => Math.round(p) / 100;
+  // Apportion the reversal total across heads by the gross-ITC proportion (Table 4B).
+  const rev = (head: number) => (summary.itcTotalPaise > 0 ? Math.round((summary.reversalPaise * head) / summary.itcTotalPaise) : 0);
   return {
     gstin,
     ret_period: gstnPeriod(summary.period),
@@ -503,6 +546,7 @@ export function buildGstr3bJson(summary: Gstr3bSummary, gstin: string) {
     },
     itc_elg: {
       itc_avl: [{ ty: "OTH", camt: r(summary.itc.cgstPaise), samt: r(summary.itc.sgstPaise), iamt: r(summary.itc.igstPaise) }],
+      itc_rev: [{ ty: "OTH", camt: r(rev(summary.itc.cgstPaise)), samt: r(rev(summary.itc.sgstPaise)), iamt: r(rev(summary.itc.igstPaise)) }],
     },
     net_payable: {
       camt: r(Math.max(0, summary.balance.cgstPaise)),
@@ -519,8 +563,9 @@ export function gstr3bToCsv(summary: Gstr3bSummary): string {
   const rows: (string | number)[][] = [
     ["row", "cgst", "sgst", "igst", "total"],
     ["Output tax (sales)", m(summary.output.cgstPaise), m(summary.output.sgstPaise), m(summary.output.igstPaise), m(summary.outputTotalPaise)],
-    ["Eligible ITC (purchases)", m(summary.itc.cgstPaise), m(summary.itc.sgstPaise), m(summary.itc.igstPaise), m(summary.itcTotalPaise)],
-    ["Balance (output - ITC)", m(summary.balance.cgstPaise), m(summary.balance.sgstPaise), m(summary.balance.igstPaise), m(summary.outputTotalPaise - summary.itcTotalPaise)],
+    ["Gross ITC (purchases)", m(summary.itc.cgstPaise), m(summary.itc.sgstPaise), m(summary.itc.igstPaise), m(summary.itcTotalPaise)],
+    ["Less: ITC reversal (write-offs)", "", "", "", m(summary.reversalPaise)],
+    ["Net ITC (after reversal)", "", "", "", m(summary.netItcPaise)],
     ["Net payable (after set-off)", "", "", "", m(summary.netPayablePaise)],
     ["Outward taxable value", "", "", "", m(summary.outwardTaxablePaise)],
   ];
@@ -625,4 +670,284 @@ export function buildGstLiability(
     yoy: liabilityDelta(current, monthOrNull(shiftPeriod(currentPeriod, -12))),
     series,
   };
+}
+
+// ============================================================================
+// ITC register + reversal pre-calc (SALT-064)
+// ============================================================================
+
+/** One inward invoice in the ITC register (a `purchases` row + its vendor). */
+export interface ItcInvoiceRow {
+  invoiceNo: string;
+  date: string; // received_date 'YYYY-MM-DD'
+  vendorName: string;
+  vendorGstin: string;
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+}
+
+export interface ItcRegisterTotals {
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  itcPaise: number; // cgst + sgst + igst
+}
+
+export interface ItcRegisterView {
+  rows: ItcInvoiceRow[];
+  totals: ItcRegisterTotals;
+  count: number;
+}
+
+/** Aggregate a period's inward invoices into the ITC register (rows sorted by date). */
+export function buildItcRegister(rows: ItcInvoiceRow[]): ItcRegisterView {
+  const totals: ItcRegisterTotals = { taxablePaise: 0, cgstPaise: 0, sgstPaise: 0, igstPaise: 0, itcPaise: 0 };
+  for (const r of rows) {
+    totals.taxablePaise += r.taxablePaise;
+    totals.cgstPaise += r.cgstPaise;
+    totals.sgstPaise += r.sgstPaise;
+    totals.igstPaise += r.igstPaise;
+  }
+  totals.itcPaise = totals.cgstPaise + totals.sgstPaise + totals.igstPaise;
+  const sorted = [...rows].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return { rows: sorted, totals, count: rows.length };
+}
+
+/** A batch fed to the reversal pre-calc; `expiry` is 'YYYY-MM' (or empty). */
+export interface ExpiredBatchInput {
+  itemName: string;
+  batchNo: string;
+  expiry: string;
+  qty: number;
+  ptrPaise: number; // GST-exclusive purchase rate per unit
+  gstRate: number;
+}
+
+export interface ItcReversalRow extends ExpiredBatchInput {
+  reverseItcPaise: number;
+}
+
+export interface ItcReversalView {
+  rows: ItcReversalRow[];
+  totalReversePaise: number;
+}
+
+/**
+ * ITC to reverse on expired stock (Section 17(5)(h)). A batch counts when it still
+ * has stock (`qty > 0`) and its `expiry` month (YYYY-MM, lexical compare) is before
+ * `currentPeriod`. Per-unit ITC is estimated from PTR × the item's GST rate
+ * (advisory — the exact figure would come from the batch's purchase line). Paise.
+ */
+export function buildItcReversal(batches: ExpiredBatchInput[], currentPeriod: string): ItcReversalView {
+  const rows: ItcReversalRow[] = [];
+  let total = 0;
+  for (const b of batches) {
+    if (b.qty <= 0 || !b.expiry || b.expiry >= currentPeriod) continue;
+    const reverseItcPaise = Math.round((b.qty * b.ptrPaise * b.gstRate) / 100);
+    rows.push({ ...b, reverseItcPaise });
+    total += reverseItcPaise;
+  }
+  rows.sort((a, b) => (a.expiry < b.expiry ? -1 : a.expiry > b.expiry ? 1 : 0));
+  return { rows, totalReversePaise: total };
+}
+
+/** Flat CSV of the ITC register (spreadsheet fallback). */
+export function itcRegisterToCsv(view: ItcRegisterView): string {
+  const m = (p: number) => (Math.round(p) / 100).toFixed(2);
+  const head = ["vendor", "gstin", "invoice", "date", "taxable", "cgst", "sgst", "igst", "itc"];
+  const rows = view.rows.map((r) => [
+    r.vendorName,
+    r.vendorGstin,
+    r.invoiceNo,
+    r.date,
+    m(r.taxablePaise),
+    m(r.cgstPaise),
+    m(r.sgstPaise),
+    m(r.igstPaise),
+    m(r.cgstPaise + r.sgstPaise + r.igstPaise),
+  ]);
+  const totalRow = ["TOTAL", "", "", "", m(view.totals.taxablePaise), m(view.totals.cgstPaise), m(view.totals.sgstPaise), m(view.totals.igstPaise), m(view.totals.itcPaise)];
+  return [head, ...rows, totalRow].map((c) => c.map(csvCell).join(",")).join("\n");
+}
+
+// ============================================================================
+// Tally XML export (SALT-070) — sales + purchase vouchers for the accountant
+// ============================================================================
+
+/** A sale as a Tally voucher input (`partyName` is "Cash" for walk-in / cash bills). */
+export interface TallySaleRow {
+  invoiceNo: string;
+  date: string; // 'YYYY-MM-DD'
+  partyName: string;
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  totalPaise: number;
+}
+
+/** A purchase as a Tally voucher input. */
+export interface TallyPurchaseRow {
+  invoiceNo: string;
+  date: string;
+  vendorName: string;
+  taxablePaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  totalPaise: number;
+}
+
+const TALLY = {
+  sales: "Sales",
+  purchase: "Purchase",
+  outCgst: "Output CGST",
+  outSgst: "Output SGST",
+  outIgst: "Output IGST",
+  inCgst: "Input CGST",
+  inSgst: "Input SGST",
+  inIgst: "Input IGST",
+} as const;
+
+function xmlEscape(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c] ?? c);
+}
+
+/** paise → rupee string, 2 dp (Tally amounts are rupees). */
+function rupeeStr(paise: number): string {
+  return (Math.round(paise) / 100).toFixed(2);
+}
+
+/**
+ * One Tally ledger line. In Tally XML, AMOUNT is **negative for a debit** and
+ * positive for a credit, with ISDEEMEDPOSITIVE 'Yes' on debits. Zero is omitted.
+ */
+function ledgerEntry(name: string, debit: boolean, paise: number): string {
+  if (paise === 0) return "";
+  const amt = debit ? -Math.round(paise) : Math.round(paise);
+  return [
+    "        <ALLLEDGERENTRIES.LIST>",
+    `          <LEDGERNAME>${xmlEscape(name)}</LEDGERNAME>`,
+    `          <ISDEEMEDPOSITIVE>${debit ? "Yes" : "No"}</ISDEEMEDPOSITIVE>`,
+    `          <AMOUNT>${rupeeStr(amt)}</AMOUNT>`,
+    "        </ALLLEDGERENTRIES.LIST>",
+  ].join("\n");
+}
+
+function voucher(vchType: string, date: string, num: string, partyName: string, entries: string[]): string {
+  return [
+    "      <TALLYMESSAGE>",
+    `        <VOUCHER VCHTYPE="${xmlEscape(vchType)}" ACTION="Create">`,
+    `          <DATE>${date.replace(/-/g, "")}</DATE>`,
+    `          <VOUCHERTYPENAME>${xmlEscape(vchType)}</VOUCHERTYPENAME>`,
+    `          <VOUCHERNUMBER>${xmlEscape(num)}</VOUCHERNUMBER>`,
+    `          <PARTYLEDGERNAME>${xmlEscape(partyName)}</PARTYLEDGERNAME>`,
+    ...entries.filter(Boolean),
+    "        </VOUCHER>",
+    "      </TALLYMESSAGE>",
+  ].join("\n");
+}
+
+/**
+ * Build a Tally-importable XML envelope of the period's sales + purchase vouchers,
+ * each a balanced double entry carrying the GST split:
+ *  - Sale:     Dr party/Cash (total) · Cr Sales (taxable) · Cr Output CGST/SGST/IGST
+ *  - Purchase: Dr Purchase (taxable) · Dr Input CGST/SGST/IGST · Cr vendor (total)
+ * Ledgers are referenced by name (Tally maps/creates them on import). Amounts in rupees.
+ */
+export function buildTallyXml(companyName: string, sales: TallySaleRow[], purchases: TallyPurchaseRow[]): string {
+  const vouchers: string[] = [];
+  for (const s of sales) {
+    vouchers.push(
+      voucher("Sales", s.date, s.invoiceNo, s.partyName, [
+        ledgerEntry(s.partyName, true, s.totalPaise),
+        ledgerEntry(TALLY.sales, false, s.taxablePaise),
+        ledgerEntry(TALLY.outCgst, false, s.cgstPaise),
+        ledgerEntry(TALLY.outSgst, false, s.sgstPaise),
+        ledgerEntry(TALLY.outIgst, false, s.igstPaise),
+      ]),
+    );
+  }
+  for (const p of purchases) {
+    vouchers.push(
+      voucher("Purchase", p.date, p.invoiceNo, p.vendorName, [
+        ledgerEntry(TALLY.purchase, true, p.taxablePaise),
+        ledgerEntry(TALLY.inCgst, true, p.cgstPaise),
+        ledgerEntry(TALLY.inSgst, true, p.sgstPaise),
+        ledgerEntry(TALLY.inIgst, true, p.igstPaise),
+        ledgerEntry(p.vendorName, false, p.totalPaise),
+      ]),
+    );
+  }
+  return [
+    '<?xml version="1.0" encoding="UTF-8"?>',
+    "<ENVELOPE>",
+    "  <HEADER><TALLYREQUEST>Import Data</TALLYREQUEST></HEADER>",
+    "  <BODY>",
+    "    <IMPORTDATA>",
+    "      <REQUESTDESC>",
+    "        <REPORTNAME>Vouchers</REPORTNAME>",
+    `        <STATICVARIABLES><SVCURRENTCOMPANY>${xmlEscape(companyName)}</SVCURRENTCOMPANY></STATICVARIABLES>`,
+    "      </REQUESTDESC>",
+    "      <REQUESTDATA>",
+    ...vouchers,
+    "      </REQUESTDATA>",
+    "    </IMPORTDATA>",
+    "  </BODY>",
+    "</ENVELOPE>",
+  ].join("\n");
+}
+
+// ============================================================================
+// HSN-wise summary report (SALT-068) — flexible date range (e.g. GSTR-9 annual)
+// ============================================================================
+
+/** A sale line for the HSN summary (date-filtered upstream by its invoice). */
+export interface HsnLineInput {
+  hsn: string | null;
+  gst_rate: number;
+  qty: number;
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+
+export interface HsnSummary {
+  rows: HsnRow[];
+  totals: TaxTotals;
+  qty: number;
+}
+
+/** Aggregate sale lines by HSN × rate (the GSTR-1 §12 / GSTR-9 HSN table, over any range). */
+export function buildHsnSummary(lines: HsnLineInput[]): HsnSummary {
+  const map = new Map<string, HsnRow>();
+  const totals = emptyTotals();
+  let qty = 0;
+  for (const line of lines) {
+    const hsn = line.hsn?.trim() || "—";
+    const key = `${hsn}|${line.gst_rate}`;
+    let row = map.get(key);
+    if (!row) {
+      row = { hsn, rate: line.gst_rate, qty: 0, ...emptyTotals() };
+      map.set(key, row);
+    }
+    row.qty += line.qty;
+    addInto(row, line);
+    qty += line.qty;
+    addInto(totals, line);
+  }
+  return { rows: sortRows(Array.from(map.values()), (r) => [r.hsn, r.rate]), totals, qty };
+}
+
+/** Flat CSV of the HSN summary (spreadsheet fallback). */
+export function hsnSummaryToCsv(s: HsnSummary): string {
+  const m = (p: number) => (Math.round(p) / 100).toFixed(2);
+  const head = ["hsn", "rate", "qty", "taxable", "cgst", "sgst", "igst", "total"];
+  const rows = s.rows.map((r) => [r.hsn, r.rate, r.qty, m(r.taxablePaise), m(r.cgstPaise), m(r.sgstPaise), m(r.igstPaise), m(r.totalPaise)]);
+  const total = ["TOTAL", "", s.qty, m(s.totals.taxablePaise), m(s.totals.cgstPaise), m(s.totals.sgstPaise), m(s.totals.igstPaise), m(s.totals.totalPaise)];
+  return [head, ...rows, total].map((c) => c.map(csvCell).join(",")).join("\n");
 }

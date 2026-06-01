@@ -14,7 +14,15 @@ import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { searchCatalog } from "@/lib/search";
 import { buildReceivePurchasePayload, withTimeout, TimeoutError, type PurchaseLine } from "@/lib/orders";
-import { computeGrnLine, grnTotals, isInterstate } from "@/lib/grn";
+import {
+  computeGrnLine,
+  grnTotals,
+  isInterstate,
+  matchGrnToPo,
+  discrepancyLabel,
+  type MatchableLine,
+  type LineDiscrepancy,
+} from "@/lib/grn";
 import { useCatalog } from "@/store/catalog";
 import type { Item, Payment } from "@/lib/types";
 import { CreateItemDialog } from "./CreateItemDialog";
@@ -28,10 +36,20 @@ const MAX_RESULTS = 8;
 /** GRN line grid: Item · Batch · Exp · Qty · Free · PTR · Disc% · MRP · Total · ✕ */
 const GRID = "grid-cols-[minmax(9rem,1.6fr)_0.9fr_0.8fr_0.5fr_0.5fr_0.8fr_0.6fr_0.8fr_0.9fr_2rem]";
 
+interface PoLineRow {
+  item_id: string | null;
+  name: string;
+  qty: number;
+  ptr_paise: number;
+  gst_rate: number;
+}
+
 export function GrnEntryPage() {
   const { id: routeVendorId } = useParams<{ id: string }>();
   const [sp] = useSearchParams();
   const vendorId = routeVendorId ?? sp.get("vendor") ?? null;
+  // Receiving against a purchase order (SALT-024): ?po=<id> loads + prefills it.
+  const poId = sp.get("po");
 
   const orgId = useAuth().membership?.orgId;
   const shopId = useAuth().shopId;
@@ -47,6 +65,7 @@ export function GrnEntryPage() {
   const [vendorPickerOpen, setVendorPickerOpen] = useState(false);
   const [invoiceNo, setInvoiceNo] = useState("");
   const [invoiceDate, setInvoiceDate] = useState("");
+  const [invoiceTotal, setInvoiceTotal] = useState("");
   const [query, setQuery] = useState("");
   const [lines, setLines] = useState<PurchaseLine[]>([]);
   const [payment, setPayment] = useState<Payment>({ method: "credit", creditDays: 30 });
@@ -54,14 +73,18 @@ export function GrnEntryPage() {
   const [error, setError] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
   const [createItemOpen, setCreateItemOpen] = useState(false);
+  // PO being received against: the ordered lines (for matching) + a display ref.
+  const [poLines, setPoLines] = useState<MatchableLine[] | null>(null);
+  const [poRef, setPoRef] = useState<string | null>(null);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
   }, [orgId, loadCatalog]);
 
   // Preselect the vendor when arriving from a vendor profile (?vendor= or :id).
+  // Skipped when a ?po= is present — the PO loader sets the vendor itself.
   useEffect(() => {
-    if (!supabase || !orgId || !vendorId) return;
+    if (!supabase || !orgId || !vendorId || poId) return;
     let active = true;
     supabase
       .from("ledgers")
@@ -77,7 +100,57 @@ export function GrnEntryPage() {
     return () => {
       active = false;
     };
-  }, [orgId, vendorId]);
+  }, [orgId, vendorId, poId]);
+
+  // Receive against a PO: load its header (→ vendor) + lines, prefill the grid.
+  useEffect(() => {
+    if (!supabase || !orgId || !poId) return;
+    let active = true;
+    (async () => {
+      const { data: head } = await supabase!
+        .from("purchase_orders")
+        .select("id,po_no,vendor_id,vendor:ledgers(name,state_code)")
+        .eq("org_id", orgId)
+        .eq("id", poId)
+        .maybeSingle();
+      if (!active || !head) return;
+      const h = head as unknown as {
+        po_no: string | null;
+        vendor_id: string | null;
+        vendor: { name: string; state_code: string | null } | { name: string; state_code: string | null }[] | null;
+      };
+      const v = Array.isArray(h.vendor) ? h.vendor[0] : h.vendor;
+      if (h.vendor_id && v) setVendor({ id: h.vendor_id, name: v.name, stateCode: v.state_code });
+      setPoRef(h.po_no ?? `#${poId.slice(0, 8)}`);
+
+      const { data: pol } = await supabase!
+        .from("po_lines")
+        .select("item_id,name,qty,ptr_paise,gst_rate")
+        .eq("po_id", poId);
+      if (!active) return;
+      const rows = (pol as PoLineRow[] | null) ?? [];
+      setPoLines(rows.map((r) => ({ itemId: r.item_id, name: r.name, qty: r.qty, ptrPaise: r.ptr_paise })));
+      // Prefill the GRN lines from the PO; the user adjusts to what actually arrived.
+      setLines(
+        rows.map((r) => ({
+          itemId: r.item_id ?? "",
+          name: r.name,
+          batchNo: "",
+          expiry: "",
+          qty: r.qty,
+          freeQty: 0,
+          ptrPaise: r.ptr_paise,
+          mrpPaise: 0,
+          gstRate: r.gst_rate,
+          discountType: "pct",
+          discountValue: 0,
+        })),
+      );
+    })();
+    return () => {
+      active = false;
+    };
+  }, [orgId, poId]);
 
   const interstate = isInterstate(vendor?.stateCode, shopState);
   const results = useMemo(() => (query ? searchCatalog(query, items).slice(0, MAX_RESULTS) : []), [query, items]);
@@ -86,6 +159,27 @@ export function GrnEntryPage() {
     [results, query],
   );
   const totals = useMemo(() => grnTotals(lines, interstate), [lines, interstate]);
+
+  // PO match: ordered (poLines) vs received (current lines), by item.
+  const match = useMemo(
+    () =>
+      poLines
+        ? matchGrnToPo(
+            lines.map((l) => ({ itemId: l.itemId || null, name: l.name, qty: l.qty, ptrPaise: l.ptrPaise })),
+            poLines,
+          )
+        : null,
+    [lines, poLines],
+  );
+  const flagsByItem = useMemo(() => {
+    const m = new Map<string, LineDiscrepancy[]>();
+    if (match) for (const d of match.discrepancies) if (d.itemId) m.set(d.itemId, [...(m.get(d.itemId) ?? []), d]);
+    return m;
+  }, [match]);
+
+  // Supplier-invoice cross-check: flag if the entered invoice total ≠ computed GRN total.
+  const invoiceTotalPaise = toPaise(invoiceTotal);
+  const invoiceMismatch = invoiceTotal.trim() !== "" && invoiceTotalPaise !== totals.grandTotalPaise;
 
   function addItem(item: Item) {
     const b = item.batches[0];
@@ -129,10 +223,13 @@ export function GrnEntryPage() {
     setSaving(true);
     setError(null);
     try {
-      const args = buildReceivePurchasePayload(shopId, { id: vendor.id, name: vendor.name }, lines, payment, interstate, {
+      const base = buildReceivePurchasePayload(shopId, { id: vendor.id, name: vendor.name }, lines, payment, interstate, {
         vendorInvoiceNo: invoiceNo,
         vendorInvoiceDate: invoiceDate,
       });
+      // Link the GRN to its PO (server marks the PO received). p_po_id is a valid
+      // receive_purchase arg; added here to keep the shared builder PO-agnostic.
+      const args = poId ? { ...base, p_po_id: poId } : base;
       const { data, error: err } = await withTimeout(supabase.rpc("receive_purchase", args), 15000);
       if (err) setError(err.message);
       else navigate(typeof data === "string" ? `/purchases/${data}` : "/purchases");
@@ -173,7 +270,7 @@ export function GrnEntryPage() {
       />
 
       {/* Vendor + invoice meta */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-4">
         <Field label="Vendor">
           <button
             onClick={() => setVendorPickerOpen(true)}
@@ -191,7 +288,50 @@ export function GrnEntryPage() {
         <Field label="Invoice date">
           <Input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="h-9" />
         </Field>
+        <Field label="Invoice total ₹ (optional)">
+          <Input
+            type="number"
+            min={0}
+            value={invoiceTotal}
+            onChange={(e) => setInvoiceTotal(e.target.value)}
+            placeholder="cross-check"
+            className="h-9 text-right tabular-nums"
+          />
+        </Field>
       </div>
+
+      {/* PO match banner (SALT-024) */}
+      {poRef && match && (
+        <div
+          className={`mt-3 rounded-md px-3 py-2 text-sm ${match.matched ? "bg-success-bg text-success" : "bg-warning-bg text-warning"}`}
+        >
+          <div>
+            {match.matched ? (
+              <>
+                Matches PO <span className="font-medium">{poRef}</span> — ordered {formatPaise(match.orderedTotalPaise)},
+                received {formatPaise(match.receivedTotalPaise)}.
+              </>
+            ) : (
+              <>
+                Receiving against PO <span className="font-medium">{poRef}</span> —{" "}
+                <span className="font-medium">
+                  {match.discrepancies.length} discrepanc{match.discrepancies.length === 1 ? "y" : "ies"}
+                </span>{" "}
+                (ordered {formatPaise(match.orderedTotalPaise)} vs received {formatPaise(match.receivedTotalPaise)}).
+              </>
+            )}
+          </div>
+          {!match.matched && (
+            <ul className="mt-1 list-disc pl-5 text-xs">
+              {match.discrepancies.map((d, i) => (
+                <li key={i}>
+                  <span className="font-medium">{d.name}</span>: {discrepancyLabel(d)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {usingSeed && (
         <p className="mt-3 rounded-md bg-warning-bg px-3 py-2 text-sm text-warning">
@@ -257,10 +397,16 @@ export function GrnEntryPage() {
           ) : (
             lines.map((l, i) => {
               const c = computeGrnLine(l, interstate);
+              const flags = l.itemId ? flagsByItem.get(l.itemId) : undefined;
               return (
                 <div key={i} className={`grid ${GRID} items-center gap-2 border-b border-divider px-3 py-1.5 text-sm last:border-b-0`}>
                   <div className="min-w-0">
-                    <div className="truncate" title={l.name}>{l.name}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="truncate" title={l.name}>{l.name}</span>
+                      {flags?.map((d, k) => (
+                        <Badge key={k} variant="warning" className="shrink-0">{discrepancyLabel(d)}</Badge>
+                      ))}
+                    </div>
                     <div className="truncate text-[0.6875rem] text-text-tertiary">
                       eff {formatPaise(c.effectiveCostPaise)}/u · GST {formatPaise(c.gstPaise)} @ {l.gstRate}%
                       {l.freeQty ? ` · +${l.freeQty} free` : ""}
@@ -324,6 +470,11 @@ export function GrnEntryPage() {
             <span className="tabular-nums">{formatPaise(totals.grandTotalPaise)}</span>
           </div>
           <p className="text-right text-[0.6875rem] text-text-tertiary">ITC claimable {formatPaise(totals.gstPaise)}</p>
+          {invoiceMismatch && (
+            <p className="text-right text-[0.6875rem] text-warning">
+              ⚠ Invoice total {formatPaise(invoiceTotalPaise)} ≠ computed {formatPaise(totals.grandTotalPaise)}
+            </p>
+          )}
         </div>
       </div>
 
@@ -331,7 +482,7 @@ export function GrnEntryPage() {
 
       <div className="mt-4 flex items-center gap-2">
         <Button size="lg" onClick={save} disabled={!canSave}>
-          <Truck /> {saving ? "Saving…" : "Record GRN"}
+          <Truck /> {saving ? "Saving…" : poId ? "Receive against PO" : "Record GRN"}
         </Button>
         <Button variant="ghost" onClick={() => navigate("/purchases")}>
           Cancel
