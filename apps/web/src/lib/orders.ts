@@ -103,6 +103,9 @@ export interface SalesInvoiceArgs {
    *  call still resolves against the pre-0034 RPC signature; the server re-validates
    *  that these sum to the invoice total and that a credit leg has a party. */
   p_tenders?: Tender[];
+  /** The salesman who booked this bill (SALT-192). Optional; omitted when none is picked.
+   *  The RPC takes it as the last param (0050), so a bill without one is unaffected. */
+  p_salesman_id?: string;
 }
 
 /**
@@ -121,6 +124,7 @@ export function buildSalesInvoicePayload(
   tenders: Tender[] | null = null,
   notes: string | null = null,
   seriesId: string | null = null,
+  salesmanId: string | null = null,
 ): SalesInvoiceArgs {
   // Send the post-bill-discount net as each line total, so the server's GST split
   // (backed out of line_total_paise) matches what the counter displayed.
@@ -162,6 +166,8 @@ export function buildSalesInvoicePayload(
   // Only attach p_series_id when a non-default series was picked (SALT-209); otherwise the
   // server falls back to the shop's default series exactly as before.
   if (seriesId) args.p_series_id = seriesId;
+  // Attribute the bill to the chosen salesman (SALT-192); omitted ⇒ no attribution.
+  if (salesmanId) args.p_salesman_id = salesmanId;
   return args;
 }
 
