@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable, type Column } from "@/components/patterns/data-table";
 import { ScheduleBadge, AyushBadge, ColdChainBadge } from "@/components/catalog/ScheduleBadge";
+import { MessageThread } from "@/components/messages/MessageThread";
 import { mrpRange } from "@/components/catalog/format";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -650,6 +651,15 @@ export function ItemDetailPage() {
             }
           />
         )}
+      </section>
+
+      {/* Internal team notes for this item (SALT-162), live across counters */}
+      <section className="mt-6 rounded-lg border border-border p-4">
+        <div className="mb-1 flex items-baseline justify-between">
+          <h2 className="text-sm font-medium text-text-primary">Notes</h2>
+          <span className="text-xs text-text-tertiary">Internal team messages about this item — synced across counters.</span>
+        </div>
+        <MessageThread entityType="item" entityId={item.id} />
       </section>
     </Page>
   );
