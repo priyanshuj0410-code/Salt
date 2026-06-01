@@ -144,6 +144,24 @@ export function BillingScreen() {
     });
   }, [shopId, loadHeld]);
 
+  // Live stock (SALT-179): reflect another counter's batch change on this counter's search + FEFO
+  // without a refresh. Dormant until `batches` joins the realtime publication (SALT-217) — until
+  // then the subscription just receives no events, so it is safe to ship ahead. Completes the
+  // "live reflection" half of SALT-041 (the no-over-commit half shipped server-side via SALT-181).
+  useEffect(() => {
+    if (!orgId) return;
+    return subscribeTableChanges<{ item_id: string; batch_no: string | null; qty: number }>({
+      channel: `stock-${orgId}`,
+      table: "batches",
+      filter: `org_id=eq.${orgId}`,
+      event: "*",
+      onChange: (row, eventType) =>
+        useCatalog
+          .getState()
+          .applyBatchQty(row.item_id, row.batch_no ?? "", eventType === "DELETE" ? 0 : row.qty),
+    });
+  }, [orgId]);
+
   useEffect(() => {
     const id = party?.id;
     if (!supabase || !id) return;
