@@ -142,7 +142,9 @@ export function buildSalesInvoicePayload(
       batch_no: l.batchNo,
       expiry: l.expiry,
       qty: l.qty,
-      rate_paise: l.mrpPaise,
+      // The billed unit rate (SALT-191A) — the customer-pricing rate when set, else MRP.
+      // line_total_paise (the net) already reflects it; the server backs GST out of that.
+      rate_paise: l.ratePaise ?? l.mrpPaise,
       discount_type: l.discountType,
       discount_value: l.discountValue,
       gst_rate: l.gstRate,

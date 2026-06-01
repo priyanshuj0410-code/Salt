@@ -92,7 +92,7 @@ export function BillSummary({
 
   return (
     <div className="hidden flex-col gap-3 overflow-auto rounded-lg border border-border p-4 md:flex">
-      <Row label="Gross (MRP)" value={formatPaise(t.gross)} muted />
+      <Row label="Gross" value={formatPaise(t.gross)} muted />
       <Row
         label="Discount"
         value={t.discount > 0 ? `− ${formatPaise(t.discount)}` : formatPaise(0)}

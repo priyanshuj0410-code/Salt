@@ -12,7 +12,7 @@ import {
 import { ScheduleBadge } from "./ScheduleBadge";
 import { BatchPicker } from "./BatchPicker";
 import { formatPaise, formatSigned } from "@/lib/currency";
-import { lineMargin, lineMaxQty, lineNet } from "@/lib/billing";
+import { lineMargin, lineMaxQty, lineNet, lineRate } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 import type { BillLine } from "@/lib/types";
 import { useBill } from "@/store/bill";
@@ -25,6 +25,7 @@ export function BillTable() {
   const lines = useBill((s) => s.lines);
   const setQty = useBill((s) => s.setQty);
   const setDiscount = useBill((s) => s.setDiscount);
+  const setRate = useBill((s) => s.setRate);
   const removeLine = useBill((s) => s.removeLine);
   const catalog = useCatalog((s) => s.items);
   const [pickerLine, setPickerLine] = useState<BillLine | null>(null);
@@ -117,6 +118,28 @@ export function BillTable() {
                   </>
                 )}
               </button>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <span className="text-[11px] text-text-tertiary">Rate</span>
+                <div className="flex items-center gap-1.5">
+                  {l.ruleLabel && l.ruleLabel !== "MRP" && (
+                    <span className="rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-text-secondary">
+                      {l.ruleLabel}
+                    </span>
+                  )}
+                  {lineRate(l) !== l.mrpPaise && (
+                    <span className="text-[11px] text-text-tertiary line-through">{formatPaise(l.mrpPaise)}</span>
+                  )}
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={lineRate(l) / 100}
+                    onChange={(e) => setRate(l.key, Math.round((parseFloat(e.target.value) || 0) * 100))}
+                    aria-label={`Rate for ${l.name}`}
+                    className={cn(cellInput, "w-20")}
+                  />
+                </div>
+              </div>
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
                   <div className="text-[11px] text-text-tertiary">Qty</div>
@@ -205,7 +228,7 @@ export function BillTable() {
           <TableRow>
             <TableHead className="w-8">#</TableHead>
             <TableHead>Item</TableHead>
-            <TableHead className="w-24 text-right">MRP</TableHead>
+            <TableHead className="w-28 text-right">Rate</TableHead>
             <TableHead className="w-36 text-center">Qty</TableHead>
             <TableHead className="w-32 text-center">Discount</TableHead>
             <TableHead className="w-32 text-right">Amount</TableHead>
@@ -250,8 +273,22 @@ export function BillTable() {
                     )}
                   </button>
                 </TableCell>
-                <TableCell className="text-right align-top tabular-nums">
-                  {formatPaise(l.mrpPaise)}
+                <TableCell className="align-top">
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={lineRate(l) / 100}
+                    onChange={(e) => setRate(l.key, Math.round((parseFloat(e.target.value) || 0) * 100))}
+                    aria-label={`Rate for ${l.name}`}
+                    className={cn(cellInput, "w-20")}
+                  />
+                  {(lineRate(l) !== l.mrpPaise || (l.ruleLabel && l.ruleLabel !== "MRP")) && (
+                    <div className="mt-0.5 text-right text-[11px] text-muted-foreground">
+                      {l.ruleLabel && l.ruleLabel !== "MRP" ? `${l.ruleLabel} · ` : ""}
+                      MRP {formatPaise(l.mrpPaise)}
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell className="align-top">
                   <div className="flex items-center justify-center gap-1">

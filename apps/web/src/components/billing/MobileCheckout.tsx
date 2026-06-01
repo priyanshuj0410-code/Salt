@@ -53,7 +53,7 @@ export function MobileCheckout({
     <div className="border-t border-border bg-background md:hidden">
       {open && (
         <div className="max-h-[55vh] space-y-2 overflow-auto border-b border-border p-3">
-          <Row label="Gross (MRP)" value={formatPaise(t.gross)} muted />
+          <Row label="Gross" value={formatPaise(t.gross)} muted />
           <Row
             label="Discount"
             value={t.discount > 0 ? `− ${formatPaise(t.discount)}` : formatPaise(0)}
