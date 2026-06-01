@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
 import { GstinPrompt } from "./GstinPrompt";
 import { H1Notice } from "./H1Gate";
+import { CreditNotice } from "./CreditNotice";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -75,7 +76,7 @@ export function BillSummary({
   const clear = useBill((s) => s.clear);
   const parkBill = useBill((s) => s.parkBill);
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
-  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
+  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const tax = gstSplit(t.gst, isInterstate);
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
@@ -184,6 +185,7 @@ export function BillSummary({
         {needsRx && (
           <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
         )}
+        {creditWarn.over && <CreditNotice check={creditWarn} />}
         <Button
           size="lg"
           disabled={empty || saving || usingSeed || !shopId}

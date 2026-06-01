@@ -45,6 +45,7 @@ Sub-components:
 | `ScheduleBadge.tsx` | H / H1 / X / OTC badge on search results **and bill lines** |
 | `H1Gate.tsx` | Schedule H1/X checkout gate dialog + `H1Notice` inline banner — see [Schedule H1/X gate](#schedule-h1x-gate) |
 | `ParkedBills.tsx` | Held-bills strip under the header — resume/discard bills set aside on this counter — see [Parked / held bills](#parked--held-bills) |
+| `CreditNotice.tsx` | Amber over-credit-limit warning at checkout — see [Credit-limit warning](#credit-limit-warning) |
 
 ## Keyboard map
 
@@ -121,6 +122,12 @@ The **same** helper feeds all three surfaces, so the client and server never dis
 - `buildInvoiceData(..., billDiscount)` (the printed receipt — per-line amounts + a "Bill discount" row).
 
 Held bills (below) snapshot their `billDiscount`; `clear()` resets it. All money integer paise; the apportionment is smoke-tested for exact-sum + bounds.
+
+## Credit-limit warning
+
+A **non-blocking** amber notice (`CreditNotice`) at checkout when a **credit** sale would push the bound customer over their credit limit (SALT-004). Pure `creditCheck(method, limit, dues, bill)` (`lib/credit.ts`) flags `over` only for a credit-method sale to a party with `credit_limit_paise > 0` where `dues + this bill > limit`; the notice shows the limit, current dues, and the overage. The cashier can still save — it informs, never gates (cash sales / walk-in / no-limit ⇒ nothing shown).
+
+`BillingScreen` fetches the party's limit + current dues on bind via `fetchPartyCredit` (`lib/credit.ts`), reusing the party-profile math (`partyDue` + `paymentsAdjustment`, imported `posts_effects=false` docs excluded). The `credit_limit_paise` lives on `ledgers` (0007), editable on the party profile.
 
 ## Parked / held bills
 
