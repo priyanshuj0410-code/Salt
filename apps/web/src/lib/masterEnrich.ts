@@ -65,7 +65,7 @@ const SALT_PLACEHOLDERS = new Set([
   "others", "other", "na", "n/a", "nil", "none", "general", "misc",
   "miscellaneous", "unknown", "-", "--", "---", ".", "0", "x", "xxx",
 ]);
-function isBlankish(s: string | null | undefined): boolean {
+export function isBlankish(s: string | null | undefined): boolean {
   const t = (s ?? "").trim();
   return t === "" || SALT_PLACEHOLDERS.has(t.toLowerCase());
 }

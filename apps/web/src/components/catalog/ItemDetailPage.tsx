@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, PencilLine, Plus, Save, Tag, X } from "lucide-react";
+import { ArrowLeft, PencilLine, Plus, Save, Sparkles, Tag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Page } from "@/components/patterns/page";
@@ -17,6 +17,7 @@ import { itemStock, fefoBatch } from "@/lib/search";
 import { findSubstitutes, type Substitute } from "@/lib/substitutes";
 import { summarizePurchasePrices, type PurchasePriceRow } from "@/lib/priceHistory";
 import { formatPaise } from "@/lib/currency";
+import { isBlankish } from "@/lib/masterEnrich";
 import type { Batch, Item, Schedule } from "@/lib/types";
 
 const SCHEDULES: Schedule[] = ["OTC", "H", "H1", "X"];
@@ -33,6 +34,7 @@ function formFrom(i: Item) {
   return {
     name: i.name,
     salt: i.salt,
+    therapeuticCategory: i.therapeuticCategory ?? "",
     manufacturer: i.manufacturer,
     pack: i.pack,
     hsn: i.hsn,
@@ -73,6 +75,9 @@ export function ItemDetailPage() {
   const [aliasBusy, setAliasBusy] = useState(false);
   const [aliasReload, setAliasReload] = useState(0);
   const [priceRows, setPriceRows] = useState<PurchasePriceRow[]>([]);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiMsg, setAiMsg] = useState<string | null>(null);
+  const autoFilled = useRef<string | null>(null);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -139,6 +144,23 @@ export function ItemDetailPage() {
 
   const item = items.find((i) => i.id === id);
 
+  // Auto-suggest once on open for un-classified items (blank or "OTHERS" salt). Kept
+  // ABOVE the early return so the hook runs every render (rules-of-hooks); the Gemini
+  // call + setState run inside the async IIFE, never synchronously in the effect body.
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      if (usingSeed || !item || editing || !isBlankish(item.salt)) return;
+      if (autoFilled.current === item.id) return;
+      autoFilled.current = item.id;
+      if (active) await runAiFill(true);
+    })();
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.id, usingSeed]);
+
   if (!item) {
     return (
       <Page width="md">
@@ -183,6 +205,7 @@ export function ItemDetailPage() {
       const base = {
         name,
         salt: form.salt.trim() || null,
+        therapeutic_category: form.therapeuticCategory.trim() || null,
         manufacturer: form.manufacturer.trim() || null,
         pack: form.pack.trim() || null,
         hsn: form.hsn.trim() || null,
@@ -210,6 +233,7 @@ export function ItemDetailPage() {
         ...item!,
         name,
         salt: form.salt.trim(),
+        therapeuticCategory: form.therapeuticCategory.trim() || undefined,
         manufacturer: form.manufacturer.trim(),
         pack: form.pack.trim(),
         hsn: form.hsn.trim(),
@@ -224,6 +248,55 @@ export function ItemDetailPage() {
       setForm(null);
     } finally {
       setBusy(false);
+    }
+  }
+
+  // AI fill (SALT — gemini-enrich): ask Gemini (server-side, our key) for the item's
+  // identity and pre-fill ONLY the empty/placeholder fields into the edit form for
+  // review. Never writes directly — the user reviews and Saves. The free, deterministic
+  // path is "Fill from master" (brand_aliases + master_items); this covers the rest.
+  async function runAiFill(auto = false) {
+    if (!supabase || !item || aiBusy) return;
+    setAiBusy(true);
+    setAiMsg(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("gemini-enrich", {
+        body: { name: item.name, manufacturer: item.manufacturer },
+      });
+      const s = data as {
+        salt?: string;
+        therapeutic_category?: string;
+        hsn?: string;
+        gst_rate?: number;
+        schedule?: string;
+        confidence?: string;
+        error?: string;
+      } | null;
+      if (error || !s || s.error || !s.salt?.trim()) {
+        if (!auto)
+          setAiMsg(s?.error === "ai_not_configured" ? "AI fill is not configured." : "AI could not identify this item.");
+        return;
+      }
+      // Fill blanks/placeholders only — never overwrite a value already present.
+      setForm((prev) => {
+        const next = { ...(prev ?? formFrom(item)) };
+        if (s.salt?.trim() && isBlankish(next.salt)) next.salt = s.salt.trim();
+        if (s.therapeutic_category?.trim() && isBlankish(next.therapeuticCategory))
+          next.therapeuticCategory = s.therapeutic_category.trim();
+        if (s.hsn?.trim() && !next.hsn.trim()) next.hsn = s.hsn.trim();
+        if (s.gst_rate && (!next.gstRate || next.gstRate === 0)) next.gstRate = s.gst_rate;
+        if (s.schedule && SCHEDULES.includes(s.schedule as Schedule) && next.schedule === "OTC")
+          next.schedule = s.schedule as Schedule;
+        return next;
+      });
+      setEditing(true);
+      setAiMsg(
+        `AI suggestions filled${s.confidence ? ` · ${s.confidence} confidence` : ""} — review and Save. Verify HSN / GST / schedule.`,
+      );
+    } catch {
+      if (!auto) setAiMsg("AI fill failed. Try again.");
+    } finally {
+      setAiBusy(false);
     }
   }
 
@@ -325,6 +398,9 @@ export function ItemDetailPage() {
         actions={
           editing ? (
             <>
+              <Button variant="outline" onClick={() => runAiFill()} disabled={busy || aiBusy}>
+                <Sparkles /> {aiBusy ? "Filling…" : "AI fill"}
+              </Button>
               <Button variant="outline" onClick={cancel} disabled={busy}>
                 <X /> Cancel
               </Button>
@@ -333,9 +409,19 @@ export function ItemDetailPage() {
               </Button>
             </>
           ) : (
-            <Button onClick={startEdit} disabled={usingSeed} title={usingSeed ? "Demo item — cannot edit" : undefined}>
-              <PencilLine /> Edit
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                onClick={() => runAiFill()}
+                disabled={usingSeed || aiBusy}
+                title={usingSeed ? "Demo item" : "Fill missing details with AI"}
+              >
+                <Sparkles /> {aiBusy ? "Filling…" : "AI fill"}
+              </Button>
+              <Button onClick={startEdit} disabled={usingSeed} title={usingSeed ? "Demo item — cannot edit" : undefined}>
+                <PencilLine /> Edit
+              </Button>
+            </>
           )
         }
       />
@@ -344,6 +430,10 @@ export function ItemDetailPage() {
         <p className="mb-4 rounded-lg border border-info-border bg-info-bg px-3 py-2 text-xs text-info">
           This is a demo item. Add or import your own catalogue to edit items.
         </p>
+      )}
+
+      {aiMsg && (
+        <p className="mb-4 rounded-lg border border-info-border bg-info-bg px-3 py-2 text-xs text-info">{aiMsg}</p>
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -364,6 +454,14 @@ export function ItemDetailPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <EditField label={form.ayush ? "Ingredients / contents" : "Salt / molecule"}>
                 <Input value={form.salt} onChange={(e) => set("salt", e.target.value)} className="h-9" placeholder="—" />
+              </EditField>
+              <EditField label="Therapeutic category">
+                <Input
+                  value={form.therapeuticCategory}
+                  onChange={(e) => set("therapeuticCategory", e.target.value)}
+                  className="h-9"
+                  placeholder="e.g. Antidiabetic"
+                />
               </EditField>
               <EditField label="Manufacturer">
                 <Input
