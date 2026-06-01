@@ -32,6 +32,7 @@ import {
   type EnrichPlanRow,
   type SaltReplaceRow,
   type MasterRow,
+  type BrandAliasRow,
 } from "@/lib/masterEnrich";
 import type { Item } from "@/lib/types";
 
@@ -93,7 +94,21 @@ export function CatalogPage() {
       const master = await selectAll<MasterRow>((from, to) =>
         supabase!.from("master_items").select("id,name,salt,hsn,gst_rate,schedule").range(from, to).returns<MasterRow[]>(),
       );
-      setEnrichPlan(planEnrichment(items, master));
+      // The brand crosswalk (brand_aliases, migrations 0051/0052) may not be seeded
+      // yet — degrade gracefully to a master-only plan if the table is absent.
+      let brands: BrandAliasRow[] = [];
+      try {
+        brands = await selectAll<BrandAliasRow>((from, to) =>
+          supabase!
+            .from("brand_aliases")
+            .select("brand_key,brand,manufacturer,composition,category,confidence")
+            .range(from, to)
+            .returns<BrandAliasRow[]>(),
+        );
+      } catch {
+        brands = [];
+      }
+      setEnrichPlan(planEnrichment(items, master, brands));
     } catch (e) {
       setEnrichError(e instanceof Error ? e.message : "Could not load the drug master.");
     } finally {
@@ -491,7 +506,10 @@ export function CatalogPage() {
                   {enrichPlan.slice(0, 50).map((r) => (
                     <div key={r.itemId} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
                       <span className="min-w-0 flex-1 truncate font-medium">{r.itemName}</span>
-                      <span className="shrink-0 text-xs text-text-tertiary">fill {r.fills.join(", ")}</span>
+                      <span className="shrink-0 text-xs text-text-tertiary">
+                        fill {r.fills.join(", ")}
+                        {r.source === "brand" ? ` · brand${r.confidence ? ` (${r.confidence})` : ""}` : ""}
+                      </span>
                     </div>
                   ))}
                   {enrichPlan.length > 50 && (

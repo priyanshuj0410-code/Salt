@@ -17,13 +17,15 @@ interface ItemRow {
   barcode: string | null;
   ayush_flag: boolean | null;
   reorder_level: number | null;
+  therapeutic_category: string | null;
   /** Optional: present only once migration 0033 (cold_chain) is applied. */
   cold_chain?: boolean | null;
 }
 
 // items column sets: the rich set includes cold_chain (migration 0033); the base
 // set omits it so the catalogue still loads if that migration has not run yet.
-const ITEM_COLS_BASE = "id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode,ayush_flag,reorder_level";
+const ITEM_COLS_BASE =
+  "id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode,ayush_flag,reorder_level,therapeutic_category";
 const ITEM_COLS = `${ITEM_COLS_BASE},cold_chain`;
 
 interface BatchRow {
@@ -77,6 +79,7 @@ function mapRows(items: ItemRow[], batches: BatchRow[]): Item[] {
     schedule: r.schedule as Schedule,
     barcode: r.barcode ?? undefined,
     ayush: r.ayush_flag ?? false,
+    therapeuticCategory: r.therapeutic_category ?? undefined,
     reorderLevel: r.reorder_level ?? 0,
     coldChain: r.cold_chain ?? false,
     velocity: 0,
