@@ -108,7 +108,7 @@ function App() {
       <Route
         path="/"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="counter">
             <BillingScreen />
           </ProtectedRoute>
         }
@@ -116,7 +116,7 @@ function App() {
       <Route
         path="/activity"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="activity">
             <ActivityPage />
           </ProtectedRoute>
         }
@@ -124,7 +124,7 @@ function App() {
       <Route
         path="/approvals"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute permission="approvals">
             <ApprovalsPage />
           </ProtectedRoute>
         }
@@ -132,7 +132,7 @@ function App() {
       <Route
         path="/owner"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <OwnerHome />
           </ProtectedRoute>
         }
@@ -140,7 +140,7 @@ function App() {
       <Route
         path="/setup"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <SetupWizard />
           </ProtectedRoute>
         }
@@ -148,7 +148,7 @@ function App() {
       <Route
         path="/parties"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="parties">
             <PartiesPage />
           </ProtectedRoute>
         }
@@ -156,7 +156,7 @@ function App() {
       <Route
         path="/parties/:id"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="parties">
             <PartyProfilePage />
           </ProtectedRoute>
         }
@@ -164,7 +164,7 @@ function App() {
       <Route
         path="/purchases"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <GrnListPage />
           </ProtectedRoute>
         }
@@ -172,7 +172,7 @@ function App() {
       <Route
         path="/purchases/new"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <GrnEntryPage />
           </ProtectedRoute>
         }
@@ -180,7 +180,7 @@ function App() {
       <Route
         path="/purchases/orders"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <PoListPage />
           </ProtectedRoute>
         }
@@ -188,7 +188,7 @@ function App() {
       <Route
         path="/purchases/orders/new"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <PoEntryPage />
           </ProtectedRoute>
         }
@@ -196,7 +196,7 @@ function App() {
       <Route
         path="/purchases/orders/suggest"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <AutoPoPage />
           </ProtectedRoute>
         }
@@ -204,7 +204,7 @@ function App() {
       <Route
         path="/purchases/orders/:id"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <PoDetailPage />
           </ProtectedRoute>
         }
@@ -212,7 +212,7 @@ function App() {
       <Route
         path="/purchases/schemes"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <VendorSchemesPage />
           </ProtectedRoute>
         }
@@ -220,7 +220,7 @@ function App() {
       <Route
         path="/purchases/scan"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <OcrInvoiceImportPage />
           </ProtectedRoute>
         }
@@ -228,7 +228,7 @@ function App() {
       <Route
         path="/purchases/returns"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <DebitNoteListPage />
           </ProtectedRoute>
         }
@@ -236,7 +236,7 @@ function App() {
       <Route
         path="/purchases/returns/new"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <DebitNoteEntryPage />
           </ProtectedRoute>
         }
@@ -244,7 +244,7 @@ function App() {
       <Route
         path="/purchases/returns/:id"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <DebitNoteDetailPage />
           </ProtectedRoute>
         }
@@ -252,7 +252,7 @@ function App() {
       <Route
         path="/purchases/:id"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="purchases">
             <GrnDetailPage />
           </ProtectedRoute>
         }
@@ -260,7 +260,7 @@ function App() {
       <Route
         path="/bills"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="sales">
             <BillHistoryPage />
           </ProtectedRoute>
         }
@@ -268,7 +268,7 @@ function App() {
       <Route
         path="/bills/credit-notes"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="sales">
             <CreditNotesPage />
           </ProtectedRoute>
         }
@@ -276,7 +276,7 @@ function App() {
       <Route
         path="/inventory"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <StockLedgerPage />
           </ProtectedRoute>
         }
@@ -284,7 +284,7 @@ function App() {
       <Route
         path="/inventory/near-expiry"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <NearExpiryPage />
           </ProtectedRoute>
         }
@@ -292,7 +292,7 @@ function App() {
       <Route
         path="/inventory/dead-stock"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <DeadStockPage />
           </ProtectedRoute>
         }
@@ -300,7 +300,7 @@ function App() {
       <Route
         path="/inventory/reorder"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <ReorderPage />
           </ProtectedRoute>
         }
@@ -308,7 +308,7 @@ function App() {
       <Route
         path="/inventory/out-of-stock"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <OutOfStockPage />
           </ProtectedRoute>
         }
@@ -316,7 +316,7 @@ function App() {
       <Route
         path="/inventory/turnover"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <TurnoverPage />
           </ProtectedRoute>
         }
@@ -324,7 +324,7 @@ function App() {
       <Route
         path="/inventory/adjustments"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <AdjustmentsPage />
           </ProtectedRoute>
         }
@@ -332,7 +332,7 @@ function App() {
       <Route
         path="/inventory/count"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <PhysicalCountPage />
           </ProtectedRoute>
         }
@@ -340,7 +340,7 @@ function App() {
       <Route
         path="/inventory/destruction"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <ExpiryDestructionPage />
           </ProtectedRoute>
         }
@@ -348,7 +348,7 @@ function App() {
       <Route
         path="/inventory/transfers"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="inventory">
             <TransfersPage />
           </ProtectedRoute>
         }
@@ -356,7 +356,7 @@ function App() {
       <Route
         path="/gst"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="gst">
             <Gstr1Page />
           </ProtectedRoute>
         }
@@ -364,7 +364,7 @@ function App() {
       <Route
         path="/gst/gstr3b"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="gst">
             <Gstr3bPage />
           </ProtectedRoute>
         }
@@ -372,7 +372,7 @@ function App() {
       <Route
         path="/gst/liability"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="gst">
             <GstLiabilityPage />
           </ProtectedRoute>
         }
@@ -380,7 +380,7 @@ function App() {
       <Route
         path="/gst/itc"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="gst">
             <ItcRegisterPage />
           </ProtectedRoute>
         }
@@ -388,7 +388,7 @@ function App() {
       <Route
         path="/gst/tally"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="gst">
             <TallyExportPage />
           </ProtectedRoute>
         }
@@ -396,7 +396,7 @@ function App() {
       <Route
         path="/gst/hsn"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="gst">
             <HsnReportPage />
           </ProtectedRoute>
         }
@@ -404,7 +404,7 @@ function App() {
       <Route
         path="/gst/h1"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="gst">
             <H1RegisterPage />
           </ProtectedRoute>
         }
@@ -412,7 +412,7 @@ function App() {
       <Route
         path="/reports"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="reports">
             <DashboardPage />
           </ProtectedRoute>
         }
@@ -420,7 +420,7 @@ function App() {
       <Route
         path="/reports/sales"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="reports">
             <SalesReportsPage />
           </ProtectedRoute>
         }
@@ -428,7 +428,7 @@ function App() {
       <Route
         path="/reports/purchases"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="reports">
             <PurchaseReportsPage />
           </ProtectedRoute>
         }
@@ -436,7 +436,7 @@ function App() {
       <Route
         path="/reports/inventory"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="reports">
             <InventoryReportsPage />
           </ProtectedRoute>
         }
@@ -444,7 +444,7 @@ function App() {
       <Route
         path="/reports/financial"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="reports">
             <FinancialReportsPage />
           </ProtectedRoute>
         }
@@ -452,7 +452,7 @@ function App() {
       <Route
         path="/reports/tax"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="reports">
             <TaxReportsPage />
           </ProtectedRoute>
         }
@@ -460,7 +460,7 @@ function App() {
       <Route
         path="/payments"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="payments">
             <PaymentsPage />
           </ProtectedRoute>
         }
@@ -468,7 +468,7 @@ function App() {
       <Route
         path="/payments/make"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="payments">
             <MakePaymentPage />
           </ProtectedRoute>
         }
@@ -476,7 +476,7 @@ function App() {
       <Route
         path="/catalogue"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="catalogue">
             <CatalogPage />
           </ProtectedRoute>
         }
@@ -484,7 +484,7 @@ function App() {
       <Route
         path="/catalogue/:id"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="catalogue">
             <ItemDetailPage />
           </ProtectedRoute>
         }
@@ -492,7 +492,7 @@ function App() {
       <Route
         path="/salesmen"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="salesmen">
             <SalesmenPage />
           </ProtectedRoute>
         }
@@ -500,7 +500,7 @@ function App() {
       <Route
         path="/salesmen/:id"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="salesmen">
             <SalesmanDetailPage />
           </ProtectedRoute>
         }
@@ -508,7 +508,7 @@ function App() {
       <Route
         path="/import"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="imports">
             <ImportPage />
           </ProtectedRoute>
         }
@@ -516,7 +516,7 @@ function App() {
       <Route
         path="/import/smart"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="imports">
             <SmartImportPage />
           </ProtectedRoute>
         }
@@ -524,7 +524,7 @@ function App() {
       <Route
         path="/import/purchases"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="imports">
             <PurchaseInvoiceImportPage />
           </ProtectedRoute>
         }
@@ -532,7 +532,7 @@ function App() {
       <Route
         path="/import/gl"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="imports">
             <GlOpeningImportPage />
           </ProtectedRoute>
         }
@@ -540,7 +540,7 @@ function App() {
       <Route
         path="/settings/organisation"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <OrgSettingsPage />
           </ProtectedRoute>
         }
@@ -548,7 +548,7 @@ function App() {
       <Route
         path="/settings/shops"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <ShopsManagerPage />
           </ProtectedRoute>
         }
@@ -556,7 +556,7 @@ function App() {
       <Route
         path="/settings/licenses"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <DrugLicensesPage />
           </ProtectedRoute>
         }
@@ -564,7 +564,7 @@ function App() {
       <Route
         path="/settings/export"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <DataExportPage />
           </ProtectedRoute>
         }
@@ -572,7 +572,7 @@ function App() {
       <Route
         path="/settings/print"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <PrintTemplatesPage />
           </ProtectedRoute>
         }
@@ -580,7 +580,7 @@ function App() {
       <Route
         path="/settings/audit"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <AuditLogPage />
           </ProtectedRoute>
         }
@@ -588,7 +588,7 @@ function App() {
       <Route
         path="/settings/privacy"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <PartyPrivacyPage />
           </ProtectedRoute>
         }
@@ -596,7 +596,7 @@ function App() {
       <Route
         path="/settings/limits"
         element={
-          <ProtectedRoute allowedRoles={["owner"]}>
+          <ProtectedRoute permission="settings">
             <DiscountLimitsPage />
           </ProtectedRoute>
         }

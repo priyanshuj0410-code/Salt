@@ -14,7 +14,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import type { UserRole } from "@/lib/auth";
+import { rolesWith, type Permission, type UserRole } from "@/lib/permissions";
 
 /** A sub-item under a module. `path` + `built` => navigable; otherwise shown disabled. */
 export interface NavLeaf {
@@ -31,7 +31,9 @@ export interface NavModule {
   /** Module landing route (only when built). */
   path?: string;
   built: boolean;
-  /** Which roles see this module at all (role-gating, separate from build-state). */
+  /** Capability that gates this module (SALT-174) — the SSOT for access. */
+  perm: Permission;
+  /** Which roles see this module (derived from `perm` via the capability map). */
   roles: UserRole[];
   children: NavLeaf[];
 }
@@ -40,15 +42,18 @@ export interface NavModule {
  * The whole IA, made visible. Built nodes link to existing routes; everything
  * else is `built: false` and renders disabled until we build it. This is the
  * single source of truth for the sidebar AND the keyboard go-to map.
+ *
+ * Each module declares the `perm` it needs; `roles` is derived from the
+ * capability map (SALT-174) so nav visibility and route gating never drift.
  */
-export const NAV: NavModule[] = [
+const MODULES: Array<Omit<NavModule, "roles">> = [
   {
     key: "c",
     label: "Counter",
     icon: Keyboard,
     path: "/",
     built: true,
-    roles: ["owner", "cashier"],
+    perm: "counter",
     children: [{ label: "Active bill", path: "/", built: true }],
   },
   {
@@ -57,7 +62,7 @@ export const NAV: NavModule[] = [
     icon: Activity,
     path: "/activity",
     built: true,
-    roles: ["owner", "cashier"],
+    perm: "activity",
     children: [{ label: "Live feed", path: "/activity", built: true }],
   },
   {
@@ -66,7 +71,7 @@ export const NAV: NavModule[] = [
     icon: ShieldCheck,
     path: "/approvals",
     built: true,
-    roles: ["owner", "cashier"],
+    perm: "approvals",
     children: [{ label: "Manager inbox", path: "/approvals", built: true }],
   },
   {
@@ -75,7 +80,7 @@ export const NAV: NavModule[] = [
     icon: ShoppingCart,
     path: "/purchases",
     built: true,
-    roles: ["owner"],
+    perm: "purchases",
     children: [
       { label: "Receive stock (GRN)", path: "/purchases/new", built: true },
       { label: "Scan invoice (OCR)", path: "/purchases/scan", built: true },
@@ -92,7 +97,7 @@ export const NAV: NavModule[] = [
     icon: FileText,
     path: "/bills",
     built: true,
-    roles: ["owner"],
+    perm: "sales",
     children: [
       { label: "Invoices", path: "/bills", built: true },
       { label: "Credit notes", built: false },
@@ -105,7 +110,7 @@ export const NAV: NavModule[] = [
     icon: Package,
     path: "/inventory",
     built: true,
-    roles: ["owner"],
+    perm: "inventory",
     children: [
       { label: "Stock ledger", path: "/inventory", built: true },
       { label: "Near expiry", path: "/inventory/near-expiry", built: true },
@@ -125,7 +130,7 @@ export const NAV: NavModule[] = [
     icon: Users,
     path: "/parties",
     built: true,
-    roles: ["owner"],
+    perm: "parties",
     children: [
       { label: "All parties", path: "/parties", built: true },
       { label: "Customers", path: "/parties?type=customer", built: true },
@@ -138,7 +143,7 @@ export const NAV: NavModule[] = [
     icon: Wallet,
     path: "/payments",
     built: true,
-    roles: ["owner"],
+    perm: "payments",
     children: [
       { label: "Receive payment", path: "/payments", built: true },
       { label: "Make payment", path: "/payments/make", built: true },
@@ -151,7 +156,7 @@ export const NAV: NavModule[] = [
     icon: Landmark,
     path: "/gst",
     built: true,
-    roles: ["owner"],
+    perm: "gst",
     children: [
       { label: "GSTR-1", path: "/gst", built: true },
       { label: "GSTR-3B", path: "/gst/gstr3b", built: true },
@@ -170,7 +175,7 @@ export const NAV: NavModule[] = [
     icon: BarChart3,
     path: "/reports",
     built: true,
-    roles: ["owner"],
+    perm: "reports",
     children: [
       { label: "Dashboard", path: "/reports", built: true },
       { label: "Sales reports", path: "/reports/sales", built: true },
@@ -186,7 +191,7 @@ export const NAV: NavModule[] = [
     icon: Tag,
     path: "/catalogue",
     built: true,
-    roles: ["owner"],
+    perm: "catalogue",
     children: [{ label: "Items", path: "/catalogue", built: true }],
   },
   {
@@ -195,7 +200,7 @@ export const NAV: NavModule[] = [
     icon: Contact,
     path: "/salesmen",
     built: true,
-    roles: ["owner"],
+    perm: "salesmen",
     children: [{ label: "All salesmen", path: "/salesmen", built: true }],
   },
   {
@@ -204,7 +209,7 @@ export const NAV: NavModule[] = [
     icon: Settings,
     path: "/owner",
     built: true,
-    roles: ["owner"],
+    perm: "settings",
     children: [
       { label: "Users & invites", path: "/owner", built: true },
       { label: "Import / migration", path: "/import", built: true },
@@ -219,3 +224,18 @@ export const NAV: NavModule[] = [
     ],
   },
 ];
+
+/** Nav modules with `roles` filled in from the capability map (SALT-174). */
+export const NAV: NavModule[] = MODULES.map((m) => ({ ...m, roles: rolesWith(m.perm) }));
+
+/**
+ * The first nav destination the member may open, given their `can`. Used as the
+ * redirect target when a route is denied, so a role that lacks the counter (e.g.
+ * an accountant) is never bounced into a redirect loop on "/".
+ */
+export function firstAllowedNavPath(can: (p: Permission) => boolean): string {
+  for (const m of NAV) {
+    if (m.built && m.path && can(m.perm)) return m.path;
+  }
+  return "/";
+}
