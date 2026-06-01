@@ -3,6 +3,7 @@ import type { Item, Schedule } from "@/lib/types";
 import { catalog as seedCatalog } from "@/data/catalog";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
+import { cacheKey, cacheGet, cachePut } from "@/lib/offline/cache";
 
 interface ItemRow {
   id: string;
@@ -41,6 +42,8 @@ interface CatalogState {
   loaded: boolean;
   /** True when falling back to the demo seed because the org has no items yet. */
   usingSeed: boolean;
+  /** When serving the offline read-cache, the epoch-ms it was written; null when live (SALT-204). */
+  cachedAt: number | null;
   load: (orgId: string) => Promise<void>;
   /** Add or replace a single item (e.g. one just created at GRN entry) without a
    *  full reload. The first real item also drops the demo seed. */
@@ -83,6 +86,7 @@ export const useCatalog = create<CatalogState>((set) => ({
   loading: false,
   loaded: false,
   usingSeed: true,
+  cachedAt: null,
 
   load: async (orgId) => {
     if (!supabase) return;
@@ -112,13 +116,22 @@ export const useCatalog = create<CatalogState>((set) => ({
       }
       const batches = await batchesPromise;
       if (items.length === 0) {
-        set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true });
+        set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true, cachedAt: null });
         return;
       }
-      set({ items: mapRows(items, batches), usingSeed: false, loading: false, loaded: true });
+      const mapped = mapRows(items, batches);
+      set({ items: mapped, usingSeed: false, loading: false, loaded: true, cachedAt: null });
+      // Persist the working set so the counter can bill offline (SALT-204 / ADR 0017).
+      void cachePut(cacheKey("catalog", orgId), mapped);
     } catch {
-      // On a load failure, keep the seed and mark loaded so the UI isn't stuck.
-      set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true });
+      // Load failed (typically offline). Prefer the org's real catalogue from the
+      // offline read-cache over the demo seed; only seed if nothing is cached.
+      const cached = await cacheGet<Item[]>(cacheKey("catalog", orgId));
+      if (cached && cached.data.length > 0) {
+        set({ items: cached.data, usingSeed: false, loading: false, loaded: true, cachedAt: cached.cachedAt });
+      } else {
+        set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true, cachedAt: null });
+      }
     }
   },
 
