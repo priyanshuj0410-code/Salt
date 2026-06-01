@@ -28,8 +28,20 @@ export function lineRate(l: BillLine): number {
   return l.ratePaise ?? l.mrpPaise;
 }
 
+/** Base units per pack for a line (≥1); absent / invalid ⇒ 1 (sold whole). */
+function unitsPerPackOf(l: BillLine): number {
+  return l.unitsPerPack && l.unitsPerPack >= 1 ? l.unitsPerPack : 1;
+}
+
+/** Base units this line sells (SALT-164): `qty` is base units when loose, else packs × units-per-pack. */
+export function lineBaseUnits(l: BillLine): number {
+  return l.loose ? l.qty : l.qty * unitsPerPackOf(l);
+}
+
 export function lineGross(l: BillLine): number {
-  return lineRate(l) * l.qty;
+  // Per-pack rate ÷ units-per-pack = per-unit; gross = rate × base units ÷ upp. For a whole-pack
+  // line (loose falsy) this is exactly rate × qty (integer) — unchanged from before SALT-164.
+  return Math.round((lineRate(l) * lineBaseUnits(l)) / unitsPerPackOf(l));
 }
 
 /** Discount amount in paise: percentage of gross, or a flat paise amount capped at gross. */
@@ -47,9 +59,9 @@ export function lineNet(l: BillLine): number {
   return lineGross(l) - lineDiscount(l);
 }
 
-/** Landed cost of the line (PTR x qty). */
+/** Landed cost of the line (PTR per base unit × base units; = PTR × packs for a whole-pack line). */
 export function lineCost(l: BillLine): number {
-  return l.ptrPaise * l.qty;
+  return Math.round((l.ptrPaise * lineBaseUnits(l)) / unitsPerPackOf(l));
 }
 
 /** Estimated earning for the line: net selling minus landed cost. */
@@ -67,8 +79,12 @@ export function sumItemQty(lines: BillLine[], itemId: string, excludeKeys: strin
 /**
  * Max quantity this line can hold: the item's total stock (line.stock) minus
  * what other lines of the same item already use. Caps per item, not per batch.
+ * A loose line's qty is base UNITS, so it caps at the item's base units on hand
+ * (packs × units-per-pack) — a generous client hint; the server's atomic base-unit
+ * check (SALT-164/0057) is the authoritative oversell guard for mixed pack+loose.
  */
 export function lineMaxQty(lines: BillLine[], line: BillLine): number {
+  if (line.loose) return Math.max(1, line.stock * unitsPerPackOf(line));
   return line.stock - sumItemQty(lines, line.itemId, [line.key]);
 }
 

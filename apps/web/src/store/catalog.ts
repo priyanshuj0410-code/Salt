@@ -21,6 +21,8 @@ interface ItemRow {
   therapeutic_category: string | null;
   /** Optional: present only once migration 0033 (cold_chain) is applied. */
   cold_chain?: boolean | null;
+  /** Base units per pack (items.units_per_pack, migration 0057) — enables loose-unit sale (SALT-164). */
+  units_per_pack?: number | null;
   /** Embedded from the linked master item via master_item_id (SALT-211) — the date-effective GST
    *  rate class. Absent (old DB / unlinked / master_items unreadable) ⇒ fall back to flat gst_rate. */
   master_items?: { gst_rate_class: string | null } | null;
@@ -30,7 +32,7 @@ interface ItemRow {
 // embed (SALT-211); the base set omits both so the catalogue still loads if those are unavailable.
 const ITEM_COLS_BASE =
   "id,name,salt,manufacturer,pack,hsn,gst_rate,schedule,barcode,ayush_flag,reorder_level,therapeutic_category";
-const ITEM_COLS = `${ITEM_COLS_BASE},cold_chain,master_items(gst_rate_class)`;
+const ITEM_COLS = `${ITEM_COLS_BASE},cold_chain,units_per_pack,master_items(gst_rate_class)`;
 
 interface BatchRow {
   item_id: string;
@@ -98,6 +100,7 @@ function mapRows(items: ItemRow[], batches: BatchRow[], schedule: GstScheduleRow
     therapeuticCategory: r.therapeutic_category ?? undefined,
     reorderLevel: r.reorder_level ?? 0,
     coldChain: r.cold_chain ?? false,
+    unitsPerPack: r.units_per_pack ?? undefined,
     velocity: 0,
     batches: byItem.get(r.id) ?? [],
   }));
