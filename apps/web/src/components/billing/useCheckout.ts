@@ -30,7 +30,9 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
   const setCreditDays = useBill((s) => s.setCreditDays);
   const billDiscount = useBill((s) => s.billDiscount);
   const usingSeed = useCatalog((s) => s.usingSeed);
-  const { shopId, shop } = useAuth();
+  const loadCatalog = useCatalog((s) => s.load);
+  const { shopId, shop, membership } = useAuth();
+  const orgId = membership?.orgId;
   const blockers = useShopBlockers();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -74,7 +76,15 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
       const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount);
       const { data, error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
       if (err) {
-        setError(err.message);
+        // Oversell guard fired (another counter took the last unit): the server rejects
+        // atomically (SALT-181). Refresh the catalogue so FEFO re-resolves against current
+        // stock, and show a recoverable message rather than the raw SQL error.
+        if (/insufficient stock/i.test(err.message)) {
+          if (orgId) void loadCatalog(orgId);
+          setError("Stock changed — another counter may have sold the last unit. Catalogue refreshed; check the line and try again.");
+        } else {
+          setError(err.message);
+        }
         return null;
       }
       const invoiceId = (data as string | null) ?? null;
