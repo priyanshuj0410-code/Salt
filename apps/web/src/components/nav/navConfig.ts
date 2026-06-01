@@ -161,6 +161,7 @@ export const NAV: NavModule[] = [
       { label: "Tally export", path: "/gst/tally", built: true },
       { label: "HSN summary", path: "/gst/hsn", built: true },
       { label: "H1 / X register", path: "/gst/h1", built: true },
+      { label: "Invoice series", path: "/gst/series", built: true },
       { label: "Drug licenses", built: false },
     ],
   },
