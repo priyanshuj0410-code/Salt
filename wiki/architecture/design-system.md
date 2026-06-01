@@ -1,6 +1,6 @@
 ---
 type: architecture
-updated: 2026-05-31
+updated: 2026-06-01
 ---
 
 # Design system
@@ -31,9 +31,9 @@ Refreshed after a design-system review — the earlier "the token layer is not w
 | **Tokens** | §2 | ✅ wired | `apps/web/src/index.css` `@theme` — neutrals, action, semantic on-light **and** on-dark, focus, type, radii, shadows, motion |
 | **Fonts** | §3 | ✅ wired | Geist + Geist Mono `@fontsource-variable`, imported in `main.tsx`; `.tabular-nums` helper for aligned money/qty columns |
 | **Primitives** | §5 | ✅ built | `components/ui/`: Button, Input, Badge, Kbd, Dot, Card (+ Dialog, Separator, Table). Verified token-faithful: `Dot` (§5.5 6px, `bg-success`…), `Kbd` (§5.4 mono, `surface-2`, 2px bottom-border, `md:`-only), `Badge` (§5.3 `strong` = solid `text-primary` + inverse) |
-| **Two-density switch** | §4 | ✅ wired | `[data-density="compact"\|default"]` selectors in `index.css` drive `--row-height`/`--input-height`; `patterns/page.tsx` now sets `data-density` from its `width`/density prop |
+| **Two-density switch** | §4 | ✅ wired | `[data-density="compact"\|default"]` selectors in `index.css` drive `--row-height`/`--input-height`, now **actually consumed** — `Input` reads `--input-height` and `DataTable` desktop rows read `--row-height` (SALT-147); `patterns/page.tsx` sets `data-density` from its density prop |
 | **Patterns** | §6 | ✅ built | `components/patterns/`: DataTable (hand-rolled, adaptive table↔cards), StatCard, PageHeader, EmptyState — landed in the redesign P-series. **FormRow** built (`patterns/form-row.tsx`, SALT-146): §6.5 label (uppercase tertiary) + control + helper/error, wrapping `<label>` (click-to-focus, tab=visual order); adopted by `OrgSettingsPage`, `CreatePartyDialog`, `RecordPaymentDialog` (replacing their hand-rolled `Field`). The new dual-modality primitives (EntityHeader, ActionBar, Sheet) are tracked in [interaction-patterns](interaction-patterns.md) |
-| **Screen migration** | §2 rule | 🟡 in progress | grep finds raw `zinc-*` / `text-[NNpx]` still in 5 files: `billing/BillingScreen`, `billing/BillTable`, `nav/Sidebar`, `import/smart/EntityStep`, `settings/OrgSettingsPage` |
+| **Screen migration** | §2 rule | 🟡 in progress | per-module migrations off raw `zinc-*`/`text-[NNpx]` are ticketed: **SALT-224** settings (✅ OrgSettings + ShopSetup → tokens + `Page`/`Sheet`, PR #192), **SALT-225** smart-import, **SALT-226** owner, **SALT-227** parties, **SALT-228** auth. (`parties/PurchaseEntryPage` named in the SALT-147 PRD does not exist — obsolete.) |
 
 The foundation is real, and since this note the **patterns layer and density switch landed** (see the table). The gap is now the **dual-modality primitives** (EntityHeader, ActionBar still pending; responsive **Sheet** ✅ SALT-145 + **FormRow** ✅ SALT-146 done) and migrating every screen onto the kit so keyboard and touch are both first-class — specified in [interaction-patterns](interaction-patterns.md) and ADR [0015](../decisions/0015-dual-modality-interaction.md).
 
@@ -41,7 +41,7 @@ The foundation is real, and since this note the **patterns layer and density swi
 
 A Lazyweb design-research pass on *"overall ERP design system"* (artifact: `.lazyweb/design-research/erp-design-system-2026-05-31/`, local/untracked) cross-checked `design.md` against 2026 enterprise-UX best practice and real dense-table apps (OpenSea, Mercury, ESPN). Conclusion: **`design.md` is already aligned with best practice — the work is implementation, not redesign.** Priorities, in order:
 
-1. **Finish the token migration** — move the 5 screens above off raw `zinc-*`/`[px]` utilities so intent lives in tokens (`bg-surface`, `text-text-secondary`); a future theme/density change then happens in one place. (Dark-mode tokens already exist in `index.css`, so this also unlocks a working dark theme.)
+1. **Finish the token migration** — move the remaining screens (SALT-224…228) off raw `zinc-*`/`[px]` utilities so intent lives in tokens (`bg-surface`, `text-text-secondary`); a future theme/density change then happens in one place. (Dark-mode tokens already exist in `index.css`, so this also unlocks a working dark theme.)
 2. **Build one canonical `DataTable` pattern** (§6.1) — Salt is fundamentally a tables product (ledgers, bills, batches, stock, GST). Sticky uppercase header, right-aligned `tabular-nums`, status in a rightmost badge column, **hover-revealed** row actions, ~25 rows/page. Build once, compose into Parties / Bills / Inventory / Reports. Independently validated by the table-UX literature.
 3. **Make `data-density` a real switch** (§4) — add the `[data-density="compact"]` overrides and have `DataTable`/`Input` read them; the literature lands on the same "ship a density toggle" answer.
 4. **Hold the color-for-state line** — near-monochrome tables, color only on status/deltas; for Salt's signed balances, tint the *sign* (receivable + / payable −), not the row. One inverse "hero" StatCard per screen (§6.2).
