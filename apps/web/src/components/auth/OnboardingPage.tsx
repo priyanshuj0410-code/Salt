@@ -19,7 +19,7 @@ export function OnboardingPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+      <div className="flex min-h-screen items-center justify-center text-sm text-text-tertiary">
         Loading…
       </div>
     );
@@ -69,20 +69,20 @@ export function OnboardingPage() {
   const canSubmit = mode === "create" ? name.trim().length > 0 : code.trim().length > 0;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-surface-2/30 p-4">
       <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-sm">
-        <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+        <div className="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-surface-2 p-1">
           <button
             type="button"
             onClick={() => { setMode("create"); setError(null); }}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${mode === "create" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${mode === "create" ? "bg-background shadow-sm" : "text-text-tertiary"}`}
           >
             Create org
           </button>
           <button
             type="button"
             onClick={() => { setMode("join"); setError(null); }}
-            className={`rounded-md px-3 py-1.5 text-sm font-medium ${mode === "join" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium ${mode === "join" ? "bg-background shadow-sm" : "text-text-tertiary"}`}
           >
             Join with code
           </button>
@@ -92,7 +92,7 @@ export function OnboardingPage() {
           <h1 className="text-xl font-semibold tracking-tight">
             {mode === "create" ? "Set up your organization" : "Join your team"}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-text-tertiary">
             {mode === "create"
               ? "Name your business to get started. You’ll be its owner."
               : "Enter the invite code your owner shared with you."}
@@ -129,7 +129,7 @@ export function OnboardingPage() {
                       ✓ {gstinInfo.stateName} — we&apos;ll set this as your billing state.
                     </p>
                   ) : gstinInfo.error ? (
-                    <p className="mt-1 text-xs text-muted-foreground">{gstinInfo.error}</p>
+                    <p className="mt-1 text-xs text-text-tertiary">{gstinInfo.error}</p>
                   ) : null)}
               </div>
             </>
@@ -154,7 +154,7 @@ export function OnboardingPage() {
           </Button>
         </form>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="mt-4 text-center text-xs text-text-tertiary">
           Signed in as {session.user.email} ·{" "}
           <button type="button" className="font-medium text-primary hover:underline" onClick={() => signOut()}>
             Sign out

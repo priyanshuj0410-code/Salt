@@ -131,7 +131,7 @@ export function MfaSetupDialog({ onClose }: { onClose: () => void }) {
         </DialogHeader>
 
         {loading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-text-tertiary">Loading…</p>
         ) : enabled ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-emerald-600 dark:text-emerald-500">
@@ -154,9 +154,9 @@ export function MfaSetupDialog({ onClose }: { onClose: () => void }) {
               alt="Authenticator QR code"
               className="mx-auto size-44 rounded-lg border bg-white p-2"
             />
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="text-center text-xs text-text-tertiary">
               Or enter this key manually:{" "}
-              <code className="rounded bg-muted px-1 font-mono">{enrollment.secret}</code>
+              <code className="rounded bg-surface-2 px-1 font-mono">{enrollment.secret}</code>
             </p>
             <Input
               inputMode="numeric"
@@ -179,7 +179,7 @@ export function MfaSetupDialog({ onClose }: { onClose: () => void }) {
           </form>
         ) : (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-muted-foreground">Two-factor authentication is off.</p>
+            <p className="text-sm text-text-tertiary">Two-factor authentication is off.</p>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
