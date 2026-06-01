@@ -103,6 +103,17 @@ export function useCheckout({
         printIntent.current && invoiceId && shop
           ? buildInvoiceData({ invoiceId, shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
           : null;
+      // Print the real, server-allocated FY-scoped GST invoice number (SALT-013/187) when the
+      // series is configured; fall back to the UUID-hex ref (`invoiceRef`) when it is null.
+      if (receipt && invoiceId) {
+        const { data: inv } = await supabase
+          .from("sales_invoices")
+          .select("invoice_no")
+          .eq("id", invoiceId)
+          .maybeSingle();
+        const invoiceNo = (inv as { invoice_no: string | null } | null)?.invoice_no;
+        if (invoiceNo) receipt.ref = invoiceNo;
+      }
       clear();
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
