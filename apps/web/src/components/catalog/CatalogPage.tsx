@@ -508,6 +508,7 @@ export function CatalogPage() {
                       <span className="min-w-0 flex-1 truncate font-medium">{r.itemName}</span>
                       <span className="shrink-0 text-xs text-text-tertiary">
                         fill {r.fills.join(", ")}
+                        {r.replacedSalt ? ` · was "${r.replacedSalt}"` : ""}
                         {r.source === "brand" ? ` · brand${r.confidence ? ` (${r.confidence})` : ""}` : ""}
                       </span>
                     </div>
