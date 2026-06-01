@@ -4,6 +4,8 @@ import { supabase } from "@/lib/supabase";
 import { buildSalesInvoicePayload, withTimeout, TimeoutError, type RxDetails } from "@/lib/orders";
 import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
+import { useOnlineStatus } from "@/lib/useOnlineStatus";
+import { outbox } from "@/lib/outbox";
 import { formatPaise } from "@/lib/currency";
 import { gatedLines, requiresRx } from "@/lib/billing";
 import { creditCheck } from "@/lib/credit";
@@ -57,8 +59,11 @@ export function useCheckout({
   const { shopId, shop, membership } = useAuth();
   const orgId = membership?.orgId;
   const blockers = useShopBlockers();
+  const online = useOnlineStatus();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // A bill completed locally while offline and queued to sync (SALT-205) — distinct from `saved`.
+  const [savedOffline, setSavedOffline] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
   const [rxOpen, setRxOpen] = useState(false);
@@ -125,6 +130,16 @@ export function useCheckout({
       active = false;
     };
   }, [orgId]);
+
+  // Register the offline sender once (SALT-205): a queued sale replays through the same RPC.
+  // Throwing on error keeps the record queued for the next flush (at-least-once).
+  useEffect(() => {
+    outbox.register("create_sales_invoice", async (payload) => {
+      if (!supabase) throw new Error("supabase unavailable");
+      const { error: e } = await supabase.rpc("create_sales_invoice", payload);
+      if (e) throw e;
+    });
+  }, []);
 
   // While a discount override is pending, watch the org's approvals live. On approval,
   // resume the save the cashier already asked for (override passed explicitly to dodge
@@ -201,12 +216,34 @@ export function useCheckout({
       }
       return null; // waiting on the manager (request just raised, or still pending)
     }
+    const tenders = splitMode ? activeTenders(tenderAmounts) : null;
+    const notes = override ? `Discount override approved by ${override.approverName ?? "manager"}` : null;
+    const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes);
+
+    // Offline (SALT-205): queue the write and complete the bill locally rather than block the
+    // counter on a dead link. At-least-once — the outbox auto-flushes on reconnect, and the real
+    // GST invoice number is allocated then (a provisional ref prints now). Read connectivity live
+    // (not the render snapshot) so the decision is made at the moment of save.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const rec = await outbox.enqueue("create_sales_invoice", args);
+      const receipt =
+        printIntent.current && shop
+          ? buildInvoiceData({ invoiceId: rec.id, shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
+          : null;
+      if (receipt) receipt.ref = `OFFLINE-${rec.id.slice(0, 8).toUpperCase()}`;
+      clear();
+      setSplit(false);
+      setApproval(null);
+      setSavedOffline(true);
+      setTimeout(() => setSavedOffline(false), 3000);
+      printIntent.current = false;
+      if (receipt) printInvoice(receipt);
+      return rec.id;
+    }
+
     setSaving(true);
     setError(null);
     try {
-      const tenders = splitMode ? activeTenders(tenderAmounts) : null;
-      const notes = override ? `Discount override approved by ${override.approverName ?? "manager"}` : null;
-      const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes);
       const { data, error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
       if (err) {
         // Oversell guard fired (another counter took the last unit): the server rejects
@@ -289,6 +326,8 @@ export function useCheckout({
     setCreditDays,
     saving,
     saved,
+    savedOffline,
+    online,
     error,
     shopId,
     setupOpen,

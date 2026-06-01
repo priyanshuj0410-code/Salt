@@ -78,7 +78,7 @@ export function BillSummary({
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
   const hold = useHeldBills((s) => s.hold);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, savedOffline, error, shopId } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
   const { discountGate, cancelDiscountApproval } = checkout;
@@ -228,8 +228,14 @@ export function BillSummary({
           onClick={() => saveAndPrint()}
           title={usingSeed ? "Import your items to save bills" : undefined}
         >
-          {saved ? <Check /> : <Printer />}
-          {saved ? "Saved" : saving ? "Saving…" : "Save & Print · F9"}
+          {saved || savedOffline ? <Check /> : <Printer />}
+          {saved
+            ? "Saved"
+            : savedOffline
+              ? "Saved offline"
+              : saving
+                ? "Saving…"
+                : "Save & Print · F9"}
         </Button>
         {usingSeed && (
           <p className="text-center text-xs text-text-tertiary">
