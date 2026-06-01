@@ -67,6 +67,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [0014 — Doctors master table](decisions/0014-doctors-master.md)
 - [0015 — Dual-modality interaction: one system for keyboard and touch](decisions/0015-dual-modality-interaction.md)
 - [0016 — Vendor ordering is distributor-mediated (aggregator BD or ONDC, not manufacturer APIs)](decisions/0016-vendor-ordering-channel.md)
+- [0017 — Offline-first via a local write outbox (not ElectricSQL)](decisions/0017-offline-first-approach.md)
 
 ## Raw sources (immutable, at repo root)
 `salt-prd-v0.3.md` · `salt-migrator-prd-v0.1.md` · `design.md` · `salt-design-system.html` · `PRD_Intelligent_Importer.pdf` · the codebase · `Saral/Trial_Balance.xls` (untracked sample).

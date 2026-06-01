@@ -52,15 +52,22 @@ A cashier raises an approval request on one device; an owner approves/rejects fr
 
 SALT-101 also asks for **live stock** and **parked-bill sync**, which surface on the **billing** screen (its store/files) → handed off as **SALT-179** (live stock on the counter) and **SALT-180** (parked-bill sync). Both reuse `subscribeTableChanges`; the realtime substrate is ready for them. The "<1s on LAN / self-hosted Yjs" framing is met functionally by Supabase Realtime (server round-trip, typically <1s); true LAN-local latency would need the shop-local server (SALT-103).
 
+## Offline-first write outbox — SALT-100 (substrate ✅)
+
+"Bill through an outage, sync on reconnect." The awareness layer (`useOnlineStatus` + `OfflineBanner`, SALT-135) only *warns*; this is the write path. Decision in ADR [0017](../decisions/0017-offline-first-approach.md): a **local write outbox** on the Supabase stack, **not ElectricSQL** (same logic as ADR 0002 — fits the stack, zero new infra, right scope for the actual need).
+
+**Built (pure + tested).** `lib/offline.ts` — an `Outbox` that enqueues mutations to a durable store and replays them **FIFO, stop-on-failure**; the record `id` is a client UUID doubling as the **idempotency key**; storage is an injectable interface with `IndexedDbOutboxStore` (durable, survives reloads) + `InMemoryOutboxStore` (tests/SSR). No React/Supabase imports → smoke-tested 14/14 (ordering, mid-flush failure + recovery drain, exactly-once, unhandled-kind safety). `lib/outbox.ts` — the browser singleton + `useOutbox()` / `usePendingWrites()` with **online-aware auto-flush** (reuses `useOnlineStatus`).
+
+**Decoupled by design.** Consumers `outbox.register(kind, handler)` + `outbox.enqueue(kind, payload)` — they own *what* gets queued. Adoption in the sales write path (`create_sales_invoice`) lands in **billing** files → handed off as **SALT-205** (route checkout through the outbox + server idempotency key). The `OfflineBanner` (nfr lane) can show `usePendingWrites()`.
+
 ## Not yet built (same module)
 
 | Ticket | What | Builds on |
 |---|---|---|
-| SALT-100 | ElectricSQL offline-first (bill through outages) | local-first; needs CRDT/Electric, beyond Realtime |
-| SALT-102 | Multi-counter conflict resolution (atomic last-unit) | server-authoritative stock decrement (billing RPC) → billing ticket |
-| SALT-103 | Shop-local server | infra; LAN-local latency + offline gateway |
+| SALT-102 | Multi-counter conflict resolution (atomic last-unit) | server guard **done** (SALT-181); blocked on live stock (SALT-179) — billing |
+| SALT-103 | Shop-local server | **de-scoped to optional** per ADR 0017 (outbox covers offline; Realtime covers online sync) |
 
-Live stock (SALT-101) and atomic last-unit (SALT-102) land in **billing/inventory** files → filed as tickets for those modules rather than edited here.
+Live stock (SALT-101), atomic last-unit (SALT-102), and outbox adoption (SALT-100) land in **billing/inventory** files → filed as tickets for those modules rather than edited here.
 
 ## Related
-[product/roadmap](../product/roadmap.md) · [decisions/0002](../decisions/0002-stack-divergence-from-prd.md) · [data-model](data-model.md) · [security-rls](security-rls.md) · [billing-screen](billing-screen.md)
+[product/roadmap](../product/roadmap.md) · [decisions/0002](../decisions/0002-stack-divergence-from-prd.md) · [decisions/0017 — offline outbox](../decisions/0017-offline-first-approach.md) · [data-model](data-model.md) · [security-rls](security-rls.md) · [billing-screen](billing-screen.md)
