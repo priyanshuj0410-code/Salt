@@ -15,8 +15,10 @@ import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import { useBill } from "@/store/bill";
+import { useHeldBills } from "@/store/heldBills";
 import { supabase } from "@/lib/supabase";
 import { fetchPartyCredit } from "@/lib/credit";
+import { subscribeTableChanges } from "@/lib/realtime";
 import { cn } from "@/lib/utils";
 
 function Hint({ keys, label }: { keys: string; label: string }) {
@@ -76,11 +78,13 @@ function CustomerBar({
 export function BillingScreen() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [customerOpen, setCustomerOpen] = useState(false);
-  const orgId = useAuth().membership?.orgId;
+  const { membership, shopId } = useAuth();
+  const orgId = membership?.orgId;
   const loadCatalog = useCatalog((s) => s.load);
   const party = useBill((s) => s.party);
   const setParty = useBill((s) => s.setParty);
-  const parkBill = useBill((s) => s.parkBill);
+  const hold = useHeldBills((s) => s.hold);
+  const loadHeld = useHeldBills((s) => s.load);
 
   // Detail for the selected customer: drives the header phone, the "Add GSTIN"
   // prompt, and the intra/inter-state GST split. Refetched after a GSTIN is saved.
@@ -106,6 +110,20 @@ export function BillingScreen() {
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
   }, [orgId, loadCatalog]);
+
+  // Held bills (SALT-191B): load this shop's set-aside bills, then keep the strip live
+  // across counters — any hold/resume/discard on any device re-pulls the list.
+  useEffect(() => {
+    if (!shopId) return;
+    void loadHeld(shopId);
+    return subscribeTableChanges({
+      channel: `held-${shopId}`,
+      table: "held_bills",
+      filter: `shop_id=eq.${shopId}`,
+      event: "*",
+      onChange: () => void loadHeld(shopId),
+    });
+  }, [shopId, loadHeld]);
 
   useEffect(() => {
     const id = party?.id;
@@ -163,10 +181,10 @@ export function BillingScreen() {
     "f4",
     (e) => {
       e.preventDefault();
-      parkBill();
+      if (shopId) void hold(shopId);
     },
     { enableOnFormTags: true },
-    [parkBill],
+    [hold, shopId],
   );
 
   const refetchCustomer = () => setCustKey((k) => k + 1);

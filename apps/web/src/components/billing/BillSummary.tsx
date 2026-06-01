@@ -6,6 +6,7 @@ import { formatPaise, formatSigned } from "@/lib/currency";
 import { gstSplit } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
+import { useHeldBills } from "@/store/heldBills";
 import { GstinPrompt } from "./GstinPrompt";
 import { H1Notice } from "./H1Gate";
 import { CreditNotice } from "./CreditNotice";
@@ -74,7 +75,7 @@ export function BillSummary({
 }) {
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
-  const parkBill = useBill((s) => s.parkBill);
+  const hold = useHeldBills((s) => s.hold);
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const tax = gstSplit(t.gst, isInterstate);
@@ -210,7 +211,12 @@ export function BillSummary({
           >
             Save only
           </Button>
-          <Button variant="outline" size="sm" disabled={empty} onClick={parkBill}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={empty || !shopId}
+            onClick={() => shopId && hold(shopId)}
+          >
             Hold · F4
           </Button>
         </div>
