@@ -16,6 +16,7 @@ import { suggestMerges, type MergeGroup } from "@/lib/mergeSuggest";
 import { agingFor, type AgingBuckets } from "@/lib/aging";
 import { upcomingPayments, UPCOMING_BANDS, type UpcomingBuckets } from "@/lib/cashflow";
 import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
+import { CUSTOMER_GROUPS } from "@/lib/partyGroups";
 import { cn } from "@/lib/utils";
 
 interface LedgerRow {
@@ -26,6 +27,7 @@ interface LedgerRow {
   gstin: string | null;
   state_code: string | null;
   opening_balance_paise: number;
+  customer_group?: string | null;
 }
 
 interface Party extends LedgerRow {
@@ -111,20 +113,42 @@ export function PartiesPage() {
   const [aging, setAging] = useState<{ receivable: AgingBuckets; payable: AgingBuckets } | null>(null);
   const [vendorPay, setVendorPay] = useState<{ buckets: UpcomingBuckets; next: NextPayment[] } | null>(null);
   const [retagging, setRetagging] = useState<string | null>(null);
+  const [hasGroup, setHasGroup] = useState(false);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
     let active = true;
     // Page past the 1000-row cap — an org can have far more parties/bills.
+    // customer_group (migration 0032) may not be applied yet — try the select
+    // with it and fall back without, so the page still loads (SALT-048).
+    const loadLedgers = async (): Promise<{ rows: LedgerRow[]; hasGroup: boolean }> => {
+      const withGroup = () =>
+        selectAll<LedgerRow>((from, to) =>
+          supabase!
+            .from("ledgers")
+            .select("id,name,type,phone,gstin,state_code,opening_balance_paise,customer_group")
+            .eq("org_id", orgId)
+            .order("name")
+            .range(from, to),
+        );
+      const withoutGroup = () =>
+        selectAll<LedgerRow>((from, to) =>
+          supabase!
+            .from("ledgers")
+            .select("id,name,type,phone,gstin,state_code,opening_balance_paise")
+            .eq("org_id", orgId)
+            .order("name")
+            .range(from, to),
+        );
+      try {
+        return { rows: await withGroup(), hasGroup: true };
+      } catch (e) {
+        if (e instanceof Error && e.message.includes("customer_group")) return { rows: await withoutGroup(), hasGroup: false };
+        throw e;
+      }
+    };
     Promise.all([
-      selectAll<LedgerRow>((from, to) =>
-        supabase!
-          .from("ledgers")
-          .select("id,name,type,phone,gstin,state_code,opening_balance_paise")
-          .eq("org_id", orgId)
-          .order("name")
-          .range(from, to),
-      ),
+      loadLedgers(),
       selectAll<BillRow>((from, to) =>
         supabase!
           .from("ledger_bills")
@@ -133,8 +157,9 @@ export function PartiesPage() {
           .range(from, to),
       ),
     ])
-      .then(([ledgers, bills]) => {
+      .then(([{ rows: ledgers, hasGroup: groupCol }, bills]) => {
         if (!active) return;
+        setHasGroup(groupCol);
         const refsByLedger = new Map<string, string[]>();
         for (const b of bills) {
           const arr = refsByLedger.get(b.ledger_id);
@@ -188,6 +213,22 @@ export function PartiesPage() {
     setRetagging(id);
     setError(null);
     const { error: err } = await supabase.from("ledgers").update({ type }).eq("id", id);
+    setRetagging(null);
+    if (err) {
+      setError(err.message);
+      setRows(prev);
+    }
+  }
+
+  // Set a party's customer group inline from the list (SALT-048). Optimistic;
+  // reverts on error. Only reachable when the customer_group column exists.
+  async function regroup(id: string, group: string) {
+    if (!supabase || retagging) return;
+    const prev = rows;
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, customer_group: group || null } : r)));
+    setRetagging(id);
+    setError(null);
+    const { error: err } = await supabase.from("ledgers").update({ customer_group: group || null }).eq("id", id);
     setRetagging(null);
     if (err) {
       setError(err.message);
@@ -269,7 +310,13 @@ export function PartiesPage() {
   const visible = useMemo(() => {
     const q = filter.trim().toLowerCase();
     if (!q) return rows;
-    return rows.filter((r) => r.name.toLowerCase().includes(q) || r.type.includes(q) || (r.gstin ?? "").toLowerCase().includes(q));
+    return rows.filter(
+      (r) =>
+        r.name.toLowerCase().includes(q) ||
+        r.type.includes(q) ||
+        (r.gstin ?? "").toLowerCase().includes(q) ||
+        (r.customer_group ?? "").toLowerCase().includes(q),
+    );
   }, [rows, filter]);
 
   const groupKey = (g: MergeGroup) => `${g.reason}:${g.label}`;
@@ -446,7 +493,7 @@ export function PartiesPage() {
           <Input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Search by name, type or GSTIN…"
+            placeholder="Search by name, type, GSTIN or group…"
             className="h-9 max-w-xs"
           />
           <span className="text-xs text-text-tertiary">
@@ -496,6 +543,23 @@ export function PartiesPage() {
                       <div className="text-xs text-text-tertiary tabular-nums">{r.billCount} bills</div>
                     </div>
                   </Link>
+                  {/* Inline group (SALT-048) — segment parties without opening the profile (desktop) */}
+                  {hasGroup && (
+                    <select
+                      aria-label={`Group for ${r.name}`}
+                      value={r.customer_group ?? ""}
+                      disabled={retagging === r.id}
+                      onChange={(e) => regroup(r.id, e.target.value)}
+                      className="hidden h-8 shrink-0 rounded-md border border-input bg-background px-1.5 text-xs outline-none focus-visible:border-ring disabled:opacity-50 sm:block"
+                    >
+                      <option value="">— group —</option>
+                      {CUSTOMER_GROUPS.map((g) => (
+                        <option key={g} value={g}>
+                          {g}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   {/* Inline re-tag (SALT-051) — fix mistags without opening the profile */}
                   <select
                     aria-label={`Type for ${r.name}`}
@@ -521,6 +585,7 @@ export function PartiesPage() {
           open={createOpen}
           onOpenChange={setCreateOpen}
           onCreated={reload}
+          groupsEnabled={hasGroup}
         />
     </Page>
   );
