@@ -70,15 +70,30 @@ async function callGemini(key: string, b64: string, mime: string): Promise<strin
     ],
     generationConfig: { responseMimeType: "application/json", temperature: 0 },
   };
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": key },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`Gemini API ${res.status}: ${detail.slice(0, 300)}`);
+  // Retry transient capacity errors (503 UNAVAILABLE, 429 RESOURCE_EXHAUSTED) with
+  // exponential backoff — a freshly-released model can spike. Other 4xx/5xx (bad
+  // key, blocked, model not found) are returned immediately. Honours Retry-After
+  // when present, else 0.5s → 1s → 2s.
+  const RETRYABLE = new Set([429, 503]);
+  const MAX_ATTEMPTS = 3;
+  let res: Response | null = null;
+  let lastDetail = "";
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) break;
+    lastDetail = await res.text();
+    if (!RETRYABLE.has(res.status) || attempt === MAX_ATTEMPTS) {
+      throw new Error(`Gemini API ${res.status}: ${lastDetail.slice(0, 300)}`);
+    }
+    const retryAfter = Number(res.headers.get("retry-after"));
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 500 * 2 ** (attempt - 1);
+    await new Promise((r) => setTimeout(r, waitMs));
   }
+  if (!res || !res.ok) throw new Error(`Gemini API error: ${lastDetail.slice(0, 300)}`);
   const data = await res.json();
   // generateContent → candidates[].content.parts[].text; concatenate the text parts.
   const parts = data?.candidates?.[0]?.content?.parts ?? [];
