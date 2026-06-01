@@ -36,7 +36,7 @@ export function MobileCheckout({
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
   const hold = useHeldBills((s) => s.hold);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, savedOffline, error, shopId } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
   const { discountGate, cancelDiscountApproval } = checkout;
@@ -193,6 +193,10 @@ export function MobileCheckout({
           {saved ? (
             <>
               <Check /> Saved
+            </>
+          ) : savedOffline ? (
+            <>
+              <Check /> Saved offline
             </>
           ) : saving ? (
             "Saving…"
