@@ -17,6 +17,7 @@ import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
 import { agingFor } from "@/lib/aging";
 import { normalizePhoneForWa, reminderMessage, whatsappUrl } from "@/lib/collection";
 import { AgingTable } from "@/components/parties/AgingTable";
+import { ClinicalSection } from "@/components/parties/ClinicalSection";
 import { MessageThread } from "@/components/messages/MessageThread";
 import {
   partyDue,
@@ -433,6 +434,9 @@ export function PartyProfilePage() {
           </Button>
         </div>
       </section>
+
+      {/* Clinical notes (SALT-052) — customers only; the section hides itself until 0033 is applied */}
+      {isCustomer && <ClinicalSection ledgerId={ledger.id} />}
 
       {/* Internal notes (SALT-161) — live message thread, shared across counters */}
       <section className="mt-6 rounded-lg border border-border p-4">
