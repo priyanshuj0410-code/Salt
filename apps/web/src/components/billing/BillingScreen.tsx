@@ -18,7 +18,7 @@ import { useCatalog } from "@/store/catalog";
 import { useBill } from "@/store/bill";
 import { useHeldBills } from "@/store/heldBills";
 import { useKeymap } from "@/store/shortcuts";
-import { useOutbox } from "@/lib/outbox";
+import { useOutbox, outbox } from "@/lib/outbox";
 import { supabase } from "@/lib/supabase";
 import { fetchPartyCredit } from "@/lib/credit";
 import { subscribeTableChanges } from "@/lib/realtime";
@@ -91,6 +91,13 @@ export function BillingScreen() {
   // Mount the offline outbox here (SALT-205): this drives the auto-flush on reconnect and the
   // "waiting to sync" count. The sales handler is registered in useCheckout.
   const { online, pending: pendingWrites } = useOutbox();
+  // Surface parked (poison) bills (SALT-202): a write that has exhausted its retries is parked and
+  // dropped from `pending`, so without this a failed offline bill would silently vanish. Re-read on
+  // any pending/connectivity change (a park coincides with a flush, which changes `pending`).
+  const [parkedWrites, setParkedWrites] = useState(0);
+  useEffect(() => {
+    void outbox.parked().then(setParkedWrites);
+  }, [pendingWrites, online]);
   // Resolve customer pricing for the bill's lines (SALT-191A) — re-prices on party change.
   usePriceResolution(shopId, party?.id ?? null);
   // Rebindable action shortcuts (SALT-178) — the counter reads keys from the keymap.
@@ -226,6 +233,14 @@ export function BillingScreen() {
               title="Bills saved offline, waiting to sync"
             >
               <RefreshCw className="size-3.5" /> {pendingWrites} to sync
+            </span>
+          )}
+          {parkedWrites > 0 && (
+            <span
+              className="flex items-center gap-1 rounded-full bg-danger-bg px-2 py-0.5 text-xs font-medium text-danger"
+              title="Bills that failed to sync after retries — check Bills"
+            >
+              <CloudOff className="size-3.5" /> {parkedWrites} failed
             </span>
           )}
           <span className="hidden text-sm text-text-tertiary md:block">Counter 1</span>

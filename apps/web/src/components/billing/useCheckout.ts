@@ -155,12 +155,17 @@ export function useCheckout({
     };
   }, [orgId]);
 
-  // Register the offline sender once (SALT-205): a queued sale replays through the same RPC.
-  // Throwing on error keeps the record queued for the next flush (at-least-once).
+  // Register the offline sender once (SALT-205, made exactly-once in SALT-202): a queued sale
+  // replays with its record id as `p_idempotency_key`, so a double-drain returns the original
+  // invoice rather than re-posting (0045/SALT-201). A throw parks the record after retries
+  // (poison-parking, SALT-210) — it never blocks the head of the queue.
   useEffect(() => {
-    outbox.register("create_sales_invoice", async (payload) => {
+    outbox.register("create_sales_invoice", async (payload, rec) => {
       if (!supabase) throw new Error("supabase unavailable");
-      const { error: e } = await supabase.rpc("create_sales_invoice", payload);
+      const { error: e } = await supabase.rpc("create_sales_invoice", {
+        ...(payload as Record<string, unknown>),
+        p_idempotency_key: rec.id,
+      });
       if (e) throw e;
     });
   }, []);
