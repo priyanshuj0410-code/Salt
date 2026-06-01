@@ -86,7 +86,7 @@ const typeTint = (type: string) =>
       : "bg-info-bg text-info";
 
 function Balance({ paise }: { paise: number }) {
-  if (paise === 0) return <span className="text-muted-foreground">₹0</span>;
+  if (paise === 0) return <span className="text-text-tertiary">₹0</span>;
   const dr = paise > 0;
   return (
     <span className={dr ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}>
@@ -472,7 +472,7 @@ export function PartiesPage() {
                   <div key={groupKey(g)} className="rounded-lg border bg-amber-500/5 p-3">
                     <div className="mb-2 flex items-center gap-2 text-xs">
                       <Badge variant="outline">{REASON_LABEL[g.reason]}</Badge>
-                      <span className="text-muted-foreground">pick the one to keep, then merge</span>
+                      <span className="text-text-tertiary">pick the one to keep, then merge</span>
                     </div>
                     <div className="space-y-1.5">
                       {g.parties.map((p) => (
@@ -485,7 +485,7 @@ export function PartiesPage() {
                           />
                           <span className="min-w-0 flex-1 truncate font-medium">{p.name}</span>
                           <Badge variant="secondary">{p.type}</Badge>
-                          <span className="w-16 text-right text-xs text-muted-foreground">{p.billCount} bills</span>
+                          <span className="w-16 text-right text-xs text-text-tertiary">{p.billCount} bills</span>
                           <span className="w-28 text-right text-xs">
                             <Balance paise={p.openingBalancePaise} />
                           </span>
@@ -497,7 +497,7 @@ export function PartiesPage() {
                         <GitMerge />
                         Merge {g.parties.length} into 1
                       </Button>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-text-tertiary">
                         balances add up; bills move to the kept party
                       </span>
                     </div>
