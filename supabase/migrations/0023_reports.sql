@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0023: Reports & analytics — derived views over the two backbones, plus a
 -- general audit log. Views use security_invoker so per-org RLS still applies.
 -- On-hand reads the batches cache; the audit trail and financials read the

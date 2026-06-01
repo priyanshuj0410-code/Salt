@@ -1,0 +1,73 @@
+---
+type: architecture
+updated: 2026-06-01
+tags: [ops, nfr, reliability, security, compliance, scalability]
+---
+
+# Operations & NFR posture
+
+The non-functional posture of Salt — reliability, security, compliance, scalability — and the runbooks for each. Salt has **no servers of its own**: the backend is [Supabase](stack.md) (managed Postgres + PostgREST + Auth + RLS). So most of the NFR baseline is *inherited* from the Supabase project's plan and region, and the infra work is (a) documenting that baseline + the runbooks, and (b) raising the few **account-owner actions** that only the project owner can take from the Supabase dashboard. Those are collected in [Action items](#action-items) at the bottom.
+
+Covers tickets **SALT-134** (reliability), **SALT-136** (security), **SALT-137** (compliance), **SALT-138** (scalability) — re-homed from the `nfr` lane to `infra` as platform/ops.
+
+## Reliability — backups & recovery (SALT-134)
+
+**Baseline (Supabase managed Postgres).** Confirm on the project's plan in the dashboard:
+- **Daily logical backups** are taken automatically (Pro plan and above; typical retention 7 days, longer on higher tiers).
+- **Point-in-Time Recovery (PITR)** is a paid add-on giving recovery to a fine (≈2-minute) granularity via WAL archiving. It is **off by default** and must be enabled.
+
+**Targets (proposed).**
+- **RPO** (max data loss): ≤ 5 min with PITR enabled; otherwise up to 24 h (last daily backup).
+- **RTO** (max time to restore): ≤ 1 h for a full project restore.
+
+**Restore runbook.**
+1. In the Supabase dashboard → Database → Backups, pick the restore point (a daily backup, or a PITR timestamp).
+2. Supabase restores into the project (or a clone). Note: a restore is destructive to data written after the chosen point — take a fresh backup first if the current state matters.
+3. After restore, re-run the migration sanity check: `supabase/migrations/` should be a contiguous `0001`–`0024` + `0025`–`0031` (see [data-model](data-model.md)); the app is stateless on Vercel and needs no redeploy.
+4. Verify with a smoke read (a known org's trial balance nets to 0; recent bills present) before reopening counters.
+
+**Zero-loss *local* durability** (bill through a power/network cut with no loss) depends on the **offline-first substrate** — that is **SALT-135** (blocked on the sync substrate, see [roadmap](../product/roadmap.md)), **out of scope here**.
+
+## Security — encryption, logs, PII (SALT-136)
+
+- **In transit:** all client↔Supabase traffic is HTTPS/TLS (the `@supabase/supabase-js` client only speaks HTTPS).
+- **At rest:** Supabase encrypts Postgres storage at rest (AES-256 on the underlying volume). Inherited from the platform; confirm on the project's plan.
+- **Tenancy isolation:** every business table is deny-by-default **RLS** gated on `is_member(org_id)` — see [security-rls](security-rls.md). This is the primary safeguard against cross-org PII exposure.
+- **No plaintext PII in client logs — verified.** The only `console.*` in `apps/web/src` is the PII-safe `ErrorBoundary` (it logs the error/stack, not user data). There is no analytics/telemetry that ships field values. Re-check this whenever a `console.*` is added (consider an eslint `no-console` rule with an ErrorBoundary exception as a future guard).
+- **Secrets:** only the Supabase **publishable/anon** key is in the client bundle (safe by design — RLS enforces access). The service-role key and DB password are never shipped client-side.
+
+**GDPR / DPDP export + erase** (right to access + erasure of a party's PII): **not built**. This needs a security-definer RPC (`export_party_pii` / `erase_party_pii`, the latter scrubbing name/phone/address/GSTIN while preserving the immutable financial ledger for statutory retention) plus a minimal owner-settings UI. That is **DB + settings work, not infra** — filed as **SALT-188** (`database`). Data **export** may already be partly served by SALT-093 (Data export/backup).
+
+## Compliance — residency & audit trail (SALT-137)
+
+**Data residency (India).** Supabase pins data to the **region chosen at project creation** and the region **cannot be changed afterward** (moving regions = migrate to a new project). For Indian medical-retail compliance the project must live in an **India region (`ap-south-1`, Mumbai)**. This is an **account-owner action**: confirm the current project's region in the dashboard; if it is not in India, plan a project migration. (I cannot read the project region from here.)
+
+**Inspector-ready audit trail.** The append-only audit log UI exists (**SALT-092**, done; viewable at `/settings/audit`, see [App.tsx](../architecture/screens-routing.md)) and a data-export path exists (**SALT-093**). The **DB-level capture triggers + append-only lockdown** that record who/what/when on sales / purchases / payments / ledgers are **SALT-171** (`database`, todo) — that is the database module's work, not infra; this page just records the dependency. Once triggers land, the `/settings/audit` viewer + export is the inspector surface.
+
+## Scalability — load test to PRD scale (SALT-138)
+
+**PRD targets:** 50k items · 1M bills/year · 100 shops, meeting the **SALT-133** latency targets:
+- local save **< 200 ms**, 10k-item list render **< 500 ms**, reports **< 5 s**.
+
+**Method (documented; execution needs an account-owner step).**
+1. **Provision a non-prod Supabase project** on the same plan, India region, with `supabase/migrations/0001`–`0031` applied.
+2. **Seed to scale:** one org, 100 `shops`, 50k `items` + batches, ~1M `sales_invoices`/`sale_lines` spread across a year and the shops, plus proportional `stock_movements` and `ledger_entries`. (A seed generator can be written as a follow-up infra task; it must post through the real RPCs or insert pre-balanced rows so `v_*` views stay consistent.)
+3. **Drive the hot paths** as an **authenticated** member (anon-key timing against prod is blocked by RLS — a seeded, authenticated test env is required): catalog/substitute search, `create_sales_invoice` save, and the heaviest report (`v_*` aggregates over a year). Record p50/p95 against the SALT-133 targets.
+4. Tune with indexes / pagination (`fetchAllPaged` already bounds report reads) where a target is missed.
+
+**Status:** blocked on a seeded, authenticated non-prod environment (account-owner provisioning). The method + targets are recorded here so the run is turnkey once that exists.
+
+## Action items
+
+| # | Action | Owner | Ticket | Blocks |
+|---|---|---|---|---|
+| 1 | Enable PITR + confirm daily-backup retention on the Supabase project | **Account owner** (dashboard) | SALT-134 | full reliability sign-off |
+| 2 | Confirm the project region is an India region (`ap-south-1`); migrate if not | **Account owner** (dashboard) | SALT-137 | residency compliance |
+| 3 | Provision + seed an authenticated non-prod project to PRD scale, then run the load test | **Account owner** + infra | SALT-138 | scalability sign-off |
+| 4 | GDPR/DPDP export + erase RPC (`export_party_pii` / `erase_party_pii`) + owner UI | **database** module | SALT-188 | SALT-136 erase |
+| 5 | Audit-capture triggers + append-only lockdown on financial tables | **database** module | SALT-171 | SALT-137 audit |
+
+Infra has delivered the documentation, runbooks, and method above + the no-PII-logs verification + the at-rest/transit/RLS posture. The remaining items are account-owner dashboard actions or other modules' code, tracked by the tickets above.
+
+## Related
+- [stack](stack.md) · [security-rls](security-rls.md) · [data-model](data-model.md) · [../product/roadmap](../product/roadmap.md)

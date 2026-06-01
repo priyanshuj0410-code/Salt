@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0022: GST & compliance.
 -- Filing periods + GSTR-2B reconciliation + the Schedule H1/X register + drug
 -- licenses. GSTR-1/3B/ITC are VIEWS derived from the document tables and the

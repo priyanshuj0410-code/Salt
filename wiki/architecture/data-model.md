@@ -1,6 +1,6 @@
 ---
 type: architecture
-updated: 2026-05-29
+updated: 2026-06-01
 ---
 
 # Data model & migrations
@@ -9,17 +9,17 @@ All tables live in Postgres (Supabase), every business table carries `org_id` fo
 
 Migrations are applied in order by the user in the Supabase SQL editor. For exact column-level definitions (types, nullability, defaults, FKs) see [schema.md](schema.md).
 
-> **Target model:** the full forward design for every nav module (multi-shop, purchases/GRN, payments, returns, GST, reports, double-entry accounting) is drafted as SQL in `supabase/proposed/0014–0024` — see [proposed-data-model.md](proposed-data-model.md) and [decisions/0009](../decisions/0009-target-data-model.md).
+> **Target model:** the full forward design for every nav module (multi-shop, purchases/GRN, payments, returns, GST, reports, double-entry accounting) is **applied** and lives in `supabase/migrations/0014–0024` — see [proposed-data-model.md](proposed-data-model.md) and [decisions/0009](../decisions/0009-target-data-model.md).
 >
 > ⚠️ **This page is stale (flagged 2026-06-01).** The proposed `0014–0024` backbone has in
-> fact been **applied** to the live DB (verified by column-probing), even though those files
-> still read "DO NOT RUN". So the as-built model is **not** the `orders`/`order_lines` +
+> fact been **applied** to the live DB (verified by column-probing); the files are now
+> promoted into the migration history (`supabase/migrations/0014–0024`, SALT-140). So the as-built model is **not** the `orders`/`order_lines` +
 > `place_order` described below — it is `sales_invoices`/`sale_lines` + `create_sales_invoice`
 > (see [gst-returns.md](gst-returns.md)) and `purchases`/`purchase_lines` + `receive_purchase`
 > (see [grn.md](grn.md)), on `shops` + `stock_movements` + `ledger_entries`. The migration
 > table and "orders" entity below predate that and are kept only until this page is reconciled
 > module-by-module against the live schema. Trust [schema.md](schema.md), [grn.md](grn.md),
-> [gst-returns.md](gst-returns.md), and the `supabase/proposed/*` files over this page.
+> [gst-returns.md](gst-returns.md), and the `supabase/migrations/0014–0024` files over this page.
 
 | # | File | Adds |
 |---|------|------|

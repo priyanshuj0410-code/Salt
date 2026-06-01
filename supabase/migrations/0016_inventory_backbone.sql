@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0016: Inventory backbone — the stock ledger.
 -- stock_movements is the immutable, signed audit trail of every quantity change.
 -- batches.qty becomes a CACHED current-on-hand kept in step by the document RPCs

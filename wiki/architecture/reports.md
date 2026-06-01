@@ -30,7 +30,7 @@ preserve when extending a report.
 
 ## Data sources
 
-Reports lean on the purpose-built **`v_*` views** from `supabase/proposed/0023`
+Reports lean on the purpose-built **`v_*` views** from `supabase/migrations/0023`
 (confirmed live by probing — the proposed `0014–0024` schema is as-built despite
 the "DO NOT RUN" headers; same finding as the GST/GRN slices):
 
