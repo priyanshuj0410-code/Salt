@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { supabase } from "@/lib/supabase";
-import { buildSalesInvoicePayload, withTimeout, TimeoutError, type RxDetails } from "@/lib/orders";
+import { buildSalesInvoicePayload, withTimeout, TimeoutError, type RxDetails, type SalesInvoiceArgs } from "@/lib/orders";
 import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
@@ -60,7 +60,16 @@ export function useCheckout({
   const orgId = membership?.orgId;
   const blockers = useShopBlockers();
   const online = useOnlineStatus();
-  const [saving, setSaving] = useState(false);
+  // Optimistic save (SALT-155): the online write is reconciled in the background, so there is no
+  // blocking "saving" state. A definite failure / timeout is held here with its payload + receipt
+  // so the cashier can Retry without re-keying — the bill is never lost, the counter never blocked.
+  const [failedSave, setFailedSave] = useState<{
+    args: SalesInvoiceArgs;
+    receipt: ReturnType<typeof buildInvoiceData> | null;
+    willPrint: boolean;
+    message: string;
+    retryable: boolean;
+  } | null>(null);
   const [saved, setSaved] = useState(false);
   // A bill completed locally while offline and queued to sync (SALT-205) — distinct from `saved`.
   const [savedOffline, setSavedOffline] = useState(false);
@@ -230,7 +239,7 @@ export function useCheckout({
       creditApproval?: { approverName: string | null; coversPaise: number };
     } = {},
   ): Promise<string | null> {
-    if (!supabase || empty || usingSeed || saving || !shopId) return null;
+    if (!supabase || empty || usingSeed || !shopId) return null;
     if (opts.print !== undefined) printIntent.current = opts.print;
     const rxToUse = opts.rx ?? rx;
     // Schedule H1/X hard gate: no save until the prescriber + patient are recorded.
@@ -332,30 +341,54 @@ export function useCheckout({
       return rec.id;
     }
 
-    setSaving(true);
+    // Online optimistic save (SALT-155): capture the receipt from the CURRENT bill, free the
+    // counter immediately, and reconcile the RPC in the background. The receipt prints inside
+    // `reconcile` AFTER the server allocates the real invoice number, so the printed bill keeps it.
+    const receipt =
+      printIntent.current && shop
+        ? buildInvoiceData({ invoiceId: "PENDING", shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
+        : null;
+    const willPrint = printIntent.current;
+    clear();
+    setSplit(false);
+    setApproval(null);
+    setCreditApproval(null);
+    setFailedSave(null);
     setError(null);
+    printIntent.current = false;
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+    void reconcile(args, receipt, willPrint);
+    return null;
+  }
+
+  // Reconcile an optimistic save against the server in the background (SALT-155). On success,
+  // print the receipt with the real, server-allocated invoice number; a definite failure or a
+  // timeout is held in `failedSave` (a non-blocking banner with Retry) so the bill is never lost.
+  async function reconcile(
+    args: SalesInvoiceArgs,
+    receipt: ReturnType<typeof buildInvoiceData> | null,
+    willPrint: boolean,
+  ): Promise<void> {
+    if (!supabase) return;
     try {
       const { data, error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
       if (err) {
-        // Oversell guard fired (another counter took the last unit): the server rejects
-        // atomically (SALT-181). Refresh the catalogue so FEFO re-resolves against current
-        // stock, and show a recoverable message rather than the raw SQL error.
-        if (/insufficient stock/i.test(err.message)) {
-          if (orgId) void loadCatalog(orgId);
-          setError("Stock changed — another counter may have sold the last unit. Catalogue refreshed; check the line and try again.");
-        } else {
-          setError(err.message);
-        }
-        return null;
+        // A returned error means the server did NOT write (atomic rollback), so a retry is safe.
+        const oversell = /insufficient stock/i.test(err.message);
+        if (oversell && orgId) void loadCatalog(orgId);
+        setFailedSave({
+          args,
+          receipt,
+          willPrint,
+          retryable: true,
+          message: oversell
+            ? "Stock changed — another counter may have sold the last unit. Catalogue refreshed; retry or re-check the bill."
+            : `Could not save the bill: ${err.message}`,
+        });
+        return;
       }
       const invoiceId = (data as string | null) ?? null;
-      // Capture the receipt from live bill state BEFORE clear() wipes it.
-      const receipt =
-        printIntent.current && invoiceId && shop
-          ? buildInvoiceData({ invoiceId, shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
-          : null;
-      // Print the real, server-allocated FY-scoped GST invoice number (SALT-013/187) when the
-      // series is configured; fall back to the UUID-hex ref (`invoiceRef`) when it is null.
       if (receipt && invoiceId) {
         const { data: inv } = await supabase
           .from("sales_invoices")
@@ -363,27 +396,31 @@ export function useCheckout({
           .eq("id", invoiceId)
           .maybeSingle();
         const invoiceNo = (inv as { invoice_no: string | null } | null)?.invoice_no;
-        if (invoiceNo) receipt.ref = invoiceNo;
+        receipt.ref = invoiceNo ?? invoiceId.replace(/-/g, "").slice(0, 8).toUpperCase();
       }
-      clear();
-      setSplit(false); // back to single-payment for the next bill
-      setApproval(null); // each new bill re-gates from scratch
-      setCreditApproval(null);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-      printIntent.current = false;
-      if (receipt) printInvoice(receipt);
-      return invoiceId;
+      if (willPrint && receipt) printInvoice(receipt);
     } catch (e) {
-      setError(
-        e instanceof TimeoutError
-          ? "Saving is taking too long — it may have gone through. Check Bills before saving again."
-          : "Could not save the bill. Please try again.",
-      );
-      return null;
-    } finally {
-      setSaving(false);
+      // Timeout: the write MAY have landed — never auto-retry (would duplicate without a server
+      // idempotency key, SALT-205); the cashier checks Bills first. Hence retryable: false.
+      setFailedSave({
+        args,
+        receipt,
+        willPrint,
+        retryable: false,
+        message:
+          e instanceof TimeoutError
+            ? "Save timed out — it may have gone through. Check Bills before retrying."
+            : "Could not save the bill. Check Bills, then retry if it did not go through.",
+      });
     }
+  }
+
+  // Retry a held failed save (definite failures only; idempotent since the server did not write).
+  function retryFailedSave() {
+    if (!failedSave) return;
+    const { args, receipt, willPrint } = failedSave;
+    setFailedSave(null);
+    void reconcile(args, receipt, willPrint);
   }
   // Keep the ref pointing at the latest `save` (assigning in render is disallowed) so the
   // realtime approval handler resumes the current closure.
@@ -416,11 +453,14 @@ export function useCheckout({
     payment,
     setPaymentMethod,
     setCreditDays,
-    saving,
     saved,
     savedOffline,
     online,
     error,
+    // Optimistic-save failure (SALT-155): a non-blocking banner with Retry; null when clear.
+    failedSave: failedSave ? { message: failedSave.message, retryable: failedSave.retryable } : null,
+    retryFailedSave,
+    dismissFailedSave: () => setFailedSave(null),
     shopId,
     setupOpen,
     setSetupOpen,
