@@ -431,15 +431,21 @@ export interface Gstr3bSummary {
   outwardTaxablePaise: number; // 3.1(a) taxable value of outward supplies
   output: HeadAmounts; // output tax from sales
   itc: HeadAmounts; // eligible ITC from purchases
-  balance: HeadAmounts; // output − itc per head (negative = credit available)
+  balance: HeadAmounts; // netOutput − itc per head (negative = credit available)
   outputTotalPaise: number;
   itcTotalPaise: number; // gross ITC from purchases
   reversalPaise: number; // ITC reversed on write-offs / expiry destruction (Table 4B)
   netItcPaise: number; // itcTotal − reversal — the ITC actually available
-  netPayablePaise: number; // max(0, output − netItc) after full set-off — the cash figure
-  creditCarryPaise: number; // max(0, netItc − output) carried forward
+  creditNote: HeadAmounts; // outward tax reversed by sales-return credit notes
+  netOutput: HeadAmounts; // output − credit notes per head — the net outward liability
+  creditNoteTaxablePaise: number;
+  creditNoteTotalPaise: number; // credit-note tax across all heads
+  netOutputTotalPaise: number; // gross output − credit notes — the actual outward liability
+  netPayablePaise: number; // max(0, netOutput − netItc) after full set-off — the cash figure
+  creditCarryPaise: number; // max(0, netItc − netOutput) carried forward
   invoiceCount: number;
   purchaseCount: number;
+  creditNoteCount: number;
 }
 
 const emptyHead = (): HeadAmounts => ({ cgstPaise: 0, sgstPaise: 0, igstPaise: 0 });
@@ -452,7 +458,13 @@ const emptyHead = (): HeadAmounts => ({ cgstPaise: 0, sgstPaise: 0, igstPaise: 0
  * for detail. ITC reversal (returns / expired stock) is deferred until the Returns
  * module exists. All money is paise.
  */
-export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases: Gstr3bItcRow[], reversalPaise = 0): Gstr3bSummary {
+export function buildGstr3b(
+  period: string,
+  sales: Gstr3bOutwardRow[],
+  purchases: Gstr3bItcRow[],
+  reversalPaise = 0,
+  creditNotes: Gstr3bOutwardRow[] = [],
+): Gstr3bSummary {
   const output = emptyHead();
   let outwardTaxable = 0;
   for (const s of sales) {
@@ -461,18 +473,34 @@ export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases
     output.sgstPaise += s.sgst_paise;
     output.igstPaise += s.igst_paise;
   }
+  // Sales-return credit notes reverse outward tax (GSTR-3B 3.1(a) is net of them).
+  const creditNote = emptyHead();
+  let cnTaxable = 0;
+  for (const c of creditNotes) {
+    cnTaxable += c.taxable_paise;
+    creditNote.cgstPaise += c.cgst_paise;
+    creditNote.sgstPaise += c.sgst_paise;
+    creditNote.igstPaise += c.igst_paise;
+  }
   const itc = emptyHead();
   for (const p of purchases) {
     itc.cgstPaise += p.cgst_paise;
     itc.sgstPaise += p.sgst_paise;
     itc.igstPaise += p.igst_paise;
   }
+  const netOutput: HeadAmounts = {
+    cgstPaise: output.cgstPaise - creditNote.cgstPaise,
+    sgstPaise: output.sgstPaise - creditNote.sgstPaise,
+    igstPaise: output.igstPaise - creditNote.igstPaise,
+  };
   const balance: HeadAmounts = {
-    cgstPaise: output.cgstPaise - itc.cgstPaise,
-    sgstPaise: output.sgstPaise - itc.sgstPaise,
-    igstPaise: output.igstPaise - itc.igstPaise,
+    cgstPaise: netOutput.cgstPaise - itc.cgstPaise,
+    sgstPaise: netOutput.sgstPaise - itc.sgstPaise,
+    igstPaise: netOutput.igstPaise - itc.igstPaise,
   };
   const outputTotal = output.cgstPaise + output.sgstPaise + output.igstPaise;
+  const creditNoteTotal = creditNote.cgstPaise + creditNote.sgstPaise + creditNote.igstPaise;
+  const netOutputTotal = outputTotal - creditNoteTotal;
   const itcTotal = itc.cgstPaise + itc.sgstPaise + itc.igstPaise;
   const netItc = itcTotal - reversalPaise; // ITC available after the Table 4B reversal
   return {
@@ -485,10 +513,16 @@ export function buildGstr3b(period: string, sales: Gstr3bOutwardRow[], purchases
     itcTotalPaise: itcTotal,
     reversalPaise,
     netItcPaise: netItc,
-    netPayablePaise: Math.max(0, outputTotal - netItc),
-    creditCarryPaise: Math.max(0, netItc - outputTotal),
+    creditNote,
+    netOutput,
+    creditNoteTaxablePaise: cnTaxable,
+    creditNoteTotalPaise: creditNoteTotal,
+    netOutputTotalPaise: netOutputTotal,
+    netPayablePaise: Math.max(0, netOutputTotal - netItc),
+    creditCarryPaise: Math.max(0, netItc - netOutputTotal),
     invoiceCount: sales.length,
     purchaseCount: purchases.length,
+    creditNoteCount: creditNotes.length,
   };
 }
 
@@ -537,11 +571,12 @@ export function buildGstr3bJson(summary: Gstr3bSummary, gstin: string) {
     gstin,
     ret_period: gstnPeriod(summary.period),
     sup_details: {
+      // 3.1(a) outward taxable supplies — reported NET of sales-return credit notes.
       osup_det: {
-        txval: r(summary.outwardTaxablePaise),
-        camt: r(summary.output.cgstPaise),
-        samt: r(summary.output.sgstPaise),
-        iamt: r(summary.output.igstPaise),
+        txval: r(summary.outwardTaxablePaise - summary.creditNoteTaxablePaise),
+        camt: r(summary.netOutput.cgstPaise),
+        samt: r(summary.netOutput.sgstPaise),
+        iamt: r(summary.netOutput.igstPaise),
       },
     },
     itc_elg: {
@@ -563,6 +598,8 @@ export function gstr3bToCsv(summary: Gstr3bSummary): string {
   const rows: (string | number)[][] = [
     ["row", "cgst", "sgst", "igst", "total"],
     ["Output tax (sales)", m(summary.output.cgstPaise), m(summary.output.sgstPaise), m(summary.output.igstPaise), m(summary.outputTotalPaise)],
+    ["Less: credit notes (sales returns)", m(summary.creditNote.cgstPaise), m(summary.creditNote.sgstPaise), m(summary.creditNote.igstPaise), m(summary.creditNoteTotalPaise)],
+    ["Net output tax", "", "", "", m(summary.netOutputTotalPaise)],
     ["Gross ITC (purchases)", m(summary.itc.cgstPaise), m(summary.itc.sgstPaise), m(summary.itc.igstPaise), m(summary.itcTotalPaise)],
     ["Less: ITC reversal (write-offs)", "", "", "", m(summary.reversalPaise)],
     ["Net ITC (after reversal)", "", "", "", m(summary.netItcPaise)],
@@ -950,4 +987,173 @@ export function hsnSummaryToCsv(s: HsnSummary): string {
   const rows = s.rows.map((r) => [r.hsn, r.rate, r.qty, m(r.taxablePaise), m(r.cgstPaise), m(r.sgstPaise), m(r.igstPaise), m(r.totalPaise)]);
   const total = ["TOTAL", "", s.qty, m(s.totals.taxablePaise), m(s.totals.cgstPaise), m(s.totals.sgstPaise), m(s.totals.igstPaise), m(s.totals.totalPaise)];
   return [head, ...rows, total].map((c) => c.map(csvCell).join(",")).join("\n");
+}
+
+// ============================================================================
+// GSTR-1 credit notes — CDNR (registered) / CDNUR (B2C) (SALT-196)
+// ============================================================================
+
+/** One rate slice of a credit note (from `credit_note_lines`, merged per `gst_rate`). */
+export interface Gstr1CreditNoteLine {
+  rate: number; // gst_rate, e.g. 5 / 12 / 18
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+
+/** A sales-return `credit_notes` row: party + original invoice embedded, with rate-wise lines. */
+export interface Gstr1CreditNoteRow {
+  noteNo: string;
+  date: string; // note_date 'YYYY-MM-DD'
+  is_interstate: boolean;
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+  total_paise: number;
+  origInvoiceNo: string | null; // sale_invoice_id → sales_invoices.invoice_no
+  origInvoiceDate: string | null; // → sales_invoices.invoice_date
+  lines: Gstr1CreditNoteLine[]; // credit_note_lines, rate-wise
+  party: { gstin: string | null; name: string | null; state_code: string | null } | null;
+}
+
+/** A rate-wise CDNR row (recipient registered) — one per note × rate. */
+export interface CdnrRow extends TaxTotals {
+  gstin: string;
+  name: string;
+  noteNo: string;
+  date: string;
+  origInvoiceNo: string;
+  origInvoiceDate: string;
+  pos: string;
+  rate: number;
+}
+/** A rate-wise CDNUR row (recipient unregistered / B2C) — one per note × rate. */
+export interface CdnurRow extends TaxTotals {
+  noteNo: string;
+  date: string;
+  origInvoiceNo: string;
+  origInvoiceDate: string;
+  pos: string;
+  supplyType: "INTRA" | "INTER";
+  rate: number;
+}
+export interface CreditNoteSections {
+  cdnr: CdnrRow[]; // registered recipients, rate-wise
+  cdnur: CdnurRow[]; // unregistered / B2C, rate-wise
+  totals: TaxTotals; // all credit notes (the outward-tax reversal)
+}
+
+/**
+ * Split a period's sales-return credit notes into GSTR-1 **CDNR** (recipient has a
+ * GSTIN) and **CDNUR** (B2C), **rate-wise** (one row per note × `gst_rate`), each
+ * carrying the original invoice ref. Place of supply = recipient's state, else the
+ * shop's. The grand total is the outward-tax reversal that GSTR-3B 3.1(a) nets out.
+ */
+export function buildCreditNoteSections(creditNotes: Gstr1CreditNoteRow[], shopStateCode: string): CreditNoteSections {
+  const cdnr: CdnrRow[] = [];
+  const cdnur: CdnurRow[] = [];
+  const totals = emptyTotals();
+  for (const cn of creditNotes) {
+    const gstin = cn.party?.gstin?.trim() ?? "";
+    const pos = cn.party?.state_code?.trim() || shopStateCode;
+    const name = cn.party?.name?.trim() || "";
+    const origInvoiceNo = cn.origInvoiceNo ?? "";
+    const origInvoiceDate = cn.origInvoiceDate ?? "";
+    // Rate-wise lines; fall back to a single note-level slice if none were supplied.
+    const raw: Gstr1CreditNoteLine[] = cn.lines.length
+      ? cn.lines
+      : [{ rate: 0, taxable_paise: cn.taxable_paise, cgst_paise: cn.cgst_paise, sgst_paise: cn.sgst_paise, igst_paise: cn.igst_paise }];
+    // Merge lines that share a rate → one CDNR/CDNUR item per rate.
+    const byRate = new Map<number, Gstr1CreditNoteLine>();
+    for (const ln of raw) {
+      const cur = byRate.get(ln.rate);
+      if (cur) {
+        cur.taxable_paise += ln.taxable_paise;
+        cur.cgst_paise += ln.cgst_paise;
+        cur.sgst_paise += ln.sgst_paise;
+        cur.igst_paise += ln.igst_paise;
+      } else {
+        byRate.set(ln.rate, { ...ln });
+      }
+    }
+    for (const ln of byRate.values()) {
+      addInto(totals, ln);
+      if (gstin) {
+        const row: CdnrRow = { gstin, name, noteNo: cn.noteNo, date: cn.date, origInvoiceNo, origInvoiceDate, pos, rate: ln.rate, ...emptyTotals() };
+        addInto(row, ln);
+        cdnr.push(row);
+      } else {
+        const row: CdnurRow = { noteNo: cn.noteNo, date: cn.date, origInvoiceNo, origInvoiceDate, pos, supplyType: cn.is_interstate ? "INTER" : "INTRA", rate: ln.rate, ...emptyTotals() };
+        addInto(row, ln);
+        cdnur.push(row);
+      }
+    }
+  }
+  cdnr.sort((a, b) => a.gstin.localeCompare(b.gstin) || a.noteNo.localeCompare(b.noteNo) || a.rate - b.rate);
+  cdnur.sort((a, b) => a.noteNo.localeCompare(b.noteNo) || a.rate - b.rate);
+  return { cdnr, cdnur, totals };
+}
+
+/** GSTN-shaped `{ cdnr, cdnur }` for the GSTR-1 JSON — note type 'C', rate-wise `itms`. */
+export function creditNoteSectionsToJson(s: CreditNoteSections) {
+  const r = (p: number) => Math.round(p) / 100;
+  const itm = (x: CdnrRow | CdnurRow, i: number) => ({ num: i + 1, itm_det: { rt: x.rate, txval: r(x.taxablePaise), camt: r(x.cgstPaise), samt: r(x.sgstPaise), iamt: r(x.igstPaise) } });
+  const val = (rows: TaxTotals[]) => r(rows.reduce((a, x) => a + x.totalPaise, 0));
+  const origRef = (onum: string, odt: string) => ({ ...(onum ? { onum } : {}), ...(odt ? { odt: gstnDate(odt) } : {}) });
+
+  // CDNR: group ctin → note → rate-wise itms.
+  const ctinMap = new Map<string, Map<string, CdnrRow[]>>();
+  for (const x of s.cdnr) {
+    let notes = ctinMap.get(x.gstin);
+    if (!notes) ctinMap.set(x.gstin, (notes = new Map()));
+    const list = notes.get(x.noteNo);
+    if (list) list.push(x);
+    else notes.set(x.noteNo, [x]);
+  }
+  const cdnr = Array.from(ctinMap, ([ctin, notes]) => ({
+    ctin,
+    nt: Array.from(notes, ([nt_num, rows]) => ({
+      ntty: "C",
+      nt_num,
+      nt_dt: gstnDate(rows[0].date),
+      ...origRef(rows[0].origInvoiceNo, rows[0].origInvoiceDate),
+      rchrg: "N",
+      inv_typ: "R",
+      pos: rows[0].pos,
+      val: val(rows),
+      itms: rows.map(itm),
+    })),
+  }));
+
+  // CDNUR: group note → rate-wise itms.
+  const cnurMap = new Map<string, CdnurRow[]>();
+  for (const x of s.cdnur) {
+    const list = cnurMap.get(x.noteNo);
+    if (list) list.push(x);
+    else cnurMap.set(x.noteNo, [x]);
+  }
+  const cdnur = Array.from(cnurMap, ([nt_num, rows]) => ({
+    typ: rows[0].supplyType === "INTER" ? "B2CL" : "B2CS",
+    ntty: "C",
+    nt_num,
+    nt_dt: gstnDate(rows[0].date),
+    ...origRef(rows[0].origInvoiceNo, rows[0].origInvoiceDate),
+    pos: rows[0].pos,
+    val: val(rows),
+    itms: rows.map(itm),
+  }));
+
+  return { cdnr, cdnur };
+}
+
+/** Flat rate-wise CSV of the credit-note sections (spreadsheet fallback). */
+export function creditNotesToCsv(s: CreditNoteSections): string {
+  const m = (p: number) => (Math.round(p) / 100).toFixed(2);
+  const head = ["section", "gstin", "note", "date", "orig invoice", "orig date", "pos", "rate", "taxable", "cgst", "sgst", "igst", "total"];
+  const rows: (string | number)[][] = [];
+  for (const x of s.cdnr) rows.push(["CDNR", x.gstin, x.noteNo, x.date, x.origInvoiceNo || "—", x.origInvoiceDate || "—", x.pos, x.rate, m(x.taxablePaise), m(x.cgstPaise), m(x.sgstPaise), m(x.igstPaise), m(x.totalPaise)]);
+  for (const x of s.cdnur) rows.push(["CDNUR", "", x.noteNo, x.date, x.origInvoiceNo || "—", x.origInvoiceDate || "—", x.pos, x.rate, m(x.taxablePaise), m(x.cgstPaise), m(x.sgstPaise), m(x.igstPaise), m(x.totalPaise)]);
+  return [head, ...rows].map((c) => c.map(csvCell).join(",")).join("\n");
 }

@@ -15,11 +15,18 @@ import {
   buildGstr1,
   buildGstr1Json,
   gstr1ToCsv,
+  buildCreditNoteSections,
+  creditNoteSectionsToJson,
+  creditNotesToCsv,
   type Gstr1InvoiceRow,
   type Gstr1LineRow,
+  type Gstr1CreditNoteRow,
   type B2bParty,
   type B2csRow,
   type B2clInvoice,
+  type CdnrRow,
+  type CdnurRow,
+  type Gstr1CreditNoteLine,
   type HsnRow,
 } from "@/lib/gst";
 
@@ -52,6 +59,58 @@ interface LineFetch {
 const INVOICE_COLS =
   "id,invoice_no,invoice_date,is_interstate,taxable_paise,cgst_paise,sgst_paise,igst_paise,total_paise,ledgers(gstin,name,state_code)";
 const LINE_COLS = "invoice_id,qty,gst_rate,taxable_paise,cgst_paise,sgst_paise,igst_paise,items(hsn)";
+
+/** Raw `credit_notes` shape from PostgREST (party + original invoice embedded). */
+interface CreditNoteFetch {
+  id: string;
+  note_no: string;
+  note_date: string;
+  is_interstate: boolean;
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+  total_paise: number;
+  ledgers: { gstin: string | null; name: string | null; state_code: string | null } | null;
+  sales_invoices: { invoice_no: string | null; invoice_date: string | null } | null;
+}
+/** Raw `credit_note_lines` shape (rate-wise breakup). */
+interface CreditNoteLineFetch {
+  credit_note_id: string;
+  gst_rate: number;
+  taxable_paise: number;
+  cgst_paise: number;
+  sgst_paise: number;
+  igst_paise: number;
+}
+const CREDIT_NOTE_COLS =
+  "id,note_no,note_date,is_interstate,taxable_paise,cgst_paise,sgst_paise,igst_paise,total_paise,ledgers(gstin,name,state_code),sales_invoices(invoice_no,invoice_date)";
+const CREDIT_NOTE_LINE_COLS = "credit_note_id,gst_rate,taxable_paise,cgst_paise,sgst_paise,igst_paise";
+
+/** Fetch credit_note_lines for many note ids, chunked; grouped by `credit_note_id`. */
+async function fetchCreditNoteLines(noteIds: string[]): Promise<Map<string, Gstr1CreditNoteLine[]>> {
+  const byNote = new Map<string, Gstr1CreditNoteLine[]>();
+  if (!supabase || noteIds.length === 0) return byNote;
+  for (let i = 0; i < noteIds.length; i += 300) {
+    const { data } = await supabase
+      .from("credit_note_lines")
+      .select(CREDIT_NOTE_LINE_COLS)
+      .in("credit_note_id", noteIds.slice(i, i + 300));
+    for (const r of (data as unknown as CreditNoteLineFetch[] | null) ?? []) {
+      const line: Gstr1CreditNoteLine = {
+        rate: r.gst_rate,
+        taxable_paise: r.taxable_paise,
+        cgst_paise: r.cgst_paise,
+        sgst_paise: r.sgst_paise,
+        igst_paise: r.igst_paise,
+      };
+      const list = byNote.get(r.credit_note_id);
+      if (list) list.push(line);
+      else byNote.set(r.credit_note_id, [line]);
+    }
+  }
+  return byNote;
+}
 
 /** Fetch sale_lines for many invoice ids, chunked to keep the URL bounded. */
 async function fetchLines(invoiceIds: string[]): Promise<Gstr1LineRow[]> {
@@ -88,6 +147,7 @@ export function Gstr1Page() {
   const [period, setPeriod] = useState(() => new Date().toISOString().slice(0, 7)); // 'YYYY-MM'
   const [invoices, setInvoices] = useState<Gstr1InvoiceRow[]>([]);
   const [lines, setLines] = useState<Gstr1LineRow[]>([]);
+  const [creditNotes, setCreditNotes] = useState<Gstr1CreditNoteRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -113,10 +173,42 @@ export function Gstr1Page() {
       const invs = ((data as unknown as InvoiceFetch[] | null) ?? []).map(
         (r): Gstr1InvoiceRow => ({ ...r, party: r.ledgers }),
       );
-      const ls = await fetchLines(invs.map((i) => i.id));
+      const [ls, cnRes] = await Promise.all([
+        fetchLines(invs.map((i) => i.id)),
+        supabase
+          .from("credit_notes")
+          .select(CREDIT_NOTE_COLS)
+          .eq("org_id", orgId)
+          .eq("shop_id", shopId)
+          .eq("status", "placed")
+          .eq("posts_effects", true) // exclude imported pre-cutover notes
+          .gte("note_date", start)
+          .lt("note_date", end)
+          .order("note_date"),
+      ]);
       if (!active) return;
+      const cnHeads = (cnRes.data as unknown as CreditNoteFetch[] | null) ?? [];
+      const cnLineMap = await fetchCreditNoteLines(cnHeads.map((c) => c.id));
+      if (!active) return;
+      const cns = cnHeads.map(
+        (r): Gstr1CreditNoteRow => ({
+          noteNo: r.note_no,
+          date: r.note_date,
+          is_interstate: r.is_interstate,
+          taxable_paise: r.taxable_paise,
+          cgst_paise: r.cgst_paise,
+          sgst_paise: r.sgst_paise,
+          igst_paise: r.igst_paise,
+          total_paise: r.total_paise,
+          origInvoiceNo: r.sales_invoices?.invoice_no ?? null,
+          origInvoiceDate: r.sales_invoices?.invoice_date ?? null,
+          lines: cnLineMap.get(r.id) ?? [],
+          party: r.ledgers,
+        }),
+      );
       setInvoices(invs);
       setLines(ls);
+      setCreditNotes(cns);
       setLoading(false);
     })();
 
@@ -129,8 +221,12 @@ export function Gstr1Page() {
     () => buildGstr1(period, shop?.state_code ?? "", invoices, lines),
     [period, shop?.state_code, invoices, lines],
   );
+  const cnSections = useMemo(
+    () => buildCreditNoteSections(creditNotes, shop?.state_code ?? ""),
+    [creditNotes, shop?.state_code],
+  );
 
-  const hasData = summary.invoiceCount > 0;
+  const hasData = summary.invoiceCount > 0 || cnSections.cdnr.length > 0 || cnSections.cdnur.length > 0;
   const filerGstin = shop?.gstin ?? "";
 
   const subtitle = (
@@ -162,14 +258,20 @@ export function Gstr1Page() {
             <Button
               variant="outline"
               disabled={!hasData}
-              onClick={() => download(`gstr1-${filerGstin || "shop"}-${period}.json`, JSON.stringify(buildGstr1Json(summary, filerGstin), null, 2), "application/json")}
+              onClick={() => download(`gstr1-${filerGstin || "shop"}-${period}.json`, JSON.stringify({ ...buildGstr1Json(summary, filerGstin), ...creditNoteSectionsToJson(cnSections) }, null, 2), "application/json")}
             >
               <Download /> JSON
             </Button>
             <Button
               variant="outline"
               disabled={!hasData}
-              onClick={() => download(`gstr1-${period}.csv`, gstr1ToCsv(summary), "text/csv")}
+              onClick={() =>
+                download(
+                  `gstr1-${period}.csv`,
+                  gstr1ToCsv(summary) + (cnSections.cdnr.length || cnSections.cdnur.length ? `\n\nCREDIT NOTES\n${creditNotesToCsv(cnSections)}` : ""),
+                  "text/csv",
+                )
+              }
             >
               <Download /> CSV
             </Button>
@@ -246,6 +348,72 @@ export function Gstr1Page() {
                   { key: "tax", header: "Taxable", numeric: true, cell: (r) => formatPaise(r.taxablePaise) },
                   { key: "igst", header: "IGST", numeric: true, cell: (r) => formatPaise(r.igstPaise) },
                   { key: "total", header: "Invoice value", numeric: true, cell: (r) => formatPaise(r.totalPaise) },
+                ]}
+              />
+            </Section>
+          )}
+
+          {cnSections.cdnr.length > 0 && (
+            <Section title="CDNR — credit notes to registered recipients" count={cnSections.cdnr.length}>
+              <DataTable<CdnrRow>
+                cols="1.2fr 1fr 1.2fr 0.6fr 1fr 0.9fr 0.9fr 0.9fr"
+                rows={cnSections.cdnr}
+                rowKey={(r) => `${r.gstin}|${r.noteNo}|${r.rate}`}
+                loading={loading}
+                columns={[
+                  { key: "gstin", header: "GSTIN", cell: (r) => <span className="tabular-nums">{r.gstin}</span> },
+                  { key: "note", header: "Note", cell: (r) => <span className="tabular-nums">{r.noteNo}</span> },
+                  {
+                    key: "orig",
+                    header: "Orig. invoice",
+                    cell: (r) =>
+                      r.origInvoiceNo ? (
+                        <span className="tabular-nums">
+                          {r.origInvoiceNo}
+                          {r.origInvoiceDate && <span className="ml-1 text-text-tertiary">{r.origInvoiceDate}</span>}
+                        </span>
+                      ) : (
+                        "—"
+                      ),
+                  },
+                  { key: "rate", header: "Rate", numeric: true, cell: (r) => pct(r.rate) },
+                  { key: "tax", header: "Taxable", numeric: true, cell: (r) => `− ${formatPaise(r.taxablePaise)}` },
+                  { key: "cgst", header: "CGST", numeric: true, cell: (r) => formatPaise(r.cgstPaise) },
+                  { key: "sgst", header: "SGST", numeric: true, cell: (r) => formatPaise(r.sgstPaise) },
+                  { key: "igst", header: "IGST", numeric: true, cell: (r) => formatPaise(r.igstPaise) },
+                ]}
+              />
+            </Section>
+          )}
+
+          {cnSections.cdnur.length > 0 && (
+            <Section title="CDNUR — credit notes to unregistered (B2C)" count={cnSections.cdnur.length}>
+              <DataTable<CdnurRow>
+                cols="1fr 1.2fr 0.7fr 0.6fr 1fr 0.9fr 0.9fr 0.9fr"
+                rows={cnSections.cdnur}
+                rowKey={(r) => `${r.noteNo}|${r.rate}`}
+                loading={loading}
+                columns={[
+                  { key: "note", header: "Note", cell: (r) => <span className="tabular-nums">{r.noteNo}</span> },
+                  {
+                    key: "orig",
+                    header: "Orig. invoice",
+                    cell: (r) =>
+                      r.origInvoiceNo ? (
+                        <span className="tabular-nums">
+                          {r.origInvoiceNo}
+                          {r.origInvoiceDate && <span className="ml-1 text-text-tertiary">{r.origInvoiceDate}</span>}
+                        </span>
+                      ) : (
+                        "—"
+                      ),
+                  },
+                  { key: "pos", header: "POS", cell: (r) => <span className="tabular-nums">{r.pos || "—"}</span> },
+                  { key: "rate", header: "Rate", numeric: true, cell: (r) => pct(r.rate) },
+                  { key: "tax", header: "Taxable", numeric: true, cell: (r) => `− ${formatPaise(r.taxablePaise)}` },
+                  { key: "cgst", header: "CGST", numeric: true, cell: (r) => formatPaise(r.cgstPaise) },
+                  { key: "sgst", header: "SGST", numeric: true, cell: (r) => formatPaise(r.sgstPaise) },
+                  { key: "igst", header: "IGST", numeric: true, cell: (r) => formatPaise(r.igstPaise) },
                 ]}
               />
             </Section>

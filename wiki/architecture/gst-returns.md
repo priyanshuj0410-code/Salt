@@ -40,34 +40,42 @@ pre-cutover history is excluded — already filed elsewhere), `invoice_date` wit
 - **B2CL** — B2C, inter-state, invoice ≥ ₹2.5L (`B2CL_THRESHOLD_PAISE`); itemised by rate.
 - **B2CS** — remaining B2C; aggregated by place-of-supply + supply type + rate.
 - **HSN** — every line by `hsn × rate` (qty + taxable + taxes); spans B2B and B2C.
+- **CDNR / CDNUR** — sales-return `credit_notes` for the period (`buildCreditNoteSections`),
+  **rate-wise** from `credit_note_lines` and carrying the original invoice ref
+  (`sale_invoice_id → invoice_no/date`): CDNR = recipient has a GSTIN; CDNUR = B2C (GSTN note
+  type `C`, `itms` per rate). These reduce the outward liability GSTR-3B 3.1(a) nets out (SALT-196).
 - Place of supply = recipient `state_code`, falling back to the shop's state for walk-ins.
 
 Section breakdowns and the headline totals both derive from the **lines**, so they reconcile.
 
 ## Export
 
-- `buildGstr1Json` → GSTN-shaped `{ gstin, fp, b2b, b2cl, b2cs, hsn }` (amounts in rupees,
-  dates `DD-MM-YYYY`, `fp = MMYYYY`).
-- `gstr1ToCsv` → one flat CSV across all sections (spreadsheet fallback).
+- `buildGstr1Json` → GSTN-shaped `{ gstin, fp, b2b, b2cl, b2cs, hsn }`, merged with
+  `creditNoteSectionsToJson` → `{ cdnr, cdnur }` (amounts in rupees, dates `DD-MM-YYYY`,
+  `fp = MMYYYY`).
+- `gstr1ToCsv` → one flat CSV across all sections; credit notes appended via `creditNotesToCsv`.
 
 ## GSTR-3B (summary return)
 
-`buildGstr3b(period, sales, purchases, reversalPaise)` (screen `/gst/gstr3b`) nets the month's tax:
+`buildGstr3b(period, sales, purchases, reversalPaise, creditNotes)` (screen `/gst/gstr3b`) nets the month's tax:
 
 - **Output tax** — summed per head (CGST/SGST/IGST) from the period's `sales_invoices`
   (same scope as GSTR-1: shop, `status='placed'`, `posts_effects=true`).
+- **Less: credit notes** — the period's sales-return `credit_notes` per head; **net output**
+  = output − credit notes is the actual outward liability reported in 3.1(a) (SALT-196).
 - **Gross ITC** — summed per head from `purchases` (`status='received'`,
   `posts_effects=true`, `received_date` in month); `receive_purchase` stores the split the
   same way `create_sales_invoice` does.
-- **Net payable** = `max(0, output − net ITC)` after full credit set-off (the cash figure),
-  where net ITC = gross ITC − the Table-4B reversal below; per-head `balance` is shown for
-  detail; surplus ITC is reported as credit carried forward.
+- **Net payable** = `max(0, net output − net ITC)` after full credit set-off (the cash figure),
+  where net output = output − credit notes and net ITC = gross ITC − the Table-4B reversal below;
+  per-head `balance` is shown for detail; surplus ITC is reported as credit carried forward.
 - `buildGstr3bJson` → GSTN-style `{ gstin, ret_period, sup_details, itc_elg, net_payable }`;
   `gstr3bToCsv` for spreadsheets.
 - **ITC reversal (Table 4B)** is wired from **expiry write-offs** (`stock_movements`,
   `reason='writeoff'`, period-scoped): `buildWriteoffReversal` sums `qty × ptr × gst_rate`, and
   `buildGstr3b(…, reversalPaise)` subtracts it → **net ITC** → net payable (SALT-170). Sales
-  returns / credit notes still pend the Returns module; per-head set-off is simplified.
+  returns are now wired (SALT-196): credit notes net the outward side (3.1(a)) and surface as
+  CDNR/CDNUR in GSTR-1; per-head set-off is simplified.
 
 ## GST liability (live)
 
@@ -140,16 +148,18 @@ as **SALT-209**.
 
 ## Status & next
 
-**Shipped** (all in-lane GST work — 9 tickets): GSTR-1, GSTR-3B (+ Table-4B write-off reversal),
-live liability, ITC register, Tally export, HSN summary, the **H1/X register** (SALT-065, on the
-live `h1_register` / 0032), and **invoice-series management** (SALT-067, on `invoice_series` / 0033).
+**Shipped** (all in-lane GST work — 10 tickets): GSTR-1 (+ **CDNR/CDNUR** credit notes), GSTR-3B
+(+ Table-4B write-off reversal **+ net-output credit-note netting**, SALT-196), live liability,
+ITC register, Tally export, HSN summary, the **H1/X register** (SALT-065, on the live
+`h1_register` / 0032), and **invoice-series management** (SALT-067, on `invoice_series` / 0033).
 
 **Elsewhere / handed off:** GSTR-2B recon (SALT-007, smart-import lane) · the drug-license
 renewal banner (SALT-066, owner lane — store + 90/60/30-day alerts already ship in
 `settings/DrugLicensesPage`) · e-invoicing IRN/QR (SALT-071) and direct GSTN filing (SALT-072)
-await GSP/IRP credentials. Sales credit-note GST reversal rides the Returns engine
-(`lib/returns.ts`); the Reports lane also exposes a Tax-reports suite at `/reports/tax` over the
-`v_*` views — complementary to these filing screens.
+await GSP/IRP credentials. Sales returns are recorded by the Returns engine (`lib/returns.ts`) as
+`credit_notes`; the GST module reads those into GSTR-1 CDNR/CDNUR and the GSTR-3B net output
+(SALT-196). The Reports lane also exposes a Tax-reports suite at `/reports/tax` over the `v_*`
+views — complementary to these filing screens.
 
 Links: [product/product-modules](../product/product-modules.md) §9 ·
 [domain/orders](../domain/orders.md) ·
