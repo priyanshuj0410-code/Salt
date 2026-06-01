@@ -1,9 +1,10 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import { Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FormRow } from "@/components/patterns/form-row";
 import { useAuth } from "@/lib/auth";
 import { TimeoutError } from "@/lib/orders";
 import {
@@ -133,7 +134,7 @@ export function RecordPaymentDialog({
               </Button>
             </div>
           ) : (
-            <Field label="Party">
+            <FormRow label="Party">
               <Input
                 autoFocus
                 value={query}
@@ -158,7 +159,7 @@ export function RecordPaymentDialog({
                   ))}
                 </div>
               )}
-            </Field>
+            </FormRow>
           )}
 
           {/* Direction */}
@@ -185,7 +186,7 @@ export function RecordPaymentDialog({
           </div>
 
           {/* Amount */}
-          <Field label="Amount (₹)">
+          <FormRow label="Amount (₹)">
             <Input
               type="number"
               min={0}
@@ -194,7 +195,7 @@ export function RecordPaymentDialog({
               placeholder="0"
               className="h-9 text-right tabular-nums"
             />
-          </Field>
+          </FormRow>
 
           {/* Mode */}
           <div className="flex flex-col gap-1">
@@ -215,19 +216,19 @@ export function RecordPaymentDialog({
           </div>
 
           {/* Reference */}
-          <Field label={`${modeMeta.refLabel} (optional)`}>
+          <FormRow label={`${modeMeta.refLabel} (optional)`}>
             <Input
               value={reference}
               onChange={(e) => setReference(e.target.value)}
               placeholder={modeMeta.refLabel}
               className="h-9"
             />
-          </Field>
+          </FormRow>
 
           {/* Notes */}
-          <Field label="Notes (optional)">
+          <FormRow label="Notes (optional)">
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="—" className="h-9" />
-          </Field>
+          </FormRow>
 
           {!shopId && <p className="text-xs text-warning">No shop selected — pick a shop before recording.</p>}
           {error && <p className="text-sm text-destructive">{error}</p>}
@@ -237,14 +238,5 @@ export function RecordPaymentDialog({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs text-text-tertiary">{label}</span>
-      {children}
-    </label>
   );
 }
