@@ -171,7 +171,7 @@ export function ImportPage() {
           <Wand2 className="mt-0.5 size-5 shrink-0 text-primary" />
           <div className="flex-1">
             <p className="text-sm font-medium">Smart import (recommended)</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-tertiary">
               Drag in your raw Marg/Tally Excel or CSV — it auto-maps the columns and quarantines
               only the rows that need a fix. Handles ledgers, items, and stock in order.
             </p>
@@ -181,12 +181,12 @@ export function ImportPage() {
 
         <Link
           to="/import/purchases"
-          className="mt-3 flex items-start gap-3 rounded-lg border p-4 hover:bg-muted/40"
+          className="mt-3 flex items-start gap-3 rounded-lg border p-4 hover:bg-surface-2/40"
         >
           <PackagePlus className="mt-0.5 size-5 shrink-0 text-primary" />
           <div className="flex-1">
             <p className="text-sm font-medium">Import purchase invoices</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-tertiary">
               Upload vendor bills to post as GRNs — adds stock, payable and ITC. Missing vendors and items are
               created for you.
             </p>
@@ -196,12 +196,12 @@ export function ImportPage() {
 
         <Link
           to="/import/gl"
-          className="mt-3 flex items-start gap-3 rounded-lg border p-4 hover:bg-muted/40"
+          className="mt-3 flex items-start gap-3 rounded-lg border p-4 hover:bg-surface-2/40"
         >
           <Landmark className="mt-0.5 size-5 shrink-0 text-primary" />
           <div className="flex-1">
             <p className="text-sm font-medium">Import opening balances (GL)</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-text-tertiary">
               Seed Cash, Bank, Stock, Capital and other ledger accounts with their opening balances as one
               balanced entry.
             </p>
@@ -210,10 +210,10 @@ export function ImportPage() {
         </Link>
 
         <h2 className="mt-6 border-t pt-5 text-sm font-medium">Or start from a template</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-text-tertiary">
           Already export from Marg or Tally? Download that shape — Salt reads those column names automatically.
-          Only <code className="rounded bg-muted px-1">name</code>,{" "}
-          <code className="rounded bg-muted px-1">qty</code> and <code className="rounded bg-muted px-1">mrp</code>{" "}
+          Only <code className="rounded bg-surface-2 px-1">name</code>,{" "}
+          <code className="rounded bg-surface-2 px-1">qty</code> and <code className="rounded bg-surface-2 px-1">mrp</code>{" "}
           are required. One row per batch.
         </p>
 
@@ -247,9 +247,9 @@ export function ImportPage() {
 
         {result && (
           <div className="mt-6 rounded-lg border">
-            <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+            <div className="flex items-center justify-between gap-2 border-b bg-surface-2/30 px-3 py-2">
               <span className="text-xs font-medium">Dry run — preview only, nothing saved yet</span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-text-tertiary">
                 Will create {result.items.length} items · {result.batchCount} batches
               </span>
             </div>
@@ -264,7 +264,7 @@ export function ImportPage() {
               <ul className="max-h-64 divide-y overflow-auto text-sm">
                 {result.issues.map((p, i) => (
                   <li key={i} className="flex gap-2 px-3 py-1.5">
-                    <span className="text-muted-foreground">Row {p.row}</span>
+                    <span className="text-text-tertiary">Row {p.row}</span>
                     <span className={p.level === "error" ? "text-destructive" : "text-amber-600 dark:text-amber-500"}>
                       {p.level === "error" ? "Error" : "Warning"}:
                     </span>
@@ -275,7 +275,7 @@ export function ImportPage() {
             )}
 
             <div className="flex items-center justify-between gap-3 border-t p-3">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-tertiary">
                 {result.errorCount > 0
                   ? "Fix the errors in your CSV and re-upload."
                   : "Imported as one transaction — if anything fails, nothing is saved. Re-importing the same file adds rows again (no dedupe yet)."}
@@ -290,7 +290,7 @@ export function ImportPage() {
 
         <div className="mt-6 rounded-lg border p-4">
           <h2 className="text-sm font-medium">Migrate from Marg</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-text-tertiary">
             Run the Salt Migrator on the PC that holds your Marg data. It reads Marg read-only and
             uploads straight into this org.
           </p>
@@ -312,7 +312,7 @@ export function ImportPage() {
 
             <li>
               <span className="font-medium">2. Generate an upload token</span>
-              <p className="text-xs text-muted-foreground">Scoped to this org · one-time · expires in 24h.</p>
+              <p className="text-xs text-text-tertiary">Scoped to this org · one-time · expires in 24h.</p>
               <div className="mt-1.5">
                 <Button variant="outline" onClick={generateToken} disabled={tokenBusy}>
                   <KeyRound />
@@ -326,23 +326,23 @@ export function ImportPage() {
                       readOnly
                       value={token}
                       onFocus={(e) => e.currentTarget.select()}
-                      className="h-8 flex-1 rounded-md border bg-muted px-2 font-mono text-xs"
+                      className="h-8 flex-1 rounded-md border bg-surface-2 px-2 font-mono text-xs"
                       aria-label="Migration token"
                     />
                     <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(token)}>
                       Copy
                     </Button>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">Treat it like a password.</p>
+                  <p className="mt-1 text-xs text-text-tertiary">Treat it like a password.</p>
                 </div>
               )}
             </li>
 
             <li>
               <span className="font-medium">3. Run it on your Marg PC</span>
-              <p className="mt-1 text-xs text-muted-foreground">In a command prompt, from where you saved it:</p>
-              <pre className="mt-1.5 overflow-auto rounded-md bg-muted p-2 font-mono text-xs">salt-migrator-windows-x64.exe --dbf "C:\Marg\items.dbf" --upload --token YOUR_TOKEN</pre>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-text-tertiary">In a command prompt, from where you saved it:</p>
+              <pre className="mt-1.5 overflow-auto rounded-md bg-surface-2 p-2 font-mono text-xs">salt-migrator-windows-x64.exe --dbf "C:\Marg\items.dbf" --upload --token YOUR_TOKEN</pre>
+              <p className="mt-1 text-xs text-text-tertiary">
                 It previews what it found, asks you to confirm, then uploads. Items then appear in billing.
               </p>
             </li>
@@ -360,7 +360,7 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: "ba
   return (
     <div className="px-3 py-3">
       <div className={`text-2xl font-semibold tabular-nums ${color}`}>{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xs text-text-tertiary">{label}</div>
     </div>
   );
 }

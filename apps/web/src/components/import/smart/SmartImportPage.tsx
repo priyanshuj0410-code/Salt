@@ -82,18 +82,18 @@ export function SmartImportPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
+    <div className="flex min-h-screen flex-col bg-surface-2/30">
       <header className="flex items-center justify-between border-b bg-background px-4 py-2.5">
         <div className="flex items-baseline gap-3">
           <span className="text-lg font-semibold tracking-tight">Salt</span>
-          <span className="text-xs text-muted-foreground">Smart import</span>
+          <span className="text-xs text-text-tertiary">Smart import</span>
         </div>
         <UserMenu />
       </header>
 
       <main className="mx-auto w-full max-w-3xl flex-1 p-6">
         <h1 className="text-xl font-semibold">Smart import</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-text-tertiary">
           Drop your Marg/Tally export — we auto-map the columns and quarantine only the rows that
           need a fix. Import in order: parties, catalogue, stock, then history.
         </p>
@@ -114,7 +114,7 @@ export function SmartImportPage() {
                 </option>
               ))}
             </select>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-text-tertiary">
               Stock, documents, payments &amp; compliance import under this branch — do one branch&apos;s
               export set, then switch. Parties &amp; items are shared org-wide.
             </span>
@@ -145,7 +145,7 @@ export function SmartImportPage() {
                   <span
                     className={cn(
                       "flex size-5 items-center justify-center rounded-full text-xs",
-                      done ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground",
+                      done ? "bg-emerald-600 text-white" : "bg-surface-2 text-text-tertiary",
                     )}
                   >
                     {done ? <Check className="size-3" /> : locked ? <Lock className="size-3" /> : i + 1}
@@ -177,7 +177,7 @@ export function SmartImportPage() {
           )}
         </div>
 
-        <Link to="/import" className="mt-6 inline-block text-sm text-muted-foreground hover:text-foreground">
+        <Link to="/import" className="mt-6 inline-block text-sm text-text-tertiary hover:text-foreground">
           ← Back to import options
         </Link>
       </main>

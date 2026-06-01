@@ -122,7 +122,7 @@ export function LedgerStep({
           <p className="text-sm">
             Your parties — customers and vendors/distributors. Import these first.
           </p>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-text-tertiary">
             Drop your <span className="font-medium text-foreground">trial balance</span> export. We
             read each party&apos;s outstanding balance and open bills, and tag them as customer,
             vendor or other automatically — you can fix any later.
@@ -136,7 +136,7 @@ export function LedgerStep({
             const f = e.dataTransfer.files?.[0];
             if (f) onFile(f);
           }}
-          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground hover:bg-muted/40"
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-text-tertiary hover:bg-surface-2/40"
         >
           <FileUp className="size-6" />
           <span>
@@ -151,10 +151,10 @@ export function LedgerStep({
             onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
           />
         </label>
-        {busy && <p className="mt-3 text-sm text-muted-foreground">Reading file…</p>}
+        {busy && <p className="mt-3 text-sm text-text-tertiary">Reading file…</p>}
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-3 text-center">
-          <button onClick={onComplete} className="text-xs text-muted-foreground hover:text-foreground">
+          <button onClick={onComplete} className="text-xs text-text-tertiary hover:text-foreground">
             Skip this step
           </button>
         </div>
@@ -200,7 +200,7 @@ export function LedgerStep({
             okText="No unreadable bill lines"
             badText={`${qa.unparsedLines} bill lines could not be read`}
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-text-tertiary">
             Tagged {customers} customers, {vendors} vendors, {others} other (control accounts). Fix
             mistags later from the Parties screen.
           </p>
@@ -212,14 +212,14 @@ export function LedgerStep({
             {qa.unbalanced.slice(0, 20).map((u) => (
               <div key={u.name} className="flex justify-between gap-3 py-0.5">
                 <span className="truncate">{u.name}</span>
-                <span className="shrink-0 text-muted-foreground">
+                <span className="shrink-0 text-text-tertiary">
                   closing {(u.closingPaise / 100).toLocaleString("en-IN")} vs computed{" "}
                   {(u.computedPaise / 100).toLocaleString("en-IN")}
                 </span>
               </div>
             ))}
             {qa.unbalanced.length > 20 && (
-              <p className="pt-1 text-muted-foreground">+{qa.unbalanced.length - 20} more</p>
+              <p className="pt-1 text-text-tertiary">+{qa.unbalanced.length - 20} more</p>
             )}
           </div>
         )}
@@ -248,7 +248,7 @@ export function LedgerStep({
           Imported {result?.ledgers ?? 0} ledgers and {result?.bills ?? 0} open bills
         </span>
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <p className="mt-2 text-sm text-text-tertiary">
         Opening balances and party tags are saved. You can review and fix tags from the Parties
         screen.
       </p>
@@ -261,9 +261,9 @@ export function LedgerStep({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md border bg-muted/30 p-3">
+    <div className="rounded-md border bg-surface-2/30 p-3">
       <div className="text-lg font-semibold tabular-nums">{value.toLocaleString("en-IN")}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xs text-text-tertiary">{label}</div>
     </div>
   );
 }
@@ -276,7 +276,7 @@ function QaLine({ ok, okText, badText }: { ok: boolean; okText: string; badText:
       ) : (
         <AlertTriangle className="size-4 shrink-0 text-amber-600" />
       )}
-      <span className={ok ? "text-muted-foreground" : "text-amber-700 dark:text-amber-500"}>
+      <span className={ok ? "text-text-tertiary" : "text-amber-700 dark:text-amber-500"}>
         {ok ? okText : badText}
       </span>
     </div>

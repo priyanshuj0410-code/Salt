@@ -168,20 +168,20 @@ export function DocumentStep({
       <div className="rounded-lg border p-5">
         <div className="mb-4">
           <p className="text-sm">{cfg.description}</p>
-          <p className="mt-2 text-xs font-medium text-muted-foreground">Columns we look for:</p>
+          <p className="mt-2 text-xs font-medium text-text-tertiary">Columns we look for:</p>
           <div className="mt-1 flex flex-wrap gap-1.5">
             {allFields.map((f) => (
-              <span key={f.key} className="rounded-md border bg-muted/40 px-2 py-0.5 text-xs">
+              <span key={f.key} className="rounded-md border bg-surface-2/40 px-2 py-0.5 text-xs">
                 {f.label}
                 {f.required && <span className="text-destructive"> *</span>}
               </span>
             ))}
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">
+          <p className="mt-2 text-xs text-text-tertiary">
             One row per line — we group rows into documents by the bill number. Column names need not
             match; we auto-map them.
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">{cfg.tip}</p>
+          <p className="mt-1 text-xs text-text-tertiary">{cfg.tip}</p>
         </div>
 
         <label
@@ -191,7 +191,7 @@ export function DocumentStep({
             const file = e.dataTransfer.files?.[0];
             if (file) onFile(file);
           }}
-          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground hover:bg-muted/40"
+          className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-10 text-center text-sm text-text-tertiary hover:bg-surface-2/40"
         >
           <FileUp className="size-6" />
           <span>
@@ -208,7 +208,7 @@ export function DocumentStep({
         </label>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <div className="mt-3 text-center">
-          <button onClick={onComplete} className="text-xs text-muted-foreground hover:text-foreground">
+          <button onClick={onComplete} className="text-xs text-text-tertiary hover:text-foreground">
             Skip this step
           </button>
         </div>
@@ -224,7 +224,7 @@ export function DocumentStep({
         <div className="flex items-center gap-2 text-sm">
           <Wand2 className="size-4 text-primary" />
           <span className="font-medium">Check the column mapping</span>
-          <span className="text-muted-foreground">— {parsed?.rows.length ?? 0} rows.</span>
+          <span className="text-text-tertiary">— {parsed?.rows.length ?? 0} rows.</span>
         </div>
 
         <MapGroup
@@ -271,7 +271,7 @@ export function DocumentStep({
           {result?.docs ?? 0} documents, {result?.lines ?? 0} lines imported
         </span>
         {(result?.skippedDocs ?? 0) > 0 && (
-          <span className="text-muted-foreground">{result?.skippedDocs} already imported (skipped)</span>
+          <span className="text-text-tertiary">{result?.skippedDocs} already imported (skipped)</span>
         )}
         {(result?.quarantined.length ?? 0) > 0 && (
           <span className="font-medium text-amber-600 dark:text-amber-500">
@@ -282,7 +282,7 @@ export function DocumentStep({
 
       {(result?.quarantined.length ?? 0) > 0 && (
         <>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-text-tertiary">
             {cfg.kind === "purchase" || cfg.kind === "debit_note"
               ? "These documents could not be matched to a vendor — import your ledgers/party-GST first, then re-run this step (already-imported documents are skipped)."
               : "These documents could not be imported (see reasons). Fix the source data and re-run — already-imported documents are skipped."}
@@ -291,18 +291,18 @@ export function DocumentStep({
             {result?.quarantined.slice(0, 50).map((q) => (
               <div key={q.docNo} className="flex justify-between gap-3 py-0.5">
                 <span className="truncate">{q.docNo}</span>
-                <span className="shrink-0 text-muted-foreground">{q.reason}</span>
+                <span className="shrink-0 text-text-tertiary">{q.reason}</span>
               </div>
             ))}
             {(result?.quarantined.length ?? 0) > 50 && (
-              <p className="pt-1 text-muted-foreground">+{(result?.quarantined.length ?? 0) - 50} more</p>
+              <p className="pt-1 text-text-tertiary">+{(result?.quarantined.length ?? 0) - 50} more</p>
             )}
           </div>
         </>
       )}
 
       {(result?.skippedLines ?? 0) > 0 && (
-        <p className="mt-2 text-xs text-muted-foreground">
+        <p className="mt-2 text-xs text-text-tertiary">
           {result?.skippedLines} blank/unnamed lines were skipped.
         </p>
       )}
