@@ -10,7 +10,7 @@
 // DEPLOY (user/infra — the agent cannot do this):
 //   supabase functions deploy extract-invoice
 //   supabase secrets set GEMINI_API_KEY=AIza...   # vision key, server-side only
-// Optional overrides: OCR_MODEL (default gemini-2.0-flash).
+// Optional overrides: OCR_MODEL (default gemini-flash-latest).
 //
 // Auth: requires the caller's Supabase JWT (verify_jwt defaults on). The vision
 // key never leaves the server. No Storage bucket — the file is processed inline.
@@ -21,7 +21,7 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const MODEL = Deno.env.get("OCR_MODEL") ?? "gemini-2.0-flash";
+const MODEL = Deno.env.get("OCR_MODEL") ?? "gemini-flash-latest";
 
 /** The columns the CSV importer understands (PURCHASE_IMPORT_COLUMNS). The model
  *  is told to use exactly these keys per line so the client maps 1:1. */
