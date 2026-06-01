@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, PencilLine, Plus, Save, Sparkles, Tag, X } from "lucide-react";
+import { ArrowLeft, PencilLine, Plus, Save, Sparkles, Tag, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Page } from "@/components/patterns/page";
@@ -77,6 +77,8 @@ export function ItemDetailPage() {
   const [priceRows, setPriceRows] = useState<PurchasePriceRow[]>([]);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiMsg, setAiMsg] = useState<string | null>(null);
+  const [promoteBusy, setPromoteBusy] = useState(false);
+  const [promoteMsg, setPromoteMsg] = useState<string | null>(null);
   const autoFilled = useRef<string | null>(null);
 
   useEffect(() => {
@@ -300,6 +302,38 @@ export function ItemDetailPage() {
     }
   }
 
+  // "Promote to master" (SALT-085): nominate this custom item for the shared master.
+  // Server-side promote_to_master either links to an existing master (norm match) or
+  // queues a pending submission for Salt-admin review — never writes the master directly.
+  async function promote() {
+    if (!supabase || !item || promoteBusy) return;
+    setPromoteBusy(true);
+    setPromoteMsg(null);
+    try {
+      const { data, error } = await supabase.rpc("promote_to_master", { p_item_id: item.id });
+      if (error) {
+        setPromoteMsg(error.message);
+        return;
+      }
+      const r = data as string;
+      setPromoteMsg(
+        r === "submitted"
+          ? "Submitted to the shared master — pending Salt-admin review."
+          : r === "linked"
+            ? "Linked to an existing master entry."
+            : r === "pending"
+              ? "Already submitted — pending review."
+              : r === "already_linked"
+                ? "This item is already linked to the master."
+                : `Done (${r}).`,
+      );
+    } catch (e) {
+      setPromoteMsg(e instanceof Error ? e.message : "Could not submit this item.");
+    } finally {
+      setPromoteBusy(false);
+    }
+  }
+
   async function addAlias() {
     const text = aliasText.trim();
     if (!text || aliasBusy || !supabase || !orgId || !id) return;
@@ -421,6 +455,14 @@ export function ItemDetailPage() {
               <Button onClick={startEdit} disabled={usingSeed} title={usingSeed ? "Demo item — cannot edit" : undefined}>
                 <PencilLine /> Edit
               </Button>
+              <Button
+                variant="outline"
+                onClick={promote}
+                disabled={usingSeed || promoteBusy}
+                title={usingSeed ? "Demo item" : "Submit this item to the shared drug master (a Salt-admin reviews it)"}
+              >
+                <Upload /> {promoteBusy ? "Submitting…" : "Promote"}
+              </Button>
             </>
           )
         }
@@ -434,6 +476,10 @@ export function ItemDetailPage() {
 
       {aiMsg && (
         <p className="mb-4 rounded-lg border border-info-border bg-info-bg px-3 py-2 text-xs text-info">{aiMsg}</p>
+      )}
+
+      {promoteMsg && (
+        <p className="mb-4 rounded-lg border border-info-border bg-info-bg px-3 py-2 text-xs text-info">{promoteMsg}</p>
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
