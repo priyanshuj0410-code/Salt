@@ -288,11 +288,11 @@ export function PurchaseInvoiceImportPage() {
 
   return (
     <Page width="sm">
-      <Link to="/import" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+      <Link to="/import" className="text-sm font-medium text-text-tertiary hover:text-foreground">
         ← Import
       </Link>
       <h1 className="mt-2 text-xl font-semibold">Import purchase invoices</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1 text-sm text-text-tertiary">
         Upload your vendor bills (one row per line). Each invoice posts as a GRN — adding stock, the vendor
         payable, and ITC, exactly like entering it by hand. Missing vendors and items are created automatically.
         For past records that should <em>not</em> re-post stock, use{" "}
@@ -317,7 +317,7 @@ export function PurchaseInvoiceImportPage() {
             Posted {report.posted} {report.posted === 1 ? "invoice" : "invoices"}
             {report.failed > 0 ? `, ${report.failed} failed` : ""}.
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-xs text-text-tertiary">
             Created {report.vendorsCreated} {report.vendorsCreated === 1 ? "vendor" : "vendors"} and{" "}
             {report.itemsCreated} {report.itemsCreated === 1 ? "item" : "items"}.
           </p>
@@ -338,9 +338,9 @@ export function PurchaseInvoiceImportPage() {
 
       {result && (
         <div className="mt-6 rounded-lg border">
-          <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 border-b bg-surface-2/30 px-3 py-2">
             <span className="text-xs font-medium">Dry run — preview only, nothing posted yet</span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-text-tertiary">
               {result.invoices.length} invoices · {result.lineCount} lines
               {result.errorCount > 0 ? ` · ${result.errorCount} errors` : ""}
               {result.warningCount > 0 ? ` · ${result.warningCount} warnings` : ""}
@@ -356,14 +356,14 @@ export function PurchaseInvoiceImportPage() {
                 <li key={inv.key} className="px-3 py-2.5 text-sm">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">{inv.invoiceNo}</span>
-                    <span className="text-muted-foreground">·</span>
+                    <span className="text-text-tertiary">·</span>
                     <span className="truncate">{inv.vendorName}</span>
                     <Badge variant={vendorExists ? "secondary" : "outline"}>
                       {vendorExists ? "vendor on file" : "new vendor"}
                     </Badge>
                     {!inv.valid && <Badge variant="destructive">has errors</Badge>}
                   </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-tertiary">
                     <span>{inv.date ?? "no date"}</span>
                     <span>{inv.lines.length} lines</span>
                     {newItemCount > 0 && <span>{newItemCount} new {newItemCount === 1 ? "item" : "items"}</span>}
@@ -378,7 +378,7 @@ export function PurchaseInvoiceImportPage() {
             <ul className="max-h-48 divide-y overflow-auto border-t text-sm">
               {result.issues.map((p, i) => (
                 <li key={i} className="flex gap-2 px-3 py-1.5">
-                  <span className="text-muted-foreground">Row {p.row}</span>
+                  <span className="text-text-tertiary">Row {p.row}</span>
                   <span className={p.level === "error" ? "text-destructive" : "text-amber-600 dark:text-amber-500"}>
                     {p.level === "error" ? "Error" : "Warning"}:
                   </span>
@@ -389,7 +389,7 @@ export function PurchaseInvoiceImportPage() {
           )}
 
           <div className="flex items-center justify-between gap-3 border-t p-3">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-tertiary">
               Each invoice posts on its own. Re-running re-posts — fix errors and re-import only what failed.
             </p>
             <Button onClick={doImport} disabled={importing || result.invoices.filter((i) => i.valid).length === 0}>

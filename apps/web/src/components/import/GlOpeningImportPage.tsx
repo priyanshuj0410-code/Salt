@@ -121,11 +121,11 @@ export function GlOpeningImportPage() {
 
   return (
     <Page width="sm">
-      <Link to="/import" className="text-sm font-medium text-muted-foreground hover:text-foreground">
+      <Link to="/import" className="text-sm font-medium text-text-tertiary hover:text-foreground">
         ← Import
       </Link>
       <h1 className="mt-2 text-xl font-semibold">Import opening balances (GL)</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="mt-1 text-sm text-text-tertiary">
         Seed your ledger accounts — Cash, Bank, Stock, Capital, loans, fixed assets — with their opening balances
         as one balanced opening entry. Customer and vendor balances come in through{" "}
         <Link to="/import/smart" className="font-medium text-primary hover:underline">Smart Import</Link> (the
@@ -149,7 +149,7 @@ export function GlOpeningImportPage() {
           <p className="font-medium text-emerald-700 dark:text-emerald-400">
             Posted opening balances for {report.posted} {report.posted === 1 ? "account" : "accounts"}.
           </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-0.5 text-xs text-text-tertiary">
             Created {report.created} new {report.created === 1 ? "account" : "accounts"}
             {report.skipped > 0 ? ` · skipped ${report.skipped} that already had an opening` : ""}.
           </p>
@@ -158,9 +158,9 @@ export function GlOpeningImportPage() {
 
       {result && (
         <div className="mt-6 rounded-lg border">
-          <div className="flex items-center justify-between gap-2 border-b bg-muted/30 px-3 py-2">
+          <div className="flex items-center justify-between gap-2 border-b bg-surface-2/30 px-3 py-2">
             <span className="text-xs font-medium">Dry run — preview only, nothing posted yet</span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-text-tertiary">
               {result.accounts.length} accounts
               {result.errorCount > 0 ? ` · ${result.errorCount} errors` : ""}
               {result.warningCount > 0 ? ` · ${result.warningCount} warnings` : ""}
@@ -170,17 +170,17 @@ export function GlOpeningImportPage() {
           <div className="grid grid-cols-3 divide-x border-b text-center text-sm">
             <div className="px-2 py-2">
               <div className="font-semibold tabular-nums">{formatPaise(result.totalDebitPaise)}</div>
-              <div className="text-xs text-muted-foreground">Total debit</div>
+              <div className="text-xs text-text-tertiary">Total debit</div>
             </div>
             <div className="px-2 py-2">
               <div className="font-semibold tabular-nums">{formatPaise(result.totalCreditPaise)}</div>
-              <div className="text-xs text-muted-foreground">Total credit</div>
+              <div className="text-xs text-text-tertiary">Total credit</div>
             </div>
             <div className="px-2 py-2">
               <div className={`font-semibold tabular-nums ${diffPaise === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-500"}`}>
                 {diffPaise === 0 ? "Balanced" : formatPaise(Math.abs(diffPaise))}
               </div>
-              <div className="text-xs text-muted-foreground">{diffPaise === 0 ? "Dr = Cr" : "to OB Equity"}</div>
+              <div className="text-xs text-text-tertiary">{diffPaise === 0 ? "Dr = Cr" : "to OB Equity"}</div>
             </div>
           </div>
 
@@ -192,7 +192,7 @@ export function GlOpeningImportPage() {
                 return (
                   <li key={i} className="flex items-center gap-2 px-3 py-1.5">
                     <span className="min-w-0 flex-1 truncate">
-                      {a.code && <span className="font-mono text-xs text-muted-foreground">{a.code} </span>}
+                      {a.code && <span className="font-mono text-xs text-text-tertiary">{a.code} </span>}
                       {a.name}
                     </span>
                     <Badge variant={onFileAcct ? "secondary" : "outline"}>{onFileAcct ? "on file" : "new"}</Badge>
@@ -213,7 +213,7 @@ export function GlOpeningImportPage() {
             <ul className="max-h-44 divide-y overflow-auto border-t text-sm">
               {result.issues.map((p, i) => (
                 <li key={i} className="flex gap-2 px-3 py-1.5">
-                  <span className="text-muted-foreground">Row {p.row}</span>
+                  <span className="text-text-tertiary">Row {p.row}</span>
                   <span className={p.level === "error" ? "text-destructive" : "text-amber-600 dark:text-amber-500"}>
                     {p.level === "error" ? "Error" : "Warning"}:
                   </span>
@@ -224,7 +224,7 @@ export function GlOpeningImportPage() {
           )}
 
           <div className="flex items-center justify-between gap-3 border-t p-3">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-text-tertiary">
               {newMissingType > 0
                 ? `${newMissingType} new account(s) need a type before they can be created.`
                 : "Posted as one balanced opening entry. Re-running skips accounts that already have an opening."}
