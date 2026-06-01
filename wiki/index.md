@@ -12,7 +12,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 
 ## Product
 - [product/prd](product/prd.md) — vision, customer, goals/non-goals, functional surfaces, pricing (synthesis of `salt-prd-v0.3.md`).
-- [product/roadmap](product/roadmap.md) — PRD phases vs as-built; the big gaps (offline/real-time, sales/GRN/tax); market-informed priority additions.
+- [product/roadmap](product/roadmap.md) — PRD phases vs as-built (refreshed 2026-06-01: Phases 1–3 largely shipped on the `create_sales_invoice` + 0014–0024 backbone); the remaining gap is offline-first / live-multi-counter; market-informed priority additions.
 - [product/market-research](product/market-research.md) — competitor matrix (Marg/GoFrugal/RetailGraph/eVitalRx/Tally), GST pharma rules, Schedule H/H1/X requirements, pain points, modern trends, competitive gaps Salt can fill.
 - [product/product-modules](product/product-modules.md) — full platform module map (21 modules across 4 tiers); dependency graph; recommended build sequence.
 
