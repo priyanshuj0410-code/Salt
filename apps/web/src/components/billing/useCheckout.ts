@@ -9,6 +9,7 @@ import { outbox } from "@/lib/outbox";
 import { formatPaise } from "@/lib/currency";
 import { gatedLines, requiresRx } from "@/lib/billing";
 import { creditCheck } from "@/lib/credit";
+import { listSalesmen } from "@/lib/salesmen";
 import { requestApproval, subscribeApprovals, cancelApproval } from "@/lib/approvals";
 import {
   parseDiscountLimits,
@@ -98,6 +99,10 @@ export function useCheckout({
   // bill (null = the shop default). Sticky across bills.
   const [series, setSeries] = useState<{ id: string; code: string; is_default: boolean }[]>([]);
   const [seriesId, setSeriesId] = useState<string | null>(null);
+  // Per-bill salesman (SALT-192): the shop's active salesmen + the one this bill is booked under
+  // (null = none). Sticky across bills — a salesman on shift books several in a row.
+  const [salesmen, setSalesmen] = useState<{ id: string; name: string }[]>([]);
+  const [salesmanId, setSalesmanId] = useState<string | null>(null);
   // Remembered across the H1 gate / shop-setup detours so a resumed save still prints.
   const printIntent = useRef(false);
   // Always points at the latest `save` so the realtime approval handler can resume it.
@@ -197,6 +202,20 @@ export function useCheckout({
       active = false;
     };
   }, [shopId]);
+
+  // Load the org's active salesmen for the checkout picker (SALT-192); empty list ⇒ no picker.
+  useEffect(() => {
+    if (!orgId) return;
+    let active = true;
+    void listSalesmen(orgId)
+      .then((rows) => {
+        if (active) setSalesmen(rows.filter((s) => s.is_active).map((s) => ({ id: s.id, name: s.name })));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [orgId]);
 
   // While a discount override is pending, watch the org's approvals live. On approval,
   // resume the save the cashier already asked for (override passed explicitly to dodge
@@ -324,7 +343,7 @@ export function useCheckout({
     const notes = noteParts.length ? `Manager override — ${noteParts.join("; ")}` : null;
     // Only thread a non-default series (SALT-209); the default path sends no p_series_id.
     const seriesArg = seriesId && seriesId !== defaultSeriesId ? seriesId : null;
-    const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes, seriesArg);
+    const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes, seriesArg, salesmanId);
 
     // Offline (SALT-205): queue the write and complete the bill locally rather than block the
     // counter on a dead link. At-least-once — the outbox auto-flushes on reconnect, and the real
@@ -529,6 +548,10 @@ export function useCheckout({
     series,
     seriesId: seriesId ?? defaultSeriesId,
     setSeriesId,
+    // Per-bill salesman (SALT-192): the active salesmen + the current pick + its setter.
+    salesmen,
+    salesmanId,
+    setSalesmanId,
     saveAndPrint: () => save({ print: true }),
     saveOnly: () => save({ print: false }),
     resumeSave: () => save(),

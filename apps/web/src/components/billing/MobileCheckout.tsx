@@ -14,6 +14,7 @@ import { CreditApprovalNotice } from "./CreditApprovalNotice";
 import { SplitTender } from "./SplitTender";
 import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
 import { SeriesPicker } from "./SeriesPicker";
+import { SalesmanPicker } from "./SalesmanPicker";
 import { SaveRetryBanner } from "./SaveRetryBanner";
 import type { Checkout } from "./useCheckout";
 
@@ -43,6 +44,7 @@ export function MobileCheckout({
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
   const { discountGate, cancelDiscountApproval, creditGate, cancelCreditApproval } = checkout;
   const { series, seriesId, setSeriesId, failedSave, retryFailedSave, dismissFailedSave } = checkout;
+  const { salesmen, salesmanId, setSalesmanId } = checkout;
   // Block charging while a split is unbalanced or an over-limit discount/credit sale awaits approval.
   // The save itself is optimistic (SALT-155) and never blocks on the network.
   const blockSave =
@@ -86,6 +88,7 @@ export function MobileCheckout({
           </div>
 
           <SeriesPicker series={series} value={seriesId} onChange={setSeriesId} />
+          <SalesmanPicker salesmen={salesmen} value={salesmanId} onChange={setSalesmanId} />
 
           <div className="flex items-center justify-between pt-1">
             <p className="text-xs font-medium text-text-tertiary">Payment</p>

@@ -13,6 +13,7 @@ import { CreditApprovalNotice } from "./CreditApprovalNotice";
 import { SplitTender } from "./SplitTender";
 import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
 import { SeriesPicker } from "./SeriesPicker";
+import { SalesmanPicker } from "./SalesmanPicker";
 import { SaveRetryBanner } from "./SaveRetryBanner";
 import type { Checkout } from "./useCheckout";
 
@@ -85,6 +86,7 @@ export function BillSummary({
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
   const { discountGate, cancelDiscountApproval, creditGate, cancelCreditApproval } = checkout;
   const { series, seriesId, setSeriesId, failedSave, retryFailedSave, dismissFailedSave } = checkout;
+  const { salesmen, salesmanId, setSalesmanId } = checkout;
   // Save is blocked while a split does not balance, or while an over-limit discount/credit sale
   // is awaiting manager approval (the server / gate would reject it anyway). The save itself is
   // optimistic (SALT-155) — it never blocks on the network.
@@ -147,6 +149,7 @@ export function BillSummary({
       <Separator />
 
       <SeriesPicker series={series} value={seriesId} onChange={setSeriesId} />
+      <SalesmanPicker salesmen={salesmen} value={salesmanId} onChange={setSalesmanId} />
 
       <div>
         <div className="mb-1.5 flex items-center justify-between">
