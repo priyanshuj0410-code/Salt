@@ -54,7 +54,10 @@ export interface InvoicePrintData {
   payment: Payment;
   lines: InvoiceLine[];
   gross: number;
+  /** Sum of per-line discounts (paise). */
   discount: number;
+  /** A whole-bill discount applied on top of line discounts (paise). */
+  billDiscount: number;
   taxable: number;
   cgst: number;
   sgst: number;

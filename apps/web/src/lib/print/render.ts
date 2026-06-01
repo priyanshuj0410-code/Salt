@@ -80,6 +80,7 @@ function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang:
       <tfoot>
         ${receiptTotalRow(L("grossMrp", lang), formatPaise(d.gross))}
         ${d.discount > 0 ? receiptTotalRow(L("discount", lang), `- ${formatPaise(d.discount)}`) : ""}
+        ${d.billDiscount > 0 ? receiptTotalRow(L("billDiscount", lang), `- ${formatPaise(d.billDiscount)}`) : ""}
         ${receiptTotalRow(L("taxable", lang), formatPaise(d.taxable))}
         ${taxRows}
         ${receiptTotalRow(L("total", lang), formatPaise(d.grand), true)}
@@ -183,6 +184,7 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: P
       <table class="s-totals">
         <tr><td>${L("grossMrp", lang)}</td><td>${formatPaise(d.gross)}</td></tr>
         ${d.discount > 0 ? `<tr><td>${L("discount", lang)}</td><td>- ${formatPaise(d.discount)}</td></tr>` : ""}
+        ${d.billDiscount > 0 ? `<tr><td>${L("billDiscount", lang)}</td><td>- ${formatPaise(d.billDiscount)}</td></tr>` : ""}
         <tr><td>${L("taxableValue", lang)}</td><td>${formatPaise(d.taxable)}</td></tr>
         ${taxRows}
         <tr class="grand"><td>${L("grandTotal", lang)}</td><td>${formatPaise(d.grand)}</td></tr>
@@ -252,6 +254,7 @@ function monoBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string 
   lines.push(monoDash);
   lines.push(monoTotal("Gross (MRP)", rs(d.gross)));
   if (d.discount > 0) lines.push(monoTotal("Discount", "-" + rs(d.discount)));
+  if (d.billDiscount > 0) lines.push(monoTotal("Bill discount", "-" + rs(d.billDiscount)));
   lines.push(monoTotal("Taxable", rs(d.taxable)));
   if (d.isInterstate) {
     lines.push(monoTotal("IGST", rs(d.igst)));

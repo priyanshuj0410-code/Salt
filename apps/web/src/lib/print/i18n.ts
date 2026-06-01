@@ -33,6 +33,7 @@ export const LABELS = {
   igst: { en: "IGST", hi: "आईजीएसटी" },
   grossMrp: { en: "Gross (MRP)", hi: "सकल (एमआरपी)" },
   discount: { en: "Discount", hi: "छूट" },
+  billDiscount: { en: "Bill discount", hi: "बिल छूट" },
   total: { en: "Total", hi: "कुल" },
   grandTotal: { en: "Grand total", hi: "कुल योग" },
   billTo: { en: "Bill To", hi: "बिल प्रति" },
