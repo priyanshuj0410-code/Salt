@@ -1,4 +1,15 @@
-export type EntityKey = "ledgers" | "party_gstin" | "items" | "batches" | "salesmen" | "doctors" | "shops";
+export type EntityKey =
+  | "ledgers"
+  | "party_gstin"
+  | "items"
+  | "batches"
+  | "salesmen"
+  | "doctors"
+  | "shops"
+  | "h1_register"
+  | "drug_licenses"
+  | "gst_returns"
+  | "invoice_series";
 
 export interface FieldDef {
   key: string;
@@ -17,6 +28,12 @@ export interface EntityConfig {
   /** A practical tip shown on the upload screen. */
   tip: string;
   fields: FieldDef[];
+  /** Inject the active shop_id into each row (shop-scoped tables like the
+   *  compliance registers). Default false = org-scoped only. */
+  shopScoped?: boolean;
+  /** Upsert (not insert) on this conflict target, e.g. "org_id,shop_id,doc_type,financial_year"
+   *  — for idempotent re-import of keyed records (invoice series, filed returns). */
+  upsertOn?: string;
 }
 
 export const ENTITIES: EntityConfig[] = [
@@ -119,6 +136,72 @@ export const ENTITIES: EntityConfig[] = [
       { key: "state_code", label: "State code", aliases: ["state", "state code", "pos", "place of supply"] },
       { key: "address", label: "Address", aliases: ["city", "location", "add", "addr"] },
       { key: "phone", label: "Phone", aliases: ["mobile", "contact", "phone no", "telephone"] },
+    ],
+  },
+  {
+    key: "h1_register",
+    label: "Schedule H1/X register",
+    order: 7,
+    shopScoped: true,
+    description: "Your Schedule H1/X sale register — the statutory record (drug, batch, qty, doctor, patient).",
+    tip: "Drug name is required; an unknown schedule defaults to H1. Imported under the active shop, as records only (not linked to live invoices).",
+    fields: [
+      { key: "drug_name", label: "Drug", required: true, aliases: ["drug", "medicine", "item", "product", "drug name", "particulars", "item name"] },
+      { key: "schedule", label: "Schedule", aliases: ["schedule", "sch", "drug schedule", "category"] },
+      { key: "batch_no", label: "Batch", aliases: ["batch", "batch no", "lot", "lot no"] },
+      { key: "expiry", label: "Expiry", aliases: ["expiry", "exp", "exp date", "expiry date"] },
+      { key: "qty", label: "Qty", aliases: ["qty", "quantity", "units", "pcs", "nos"] },
+      { key: "doctor_name", label: "Doctor", aliases: ["doctor", "dr", "prescriber", "doctor name"] },
+      { key: "doctor_reg_no", label: "Doctor reg no", aliases: ["doctor reg", "doctor registration", "reg no", "registration", "mci no"] },
+      { key: "patient_name", label: "Patient", aliases: ["patient", "patient name", "customer", "buyer"] },
+      { key: "patient_address", label: "Patient address", aliases: ["patient address", "address", "add", "addr"] },
+      { key: "date", label: "Date", aliases: ["date", "sale date", "sold on", "bill date", "dispensed date", "invoice date"] },
+    ],
+  },
+  {
+    key: "drug_licenses",
+    label: "Drug licences",
+    order: 8,
+    shopScoped: true,
+    description: "Your drug licences (Form 20 / 21 etc.) — type, number, holder, validity dates.",
+    tip: "Licence type and number are required; dates accept dd-mm-yyyy or yyyy-mm-dd.",
+    fields: [
+      { key: "license_type", label: "Type", required: true, aliases: ["type", "license type", "licence type", "form", "form no", "category"] },
+      { key: "license_no", label: "Number", required: true, aliases: ["license no", "licence no", "number", "license number", "licence number", "dl no", "reg no"] },
+      { key: "holder_name", label: "Holder", aliases: ["holder", "holder name", "name", "proprietor", "licensee", "firm"] },
+      { key: "issued_date", label: "Issued", aliases: ["issue date", "issued", "issued date", "valid from", "date of issue"] },
+      { key: "expiry_date", label: "Expiry", aliases: ["expiry", "expiry date", "valid upto", "valid till", "valid to", "expires", "renewal date"] },
+      { key: "notes", label: "Notes", aliases: ["notes", "remark", "remarks", "description"] },
+    ],
+  },
+  {
+    key: "gst_returns",
+    label: "Filed GST returns",
+    order: 9,
+    shopScoped: true,
+    upsertOn: "org_id,shop_id,period,return_type",
+    description: "Your filed GSTR-1 / GSTR-3B history — an archive of which returns were filed, by period.",
+    tip: "Period (YYYY-MM) and return type (GSTR1/GSTR3B) are required; re-import updates the same period+type. Filed figures are kept verbatim in source.",
+    fields: [
+      { key: "period", label: "Period", required: true, aliases: ["period", "month", "return period", "tax period"] },
+      { key: "return_type", label: "Return", required: true, aliases: ["type", "return", "return type", "form", "gst return"] },
+      { key: "status", label: "Status", aliases: ["status", "filed", "state"] },
+      { key: "filed_date", label: "Filed on", aliases: ["filed date", "filed on", "date of filing", "filed at", "submission date", "arn date"] },
+    ],
+  },
+  {
+    key: "invoice_series",
+    label: "Invoice series",
+    order: 10,
+    shopScoped: true,
+    upsertOn: "org_id,shop_id,doc_type,financial_year",
+    description: "Your voucher numbering — so Salt continues each series without clashing with the old system.",
+    tip: "Doc type and financial year are required. Map your NEXT number to use (last used + 1). Re-import updates the same series.",
+    fields: [
+      { key: "doc_type", label: "Doc type", required: true, aliases: ["doc type", "document type", "type", "voucher type", "series", "book"] },
+      { key: "financial_year", label: "Financial year", required: true, aliases: ["financial year", "fy", "year", "f.y.", "fin year"] },
+      { key: "prefix", label: "Prefix", aliases: ["prefix", "series prefix", "bill prefix", "pre"] },
+      { key: "next_number", label: "Next number", aliases: ["next number", "next no", "last number", "last no", "current number", "running no", "number"] },
     ],
   },
 ];
@@ -360,6 +443,31 @@ export function toExpiryYM(s: string): string | null {
   return null;
 }
 
+/** Coerce dd-mm-yyyy / dd/mm/yyyy / yyyy-mm-dd to ISO yyyy-mm-dd, or null. */
+export function toIsoDate(s: string): string | null {
+  const t = (s || "").trim();
+  if (!t) return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
+  const m = t.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+  if (m) {
+    const y = m[3].length === 2 ? `20${m[3]}` : m[3];
+    return `${y}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  }
+  return null;
+}
+
+/** Normalize a free-text voucher/document type to the invoice_series enum. */
+function normalizeDocType(s: string): string | null {
+  const t = (s || "").toLowerCase().replace(/[^a-z]/g, "");
+  if (!t) return null;
+  if (/(creditnote|salesreturn|salereturn|cn)/.test(t)) return "credit_note";
+  if (/(debitnote|purchasereturn|purreturn|dn)/.test(t)) return "debit_note";
+  if (/(receipt|payment)/.test(t)) return "payment";
+  if (/(sales|sale|invoice|bill|tax)/.test(t)) return "sales_invoice";
+  if (/(purchase|grn|inward)/.test(t)) return "purchase";
+  return null;
+}
+
 function applyMapping(row: Record<string, string>, mapping: Record<string, string | null>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [field, header] of Object.entries(mapping)) {
@@ -436,6 +544,83 @@ function validate(entity: EntityKey, d: Record<string, string>, ctx: ValidateCtx
         state_code: d.state_code || null,
         address: d.address || null,
         phone: d.phone || null,
+      },
+    };
+  }
+
+  if (entity === "h1_register") {
+    if (!d.drug_name) issues.push({ field: "drug_name", level: "error", message: "Missing drug name" });
+    let schedule = (d.schedule || "").toUpperCase();
+    if (!["H", "H1", "X"].includes(schedule)) {
+      if (d.schedule) issues.push({ field: "schedule", level: "warning", message: `Unknown schedule "${d.schedule}", set to H1` });
+      schedule = "H1";
+    }
+    const qty = Number((d.qty || "").replace(/[,\s]/g, ""));
+    const soldAt = toIsoDate(d.date);
+    return {
+      issues,
+      payload: {
+        drug_name: d.drug_name,
+        schedule,
+        batch_no: d.batch_no || null,
+        expiry: d.expiry || null,
+        qty: Number.isFinite(qty) ? Math.trunc(qty) : 0,
+        doctor_name: d.doctor_name || null,
+        doctor_reg_no: d.doctor_reg_no || null,
+        patient_name: d.patient_name || null,
+        patient_address: d.patient_address || null,
+        ...(soldAt ? { sold_at: soldAt } : {}),
+      },
+    };
+  }
+
+  if (entity === "drug_licenses") {
+    if (!d.license_type) issues.push({ field: "license_type", level: "error", message: "Missing licence type" });
+    if (!d.license_no) issues.push({ field: "license_no", level: "error", message: "Missing licence number" });
+    return {
+      issues,
+      payload: {
+        license_type: d.license_type,
+        license_no: d.license_no,
+        holder_name: d.holder_name || null,
+        issued_date: toIsoDate(d.issued_date),
+        expiry_date: toIsoDate(d.expiry_date),
+        notes: d.notes || null,
+      },
+    };
+  }
+
+  if (entity === "gst_returns") {
+    const period = toExpiryYM(d.period); // YYYY-MM
+    if (!period) issues.push({ field: "period", level: "error", message: `Could not read period "${d.period}" (use YYYY-MM)` });
+    const rt = (d.return_type || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const returnType = rt.includes("3B") ? "GSTR3B" : rt.includes("1") ? "GSTR1" : null;
+    if (!returnType) issues.push({ field: "return_type", level: "error", message: "Return type must be GSTR1 or GSTR3B" });
+    const status = (d.status || "").toLowerCase().includes("draft") ? "draft" : "filed";
+    const filedAt = toIsoDate(d.filed_date);
+    return {
+      issues,
+      payload: {
+        period: period || "",
+        return_type: returnType || "GSTR1",
+        status,
+        ...(filedAt ? { filed_at: filedAt } : {}),
+      },
+    };
+  }
+
+  if (entity === "invoice_series") {
+    const docType = normalizeDocType(d.doc_type);
+    if (!docType) issues.push({ field: "doc_type", level: "error", message: `Unrecognized doc type "${d.doc_type}" (sales / purchase / credit / debit / payment)` });
+    if (!d.financial_year) issues.push({ field: "financial_year", level: "error", message: "Missing financial year" });
+    const n = Number((d.next_number || "").replace(/[,\s]/g, ""));
+    return {
+      issues,
+      payload: {
+        doc_type: docType || "sales_invoice",
+        financial_year: d.financial_year,
+        prefix: d.prefix || null,
+        next_number: Number.isFinite(n) && n > 0 ? Math.trunc(n) : 1,
       },
     };
   }
