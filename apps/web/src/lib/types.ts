@@ -25,6 +25,9 @@ export interface Item {
   /** AYUSH / non-allopathic item (ayurveda, siddha, unani, homeopathy). These
    *  carry no Drugs-&-Cosmetics schedule and describe contents, not a salt. */
   ayush?: boolean;
+  /** Therapeutic / drug class (e.g. "Antidiabetic"). Back-filled from the brand
+   *  crosswalk via "Fill from master"; "" / absent when unknown. */
+  therapeuticCategory?: string;
   /** Reorder point: the stock level at/below which this item should be re-bought.
    *  Drives the inventory reorder report; 0 = not set. */
   reorderLevel?: number;
