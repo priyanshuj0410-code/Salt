@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
+import { ActionBar } from "@/components/patterns/action-bar";
 import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
@@ -549,14 +550,31 @@ export function GrnEntryPage() {
 
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
 
-      <div className="mt-4 flex items-center gap-2">
-        <Button size="lg" onClick={save} disabled={!canSave}>
-          <Truck /> {saving ? "Saving…" : poId ? "Receive against PO" : "Record GRN"}
-        </Button>
-        <Button variant="ghost" onClick={() => navigate("/purchases")}>
-          Cancel
-        </Button>
-      </div>
+      <ActionBar
+        className="mt-4"
+        summary={
+          <span className="text-sm">
+            <span className="font-semibold tabular-nums">{formatPaise(totals.grandTotalPaise)}</span>
+            <span className="text-text-tertiary">
+              {" · "}
+              {lines.length} {lines.length === 1 ? "line" : "lines"}
+              {totals.gstPaise > 0 ? ` · ITC ${formatPaise(totals.gstPaise)}` : ""}
+            </span>
+          </span>
+        }
+        primary={{
+          children: saving ? "Saving…" : poId ? "Receive against PO" : "Record GRN",
+          onClick: save,
+          busy: saving,
+          disabled: !canSave,
+          icon: <Truck />,
+        }}
+        secondary={
+          <Button variant="ghost" onClick={() => navigate("/purchases")}>
+            Cancel
+          </Button>
+        }
+      />
 
       <VendorPicker open={vendorPickerOpen} onOpenChange={setVendorPickerOpen} orgId={orgId} onSelect={setVendor} />
       {/* Mounted only while open so the name prefills from the current search each time. */}
