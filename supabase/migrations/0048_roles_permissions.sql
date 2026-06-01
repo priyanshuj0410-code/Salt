@@ -45,7 +45,7 @@ returns table (
 ) language plpgsql security definer set search_path = public stable as $$
 declare v_org uuid;
 begin
-  select org_id into v_org from public.memberships where user_id = auth.uid() limit 1;
+  select m.org_id into v_org from public.memberships m where m.user_id = auth.uid() limit 1;
   if v_org is null then return; end if;
   if not public.is_org_owner(v_org) then
     raise exception 'only an owner can list members';
