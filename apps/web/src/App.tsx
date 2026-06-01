@@ -48,6 +48,7 @@ const ItcRegisterPage = lazy(() => import("@/components/gst/ItcRegisterPage").th
 const TallyExportPage = lazy(() => import("@/components/gst/TallyExportPage").then((m) => ({ default: m.TallyExportPage })));
 const HsnReportPage = lazy(() => import("@/components/gst/HsnReportPage").then((m) => ({ default: m.HsnReportPage })));
 const H1RegisterPage = lazy(() => import("@/components/gst/H1RegisterPage").then((m) => ({ default: m.H1RegisterPage })));
+const InvoiceSeriesPage = lazy(() => import("@/components/gst/InvoiceSeriesPage").then((m) => ({ default: m.InvoiceSeriesPage })));
 const PaymentsPage = lazy(() => import("@/components/payments/PaymentsPage").then((m) => ({ default: m.PaymentsPage })));
 const MakePaymentPage = lazy(() => import("@/components/payments/MakePaymentPage").then((m) => ({ default: m.MakePaymentPage })));
 const CatalogPage = lazy(() => import("@/components/catalog/CatalogPage").then((m) => ({ default: m.CatalogPage })));
@@ -406,6 +407,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <H1RegisterPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/series"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <InvoiceSeriesPage />
           </ProtectedRoute>
         }
       />
