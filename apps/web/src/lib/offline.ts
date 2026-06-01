@@ -15,8 +15,12 @@
  *  - The record `id` is a client-generated UUID used as the **idempotency key**;
  *    a replay-safe server (the RPC honours the key) makes delivery exactly-once,
  *    otherwise at-least-once with client-side de-dup on success.
- *  - Flush is strict **FIFO** and **stops on the first failure**, so a queued
- *    sale is never reordered behind a later one, and a dead link is not hammered.
+ *  - Flush is strict **FIFO**. A transient failure stops the drain (order kept
+ *    for retry, dead link not hammered); a record that fails `maxAttempts` times
+ *    is **parked** and skipped, so one poison write can never block the head.
+ *
+ * (Consolidates the parallel `lib/offline/writeQueue.ts` spike — SALT-210 — whose
+ * only unique feature, poison-parking, is folded in here.)
  */
 
 export interface OutboxRecord {
@@ -27,6 +31,8 @@ export interface OutboxRecord {
   payload: unknown;
   createdAt: string;
   attempts: number;
+  /** "parked" after `maxAttempts` failures — skipped by flush so it never blocks the head. Absent = pending. */
+  status?: "pending" | "parked";
   lastError?: string;
 }
 
@@ -42,8 +48,12 @@ export interface OutboxStore {
 export type OutboxHandler = (payload: unknown, rec: OutboxRecord) => Promise<void>;
 
 export interface FlushResult {
+  /** Records successfully synced and removed. */
   sent: number;
-  failed: number;
+  /** Records parked this flush (exhausted maxAttempts). */
+  parked: number;
+  /** True if the drain halted on a transient failure (pending records remain to retry). */
+  stopped: boolean;
 }
 
 function uuid(): string {
@@ -146,14 +156,21 @@ export class Outbox {
       payload,
       createdAt: new Date().toISOString(),
       attempts: 0,
+      status: "pending",
     };
     await this.store.add(rec);
     this.onChange?.();
     return rec;
   }
 
+  /** Records still waiting to sync — excludes parked (poison) records. */
   async pending(): Promise<number> {
-    return (await this.store.list()).length;
+    return (await this.store.list()).filter((r) => r.status !== "parked").length;
+  }
+
+  /** Parked (permanently-failed) records, for diagnostics / a "stuck" indicator. */
+  async parked(): Promise<number> {
+    return (await this.store.list()).filter((r) => r.status === "parked").length;
   }
 
   async list(): Promise<OutboxRecord[]> {
@@ -161,29 +178,40 @@ export class Outbox {
   }
 
   /**
-   * Replay queued mutations oldest-first. Stops at the first failure to keep
-   * order and avoid hammering a dead link. Items whose `kind` has no registered
-   * handler are left in place (a wiring bug, not a transient failure) and skipped.
+   * Replay queued mutations oldest-first. A transient failure **stops** the drain
+   * (order kept for a later retry, dead link not hammered). A record that has
+   * failed `maxAttempts` times is **parked** (status set, skipped from now on) and
+   * the drain **continues** — so one poison write can never dead-lock the head.
+   * Already-parked records and unregistered kinds are skipped.
    */
-  async flush(): Promise<FlushResult> {
+  async flush(maxAttempts = 5): Promise<FlushResult> {
     const items = await this.store.list();
     let sent = 0;
+    let parked = 0;
     for (const rec of items) {
+      if (rec.status === "parked") continue;
       const handler = this.handlers.get(rec.kind);
       if (!handler) continue;
       try {
         await handler(rec.payload, rec);
         await this.store.remove(rec.id);
-        sent++;
+        sent += 1;
         this.onChange?.();
       } catch (err) {
         rec.attempts += 1;
         rec.lastError = err instanceof Error ? err.message : String(err);
+        if (rec.attempts >= maxAttempts) {
+          rec.status = "parked";
+          await this.store.update(rec);
+          parked += 1;
+          this.onChange?.();
+          continue; // poison record parked — keep draining the rest
+        }
         await this.store.update(rec);
         this.onChange?.();
-        return { sent, failed: items.length - sent };
+        return { sent, parked, stopped: true };
       }
     }
-    return { sent, failed: 0 };
+    return { sent, parked, stopped: false };
   }
 }
