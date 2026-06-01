@@ -32,10 +32,12 @@ filed to their owners rather than edited here.
 - **Skip-to-content link — missing.** The keyboard path into `<main>` should be a
   visually-hidden "Skip to content" link as the first focusable element, with an
   `id` on `<main>`. Lives in `nav/AppLayout.tsx`. → **SALT-158 (nav)**. WCAG 2.4.1.
-- **`muted-foreground` contrast is marginal.** `--muted-foreground` = zinc-500
-  (`#71717a`) meets AA on white (~4.6:1) but drops to ~4.3:1 on `surface-2`/`muted`
-  backgrounds — under the 4.5:1 threshold for normal-size text. Token change is the
-  design-system's call. → **SALT-157 (design-system)**. WCAG 1.4.3.
+- ✅ **`muted-foreground` contrast** (was marginal: zinc-500 `#71717a` dropped to ~4.3:1 on
+  `surface-2`/`muted` backgrounds). **Fixed in SALT-157**: `--muted-foreground` aliases
+  `--text-tertiary`, so the token was nudged per-theme — light `#676770` (≈5:1 on surface-2),
+  dark `#92929b` (≈4.8:1 on dark surface-2) — clearing 4.5:1 on the muted backgrounds while
+  staying clearly lighter than secondary. Fixes both `text-muted-foreground` and
+  `text-text-tertiary`. WCAG 1.4.3. (Ratios computed; confirm with a browser contrast checker.)
 
 ## Needs manual verification (a browser, not code)
 
