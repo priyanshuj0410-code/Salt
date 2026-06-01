@@ -39,6 +39,8 @@ export interface BillLine {
   name: string;
   salt: string;
   pack: string;
+  /** HSN code — carried from the catalogue item so the tax invoice can print it (rule-46 field). */
+  hsn: string;
   schedule: Schedule;
   gstRate: number;
   batchNo: string;

@@ -73,6 +73,7 @@ function makeLine(item: Item, batch: Batch): BillLine {
     name: item.name,
     salt: item.salt,
     pack: item.pack,
+    hsn: item.hsn,
     schedule: item.schedule,
     gstRate: item.gstRate,
     batchNo: batch.batchNo,
