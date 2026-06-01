@@ -21,6 +21,8 @@ import {
   type AgingViewRow,
   type LicenseRow,
 } from "@/lib/reports";
+import { useOrgShops, scopeLabelFor, ALL_SHOPS } from "@/components/reports/useOrgShops";
+import { ShopSelect } from "@/components/reports/report-controls";
 
 /** A `sales_invoices` row for today's headline numbers. */
 interface TodayInvoice {
@@ -68,42 +70,46 @@ const EMPTY: DashboardData = {
 const SOON_BUCKETS = ["0-30"];
 
 export function DashboardPage() {
-  const { membership, shopId, shop, loading: authLoading } = useAuth();
+  const { membership, shop } = useAuth();
   const orgId = membership?.orgId;
   const navigate = useNavigate();
   const today = useMemo(() => istToday(), []);
+  const { shops } = useOrgShops();
+  const [shopFilter, setShopFilter] = useState<string>(ALL_SHOPS);
   const [data, setData] = useState<DashboardData>(EMPTY);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!supabase || !orgId || !shopId) return;
+    if (!supabase || !orgId) return;
     let active = true;
     const db = supabase;
+    const oneShop = shopFilter === ALL_SHOPS ? null : shopFilter;
 
     (async () => {
       setLoading(true);
 
       // Today's placed, operational sales — headline + cash/credit split.
-      const todayQ = db
+      let todayQ = db
         .from("sales_invoices")
         .select("id,payment_method,total_paise")
         .eq("org_id", orgId)
-        .eq("shop_id", shopId)
         .eq("status", "placed")
         .eq("posts_effects", true)
         .eq("invoice_date", today);
+      if (oneShop) todayQ = todayQ.eq("shop_id", oneShop);
 
       // Money collected today (cleared receipts from customers).
-      const receiptsQ = db
+      let receiptsQ = db
         .from("payments")
         .select("amount_paise")
         .eq("org_id", orgId)
-        .eq("shop_id", shopId)
         .eq("direction", "received")
         .eq("status", "cleared")
         .eq("payment_date", today);
+      if (oneShop) receiptsQ = receiptsQ.eq("shop_id", oneShop);
 
-      // Org-wide receivables / payables aging (open documents).
+      // Receivables / payables aging — party-level across the org (the aging views
+      // are not shop-scoped), so these stay org-wide regardless of the shop filter.
       const recvQ = db
         .from("v_receivables_aging")
         .select("party_id,party_name,outstanding_paise,d0_30_paise,d31_60_paise,d61_90_paise,d90_plus_paise")
@@ -113,20 +119,20 @@ export function DashboardPage() {
         .select("vendor_id,vendor_name,outstanding_paise,d0_30_paise,d31_60_paise,d61_90_paise,d90_plus_paise")
         .eq("org_id", orgId);
 
-      // Near-expiry batches for this shop (expired + within 60 days).
-      const expiryQ = db
+      // Near-expiry batches (expired + within 60 days).
+      let expiryQ = db
         .from("v_near_expiry")
         .select("bucket,qty,stock_value_paise,days_to_expiry")
         .eq("org_id", orgId)
-        .eq("shop_id", shopId)
         .lte("days_to_expiry", 60);
+      if (oneShop) expiryQ = expiryQ.eq("shop_id", oneShop);
 
-      // Drug licenses on file for this shop.
-      const licQ = db
+      // Drug licenses on file.
+      let licQ = db
         .from("drug_licenses")
         .select("license_type,license_no,holder_name,expiry_date")
-        .eq("org_id", orgId)
-        .eq("shop_id", shopId);
+        .eq("org_id", orgId);
+      if (oneShop) licQ = licQ.eq("shop_id", oneShop);
 
       const [todayRes, receiptsRes, recvRes, payRes, expiryRes, licRes] = await Promise.all([
         todayQ,
@@ -202,7 +208,9 @@ export function DashboardPage() {
     return () => {
       active = false;
     };
-  }, [orgId, shopId, today]);
+  }, [orgId, shopFilter, today]);
+
+  const scopeLabel = scopeLabelFor(shops, shopFilter, shop?.name);
 
   const lic = data.licenses;
   const licenseValue =
@@ -227,14 +235,13 @@ export function DashboardPage() {
         title="Dashboard"
         subtitle={
           <span>
-            {shop?.name ?? "This shop"} · {today}
+            {scopeLabel} · {today}
           </span>
         }
+        actions={<ShopSelect shops={shops} value={shopFilter} onChange={setShopFilter} />}
       />
 
-      {!authLoading && !shopId ? (
-        <EmptyState title="No shop selected" hint="The dashboard summarises one shop. Pick a shop to continue." />
-      ) : (
+      {
         <div className="flex flex-col gap-7">
           {/* Today + money */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -333,11 +340,12 @@ export function DashboardPage() {
           </div>
 
           <p className="text-xs text-text-tertiary">
-            Live figures for operational (post-cutover) documents. Receivables / payables age open invoices by due date;
-            imported opening balances live in Parties. Sales count today in IST.
+            Live figures for operational (post-cutover) documents{shops.length > 1 ? " across the selected shop scope" : ""}.
+            Receivables / payables age open invoices by due date and are org-wide (party-level); imported opening balances
+            live in Parties. Sales count today in IST.
           </p>
         </div>
-      )}
+      }
     </Page>
   );
 }

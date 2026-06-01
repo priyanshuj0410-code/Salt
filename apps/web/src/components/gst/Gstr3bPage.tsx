@@ -39,6 +39,7 @@ function download(filename: string, text: string, mime: string) {
 interface HeadRow {
   head: string;
   outputPaise: number;
+  creditPaise: number;
   itcPaise: number;
   balancePaise: number;
 }
@@ -50,6 +51,7 @@ export function Gstr3bPage() {
   const [sales, setSales] = useState<Gstr3bOutwardRow[]>([]);
   const [purchases, setPurchases] = useState<Gstr3bItcRow[]>([]);
   const [writeoffs, setWriteoffs] = useState<WriteoffRow[]>([]);
+  const [creditNotes, setCreditNotes] = useState<Gstr3bOutwardRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -90,10 +92,21 @@ export function Gstr3bPage() {
         .eq("reason", "writeoff")
         .gte("created_at", start)
         .lt("created_at", end);
-      const [salesRes, purchasesRes, writeoffsRes] = await Promise.all([salesQ, purchasesQ, writeoffsQ]);
+      // Sales-return credit notes in the month — reverse the outward tax (3.1(a) net).
+      const creditNotesQ = supabase
+        .from("credit_notes")
+        .select(OUTWARD_COLS)
+        .eq("org_id", orgId)
+        .eq("shop_id", shopId)
+        .eq("status", "placed")
+        .eq("posts_effects", true)
+        .gte("note_date", start)
+        .lt("note_date", end);
+      const [salesRes, purchasesRes, writeoffsRes, creditNotesRes] = await Promise.all([salesQ, purchasesQ, writeoffsQ, creditNotesQ]);
       if (!active) return;
       setSales((salesRes.data as unknown as Gstr3bOutwardRow[] | null) ?? []);
       setPurchases((purchasesRes.data as unknown as Gstr3bItcRow[] | null) ?? []);
+      setCreditNotes((creditNotesRes.data as unknown as Gstr3bOutwardRow[] | null) ?? []);
       setWriteoffs(
         ((writeoffsRes.data as unknown as WoFetch[] | null) ?? []).map((r) => ({
           itemName: r.items?.name ?? "—",
@@ -113,14 +126,14 @@ export function Gstr3bPage() {
   }, [orgId, shopId, period]);
 
   const reversal = useMemo(() => buildWriteoffReversal(writeoffs), [writeoffs]);
-  const summary = useMemo(() => buildGstr3b(period, sales, purchases, reversal.totalPaise), [period, sales, purchases, reversal.totalPaise]);
+  const summary = useMemo(() => buildGstr3b(period, sales, purchases, reversal.totalPaise, creditNotes), [period, sales, purchases, reversal.totalPaise, creditNotes]);
   const hasData = summary.invoiceCount > 0 || summary.purchaseCount > 0 || summary.reversalPaise > 0;
   const filerGstin = shop?.gstin ?? "";
 
   const headRows: HeadRow[] = [
-    { head: "IGST", outputPaise: summary.output.igstPaise, itcPaise: summary.itc.igstPaise, balancePaise: summary.balance.igstPaise },
-    { head: "CGST", outputPaise: summary.output.cgstPaise, itcPaise: summary.itc.cgstPaise, balancePaise: summary.balance.cgstPaise },
-    { head: "SGST", outputPaise: summary.output.sgstPaise, itcPaise: summary.itc.sgstPaise, balancePaise: summary.balance.sgstPaise },
+    { head: "IGST", outputPaise: summary.output.igstPaise, creditPaise: summary.creditNote.igstPaise, itcPaise: summary.itc.igstPaise, balancePaise: summary.balance.igstPaise },
+    { head: "CGST", outputPaise: summary.output.cgstPaise, creditPaise: summary.creditNote.cgstPaise, itcPaise: summary.itc.cgstPaise, balancePaise: summary.balance.cgstPaise },
+    { head: "SGST", outputPaise: summary.output.sgstPaise, creditPaise: summary.creditNote.sgstPaise, itcPaise: summary.itc.sgstPaise, balancePaise: summary.balance.sgstPaise },
   ];
 
   const subtitle = (
@@ -169,8 +182,14 @@ export function Gstr3bPage() {
         <EmptyState title="No GST activity this period" hint={`No placed sales or received purchases for ${period}. Pick another month.`} />
       ) : (
         <div className="flex flex-col gap-7">
-          <div hidden={!hasData} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div hidden={!hasData} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <StatCard label="Output tax" value={formatPaise(summary.outputTotalPaise)} hint={`${summary.invoiceCount} invoices`} />
+            <StatCard
+              label="Less: credit notes"
+              value={formatPaise(summary.creditNoteTotalPaise)}
+              tone={summary.creditNoteTotalPaise > 0 ? "danger" : "default"}
+              hint={summary.creditNoteTotalPaise > 0 ? `net ${formatPaise(summary.netOutputTotalPaise)} · ${summary.creditNoteCount} notes` : "no sales returns"}
+            />
             <StatCard label="Gross ITC" value={formatPaise(summary.itcTotalPaise)} hint={`${summary.purchaseCount} purchases`} />
             <StatCard
               label="ITC reversal"
@@ -197,6 +216,7 @@ export function Gstr3bPage() {
               columns={[
                 { key: "head", header: "Tax", cell: (r) => r.head },
                 { key: "output", header: "Output", numeric: true, cell: (r) => formatPaise(r.outputPaise) },
+                { key: "credit", header: "Cr. notes", numeric: true, cell: (r) => (r.creditPaise > 0 ? `− ${formatPaise(r.creditPaise)}` : "—") },
                 { key: "itc", header: "ITC", numeric: true, cell: (r) => formatPaise(r.itcPaise) },
                 {
                   key: "balance",

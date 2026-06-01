@@ -1,21 +1,21 @@
 import type { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
-import type { Permission, UserRole } from "@/lib/permissions";
-import { firstAllowedNavPath } from "@/components/nav/navConfig";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth, type UserRole } from "@/lib/auth";
+import { can, pathModule } from "@/lib/permissions";
 
 export function ProtectedRoute({
   children,
-  permission,
-  allowedRoles,
 }: {
   children: ReactNode;
-  /** Capability required to open this route (SALT-174), checked via `can()`. */
-  permission?: Permission;
-  /** Legacy role gate, kept for back-compat; prefer `permission`. */
+  /**
+   * Legacy hint, still accepted so existing routes don't need editing. Access is
+   * now derived centrally from the route's module via the capability map
+   * (`lib/permissions`), so role/permission changes apply everywhere at once.
+   */
   allowedRoles?: UserRole[];
 }) {
-  const { session, membership, loading, can } = useAuth();
+  const { session, membership, loading } = useAuth();
+  const { pathname } = useLocation();
 
   if (loading) {
     return (
@@ -30,13 +30,11 @@ export function ProtectedRoute({
   // Signed in but no org yet → onboarding.
   if (!membership) return <Navigate to="/onboarding" replace />;
 
-  // Capability / role gate. On denial, bounce to the member's first allowed
-  // screen rather than a hardcoded "/", so a role without the counter (e.g. an
-  // accountant) never lands in a redirect loop.
-  const denied =
-    (permission != null && !can(permission)) ||
-    (allowedRoles != null && !allowedRoles.includes(membership.role));
-  if (denied) return <Navigate to={firstAllowedNavPath(can)} replace />;
+  // Capability gate: the role (+ per-user overrides) must permit this route's
+  // module. `counter` ("/") is always allowed, so a denied user lands safely.
+  if (!can(membership.role, membership.permissions, pathModule(pathname))) {
+    return <Navigate to="/" replace />;
+  }
 
   return <>{children}</>;
 }

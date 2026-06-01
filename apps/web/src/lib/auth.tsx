@@ -9,12 +9,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
-import {
-  effectivePermissions,
-  type Permission,
-  type PermissionOverride,
-  type UserRole,
-} from "./permissions";
+import type { PermissionOverrides } from "./permissions";
 import { IdleWarningDialog } from "@/components/auth/IdleWarningDialog";
 import { UpdatePasswordDialog } from "@/components/auth/UpdatePasswordDialog";
 import { MfaChallengeDialog } from "@/components/auth/MfaChallengeDialog";
@@ -80,16 +75,14 @@ function needsMfaChallenge(
   return !!aal && aal.currentLevel === "aal1" && aal.nextLevel === "aal2";
 }
 
-// UserRole (5 roles since SALT-174) lives in ./permissions so it can be shared
-// with navConfig without an import cycle; re-exported here for existing callers.
-export type { UserRole, Permission } from "./permissions";
+export type UserRole = "owner" | "manager" | "accountant" | "pharmacist" | "cashier";
 
 export interface Membership {
-  /** The membership row id — needed to attach per-user permission overrides. */
-  id: string;
   orgId: string;
   orgName: string;
   role: UserRole;
+  /** Per-user capability overrides layered on the role (SALT-091). */
+  permissions: PermissionOverrides;
 }
 
 /** Shop snapshot used app-wide for place-of-supply, GSTIN, header info. */
@@ -110,10 +103,6 @@ interface AuthContextValue {
   user: User | null;
   /** The user's org + role, or null if they haven't joined/created an org yet. */
   membership: Membership | null;
-  /** Effective capabilities = role defaults + per-user overrides (SALT-174). */
-  permissions: Set<Permission>;
-  /** True if the current member has `permission` (role default, honouring overrides). */
-  can: (permission: Permission) => boolean;
   /** The active shop id — what every shop-scoped screen reads (SALT-173). */
   shopId: string | null;
   /** Full active-shop record. null until resolved, or if no shop exists yet. */
@@ -135,7 +124,6 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
-  const [permissions, setPermissions] = useState<Set<Permission>>(() => new Set());
   const [shopId, setShopId] = useState<string | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
   const [shops, setShops] = useState<Shop[]>([]);
@@ -171,28 +159,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadMembership = useCallback(async (userId: string) => {
     if (!supabase) return;
-    const { data } = await supabase
+    // Include the per-user permission overrides (0046); fall back to the legacy
+    // columns if that migration is not applied yet, so the app still loads.
+    const primary = await supabase
       .from("memberships")
-      .select("id, role, org_id, orgs(name)")
+      .select("role, org_id, permissions, orgs(name)")
       .eq("user_id", userId)
       .limit(1)
       .maybeSingle();
+    let data = primary.data as Record<string, unknown> | null;
+    if (primary.error) {
+      const fb = await supabase
+        .from("memberships")
+        .select("role, org_id, orgs(name)")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+      data = fb.data as Record<string, unknown> | null;
+    }
     if (data) {
       const org = data.orgs as { name: string } | { name: string }[] | null;
       const orgName = Array.isArray(org) ? (org[0]?.name ?? "") : (org?.name ?? "");
-      const role = data.role as UserRole;
-      setMembership({ id: data.id as string, orgId: data.org_id as string, orgName, role });
-
-      // Per-user permission overrides (SALT-174). The membership_permissions
-      // table may be absent on a DB where migration 0044 has not yet run — on
-      // any error, fall back to the role's default capabilities (no lockout).
-      let overrides: PermissionOverride[] = [];
-      const { data: ovr, error: ovrErr } = await supabase
-        .from("membership_permissions")
-        .select("permission, granted")
-        .eq("membership_id", data.id as string);
-      if (!ovrErr && Array.isArray(ovr)) overrides = ovr as unknown as PermissionOverride[];
-      setPermissions(effectivePermissions(role, overrides));
+      const permissions = (data.permissions ?? {}) as PermissionOverrides;
+      setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole, permissions });
       // Resolve the org's shops (SALT-173). Ordered primary-first then oldest,
       // so the primary (or, absent one, the oldest) is the deterministic
       // fallback. This covers orgs whose imports created shops without ever
@@ -241,7 +230,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } else {
       setMembership(null);
-      setPermissions(new Set());
       setShopId(null);
       setShop(null);
       setShops([]);
@@ -274,7 +262,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setMfaChallengeRequired(false); // re-evaluated by the AAL effect
       } else {
         setMembership(null);
-        setPermissions(new Set());
         setShopId(null);
         setShop(null);
         setShops([]);
@@ -373,11 +360,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
-  const can = useCallback(
-    (permission: Permission) => permissions.has(permission),
-    [permissions],
-  );
-
   const setActiveShop = useCallback(
     (id: string) => {
       const next = shops.find((s) => s.id === id);
@@ -400,7 +382,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, membership, permissions, can, shopId, shop, shops, setActiveShop, loading, refresh, signOut }}
+      value={{ session, user: session?.user ?? null, membership, shopId, shop, shops, setActiveShop, loading, refresh, signOut }}
     >
       {children}
       {idleSecondsLeft !== null && (

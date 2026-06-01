@@ -14,7 +14,8 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { rolesWith, type Permission, type UserRole } from "@/lib/permissions";
+import type { UserRole } from "@/lib/auth";
+import { rolesForModule } from "@/lib/permissions";
 
 /** A sub-item under a module. `path` + `built` => navigable; otherwise shown disabled. */
 export interface NavLeaf {
@@ -31,9 +32,7 @@ export interface NavModule {
   /** Module landing route (only when built). */
   path?: string;
   built: boolean;
-  /** Capability that gates this module (SALT-174) — the SSOT for access. */
-  perm: Permission;
-  /** Which roles see this module (derived from `perm` via the capability map). */
+  /** Which roles see this module — derived from the capability matrix (lib/permissions). */
   roles: UserRole[];
   children: NavLeaf[];
 }
@@ -41,19 +40,18 @@ export interface NavModule {
 /**
  * The whole IA, made visible. Built nodes link to existing routes; everything
  * else is `built: false` and renders disabled until we build it. This is the
- * single source of truth for the sidebar AND the keyboard go-to map.
- *
- * Each module declares the `perm` it needs; `roles` is derived from the
- * capability map (SALT-174) so nav visibility and route gating never drift.
+ * single source of truth for the sidebar AND the keyboard go-to map. Role
+ * visibility comes from `rolesForModule` so it stays in lock-step with the
+ * route-level capability gate in ProtectedRoute.
  */
-const MODULES: Array<Omit<NavModule, "roles">> = [
+export const NAV: NavModule[] = [
   {
     key: "c",
     label: "Counter",
     icon: Keyboard,
     path: "/",
     built: true,
-    perm: "counter",
+    roles: rolesForModule("counter"),
     children: [{ label: "Active bill", path: "/", built: true }],
   },
   {
@@ -62,7 +60,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: Activity,
     path: "/activity",
     built: true,
-    perm: "activity",
+    roles: rolesForModule("activity"),
     children: [{ label: "Live feed", path: "/activity", built: true }],
   },
   {
@@ -71,7 +69,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: ShieldCheck,
     path: "/approvals",
     built: true,
-    perm: "approvals",
+    roles: rolesForModule("approvals"),
     children: [{ label: "Manager inbox", path: "/approvals", built: true }],
   },
   {
@@ -80,7 +78,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: ShoppingCart,
     path: "/purchases",
     built: true,
-    perm: "purchases",
+    roles: rolesForModule("purchases"),
     children: [
       { label: "Receive stock (GRN)", path: "/purchases/new", built: true },
       { label: "Scan invoice (OCR)", path: "/purchases/scan", built: true },
@@ -97,7 +95,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: FileText,
     path: "/bills",
     built: true,
-    perm: "sales",
+    roles: rolesForModule("sales"),
     children: [
       { label: "Invoices", path: "/bills", built: true },
       { label: "Credit notes", built: false },
@@ -110,7 +108,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: Package,
     path: "/inventory",
     built: true,
-    perm: "inventory",
+    roles: rolesForModule("inventory"),
     children: [
       { label: "Stock ledger", path: "/inventory", built: true },
       { label: "Near expiry", path: "/inventory/near-expiry", built: true },
@@ -130,7 +128,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: Users,
     path: "/parties",
     built: true,
-    perm: "parties",
+    roles: rolesForModule("parties"),
     children: [
       { label: "All parties", path: "/parties", built: true },
       { label: "Customers", path: "/parties?type=customer", built: true },
@@ -143,7 +141,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: Wallet,
     path: "/payments",
     built: true,
-    perm: "payments",
+    roles: rolesForModule("payments"),
     children: [
       { label: "Receive payment", path: "/payments", built: true },
       { label: "Make payment", path: "/payments/make", built: true },
@@ -156,7 +154,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: Landmark,
     path: "/gst",
     built: true,
-    perm: "gst",
+    roles: rolesForModule("gst"),
     children: [
       { label: "GSTR-1", path: "/gst", built: true },
       { label: "GSTR-3B", path: "/gst/gstr3b", built: true },
@@ -166,6 +164,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
       { label: "Tally export", path: "/gst/tally", built: true },
       { label: "HSN summary", path: "/gst/hsn", built: true },
       { label: "H1 / X register", path: "/gst/h1", built: true },
+      { label: "Invoice series", path: "/gst/series", built: true },
       { label: "Drug licenses", built: false },
     ],
   },
@@ -175,7 +174,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: BarChart3,
     path: "/reports",
     built: true,
-    perm: "reports",
+    roles: rolesForModule("reports"),
     children: [
       { label: "Dashboard", path: "/reports", built: true },
       { label: "Sales reports", path: "/reports/sales", built: true },
@@ -191,7 +190,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: Tag,
     path: "/catalogue",
     built: true,
-    perm: "catalogue",
+    roles: rolesForModule("catalogue"),
     children: [{ label: "Items", path: "/catalogue", built: true }],
   },
   {
@@ -200,7 +199,7 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: Contact,
     path: "/salesmen",
     built: true,
-    perm: "salesmen",
+    roles: rolesForModule("salesmen"),
     children: [{ label: "All salesmen", path: "/salesmen", built: true }],
   },
   {
@@ -209,9 +208,10 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     icon: Settings,
     path: "/owner",
     built: true,
-    perm: "settings",
+    roles: rolesForModule("settings"),
     children: [
       { label: "Users & invites", path: "/owner", built: true },
+      { label: "Roles & permissions", path: "/settings/users", built: true },
       { label: "Import / migration", path: "/import", built: true },
       { label: "Organisation", path: "/settings/organisation", built: true },
       { label: "Shops", path: "/settings/shops", built: true },
@@ -224,18 +224,3 @@ const MODULES: Array<Omit<NavModule, "roles">> = [
     ],
   },
 ];
-
-/** Nav modules with `roles` filled in from the capability map (SALT-174). */
-export const NAV: NavModule[] = MODULES.map((m) => ({ ...m, roles: rolesWith(m.perm) }));
-
-/**
- * The first nav destination the member may open, given their `can`. Used as the
- * redirect target when a route is denied, so a role that lacks the counter (e.g.
- * an accountant) is never bounced into a redirect loop on "/".
- */
-export function firstAllowedNavPath(can: (p: Permission) => boolean): string {
-  for (const m of NAV) {
-    if (m.built && m.path && can(m.perm)) return m.path;
-  }
-  return "/";
-}

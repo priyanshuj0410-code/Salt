@@ -1,125 +1,115 @@
+import type { UserRole } from "./auth";
+
 /**
- * Roles & permissions model (SALT-174).
- *
- * The single source of truth for *who can do what*. Five roles, each mapped to a
- * set of capability `Permission`s, plus per-user overrides layered on top. This
- * module is pure and imports nothing app-internal so it can be consumed by both
- * `auth.tsx` (the `can()` helper) and `navConfig.ts` (deriving per-module roles)
- * without an import cycle.
- *
- * Enforcement is layered:
- *  - the DB is the real boundary — RLS + `has_role()` gate the financial tables
- *    (see migrations 0043/0044); the books (GL) are owner/manager/accountant only.
- *  - this map gates the *UI* — which routes a role may open (`ProtectedRoute`)
- *    and which modules show in the nav (`navConfig.roles`).
- *
- * SALT-091 (Settings → Users & roles) builds the management UI on top of this.
+ * Role-based access model (SALT-091). A role grants a default set of module
+ * capabilities; per-user overrides (`grant`/`revoke`) layer on top. This is the
+ * single source of truth consumed by `ProtectedRoute` (route gate), the sidebar
+ * (`navConfig` visibility) and the Users & roles settings screen.
  */
 
-/** A membership role. Widened from the original owner/cashier pair (SALT-174). */
-export type UserRole = "owner" | "manager" | "pharmacist" | "cashier" | "accountant";
+export const ROLES: UserRole[] = ["owner", "manager", "accountant", "pharmacist", "cashier"];
 
-/** Display order + iteration order for the five roles. */
-export const USER_ROLES: UserRole[] = ["owner", "manager", "pharmacist", "cashier", "accountant"];
-
-/** Human label for a role (the enum value is lower-case). */
 export const ROLE_LABELS: Record<UserRole, string> = {
   owner: "Owner",
   manager: "Manager",
+  accountant: "Accountant",
   pharmacist: "Pharmacist",
   cashier: "Cashier",
-  accountant: "Accountant",
 };
 
-/**
- * A capability. Mostly one-per-nav-module (gating which screens a role opens),
- * plus a couple of pure *action* capabilities (`manage_users`, `approve_discounts`)
- * that screens consult directly via `can()` rather than via routing.
- */
-export type Permission =
-  | "counter" // ring sales at the billing counter
-  | "activity" // shop-wide activity feed
-  | "approvals" // manager approval inbox
-  | "parties" // customers / vendors ledgers
-  | "purchases" // GRN, purchase orders, debit notes
-  | "sales" // sales-invoice history, credit notes
-  | "inventory" // stock ledger, adjustments, counts
-  | "payments" // receive / make payments
-  | "gst" // GST returns & compliance
-  | "reports" // reporting suites
-  | "catalogue" // item master
-  | "salesmen" // field-salesman management
-  | "imports" // data import / migration
-  | "settings" // org / shop configuration area
-  | "manage_users" // invite members + assign roles
-  | "approve_discounts"; // act on over-limit approval requests
+export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
+  owner: "Full access, including settings and user management.",
+  manager: "Runs day-to-day operations — everything except settings.",
+  accountant: "Bills, parties, payments, GST and reports.",
+  pharmacist: "Counter, inventory and catalogue.",
+  cashier: "Counter billing only.",
+};
 
-/** Every permission, in a stable order — the owner's full grant. */
-export const ALL_PERMISSIONS: Permission[] = [
-  "counter",
-  "activity",
-  "approvals",
-  "parties",
-  "purchases",
-  "sales",
-  "inventory",
-  "payments",
-  "gst",
-  "reports",
-  "catalogue",
-  "salesmen",
-  "imports",
-  "settings",
-  "manage_users",
-  "approve_discounts",
+/** Coarse, module-level capability keys (aligned with the nav modules). */
+export type ModuleKey =
+  | "counter"
+  | "activity"
+  | "approvals"
+  | "purchases"
+  | "sales"
+  | "inventory"
+  | "parties"
+  | "payments"
+  | "gst"
+  | "reports"
+  | "catalogue"
+  | "salesmen"
+  | "settings";
+
+/** Modules an owner can grant/revoke per user. `counter` is intentionally omitted —
+ *  it is the redirect target and is always allowed (see `can`). */
+export const MODULES: { key: ModuleKey; label: string }[] = [
+  { key: "activity", label: "Activity feed" },
+  { key: "approvals", label: "Approvals" },
+  { key: "purchases", label: "Purchases / GRN" },
+  { key: "sales", label: "Sales / bills" },
+  { key: "inventory", label: "Inventory" },
+  { key: "parties", label: "Parties" },
+  { key: "payments", label: "Payments" },
+  { key: "gst", label: "GST & compliance" },
+  { key: "reports", label: "Reports" },
+  { key: "catalogue", label: "Catalogue" },
+  { key: "salesmen", label: "Salesmen" },
+  { key: "settings", label: "Settings" },
 ];
 
-/**
- * Base capabilities per role. Per-user grants/revocations (the
- * `membership_permissions` table) are layered on at runtime by
- * {@link effectivePermissions}; these are the defaults a new member starts with.
- *
- *  - **owner**       — everything (the org account holder).
- *  - **manager**     — everything *except* user administration (`manage_users`).
- *  - **pharmacist**  — dispensing + stock: counter, inventory, catalogue, goods receipt.
- *  - **cashier**     — the counter and its supporting feed/approvals only.
- *  - **accountant**  — the books: parties, payments, GST, reports, sales/purchase docs.
- *
- * owner→owner and cashier→cashier map cleanly from the old two-role model, so the
- * 0043 migration causes no lockouts (a pre-migration cashier sees exactly what it
- * saw before: counter / activity / approvals).
- */
-export const ROLE_CAPABILITIES: Record<UserRole, Permission[]> = {
-  owner: ALL_PERMISSIONS,
-  manager: ALL_PERMISSIONS.filter((p) => p !== "manage_users"),
-  pharmacist: ["counter", "activity", "approvals", "purchases", "inventory", "catalogue"],
+const ALL: ModuleKey[] = [
+  "counter", "activity", "approvals", "purchases", "sales", "inventory",
+  "parties", "payments", "gst", "reports", "catalogue", "salesmen", "settings",
+];
+
+/** Default module set per role. `counter` is in every role (the landing screen). */
+export const ROLE_MODULES: Record<UserRole, ModuleKey[]> = {
+  owner: ALL,
+  manager: ALL.filter((m) => m !== "settings"),
+  accountant: ["counter", "activity", "sales", "parties", "payments", "gst", "reports"],
+  pharmacist: ["counter", "activity", "approvals", "inventory", "catalogue"],
   cashier: ["counter", "activity", "approvals"],
-  accountant: ["activity", "parties", "purchases", "sales", "payments", "gst", "reports", "salesmen"],
 };
 
-/** A per-user override row (from `membership_permissions`): grant or revoke one permission. */
-export interface PermissionOverride {
-  permission: Permission;
-  granted: boolean;
+export interface PermissionOverrides {
+  grant?: ModuleKey[];
+  revoke?: ModuleKey[];
 }
 
-/**
- * The effective permission set for a member: the role's base capabilities with
- * per-user overrides applied (a `granted` row adds, a revoked row removes).
- */
-export function effectivePermissions(
-  role: UserRole | null | undefined,
-  overrides: readonly PermissionOverride[] = [],
-): Set<Permission> {
-  const set = new Set<Permission>(role ? ROLE_CAPABILITIES[role] : []);
-  for (const o of overrides) {
-    if (o.granted) set.add(o.permission);
-    else set.delete(o.permission);
-  }
-  return set;
+/** Resolve whether a role (+ overrides) may use a module. revoke > grant > role default. */
+export function can(
+  role: UserRole | undefined,
+  perms: PermissionOverrides | null | undefined,
+  mod: ModuleKey,
+): boolean {
+  if (mod === "counter") return true; // always reachable — it is the redirect target
+  if (!role) return false;
+  if (perms?.revoke?.includes(mod)) return false;
+  if (perms?.grant?.includes(mod)) return true;
+  return ROLE_MODULES[role]?.includes(mod) ?? false;
 }
 
-/** The roles whose *base* capabilities include `permission` — used to seed nav role-gating. */
-export function rolesWith(permission: Permission): UserRole[] {
-  return USER_ROLES.filter((r) => ROLE_CAPABILITIES[r].includes(permission));
+/** The roles whose *default* set includes a module — drives sidebar visibility. */
+export function rolesForModule(mod: ModuleKey): UserRole[] {
+  return ROLES.filter((r) => ROLE_MODULES[r].includes(mod));
+}
+
+/** Map a route pathname to the module it belongs to. Unknown → settings (owner-only). */
+export function pathModule(pathname: string): ModuleKey {
+  const p = pathname;
+  if (p === "/") return "counter";
+  if (p.startsWith("/activity")) return "activity";
+  if (p.startsWith("/approvals")) return "approvals";
+  if (p.startsWith("/purchases")) return "purchases";
+  if (p.startsWith("/bills")) return "sales";
+  if (p.startsWith("/inventory")) return "inventory";
+  if (p.startsWith("/parties")) return "parties";
+  if (p.startsWith("/payments")) return "payments";
+  if (p.startsWith("/gst")) return "gst";
+  if (p.startsWith("/reports")) return "reports";
+  if (p.startsWith("/catalogue")) return "catalogue";
+  if (p.startsWith("/salesmen")) return "salesmen";
+  // /settings, /owner, /import and anything unmapped → settings (most restrictive).
+  return "settings";
 }

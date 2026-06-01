@@ -9,7 +9,8 @@ import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ViewTabs, ExportButton, type ReportView } from "@/components/reports/report-controls";
+import { ViewTabs, ExportButton, ShopSelect, type ReportView } from "@/components/reports/report-controls";
+import { useOrgShops, scopeLabelFor, ALL_SHOPS } from "@/components/reports/useOrgShops";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
@@ -97,9 +98,11 @@ const VIEWS: ReportView<ViewKey>[] = [
 const pct = (rate: number) => `${rate}%`;
 
 export function TaxReportsPage() {
-  const { membership, shopId, shop, loading: authLoading } = useAuth();
+  const { membership, shop } = useAuth();
   const orgId = membership?.orgId;
   const navigate = useNavigate();
+  const { shops } = useOrgShops();
+  const [shopFilter, setShopFilter] = useState<string>(ALL_SHOPS);
   const [period, setPeriod] = useState(() => istMonth());
   const [view, setView] = useState<ViewKey>("summary");
   const [invoices, setInvoices] = useState<Gstr1InvoiceRow[]>([]);
@@ -108,50 +111,51 @@ export function TaxReportsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!supabase || !orgId || !shopId) return;
+    if (!supabase || !orgId) return;
     let active = true;
     const db = supabase;
     const { start, end } = monthRange(period);
+    const oneShop = shopFilter === ALL_SHOPS ? null : shopFilter;
 
     (async () => {
       setLoading(true);
       const [invRaw, saleRaw, purRaw] = await Promise.all([
-        fetchAllPaged<InvoiceFetch>((f, t) =>
-          db
+        fetchAllPaged<InvoiceFetch>((f, t) => {
+          let q = db
             .from("sales_invoices")
             .select(INV_COLS)
             .eq("org_id", orgId)
-            .eq("shop_id", shopId)
             .eq("status", "placed")
             .eq("posts_effects", true)
             .gte("invoice_date", start)
-            .lt("invoice_date", end)
-            .range(f, t),
-        ),
-        fetchAllPaged<LineFetch>((f, t) =>
-          db
+            .lt("invoice_date", end);
+          if (oneShop) q = q.eq("shop_id", oneShop);
+          return q.range(f, t);
+        }),
+        fetchAllPaged<LineFetch>((f, t) => {
+          let q = db
             .from("sale_lines")
             .select(SALE_LINE_COLS)
             .eq("org_id", orgId)
-            .eq("sales_invoices.shop_id", shopId)
             .eq("sales_invoices.status", "placed")
             .eq("sales_invoices.posts_effects", true)
             .gte("sales_invoices.invoice_date", start)
-            .lt("sales_invoices.invoice_date", end)
-            .range(f, t),
-        ),
-        fetchAllPaged<RateRow>((f, t) =>
-          db
+            .lt("sales_invoices.invoice_date", end);
+          if (oneShop) q = q.eq("sales_invoices.shop_id", oneShop);
+          return q.range(f, t);
+        }),
+        fetchAllPaged<RateRow>((f, t) => {
+          let q = db
             .from("purchase_lines")
             .select(PUR_LINE_COLS)
             .eq("org_id", orgId)
-            .eq("purchases.shop_id", shopId)
             .eq("purchases.status", "received")
             .eq("purchases.posts_effects", true)
             .gte("purchases.received_date", start)
-            .lt("purchases.received_date", end)
-            .range(f, t),
-        ),
+            .lt("purchases.received_date", end);
+          if (oneShop) q = q.eq("purchases.shop_id", oneShop);
+          return q.range(f, t);
+        }),
       ]);
       if (!active) return;
       setInvoices(invRaw.map((r): Gstr1InvoiceRow => ({ ...r, party: r.ledgers })));
@@ -163,7 +167,7 @@ export function TaxReportsPage() {
     return () => {
       active = false;
     };
-  }, [orgId, shopId, period]);
+  }, [orgId, shopFilter, period]);
 
   const gstr1 = useMemo(() => buildGstr1(period, shop?.state_code ?? "", invoices, saleLines), [period, shop?.state_code, invoices, saleLines]);
   const gstr3b = useMemo(
@@ -211,18 +215,17 @@ export function TaxReportsPage() {
       <PageHeader
         icon={Receipt}
         title="Tax reports"
-        subtitle={<span>{shop?.name ?? "This shop"} · GST preview</span>}
+        subtitle={<span>{scopeLabelFor(shops, shopFilter, shop?.name)} · GST preview</span>}
         actions={
           <>
+            <ShopSelect shops={shops} value={shopFilter} onChange={setShopFilter} />
             <Input type="month" value={period} onChange={(e) => setPeriod(e.target.value)} className="w-[10.5rem]" aria-label="Tax period" />
             <ExportButton onExport={exporters[view]} disabled={!hasData} />
           </>
         }
       />
 
-      {!authLoading && !shopId ? (
-        <EmptyState title="No shop selected" hint="Tax reports are per shop GSTIN. Pick a shop to continue." />
-      ) : !loading && !hasData ? (
+      {!loading && !hasData ? (
         <EmptyState title="No GST activity this period" hint={`No placed sales or received purchases for ${period}.`} />
       ) : (
         <div className="flex flex-col gap-5">
@@ -297,6 +300,9 @@ export function TaxReportsPage() {
 
           <p className="text-xs text-text-tertiary">
             Operational invoices for {period} (IST). Output tax from placed sales; ITC from received purchase lines.
+            {shopFilter === ALL_SHOPS && shops.length > 1
+              ? " Consolidated across shops — this sums different GSTINs, so it is a management view, not a single return."
+              : ""}
           </p>
         </div>
       )}

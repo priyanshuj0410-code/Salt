@@ -53,8 +53,9 @@ export interface PaymentAllocationInput {
 
 /**
  * `record_payment` args — keys match the SQL parameter names. `p_allocations`
- * applies the payment across specific open bills (omit => party-level only).
- * `p_payment_date` is left to its SQL default (today) — the RPC has no param.
+ * applies the payment across specific open bills (omit => party-level only);
+ * `p_salesman_id` attributes a received payment to the collecting salesman
+ * (omit for vendor/outward). `p_payment_date` is left to its SQL default (today).
  */
 export interface RecordPaymentArgs {
   p_shop_id: string;
@@ -65,6 +66,7 @@ export interface RecordPaymentArgs {
   p_reference: string | null;
   p_notes: string | null;
   p_allocations?: PaymentAllocationInput[];
+  p_salesman_id?: string;
 }
 
 export function buildRecordPaymentArgs(input: {
@@ -76,6 +78,7 @@ export function buildRecordPaymentArgs(input: {
   reference?: string;
   notes?: string;
   allocations?: PaymentAllocationInput[];
+  salesmanId?: string;
 }): RecordPaymentArgs {
   const allocations = (input.allocations ?? []).filter((a) => a.allocated_paise > 0);
   return {
@@ -87,6 +90,7 @@ export function buildRecordPaymentArgs(input: {
     p_reference: input.reference?.trim() || null,
     p_notes: input.notes?.trim() || null,
     ...(allocations.length ? { p_allocations: allocations } : {}),
+    ...(input.salesmanId ? { p_salesman_id: input.salesmanId } : {}),
   };
 }
 
