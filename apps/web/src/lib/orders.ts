@@ -1,5 +1,6 @@
 import type { BillLine, DiscountType, Payment } from "./types";
 import { apportionedLineNets, NO_BILL_DISCOUNT, type BillDiscount } from "./billing";
+import type { Tender } from "./tenders";
 import { computeGrnLine } from "./grn";
 
 /** Thrown when a save outlives its timeout (the request may still have landed). */
@@ -94,6 +95,10 @@ export interface SalesInvoiceArgs {
   p_patient_name: string | null;
   p_patient_address: string | null;
   p_notes: string | null;
+  /** Split-tender legs (SALT-198). Omitted entirely for a single-payment bill so the
+   *  call still resolves against the pre-0034 RPC signature; the server re-validates
+   *  that these sum to the invoice total and that a credit leg has a party. */
+  p_tenders?: Tender[];
 }
 
 /**
@@ -109,15 +114,19 @@ export function buildSalesInvoicePayload(
   payment: Payment,
   rx: RxDetails | null = null,
   billDiscount: BillDiscount = NO_BILL_DISCOUNT,
+  tenders: Tender[] | null = null,
 ): SalesInvoiceArgs {
   // Send the post-bill-discount net as each line total, so the server's GST split
   // (backed out of line_total_paise) matches what the counter displayed.
   const nets = apportionedLineNets(lines, billDiscount);
-  return {
+  // A split with a credit leg needs the credit-days even though the single method
+  // may be cash; the server uses p_credit_days for that leg's due date.
+  const hasCreditTender = !!tenders?.some((t) => t.mode === "credit");
+  const args: SalesInvoiceArgs = {
     p_shop_id: shopId,
     p_party_id: party?.id ?? null,
     p_payment_method: payment.method,
-    p_credit_days: payment.method === "credit" ? payment.creditDays : 0,
+    p_credit_days: payment.method === "credit" || hasCreditTender ? payment.creditDays : 0,
     p_invoice_no: null,
     // Structured Rx params (not folded into notes) — the server backs the h1_register
     // row out of these and enforce_h1_gate rejects the invoice if any is missing.
@@ -139,6 +148,10 @@ export function buildSalesInvoicePayload(
       line_total_paise: nets[i],
     })),
   };
+  // Only attach p_tenders for a real split — a single-payment bill omits the key so
+  // the RPC resolves cleanly even before migration 0034 is applied (graceful rollout).
+  if (tenders && tenders.length > 0) args.p_tenders = tenders;
+  return args;
 }
 
 /** One line entered in the GRN (vendor purchase) form. */
