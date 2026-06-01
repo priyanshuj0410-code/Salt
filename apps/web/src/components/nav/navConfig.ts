@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth";
+import { rolesForModule } from "@/lib/permissions";
 
 /** A sub-item under a module. `path` + `built` => navigable; otherwise shown disabled. */
 export interface NavLeaf {
@@ -31,7 +32,7 @@ export interface NavModule {
   /** Module landing route (only when built). */
   path?: string;
   built: boolean;
-  /** Which roles see this module at all (role-gating, separate from build-state). */
+  /** Which roles see this module — derived from the capability matrix (lib/permissions). */
   roles: UserRole[];
   children: NavLeaf[];
 }
@@ -39,7 +40,9 @@ export interface NavModule {
 /**
  * The whole IA, made visible. Built nodes link to existing routes; everything
  * else is `built: false` and renders disabled until we build it. This is the
- * single source of truth for the sidebar AND the keyboard go-to map.
+ * single source of truth for the sidebar AND the keyboard go-to map. Role
+ * visibility comes from `rolesForModule` so it stays in lock-step with the
+ * route-level capability gate in ProtectedRoute.
  */
 export const NAV: NavModule[] = [
   {
@@ -48,7 +51,7 @@ export const NAV: NavModule[] = [
     icon: Keyboard,
     path: "/",
     built: true,
-    roles: ["owner", "cashier"],
+    roles: rolesForModule("counter"),
     children: [{ label: "Active bill", path: "/", built: true }],
   },
   {
@@ -57,7 +60,7 @@ export const NAV: NavModule[] = [
     icon: Activity,
     path: "/activity",
     built: true,
-    roles: ["owner", "cashier"],
+    roles: rolesForModule("activity"),
     children: [{ label: "Live feed", path: "/activity", built: true }],
   },
   {
@@ -66,7 +69,7 @@ export const NAV: NavModule[] = [
     icon: ShieldCheck,
     path: "/approvals",
     built: true,
-    roles: ["owner", "cashier"],
+    roles: rolesForModule("approvals"),
     children: [{ label: "Manager inbox", path: "/approvals", built: true }],
   },
   {
@@ -75,7 +78,7 @@ export const NAV: NavModule[] = [
     icon: ShoppingCart,
     path: "/purchases",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("purchases"),
     children: [
       { label: "Receive stock (GRN)", path: "/purchases/new", built: true },
       { label: "Scan invoice (OCR)", path: "/purchases/scan", built: true },
@@ -92,7 +95,7 @@ export const NAV: NavModule[] = [
     icon: FileText,
     path: "/bills",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("sales"),
     children: [
       { label: "Invoices", path: "/bills", built: true },
       { label: "Credit notes", built: false },
@@ -105,7 +108,7 @@ export const NAV: NavModule[] = [
     icon: Package,
     path: "/inventory",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("inventory"),
     children: [
       { label: "Stock ledger", path: "/inventory", built: true },
       { label: "Near expiry", path: "/inventory/near-expiry", built: true },
@@ -125,7 +128,7 @@ export const NAV: NavModule[] = [
     icon: Users,
     path: "/parties",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("parties"),
     children: [
       { label: "All parties", path: "/parties", built: true },
       { label: "Customers", path: "/parties?type=customer", built: true },
@@ -138,7 +141,7 @@ export const NAV: NavModule[] = [
     icon: Wallet,
     path: "/payments",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("payments"),
     children: [
       { label: "Receive payment", path: "/payments", built: true },
       { label: "Make payment", path: "/payments/make", built: true },
@@ -151,7 +154,7 @@ export const NAV: NavModule[] = [
     icon: Landmark,
     path: "/gst",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("gst"),
     children: [
       { label: "GSTR-1", path: "/gst", built: true },
       { label: "GSTR-3B", path: "/gst/gstr3b", built: true },
@@ -171,7 +174,7 @@ export const NAV: NavModule[] = [
     icon: BarChart3,
     path: "/reports",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("reports"),
     children: [
       { label: "Dashboard", path: "/reports", built: true },
       { label: "Sales reports", path: "/reports/sales", built: true },
@@ -187,7 +190,7 @@ export const NAV: NavModule[] = [
     icon: Tag,
     path: "/catalogue",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("catalogue"),
     children: [{ label: "Items", path: "/catalogue", built: true }],
   },
   {
@@ -196,7 +199,7 @@ export const NAV: NavModule[] = [
     icon: Contact,
     path: "/salesmen",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("salesmen"),
     children: [{ label: "All salesmen", path: "/salesmen", built: true }],
   },
   {
@@ -205,9 +208,10 @@ export const NAV: NavModule[] = [
     icon: Settings,
     path: "/owner",
     built: true,
-    roles: ["owner"],
+    roles: rolesForModule("settings"),
     children: [
       { label: "Users & invites", path: "/owner", built: true },
+      { label: "Roles & permissions", path: "/settings/users", built: true },
       { label: "Import / migration", path: "/import", built: true },
       { label: "Organisation", path: "/settings/organisation", built: true },
       { label: "Shops", path: "/settings/shops", built: true },
