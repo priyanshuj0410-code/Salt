@@ -20,8 +20,12 @@ import {
   isInterstate,
   matchGrnToPo,
   discrepancyLabel,
+  activeSchemeFor,
+  schemeFreeQtyFor,
+  schemeMismatch,
   type MatchableLine,
   type LineDiscrepancy,
+  type VendorScheme,
 } from "@/lib/grn";
 import { useCatalog } from "@/store/catalog";
 import type { Item, Payment } from "@/lib/types";
@@ -76,6 +80,8 @@ export function GrnEntryPage() {
   // PO being received against: the ordered lines (for matching) + a display ref.
   const [poLines, setPoLines] = useState<MatchableLine[] | null>(null);
   const [poRef, setPoRef] = useState<string | null>(null);
+  // Active schemes for the chosen vendor (SALT-026) — auto-applied + flagged.
+  const [schemes, setSchemes] = useState<VendorScheme[]>([]);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -152,6 +158,44 @@ export function GrnEntryPage() {
     };
   }, [orgId, poId]);
 
+  // Load the chosen vendor's active schemes — used to auto-apply + flag lines.
+  useEffect(() => {
+    if (!supabase || !orgId || !vendor) return;
+    let active = true;
+    supabase
+      .from("vendor_schemes")
+      .select("id,vendor_id,item_id,label,discount_type,discount_value,scheme_buy_qty,scheme_free_qty,valid_from,valid_to,active")
+      .eq("org_id", orgId)
+      .eq("vendor_id", vendor.id)
+      .eq("active", true)
+      .then(({ data, error }) => {
+        if (!active) return;
+        // Table ships in migration 0032; if unapplied the select errors — treat
+        // as "no schemes" so the GRN screen still works (SALT-026 defensive load).
+        if (error) {
+          setSchemes([]);
+          return;
+        }
+        type Row = {
+          id: string; vendor_id: string; item_id: string | null; label: string | null;
+          discount_type: "pct" | "flat" | null; discount_value: number;
+          scheme_buy_qty: number; scheme_free_qty: number;
+          valid_from: string | null; valid_to: string | null; active: boolean;
+        };
+        setSchemes(
+          ((data as Row[] | null) ?? []).map((r) => ({
+            id: r.id, vendorId: r.vendor_id, itemId: r.item_id, label: r.label,
+            discountType: r.discount_type, discountValue: r.discount_value,
+            schemeBuyQty: r.scheme_buy_qty, schemeFreeQty: r.scheme_free_qty,
+            validFrom: r.valid_from, validTo: r.valid_to, active: r.active,
+          })),
+        );
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId, vendor]);
+
   const interstate = isInterstate(vendor?.stateCode, shopState);
   const results = useMemo(() => (query ? searchCatalog(query, items).slice(0, MAX_RESULTS) : []), [query, items]);
   const hasExactMatch = useMemo(
@@ -183,6 +227,11 @@ export function GrnEntryPage() {
 
   function addItem(item: Item) {
     const b = item.batches[0];
+    // Auto-apply the vendor's active scheme for this item (SALT-026): seed the
+    // trade discount + scheme free qty (10+1 → free 1 for the default qty 1 is 0
+    // until qty rises, recomputed live in the flag). onDate = invoice date or today.
+    const onDate = invoiceDate || new Date().toISOString().slice(0, 10);
+    const scheme = activeSchemeFor(schemes, vendor?.id ?? "", item.id, onDate);
     setLines((ls) => [
       ...ls,
       {
@@ -191,12 +240,12 @@ export function GrnEntryPage() {
         batchNo: "",
         expiry: "",
         qty: 1,
-        freeQty: 0,
+        freeQty: scheme ? schemeFreeQtyFor(scheme, 1) : 0,
         ptrPaise: b?.ptrPaise ?? 0,
         mrpPaise: b?.mrpPaise ?? 0,
         gstRate: item.gstRate,
-        discountType: "pct",
-        discountValue: 0,
+        discountType: scheme?.discountType ?? "pct",
+        discountValue: scheme?.discountType ? scheme.discountValue : 0,
       },
     ]);
     setQuery("");
@@ -398,6 +447,10 @@ export function GrnEntryPage() {
             lines.map((l, i) => {
               const c = computeGrnLine(l, interstate);
               const flags = l.itemId ? flagsByItem.get(l.itemId) : undefined;
+              // Scheme flag: does the keyed line diverge from the vendor's active scheme?
+              const onDate = invoiceDate || new Date().toISOString().slice(0, 10);
+              const scheme = l.itemId ? activeSchemeFor(schemes, vendor?.id ?? "", l.itemId, onDate) : null;
+              const sMis = scheme ? schemeMismatch(l, scheme) : null;
               return (
                 <div key={i} className={`grid ${GRID} items-center gap-2 border-b border-divider px-3 py-1.5 text-sm last:border-b-0`}>
                   <div className="min-w-0">
@@ -406,6 +459,11 @@ export function GrnEntryPage() {
                       {flags?.map((d, k) => (
                         <Badge key={k} variant="warning" className="shrink-0">{discrepancyLabel(d)}</Badge>
                       ))}
+                      {sMis && (
+                        <Badge variant="warning" className="shrink-0">
+                          scheme: {[sMis.freeQtyOff ? `free ${sMis.expectedFreeQty}` : "", sMis.discountOff ? `disc ${sMis.expectedDiscountValue}${scheme?.discountType === "flat" ? "₹" : "%"}` : ""].filter(Boolean).join(" · ")}
+                        </Badge>
+                      )}
                     </div>
                     <div className="truncate text-[0.6875rem] text-text-tertiary">
                       eff {formatPaise(c.effectiveCostPaise)}/u · GST {formatPaise(c.gstPaise)} @ {l.gstRate}%

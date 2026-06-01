@@ -22,6 +22,7 @@ const PoListPage = lazy(() => import("@/components/grn/PoListPage").then((m) => 
 const PoEntryPage = lazy(() => import("@/components/grn/PoEntryPage").then((m) => ({ default: m.PoEntryPage })));
 const PoDetailPage = lazy(() => import("@/components/grn/PoDetailPage").then((m) => ({ default: m.PoDetailPage })));
 const AutoPoPage = lazy(() => import("@/components/grn/AutoPoPage").then((m) => ({ default: m.AutoPoPage })));
+const VendorSchemesPage = lazy(() => import("@/components/grn/VendorSchemesPage").then((m) => ({ default: m.VendorSchemesPage })));
 const DebitNoteListPage = lazy(() => import("@/components/grn/DebitNoteListPage").then((m) => ({ default: m.DebitNoteListPage })));
 const DebitNoteEntryPage = lazy(() => import("@/components/grn/DebitNoteEntryPage").then((m) => ({ default: m.DebitNoteEntryPage })));
 const DebitNoteDetailPage = lazy(() => import("@/components/grn/DebitNoteDetailPage").then((m) => ({ default: m.DebitNoteDetailPage })));
@@ -201,6 +202,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <PoDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/schemes"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <VendorSchemesPage />
           </ProtectedRoute>
         }
       />
