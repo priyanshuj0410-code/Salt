@@ -84,7 +84,7 @@ A **hard gate**: a bill containing any Schedule **H1** or **X** drug cannot be s
 - Persistence **today**: `buildSalesInvoicePayload` threads the details into the existing `create_sales_invoice` args — `doctorName → sales_invoices.doctor_name`, the rest formatted by `formatRxNote` into `notes`. Only attached when the bill actually has H1/X lines.
 - `H1Notice` (amber → green) surfaces the requirement inline above Save/Charge and opens the gate to add/edit.
 
-**Follow-up (DB slice, not built here):** wire `enforce_h1_gate` + `record_h1_entry` into `create_sales_invoice` so the structured `h1_register` rows are written atomically (with real `sale_line_id`s) and the server independently rejects a non-compliant H1 sale — defense in depth behind this UI gate. The proposed RPC (`supabase/proposed/0018_sales.sql`) already carries `doctor_name`/`notes` but does **not** call the gate; see ticket SALT-148 (and SALT-065 for the inspector register screen).
+**Follow-up (DB slice, not built here):** wire `enforce_h1_gate` + `record_h1_entry` into `create_sales_invoice` so the structured `h1_register` rows are written atomically (with real `sale_line_id`s) and the server independently rejects a non-compliant H1 sale — defense in depth behind this UI gate. The proposed RPC (`supabase/migrations/0018_sales.sql`) already carries `doctor_name`/`notes` but does **not** call the gate; see ticket SALT-148 (and SALT-065 for the inspector register screen).
 
 ## useBill store (`store/bill.ts`)
 

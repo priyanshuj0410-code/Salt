@@ -19,7 +19,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 ## Architecture
 - [architecture/stack](architecture/stack.md) — monorepo, Vite/React/Tailwind, Supabase backend, deploy/CI, conventions.
 - [architecture/data-model](architecture/data-model.md) — tables, migrations 0001–0013, key RPCs, what's not modeled yet.
-- [architecture/proposed-data-model](architecture/proposed-data-model.md) — draft SQL (0014–0024) giving every nav module a clean model on a shared stock + double-entry backbone; multi-shop; unrun.
+- [architecture/proposed-data-model](architecture/proposed-data-model.md) — the target model (0014–0024): every nav module on a shared stock + double-entry backbone; multi-shop; **applied & promoted to `supabase/migrations/`** (SALT-140).
 - [architecture/schema](architecture/schema.md) — exact table + column definitions (types, nullability, defaults, FKs) for every table.
 - [architecture/security-rls](architecture/security-rls.md) — Auth, per-org RLS, `is_member`, security-definer RPCs, gaps.
 - [architecture/import-pipeline](architecture/import-pipeline.md) — CSV / Go migrator / Smart Importer; trial-balance extraction; merge.

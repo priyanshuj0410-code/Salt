@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0018: Sales documents — invoices on the shared backbone.
 -- Replaces the sale branch of orders/place_order. create_sales_invoice is the
 -- authority for the GST split (CGST+SGST intra-state vs IGST inter-state, decided

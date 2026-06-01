@@ -16,7 +16,7 @@ in `lib/gst.ts`, which is **pure** (no Supabase) and unit-smoke-tested.
 
 > ⚠️ **Stale-wiki flag.** The live sales tables are **`sales_invoices` / `sale_lines`**,
 > written by the `create_sales_invoice` RPC — the [proposed model](proposed-data-model.md)
-> (`supabase/proposed/0018_sales.sql`) was adopted. [data-model.md](data-model.md) still
+> (`supabase/migrations/0018_sales.sql`) was adopted. [data-model.md](data-model.md) still
 > describes `orders`/`order_lines` + `place_order`; that section is **out of date**. Queued
 > for a wiki-lint reconcile.
 

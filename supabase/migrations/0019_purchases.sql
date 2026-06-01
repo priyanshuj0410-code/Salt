@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0019: Purchase documents — POs and GRNs on the shared backbone.
 -- Replaces the purchase branch of orders/place_order. receive_purchase (a GRN)
 -- upserts batches (qty + free goods into stock, refreshes ptr/mrp/expiry), logs a

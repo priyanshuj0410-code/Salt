@@ -1,4 +1,3 @@
--- DRAFT / DESIGN ONLY — DO NOT RUN. Promote to supabase/migrations/ when building this slice.
 -- 0015: Catalogue & drug master.
 -- Extends the item master with retail/clinical fields, adds search aliases and
 -- same-salt substitutes, and introduces a GLOBAL master_items reference (the

@@ -19,7 +19,7 @@ Screens under `components/grn/`; pure economics in `lib/grn.ts`; the RPC contrac
 
 > ⚠️ **Stale-wiki flag.** The live purchase tables — **`purchases` / `purchase_lines` /
 > `purchase_orders` / `po_lines`** + the **`receive_purchase`** RPC — are the
-> [proposed model](proposed-data-model.md) (`supabase/proposed/0019_purchases.sql`), which
+> [proposed model](proposed-data-model.md) (`supabase/migrations/0019_purchases.sql`), which
 > has been **applied** despite still being labelled "DO NOT RUN". [data-model.md](data-model.md)
 > still describes purchases as `orders`/`order_lines` + `place_order` (migrations 0010/0011);
 > that is the old model. Verified by live column-probing on 2026-06-01. Same situation the
