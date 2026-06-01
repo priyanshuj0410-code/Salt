@@ -25,6 +25,7 @@ const DebitNoteListPage = lazy(() => import("@/components/grn/DebitNoteListPage"
 const DebitNoteEntryPage = lazy(() => import("@/components/grn/DebitNoteEntryPage").then((m) => ({ default: m.DebitNoteEntryPage })));
 const DebitNoteDetailPage = lazy(() => import("@/components/grn/DebitNoteDetailPage").then((m) => ({ default: m.DebitNoteDetailPage })));
 const BillHistoryPage = lazy(() => import("@/components/bills/BillHistoryPage").then((m) => ({ default: m.BillHistoryPage })));
+const CreditNotesPage = lazy(() => import("@/components/bills/CreditNotesPage").then((m) => ({ default: m.CreditNotesPage })));
 const ActivityPage = lazy(() => import("@/components/activity/ActivityPage").then((m) => ({ default: m.ActivityPage })));
 const ApprovalsPage = lazy(() => import("@/components/approvals/ApprovalsPage").then((m) => ({ default: m.ApprovalsPage })));
 const StockLedgerPage = lazy(() => import("@/components/inventory/StockLedgerPage").then((m) => ({ default: m.StockLedgerPage })));
@@ -229,6 +230,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <BillHistoryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bills/credit-notes"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <CreditNotesPage />
           </ProtectedRoute>
         }
       />
