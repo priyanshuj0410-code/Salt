@@ -13,6 +13,7 @@ import { H1Notice } from "./H1Gate";
 import { CreditNotice } from "./CreditNotice";
 import { SplitTender } from "./SplitTender";
 import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
+import { SeriesPicker } from "./SeriesPicker";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -40,6 +41,7 @@ export function MobileCheckout({
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
   const { discountGate, cancelDiscountApproval } = checkout;
+  const { series, seriesId, setSeriesId } = checkout;
   // Block charging while a split is unbalanced or an over-limit discount awaits approval.
   const blockSave = saving || usingSeed || (splitMode && !tenderChk.ok) || discountGate.status === "pending";
   const tax = gstSplit(t.gst, isInterstate);
@@ -76,6 +78,8 @@ export function MobileCheckout({
             <span>{loss ? "Est. loss" : "Est. earnings"}</span>
             <span className="tabular-nums">{formatSigned(t.margin)}</span>
           </div>
+
+          <SeriesPicker series={series} value={seriesId} onChange={setSeriesId} />
 
           <div className="flex items-center justify-between pt-1">
             <p className="text-xs font-medium text-text-tertiary">Payment</p>
