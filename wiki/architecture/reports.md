@@ -77,9 +77,17 @@ current-state / as-of-now.
 
 ## Decisions & limitations
 
+- **Shop switcher (SALT-118):** Dashboard / Sales / Purchase / Inventory / Tax take
+  a `ShopSelect` (backed by `useOrgShops`) — **All shops** (org-wide, consolidated;
+  the default) or a single shop. It **hides itself for single-shop orgs**, where the
+  report already runs org-wide, so there is zero change there. Queries drop the
+  `shop_id` filter for "All shops" and re-add it (direct or via the document embed,
+  e.g. `sales_invoices.shop_id`) for a single shop. Caveats: receivables/payables
+  **aging stays org-wide** (the aging views are party-level, not shop-scoped); the
+  consolidated **Tax** view sums across **GSTINs** (a management view, not a filing).
 - **Financial reports are organisation-wide**, not shop-scoped — accounting is per
   legal entity (the `v_trial_balance` / `v_pnl` / `v_balance_sheet` views group by
-  `org_id` only). The other suites are shop-scoped. Stated in each subtitle.
+  `org_id` only), so they carry no switcher. Stated in each subtitle.
 - **Balance sheet** folds all-time net P&L (`v_pnl`) into equity as "retained
   earnings" so assets ≈ liabilities + equity (the asset/liability/equity view
   excludes income/expense accounts).

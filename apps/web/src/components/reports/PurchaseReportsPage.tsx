@@ -7,7 +7,8 @@ import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
-import { ViewTabs, RangeControls, ExportButton, type ReportView } from "@/components/reports/report-controls";
+import { ViewTabs, RangeControls, ExportButton, ShopSelect, type ReportView } from "@/components/reports/report-controls";
+import { useOrgShops, scopeLabelFor, ALL_SHOPS } from "@/components/reports/useOrgShops";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
@@ -68,9 +69,11 @@ const VIEWS: ReportView<ViewKey>[] = [
 const gstOf = (p: PurchaseRow) => p.cgst_paise + p.sgst_paise + p.igst_paise;
 
 export function PurchaseReportsPage() {
-  const { membership, shopId, shop, loading: authLoading } = useAuth();
+  const { membership, shop } = useAuth();
   const orgId = membership?.orgId;
   const navigate = useNavigate();
+  const { shops } = useOrgShops();
+  const [shopFilter, setShopFilter] = useState<string>(ALL_SHOPS);
   const [range, setRange] = useState(() => presetRange("month"));
   const [view, setView] = useState<ViewKey>("register");
   const [grns, setGrns] = useState<PurchaseRow[]>([]);
@@ -78,39 +81,39 @@ export function PurchaseReportsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!supabase || !orgId || !shopId) return;
+    if (!supabase || !orgId) return;
     let active = true;
     const db = supabase;
     const { from, to } = range;
+    const oneShop = shopFilter === ALL_SHOPS ? null : shopFilter;
 
     (async () => {
       setLoading(true);
       const [gs, ls] = await Promise.all([
-        fetchAllPaged<PurchaseRow>((f, t) =>
-          db
+        fetchAllPaged<PurchaseRow>((f, t) => {
+          let q = db
             .from("purchases")
             .select(GRN_COLS)
             .eq("org_id", orgId)
-            .eq("shop_id", shopId)
             .eq("posts_effects", true)
             .eq("status", "received")
             .gte("received_date", from)
-            .lte("received_date", to)
-            .order("received_date", { ascending: false })
-            .range(f, t),
-        ),
-        fetchAllPaged<PurchaseLineRow>((f, t) =>
-          db
+            .lte("received_date", to);
+          if (oneShop) q = q.eq("shop_id", oneShop);
+          return q.order("received_date", { ascending: false }).range(f, t);
+        }),
+        fetchAllPaged<PurchaseLineRow>((f, t) => {
+          let q = db
             .from("purchase_lines")
             .select(LINE_COLS)
             .eq("org_id", orgId)
-            .eq("purchases.shop_id", shopId)
             .eq("purchases.status", "received")
             .eq("purchases.posts_effects", true)
             .gte("purchases.received_date", from)
-            .lte("purchases.received_date", to)
-            .range(f, t),
-        ),
+            .lte("purchases.received_date", to);
+          if (oneShop) q = q.eq("purchases.shop_id", oneShop);
+          return q.range(f, t);
+        }),
       ]);
       if (!active) return;
       setGrns(gs);
@@ -121,7 +124,7 @@ export function PurchaseReportsPage() {
     return () => {
       active = false;
     };
-  }, [orgId, shopId, range]);
+  }, [orgId, shopFilter, range]);
 
   const grnDocs = useMemo(() => grns.map((g) => ({ ...g, date: g.received_date })), [grns]);
   const vendorName = useMemo(() => {
@@ -203,18 +206,17 @@ export function PurchaseReportsPage() {
       <PageHeader
         icon={ShoppingCart}
         title="Purchase reports"
-        subtitle={shop?.name ?? "This shop"}
+        subtitle={scopeLabelFor(shops, shopFilter, shop?.name)}
         actions={
           <>
+            <ShopSelect shops={shops} value={shopFilter} onChange={setShopFilter} />
             <RangeControls from={range.from} to={range.to} onChange={setRange} />
             <ExportButton onExport={exporters[view]} disabled={!hasAny} />
           </>
         }
       />
 
-      {!authLoading && !shopId ? (
-        <EmptyState title="No shop selected" hint="Purchase reports summarise one shop. Pick a shop to continue." />
-      ) : (
+      {
         <div className="flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard label="GRNs" value={totals.count} hint={`${range.from} → ${range.to}`} />
@@ -315,7 +317,7 @@ export function PurchaseReportsPage() {
             &ldquo;ITC&rdquo; is the input tax on the period&rsquo;s receipts.
           </p>
         </div>
-      )}
+      }
     </Page>
   );
 }
