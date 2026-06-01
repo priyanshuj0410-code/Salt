@@ -13,6 +13,7 @@ import { PartyGstStep } from "./PartyGstStep";
 import { DocumentStep } from "./DocumentStep";
 import { PaymentStep } from "./PaymentStep";
 import { OpeningStockStep } from "./OpeningStockStep";
+import { DropAllPanel } from "./DropAllPanel";
 
 type Step =
   | { kind: "entity"; key: string; label: string; entity: EntityConfig }
@@ -40,22 +41,32 @@ export function SmartImportPage() {
   const shopId = auth.shopId;
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [active, setActive] = useState(0);
+  // A file routed in from the drop-all panel: jump to its step, pre-loaded.
+  const [routed, setRouted] = useState<{ key: string; file: File } | null>(null);
 
   const allDone = completed.size === STEPS.length;
 
+  const routeFile = (stepKey: string, file: File) => {
+    const idx = STEPS.findIndex((s) => s.key === stepKey);
+    if (idx < 0) return;
+    setRouted({ key: stepKey, file });
+    setActive(idx);
+  };
+
   function renderStep(step: Step, advance: () => void) {
+    const initialFile = routed?.key === step.key ? routed.file : null;
     if (step.kind === "doc") {
-      return <DocumentStep key={step.key} cfg={step.doc} orgId={orgId} shopId={shopId} onComplete={advance} />;
+      return <DocumentStep key={step.key} cfg={step.doc} orgId={orgId} shopId={shopId} initialFile={initialFile} onComplete={advance} />;
     }
     if (step.kind === "payment") {
-      return <PaymentStep key={step.key} orgId={orgId} shopId={shopId} onComplete={advance} />;
+      return <PaymentStep key={step.key} orgId={orgId} shopId={shopId} initialFile={initialFile} onComplete={advance} />;
     }
     if (step.kind === "opening") {
       return <OpeningStockStep key={step.key} orgId={orgId} shopId={shopId} onComplete={advance} />;
     }
     if (step.key === "ledgers") return <LedgerStep key="ledgers" orgId={orgId} onComplete={advance} />;
     if (step.key === "party_gstin") return <PartyGstStep key="party_gstin" orgId={orgId} onComplete={advance} />;
-    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} shopId={shopId} onComplete={advance} />;
+    return <EntityStep key={step.key} entity={step.entity} orgId={orgId} shopId={shopId} initialFile={initialFile} onComplete={advance} />;
   }
 
   return (
@@ -74,6 +85,11 @@ export function SmartImportPage() {
           Drop your Marg/Tally export — we auto-map the columns and quarantine only the rows that
           need a fix. Import in order: parties, catalogue, stock, then history.
         </p>
+
+        {/* Drop-all auto-detect router (SALT-153) */}
+        <div className="mt-5">
+          <DropAllPanel onRoute={routeFile} />
+        </div>
 
         {/* Cascade stepper */}
         <ol className="mt-5 flex flex-wrap items-center gap-2">
@@ -119,6 +135,7 @@ export function SmartImportPage() {
               const advance = () => {
                 setCompleted((prev) => new Set(prev).add(STEPS[active].key));
                 setActive((i) => Math.min(STEPS.length - 1, i + 1));
+                setRouted(null);
               };
               return renderStep(STEPS[active], advance);
             })()
