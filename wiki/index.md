@@ -41,6 +41,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/reports](architecture/reports.md) — the Reports module (SALT-073…078): dashboard + sales/purchase/inventory/financial/tax suites over the `v_*` views (0023); the operational-basis filter, `lib/reports.ts` + `fetchAllPaged`, per-suite views, and the org-level financials decision.
 - [architecture/operations](architecture/operations.md) — NFR & ops posture (SALT-134/136/137/138): Supabase backup/PITR + restore runbook, at-rest/transit/RLS + no-PII-logs, India residency, audit-trail ownership, and the scale load-test method; with an account-owner action-items table.
 - [architecture/salesman](architecture/salesman.md) — field-salesman management (SALT-128): the `salesmen` master + `commission_pct`/`payments.salesman_id` (0032), commission on net sales, the `/salesmen` master+report and `/salesmen/:id` detail, and order/collection attribution back-fill in `lib/salesmen.ts`.
+- [architecture/offline-first](architecture/offline-first.md) — the offline-first substrate spike + design (SALT-135 / ADR 0017): why a custom IndexedDB read-cache + RPC write-queue (the writes are all RPCs, not rows), the Phase-1 design, and the deferred multi-counter Phase 2.
 
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.
@@ -67,6 +68,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [0014 — Doctors master table](decisions/0014-doctors-master.md)
 - [0015 — Dual-modality interaction: one system for keyboard and touch](decisions/0015-dual-modality-interaction.md)
 - [0016 — Vendor ordering is distributor-mediated (aggregator BD or ONDC, not manufacturer APIs)](decisions/0016-vendor-ordering-channel.md)
+- [0017 — Offline-first substrate: custom local write-queue + read-cache (not a sync engine)](decisions/0017-offline-first-substrate.md)
 - [0017 — Offline-first via a local write outbox (not ElectricSQL)](decisions/0017-offline-first-approach.md)
 
 ## Raw sources (immutable, at repo root)
