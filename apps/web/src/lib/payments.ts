@@ -1,6 +1,6 @@
 /**
  * Payments domain — the client contract for the `record_payment` RPC and the
- * `payments` table (supabase/proposed/0021_payments.sql, live in the DB).
+ * `payments` table (supabase/migrations/0021_payments.sql, live in the DB).
  *
  * Direction: `received` = money in from a customer (lowers their receivable);
  * `paid` = money out to a vendor (lowers our payable). The RPC posts the
