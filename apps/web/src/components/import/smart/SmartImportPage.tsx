@@ -14,12 +14,14 @@ import { DocumentStep } from "./DocumentStep";
 import { PaymentStep } from "./PaymentStep";
 import { OpeningStockStep } from "./OpeningStockStep";
 import { DropAllPanel } from "./DropAllPanel";
+import { Gstr2bStep } from "./Gstr2bStep";
 
 type Step =
   | { kind: "entity"; key: string; label: string; entity: EntityConfig }
   | { kind: "doc"; key: string; label: string; doc: DocumentConfig }
   | { kind: "payment"; key: string; label: string }
-  | { kind: "opening"; key: string; label: string };
+  | { kind: "opening"; key: string; label: string }
+  | { kind: "gstr2b"; key: string; label: string };
 
 const STEPS: Step[] = [
   // Opening-stock reconciliation slots in right after batches & stock.
@@ -33,6 +35,7 @@ const STEPS: Step[] = [
   ),
   ...DOCUMENTS.map((d): Step => ({ kind: "doc", key: d.key, label: d.label, doc: d })),
   { kind: "payment", key: PAYMENT_CONFIG.key, label: PAYMENT_CONFIG.label },
+  { kind: "gstr2b", key: "gstr2b", label: "GSTR-2B" },
 ];
 
 export function SmartImportPage() {
@@ -63,6 +66,9 @@ export function SmartImportPage() {
     }
     if (step.kind === "opening") {
       return <OpeningStockStep key={step.key} orgId={orgId} shopId={shopId} onComplete={advance} />;
+    }
+    if (step.kind === "gstr2b") {
+      return <Gstr2bStep key={step.key} orgId={orgId} onComplete={advance} />;
     }
     if (step.key === "ledgers") return <LedgerStep key="ledgers" orgId={orgId} onComplete={advance} />;
     if (step.key === "party_gstin") return <PartyGstStep key="party_gstin" orgId={orgId} onComplete={advance} />;
