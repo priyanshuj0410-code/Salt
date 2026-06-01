@@ -61,6 +61,56 @@ def derive_schedule(name: str, salt: str) -> str:
     return "H"
 
 
+# --- 8-digit HSN by drug class (best-effort, under headings 3004 / 3005). Reconcile with a CA. ---
+_AYUSH_KW = ("ayurved", "polyherbal", "herbal", "unani", "siddha", "homeop", "bhasma", "churna")
+_CORTICOSTEROID_KW = ("prednisolone", "prednisone", "methylprednisolone", "dexamethasone", "betamethasone",
+                      "hydrocortisone", "triamcinolone", "deflazacort", "clobetasol", "mometasone",
+                      "fluticasone", "budesonide", "beclometasone", "beclomethasone", "fluocinolone")
+_HORMONE_KW = ("thyroxine", "levothyroxine", "liothyronine", "testosterone", "progesterone", "estradiol",
+               "estrogen", "oestrogen", "oxytocin", "somatropin", "glucagon", "ethinylestradiol",
+               "ethinyl estradiol", "levonorgestrel", "desogestrel", "norethisterone", "medroxyprogesterone")
+_PENICILLIN_KW = ("amoxicillin", "amoxycillin", "ampicillin", "cloxacillin", "piperacillin", "penicillin")
+_ANTIBIOTIC_KW = ("azithromycin", "erythromycin", "clarithromycin", "roxithromycin", "cefixime", "cefpodoxime",
+                  "cefuroxime", "ceftriaxone", "cefoperazone", "cephalexin", "cefadroxil", "cefdinir",
+                  "ceftazidime", "cefepime", "levofloxacin", "ofloxacin", "ciprofloxacin", "moxifloxacin",
+                  "norfloxacin", "doxycycline", "minocycline", "tetracycline", "gentamicin", "amikacin",
+                  "linezolid", "clindamycin", "vancomycin", "meropenem", "imipenem", "faropenem", "rifaximin")
+_ANTIMALARIAL_KW = ("artemether", "lumefantrine", "artesunate", "arteether", "chloroquine",
+                    "hydroxychloroquine", "primaquine", "mefloquine", "quinine")
+_VITAMIN_KW = ("vitamin", "multivitamin", "cholecalciferol", "calcitriol", "ergocalciferol", "methylcobalamin",
+               "mecobalamin", "cyanocobalamin", "thiamine", "riboflavin", "pyridoxine", "folic acid",
+               "ascorbic", "tocopher", "niacinamide", "nicotinamide", "b-complex", "b complex")
+
+
+def classify_hsn(name: str, salt: str, base_hsn: str, ayush: bool) -> str:
+    """Best-effort 8-digit HSN from the drug class. Heading 3004 (medicaments) sub-classifies by
+    class; 3005 = dressings; any other chapter (devices 90xx, cosmetics, food supplements) is left
+    as supplied. Keyword-based and best-effort — reconcile with a CA before statutory use."""
+    h = (base_hsn or "").replace(".", "").strip()
+    hay = f"{name} {salt}".lower()
+    if h.startswith("3005"):
+        return "30051090" if any(k in hay for k in ("medicat", "adhesive", "band aid", "bandaid")) else "30059090"
+    if h and not h.startswith("3004"):
+        return h  # not a medicament heading — leave the supplied code (devices, cosmetics, etc.)
+    if ayush or any(k in hay for k in _AYUSH_KW):
+        return "30049011"  # Ayurvedic system medicaments
+    if "insulin" in hay:
+        return "30043110"  # insulin
+    if any(k in hay for k in _CORTICOSTEROID_KW):
+        return "30043200"  # containing corticosteroid hormones
+    if any(k in hay for k in _HORMONE_KW):
+        return "30043900"  # other hormones
+    if any(k in hay for k in _PENICILLIN_KW):
+        return "30041020"  # penicillins (amoxicillin / ampicillin group)
+    if any(k in hay for k in _ANTIBIOTIC_KW):
+        return "30042099"  # other antibiotics
+    if any(k in hay for k in _ANTIMALARIAL_KW):
+        return "30046000"  # antimalarials
+    if any(k in hay for k in _VITAMIN_KW):
+        return "30045090"  # provitamins / vitamins
+    return "30049099"  # other medicaments — the residual for the bulk of branded formulations
+
+
 def esc(v: str) -> str:
     return v.replace("'", "''")
 
@@ -85,14 +135,15 @@ def read_rows():
                 salt = (row.get("salt") or "").strip()
                 schedule = (row.get("schedule") or "").strip() or derive_schedule(name, salt)
                 rate_class = (row.get("gst_rate_class") or "std").strip() or "std"
+                ayush = (row.get("ayush") or "0").strip() in ("1", "true", "yes")
                 yield {
                     "name": name,
                     "salt": salt,
                     "manufacturer": (row.get("manufacturer") or "").strip(),
                     "pack": (row.get("pack") or "").strip(),
-                    "hsn": (row.get("hsn") or "").strip(),
+                    "hsn": classify_hsn(name, salt, (row.get("hsn") or "").strip(), ayush),
                     "schedule": schedule,
-                    "ayush": (row.get("ayush") or "0").strip() in ("1", "true", "yes"),
+                    "ayush": ayush,
                     "gst_rate_class": rate_class,
                     "gst_rate": CLASS_RATE.get(rate_class, 5),
                     "source": (row.get("source") or "curated-v1").strip(),
