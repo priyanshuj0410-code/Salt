@@ -567,6 +567,7 @@ export function CatalogPage() {
           columns={columns}
           rows={visible}
           rowKey={(i) => i.id}
+          virtualize
           cols="minmax(0,2fr) 1fr 0.8fr 0.55fr 0.9fr 0.65fr 1fr"
           onRowActivate={(i) => navigate(`/catalogue/${i.id}`)}
           loading={loading && !loaded}
