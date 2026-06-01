@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/patterns/empty-state";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
+import { MessageThread } from "@/components/messages/MessageThread";
 import { buildSavedInvoicePrintData, printSavedBill } from "@/lib/billPrint";
 import { buildBillShareSubject, buildBillShareText, mailtoLink, smsLink } from "@/lib/billShare";
 import { normalizePhoneForWa, whatsappUrl } from "@/lib/collection";
@@ -382,6 +383,15 @@ export function BillHistoryPage() {
                 </div>
               )}
             </div>
+          )}
+          {/* Internal notes (SALT-160) — live thread shared across counters */}
+          {openBill && (
+            <section className="rounded-lg border border-border p-3">
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-medium text-text-primary">
+                <MessageSquare className="size-4 text-text-tertiary" /> Internal notes
+              </h3>
+              <MessageThread entityType="sales_invoice" entityId={openBill.id} />
+            </section>
           )}
           {reprintErr && <p className="text-sm text-text-tertiary">{reprintErr}</p>}
           {confirmVoid ? (
