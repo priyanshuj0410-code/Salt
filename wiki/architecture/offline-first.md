@@ -45,6 +45,7 @@ A row-sync engine would force re-implementing the posting logic client-side (hug
 - Offline save → `enqueue` + optimistic local state (the bill shows as **queued**).
 - On reconnect → `drain()` in order, calling the real RPC per intent; **at-least-once** delivery made safe by the idempotency key. Failures retry / park with a surfaced error — never a silent drop, never a head-of-line deadlock.
 - Exposes sync status (queued / syncing / synced) for the UI.
+- **Status — queue lib built (SALT-200):** `lib/offline/writeQueue.ts` — durable IndexedDB FIFO with `enqueue` / `flush(executor)` / `status` / `subscribe`. The drain stops on a transient failure (order preserved for retry) and parks a poison intent after `maxAttempts` (no head-of-line deadlock); the pure `classifyFlushStep` decision is smoke-tested. Decoupled — it never imports supabase, so the executor that calls `supabase.rpc(intent.rpc, { ...intent.args, p_idempotency_key })` and the on-reconnect trigger are wired in **SALT-202**, once the RPCs honour the key (**SALT-201**).
 
 ### Idempotent replay — [SALT-201]
 - The write RPCs take `p_idempotency_key uuid`; a duplicate key **returns the original document id** instead of re-posting (no second double-entry / stock move / invoice number). Optional + backward-compatible. Mirrors the document-import idempotency ([0011](../decisions/0011-document-import-idempotency-key.md)).
