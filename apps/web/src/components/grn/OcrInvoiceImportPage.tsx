@@ -13,12 +13,13 @@ import { formatPaise } from "@/lib/currency";
 import { grnTotals } from "@/lib/grn";
 import { buildReceivePurchasePayload, type PurchaseLine } from "@/lib/orders";
 import { parseGstin } from "@/lib/gstin";
-import { ocrInvoiceToRows, type OcrInvoiceJson } from "@/lib/ocrInvoice";
+import { ocrInvoiceToRows } from "@/lib/ocrInvoice";
 import {
   parsePurchaseInvoices,
   type ParsedPurchaseInvoice,
   type PurchaseImportResult,
 } from "@/lib/importPurchaseInvoice";
+import { createScan, invokeExtract, updateScan, vendorGuess } from "@/lib/invoiceScans";
 
 interface VendorRow { id: string; name: string; gstin: string | null }
 interface ItemRow { id: string; name: string; item_code: string | null; barcode: string | null }
@@ -63,53 +64,52 @@ export function OcrInvoiceImportPage() {
   const [error, setError] = useState<string | null>(null);
   const [notConfigured, setNotConfigured] = useState(false);
   const [report, setReport] = useState<{ posted: number; failed: number; results: PostResult[] } | null>(null);
+  // The audit record for the current upload (SALT-221) — links the file + outcome,
+  // and its id ties the posted GRN back to the scan.
+  const [scanId, setScanId] = useState<string | null>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !supabase) return;
+    if (!file || !supabase || !orgId) return;
     setFileName(file.name);
     setResult(null);
     setReport(null);
     setError(null);
     setNotConfigured(false);
     setOcrIssues([]);
+    setScanId(null);
     setExtracting(true);
     try {
       const b64 = await readAsBase64(file);
-      const { data, error: fnErr } = await supabase.functions.invoke("extract-invoice", {
-        body: { file_base64: b64, mime: file.type || "application/octet-stream" },
-      });
-      if (fnErr) {
-        // On a non-2xx, supabase-js puts the Response in `context` but does NOT read
-        // its body into fnErr.message — so the function's real error (e.g. the Gemini
-        // status + detail, or ocr_not_configured) is only in the body. Read it.
-        const ctx = (fnErr as { context?: Response }).context;
-        let bodyError: string | null = null;
-        try {
-          const j = await ctx?.clone().json();
-          bodyError = j?.error ?? null;
-        } catch {
-          bodyError = null;
-        }
-        if (ctx?.status === 501 || bodyError === "ocr_not_configured") {
-          setNotConfigured(true);
-          return;
-        }
-        // Surface the function's actual message (Gemini status/detail) so failures are
-        // diagnosable from the page, not just "non-2xx".
-        setError(
-          bodyError
-            ? `Extraction failed: ${bodyError}`
-            : `Extraction failed: ${fnErr.message}. Is the extract-invoice function deployed?`,
-        );
-        return;
+
+      // 1. Persist the file + a pending audit row BEFORE calling OCR, so a failed
+      //    or interrupted scan is still on record and retryable from storage.
+      const created = await createScan(orgId, shopId ?? null, file, b64);
+      const sid = created.id || null;
+      setScanId(sid);
+      if (created.error) {
+        // Storage/table may not exist if migration 0049 isn't applied yet — don't
+        // block scanning, just note it and continue without the audit record.
+        setOcrIssues((cur) => [...cur, `Could not save to scan history: ${created.error}`]);
       }
-      if (data?.error === "ocr_not_configured") {
+
+      // 2. Extract.
+      const out = await invokeExtract(b64, file.type || "application/octet-stream");
+      if (out.notConfigured) {
         setNotConfigured(true);
+        if (sid) await updateScan(sid, { status: "failed", error: "ocr_not_configured" });
         return;
       }
-      const mapped = ocrInvoiceToRows(data as OcrInvoiceJson);
-      setOcrIssues(mapped.issues);
+      if (out.error || !out.json) {
+        setError(`Extraction failed: ${out.error ?? "no data returned"}`);
+        if (sid) await updateScan(sid, { status: "failed", error: out.error ?? "no data" });
+        return;
+      }
+
+      // 3. Record the extraction + show the dry-run preview.
+      if (sid) await updateScan(sid, { status: "extracted", extracted_json: out.json, vendor_guess: vendorGuess(out.json) });
+      const mapped = ocrInvoiceToRows(out.json);
+      setOcrIssues((cur) => [...cur, ...mapped.issues]);
       setResult(parsePurchaseInvoices(mapped.rows));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not process the file.");
@@ -219,8 +219,12 @@ export function OcrInvoiceImportPage() {
           shopId, { id: vendorId, name: inv.vendorName }, plines, payment, false,
           { vendorInvoiceNo: inv.invoiceNo, vendorInvoiceDate: inv.date ?? undefined },
         );
-        const { error: e } = await supabase.rpc("receive_purchase", args);
+        const { data: grnId, error: e } = await supabase.rpc("receive_purchase", args);
         results.push({ invoiceNo: inv.invoiceNo, ok: !e, error: e?.message });
+        // Link the scan to the first GRN it produced + mark it posted (SALT-221).
+        if (!e && scanId && typeof grnId === "string") {
+          await updateScan(scanId, { status: "posted", purchase_id: grnId });
+        }
       }
 
       await loadCatalog(orgId);

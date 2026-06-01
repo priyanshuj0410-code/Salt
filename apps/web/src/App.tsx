@@ -24,6 +24,7 @@ const PoDetailPage = lazy(() => import("@/components/grn/PoDetailPage").then((m)
 const AutoPoPage = lazy(() => import("@/components/grn/AutoPoPage").then((m) => ({ default: m.AutoPoPage })));
 const VendorSchemesPage = lazy(() => import("@/components/grn/VendorSchemesPage").then((m) => ({ default: m.VendorSchemesPage })));
 const OcrInvoiceImportPage = lazy(() => import("@/components/grn/OcrInvoiceImportPage").then((m) => ({ default: m.OcrInvoiceImportPage })));
+const InvoiceScansPage = lazy(() => import("@/components/grn/InvoiceScansPage").then((m) => ({ default: m.InvoiceScansPage })));
 const DebitNoteListPage = lazy(() => import("@/components/grn/DebitNoteListPage").then((m) => ({ default: m.DebitNoteListPage })));
 const DebitNoteEntryPage = lazy(() => import("@/components/grn/DebitNoteEntryPage").then((m) => ({ default: m.DebitNoteEntryPage })));
 const DebitNoteDetailPage = lazy(() => import("@/components/grn/DebitNoteDetailPage").then((m) => ({ default: m.DebitNoteDetailPage })));
@@ -224,6 +225,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <OcrInvoiceImportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/scans"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <InvoiceScansPage />
           </ProtectedRoute>
         }
       />
