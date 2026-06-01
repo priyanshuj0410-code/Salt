@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Copy, FlaskConical, GitMerge, PackagePlus, RefreshCw, Sparkles, Tag } from "lucide-react";
+import { Copy, FlaskConical, GitMerge, Inbox, PackagePlus, RefreshCw, Sparkles, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -84,10 +84,30 @@ export function CatalogPage() {
   const [updSel, setUpdSel] = useState<Set<string>>(new Set());
   const [updError, setUpdError] = useState<string | null>(null);
   const [updDone, setUpdDone] = useState<number | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [subOpen, setSubOpen] = useState(false);
+  const [subBusy, setSubBusy] = useState(false);
+  const [subRows, setSubRows] = useState<
+    { id: string; name: string; salt: string | null; manufacturer: string | null; submitted_at: string }[] | null
+  >(null);
+  const [subError, setSubError] = useState<string | null>(null);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
   }, [orgId, loadCatalog]);
+
+  // Is the signed-in user a Salt-admin? Gates the "Submissions" review queue (SALT-085).
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      if (!supabase || !orgId) return;
+      const { data } = await supabase.rpc("is_salt_admin");
+      if (active) setIsAdmin(data === true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [orgId]);
 
   // "Fill from master": match each item to the seeded national drug master and
   // back-fill only its missing salt / HSN / GST, plus set the master_item_id link.
@@ -244,6 +264,45 @@ export function CatalogPage() {
     }
   }
 
+  // Master submissions (SALT-085): Salt-admins review shop-nominated custom items.
+  async function runSubmissions() {
+    if (!supabase || subBusy) return;
+    setSubOpen(true);
+    setSubBusy(true);
+    setSubError(null);
+    setSubRows(null);
+    try {
+      const { data, error } = await supabase
+        .from("master_item_submissions")
+        .select("id,name,salt,manufacturer,submitted_at")
+        .eq("status", "pending")
+        .order("submitted_at");
+      if (error) throw error;
+      setSubRows(
+        (data as { id: string; name: string; salt: string | null; manufacturer: string | null; submitted_at: string }[]) ?? [],
+      );
+    } catch (e) {
+      setSubError(e instanceof Error ? e.message : "Could not load submissions.");
+    } finally {
+      setSubBusy(false);
+    }
+  }
+
+  async function reviewSubmission(id: string, approve: boolean) {
+    if (!supabase || subBusy) return;
+    setSubBusy(true);
+    setSubError(null);
+    try {
+      const { error } = await supabase.rpc("review_master_submission", { p_submission_id: id, p_approve: approve });
+      if (error) throw error;
+      setSubRows((rows) => (rows ? rows.filter((r) => r.id !== id) : rows));
+    } catch (e) {
+      setSubError(e instanceof Error ? e.message : "Could not review the submission.");
+    } finally {
+      setSubBusy(false);
+    }
+  }
+
   // Default survivor: the item carrying the most stock, then most batches, then name.
   const defaultSurvivor = (g: DuplicateGroup) =>
     [...g.items].sort(
@@ -362,6 +421,11 @@ export function CatalogPage() {
             >
               <RefreshCw /> Master updates
             </Button>
+            {isAdmin && (
+              <Button variant="outline" onClick={runSubmissions} title="Review shop-submitted items for the shared master">
+                <Inbox /> Submissions
+              </Button>
+            )}
             <Button onClick={() => setCreateOpen(true)}>
               <PackagePlus /> New item
             </Button>
@@ -763,6 +827,56 @@ export function CatalogPage() {
                 </Button>
               </>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={subOpen} onOpenChange={setSubOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Master submissions</DialogTitle>
+            <DialogDescription>
+              Shop-nominated custom items awaiting review. Approve to add them to the shared master (visible to all
+              shops); reject to discard.
+            </DialogDescription>
+          </DialogHeader>
+
+          {subError && <p className="text-sm text-destructive">{subError}</p>}
+
+          {subBusy && !subRows ? (
+            <p className="py-6 text-center text-sm text-text-tertiary">Loading…</p>
+          ) : subRows ? (
+            subRows.length === 0 ? (
+              <p className="py-6 text-center text-sm text-text-tertiary">No pending submissions.</p>
+            ) : (
+              <div className="max-h-80 divide-y divide-divider overflow-y-auto rounded-lg border border-border">
+                {subRows.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium">{r.name}</span>
+                      <span className="block truncate text-xs text-text-tertiary">
+                        {r.salt || "—"}
+                        {r.manufacturer ? ` · ${r.manufacturer}` : ""}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 gap-1.5">
+                      <Button size="sm" variant="outline" disabled={subBusy} onClick={() => reviewSubmission(r.id, false)}>
+                        Reject
+                      </Button>
+                      <Button size="sm" disabled={subBusy} onClick={() => reviewSubmission(r.id, true)}>
+                        Approve
+                      </Button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : null}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSubOpen(false)} disabled={subBusy}>
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
