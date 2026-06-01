@@ -39,6 +39,7 @@ export function buildInvoiceData(args: {
     lines: lines.map((l, i) => ({
       name: l.name,
       pack: l.pack,
+      hsn: l.hsn,
       batchNo: l.batchNo,
       expiry: l.expiry,
       qty: l.qty,
