@@ -75,6 +75,7 @@ const ShopsManagerPage = lazy(() => import("@/components/settings/ShopsManagerPa
 const PartyPrivacyPage = lazy(() => import("@/components/settings/PartyPrivacyPage").then((m) => ({ default: m.PartyPrivacyPage })));
 const DiscountLimitsPage = lazy(() => import("@/components/settings/DiscountLimitsPage").then((m) => ({ default: m.DiscountLimitsPage })));
 const UsersRolesPage = lazy(() => import("@/components/settings/UsersRolesPage").then((m) => ({ default: m.UsersRolesPage })));
+const WhatsAppPage = lazy(() => import("@/components/integrations/WhatsAppPage").then((m) => ({ default: m.WhatsAppPage })));
 const SmartImportPage = lazy(() => import("@/components/import/smart/SmartImportPage").then((m) => ({ default: m.SmartImportPage })));
 
 function PageFallback() {
@@ -625,6 +626,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <UsersRolesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/integrations/whatsapp"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <WhatsAppPage />
           </ProtectedRoute>
         }
       />
