@@ -5,7 +5,7 @@ import { buildSalesInvoicePayload, withTimeout, TimeoutError, type RxDetails, ty
 import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
-import { outbox } from "@/lib/outbox";
+import { enqueue as enqueueWrite } from "@/lib/offline/writeQueue";
 import { formatPaise } from "@/lib/currency";
 import { gatedLines, requiresRx } from "@/lib/billing";
 import { creditCheck } from "@/lib/credit";
@@ -155,15 +155,8 @@ export function useCheckout({
     };
   }, [orgId]);
 
-  // Register the offline sender once (SALT-205): a queued sale replays through the same RPC.
-  // Throwing on error keeps the record queued for the next flush (at-least-once).
-  useEffect(() => {
-    outbox.register("create_sales_invoice", async (payload) => {
-      if (!supabase) throw new Error("supabase unavailable");
-      const { error: e } = await supabase.rpc("create_sales_invoice", payload);
-      if (e) throw e;
-    });
-  }, []);
+  // (Offline replay no longer needs a registered sender — the write-queue executor is passed at
+  //  flush time by `useOfflineSync` in BillingScreen, with the idempotency key. SALT-202.)
 
   // Load the shop's active sales-invoice series (SALT-209), deduped by code across FYs — the
   // RPC only needs a row of the desired code (it allocates the current-FY number from it).
@@ -321,17 +314,17 @@ export function useCheckout({
     const seriesArg = seriesId && seriesId !== defaultSeriesId ? seriesId : null;
     const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes, seriesArg);
 
-    // Offline (SALT-205): queue the write and complete the bill locally rather than block the
-    // counter on a dead link. At-least-once — the outbox auto-flushes on reconnect, and the real
-    // GST invoice number is allocated then (a provisional ref prints now). Read connectivity live
-    // (not the render snapshot) so the decision is made at the moment of save.
+    // Offline (SALT-202): commit the write to the durable, idempotent write-queue and complete the
+    // bill locally rather than block the counter on a dead link. `useOfflineSync` (BillingScreen)
+    // drains it on reconnect, passing the returned key as p_idempotency_key — so a replay is
+    // exactly-once (0045). A provisional ref prints now; the real GST number is allocated on sync.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      const rec = await outbox.enqueue("create_sales_invoice", args);
+      const key = await enqueueWrite("create_sales_invoice", args as unknown as Record<string, unknown>);
       const receipt =
         printIntent.current && shop
-          ? buildInvoiceData({ invoiceId: rec.id, shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
+          ? buildInvoiceData({ invoiceId: key, shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
           : null;
-      if (receipt) receipt.ref = `OFFLINE-${rec.id.slice(0, 8).toUpperCase()}`;
+      if (receipt) receipt.ref = `UNSYNCED-${key.slice(0, 8).toUpperCase()}`;
       clear();
       setSplit(false);
       setApproval(null);
@@ -340,7 +333,7 @@ export function useCheckout({
       setTimeout(() => setSavedOffline(false), 3000);
       printIntent.current = false;
       if (receipt) printInvoice(receipt);
-      return rec.id;
+      return key;
     }
 
     // Online optimistic save (SALT-155): capture the receipt from the CURRENT bill, free the

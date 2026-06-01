@@ -18,7 +18,7 @@ import { useCatalog } from "@/store/catalog";
 import { useBill } from "@/store/bill";
 import { useHeldBills } from "@/store/heldBills";
 import { useKeymap } from "@/store/shortcuts";
-import { useOutbox } from "@/lib/outbox";
+import { useOfflineSync } from "./useOfflineSync";
 import { supabase } from "@/lib/supabase";
 import { fetchPartyCredit } from "@/lib/credit";
 import { subscribeTableChanges } from "@/lib/realtime";
@@ -88,9 +88,9 @@ export function BillingScreen() {
   const setParty = useBill((s) => s.setParty);
   const hold = useHeldBills((s) => s.hold);
   const loadHeld = useHeldBills((s) => s.load);
-  // Mount the offline outbox here (SALT-205): this drives the auto-flush on reconnect and the
-  // "waiting to sync" count. The sales handler is registered in useCheckout.
-  const { online, pending: pendingWrites } = useOutbox();
+  // Drain the offline write-queue on reconnect + surface its depth (SALT-202): pending = bills
+  // saved offline waiting to sync (idempotent replay); parked = permanently-failed, needs attention.
+  const { online, pending: pendingWrites, parked } = useOfflineSync();
   // Resolve customer pricing for the bill's lines (SALT-191A) — re-prices on party change.
   usePriceResolution(shopId, party?.id ?? null);
   // Rebindable action shortcuts (SALT-178) — the counter reads keys from the keymap.
@@ -226,6 +226,14 @@ export function BillingScreen() {
               title="Bills saved offline, waiting to sync"
             >
               <RefreshCw className="size-3.5" /> {pendingWrites} to sync
+            </span>
+          )}
+          {parked > 0 && (
+            <span
+              className="flex items-center gap-1 rounded-full bg-danger-bg px-2 py-0.5 text-xs font-medium text-danger"
+              title="Bills that failed to sync — check Bills"
+            >
+              <CloudOff className="size-3.5" /> {parked} failed
             </span>
           )}
           <span className="hidden text-sm text-text-tertiary md:block">Counter 1</span>
