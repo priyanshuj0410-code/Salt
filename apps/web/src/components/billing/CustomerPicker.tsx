@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { cacheGet, cacheKey, cachePut } from "@/lib/offline/cache";
 import type { OrderParty } from "@/lib/orders";
 
 interface CustomerRow {
@@ -11,6 +12,20 @@ interface CustomerRow {
   name: string;
   phone: string | null;
 }
+
+/** The full party shape cached under the shared `parties` key (matches what `PartiesPage` writes,
+ *  SALT-207) so the two share one offline cache without either clobbering the other's fields. */
+interface PartyRow {
+  id: string;
+  name: string;
+  type: string;
+  phone: string | null;
+  gstin: string | null;
+  state_code: string | null;
+  opening_balance_paise: number | null;
+  customer_group: string | null;
+}
+const PARTY_COLS = "id,name,type,phone,gstin,state_code,opening_balance_paise,customer_group";
 
 /**
  * Pick the customer a bill is for. "Walk-in" (null party) is the default and
@@ -31,21 +46,27 @@ export function CustomerPicker({
   const [loaded, setLoaded] = useState(false);
   const [q, setQ] = useState("");
 
+  // Load the org's parties for the picker (SALT-215). Online: fetch the full party list, refresh the
+  // shared `parties` cache (so a cashier can bill a known customer through an outage), and show
+  // customers. Offline / on fetch failure: fall back to that cache instead of an empty list.
   useEffect(() => {
-    if (!open || !supabase || !orgId || loaded) return;
+    if (!open || !orgId || loaded) return;
     let active = true;
-    supabase
-      .from("ledgers")
-      .select("id,name,phone")
-      .eq("org_id", orgId)
-      .eq("type", "customer")
-      .order("name")
-      .then(({ data }) => {
-        if (active) {
-          setRows((data as CustomerRow[] | null) ?? []);
-          setLoaded(true);
+    const key = cacheKey("parties", orgId);
+    void (async () => {
+      let parties: PartyRow[] | null = null;
+      if (supabase && (typeof navigator === "undefined" || navigator.onLine)) {
+        const { data, error } = await supabase.from("ledgers").select(PARTY_COLS).eq("org_id", orgId).order("name");
+        if (!error && data) {
+          parties = data as PartyRow[];
+          void cachePut(key, parties);
         }
-      });
+      }
+      if (!parties) parties = (await cacheGet<PartyRow[]>(key))?.data ?? [];
+      if (!active) return;
+      setRows(parties.filter((p) => p.type === "customer").map((p) => ({ id: p.id, name: p.name, phone: p.phone })));
+      setLoaded(true);
+    })();
     return () => {
       active = false;
     };
