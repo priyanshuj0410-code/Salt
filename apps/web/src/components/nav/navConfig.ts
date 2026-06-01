@@ -1,6 +1,7 @@
 import {
   Activity,
   BarChart3,
+  Contact,
   FileText,
   Keyboard,
   Landmark,
@@ -185,6 +186,15 @@ export const NAV: NavModule[] = [
     built: true,
     roles: ["owner"],
     children: [{ label: "Items", path: "/catalogue", built: true }],
+  },
+  {
+    key: "e",
+    label: "Salesmen",
+    icon: Contact,
+    path: "/salesmen",
+    built: true,
+    roles: ["owner"],
+    children: [{ label: "All salesmen", path: "/salesmen", built: true }],
   },
   {
     key: ",",
