@@ -38,6 +38,7 @@ A row-sync engine would force re-implementing the posting logic client-side (hug
 - IndexedDB stores for the counter working set: `items`, `batches`, `parties`, active `shop` + settings (read-mostly).
 - Seed on login / when online; refresh on a bounded cadence. Catalog + party reads fall back to the cache when [`useOnlineStatus`](realtime.md) reports offline.
 - Surface **"data as of HH:MM"** so the operator knows the staleness; bound the supported offline window.
+- **Status — catalogue cache built (SALT-204):** `lib/offline/cache.ts` (a best-effort IndexedDB kv store; never throws) + `store/catalog.ts` now caches the mapped working set on each successful online load and serves it offline instead of the demo seed, exposing `cachedAt` for the staleness hint. Party reads are scattered across feature modules (no central fetch) → adopting the cache there is split to **SALT-207**.
 
 ### Write queue — [SALT-200]
 - Durable (IndexedDB) FIFO of intents `{ rpc, args, idempotencyKey, enqueuedAt }`.
