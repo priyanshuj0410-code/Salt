@@ -29,6 +29,15 @@ export function AppLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface">
+      {/* Skip to content — first focusable element so keyboard/SR users can bypass
+          the sidebar (WCAG 2.4.1). Visually hidden until focused. */}
+      <a
+        href="#main-content"
+        className="sr-only rounded-lg border border-ring bg-background text-sm font-medium text-text-primary shadow-lg outline-none ring-3 ring-ring/50 focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[60] focus:px-3 focus:py-2"
+      >
+        Skip to content
+      </a>
+
       {/* Desktop sidebar */}
       <div className="hidden lg:flex">
         <Sidebar />
@@ -67,7 +76,7 @@ export function AppLayout() {
           </button>
         </header>
 
-        <main className="min-w-0 flex-1 overflow-y-auto">
+        <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 overflow-y-auto outline-none">
           <Outlet />
         </main>
       </div>
