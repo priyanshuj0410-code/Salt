@@ -528,3 +528,43 @@ export function suggestReorders(items: ReorderItemInput[], opts: ReorderOptions)
 
   return out.sort((a, b) => a.daysOfCover - b.daysOfCover);
 }
+
+// ── Send PO (SALT-023) ───────────────────────────────────────────────────────
+// Vendor ordering is distributor-mediated with no self-serve API (ADR 0016), so
+// "send" means a formatted plain-text PO the user pushes over WhatsApp / email /
+// copy / print. Pure formatter; the channel deep-links live in the dialog.
+
+export interface PoTextLine {
+  name: string;
+  qty: number;
+  ptrPaise: number;
+}
+
+export interface PoTextInput {
+  shopName?: string | null;
+  vendorName: string;
+  poRef: string;
+  /** Human date string (already formatted by the caller). */
+  date: string;
+  expectedDate?: string | null;
+  lines: PoTextLine[];
+  totalPaise: number;
+}
+
+/** A clean plain-text purchase order for WhatsApp / email body / clipboard. */
+export function formatPoText(po: PoTextInput): string {
+  const inr = (p: number) => `₹${(p / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const from = po.shopName?.trim() ? ` from ${po.shopName.trim()}` : "";
+  const out = [
+    `Purchase Order ${po.poRef}${from}`,
+    `To: ${po.vendorName}`,
+    `Date: ${po.date}`,
+  ];
+  if (po.expectedDate) out.push(`Expected delivery: ${po.expectedDate}`);
+  out.push("", "Items:");
+  po.lines.forEach((l, i) => {
+    out.push(`${i + 1}. ${l.name} — ${l.qty} @ ${inr(l.ptrPaise)} = ${inr(Math.round(l.qty * l.ptrPaise))}`);
+  });
+  out.push("", `Total (excl. GST): ${inr(po.totalPaise)}`, "", "Please confirm availability and dispatch. Thank you.");
+  return out.join("\n");
+}
