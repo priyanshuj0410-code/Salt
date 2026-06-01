@@ -1,7 +1,7 @@
 /**
  * Reports & analytics — pure aggregation + shared helpers (no Supabase here, so
  * every function is unit-smoke-testable). The report pages fetch rows from the
- * document tables / the `v_*` report views (supabase/proposed/0023) and pass them
+ * document tables / the `v_*` report views (supabase/migrations/0023_reports.sql) and pass them
  * in. All money is integer **paise**.
  *
  * Basis (matches the GST module): operational reports read **placed/received,

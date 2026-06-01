@@ -3,7 +3,7 @@
  *
  * The CGST/SGST/IGST split is decided and stored at write time by the
  * `create_sales_invoice` RPC (intra-state ⇒ CGST+SGST, inter-state ⇒ IGST; see
- * `lib/orders.ts` and `supabase/proposed/0018_sales.sql`), persisted on every
+ * `lib/orders.ts` and `supabase/migrations/0018_sales.sql`), persisted on every
  * `sales_invoices` row AND every `sale_lines` row. So GSTR-1 is a straight
  * aggregation of pre-taxed rows — never a back-calculation. The page fetches the
  * rows and passes them here, which keeps this unit-smoke-testable.

@@ -30,7 +30,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/interaction-patterns](architecture/interaction-patterns.md) — the keyboard+touch contract: one model/two presentations, the seven laws, per-pattern dual-modality behaviour, the counter as worked example.
 - [architecture/screens-routing](architecture/screens-routing.md) — route table, ProtectedRoute guards, role gating, lazy-load rationale; the CI-guarded nav↔route invariant (SALT-142).
 - [architecture/billing-screen](architecture/billing-screen.md) — layout, keyboard map, useBill/useCatalog stores, search algorithm, ranked OOS substitutes, FEFO, stock cap, billTotals, line + apportioned bill-level discount, parked/held bills, Schedule H1/X checkout gate, Save & Print + GST split.
-- [architecture/gst-returns](architecture/gst-returns.md) — the GST & compliance screens: GSTR-1, GSTR-3B, live liability, ITC register (+ expired-stock reversal), Tally XML export, and a range HSN-summary report, over `sales_invoices`/`sale_lines`/`purchases`/`batches`; GSTN JSON + CSV + Tally XML.
+- [architecture/gst-returns](architecture/gst-returns.md) — the GST & compliance screens (8): GSTR-1, GSTR-3B, live liability, ITC register (+ expired-stock reversal), Tally XML export, a range HSN-summary report, the Schedule H1/X dispensing register (inspector PDF), and invoice-series management, over `sales_invoices`/`sale_lines`/`purchases`/`batches`/`h1_register`/`invoice_series`; GSTN JSON + CSV + Tally XML.
 - [architecture/grn](architecture/grn.md) — GRN / purchase (inbound): `purchases`/`purchase_lines` + `receive_purchase`, scheme free goods + multi-rate GST + trade discount economics (`lib/grn.ts`), effective cost + ITC, new-item review, the `/purchases` screens.
 - [architecture/inventory](architecture/inventory.md) — stock ledger + read views (near-expiry, dead/slow, reorder, out-of-stock, turnover) on `lib/inventory.ts` over `stock_movements`/`batches.qty`; write paths (adjustments, physical count, expiry destruction + ITC reversal) via the `0028` `adjust_stock`/`finalize_physical_count` RPCs.
 - [architecture/returns](architecture/returns.md) — partial-return recomputation engine (`lib/returns.ts`, SALT-099): net value / GST / revised ITC on the **effective-cost** basis (taxable ÷ received units, so scheme free-goods + trade discount are honoured), cumulative-rounding so sequential returns leak no paise; one engine for purchase returns (debit note, ITC reversal) and sales returns (credit note, outward-tax reversal).
@@ -41,6 +41,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/reports](architecture/reports.md) — the Reports module (SALT-073…078): dashboard + sales/purchase/inventory/financial/tax suites over the `v_*` views (0023); the operational-basis filter, `lib/reports.ts` + `fetchAllPaged`, per-suite views, and the org-level financials decision.
 - [architecture/operations](architecture/operations.md) — NFR & ops posture (SALT-134/136/137/138): Supabase backup/PITR + restore runbook, at-rest/transit/RLS + no-PII-logs, India residency, audit-trail ownership, and the scale load-test method; with an account-owner action-items table.
 - [architecture/salesman](architecture/salesman.md) — field-salesman management (SALT-128): the `salesmen` master + `commission_pct`/`payments.salesman_id` (0032), commission on net sales, the `/salesmen` master+report and `/salesmen/:id` detail, and order/collection attribution back-fill in `lib/salesmen.ts`.
+- [architecture/offline-first](architecture/offline-first.md) — the offline-first substrate spike + design (SALT-135 / ADR 0017): why a custom IndexedDB read-cache + RPC write-queue (the writes are all RPCs, not rows), the Phase-1 design, and the deferred multi-counter Phase 2.
 
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.
@@ -67,6 +68,8 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [0014 — Doctors master table](decisions/0014-doctors-master.md)
 - [0015 — Dual-modality interaction: one system for keyboard and touch](decisions/0015-dual-modality-interaction.md)
 - [0016 — Vendor ordering is distributor-mediated (aggregator BD or ONDC, not manufacturer APIs)](decisions/0016-vendor-ordering-channel.md)
+- [0017 — Offline-first substrate: custom local write-queue + read-cache (not a sync engine)](decisions/0017-offline-first-substrate.md)
+- [0017 — Offline-first via a local write outbox (not ElectricSQL)](decisions/0017-offline-first-approach.md)
 
 ## Raw sources (immutable, at repo root)
 `salt-prd-v0.3.md` · `salt-migrator-prd-v0.1.md` · `design.md` · `salt-design-system.html` · `PRD_Intelligent_Importer.pdf` · the codebase · `Saral/Trial_Balance.xls` (untracked sample).

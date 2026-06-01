@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Page } from "@/components/patterns/page";
 import { SetupChecklist } from "@/components/onboarding/SetupChecklist";
+import { LicenseRenewalBanner } from "@/components/owner/LicenseRenewalBanner";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 
@@ -69,6 +70,8 @@ export function OwnerHome() {
         <p className="mt-1 text-sm text-muted-foreground">
           Reporting and inventory health will live here. For now, manage your team.
         </p>
+
+        <LicenseRenewalBanner />
 
         <Link
           to="/parties"

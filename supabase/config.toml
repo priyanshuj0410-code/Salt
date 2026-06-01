@@ -1,0 +1,13 @@
+# Supabase config. If you already run `supabase init` and have a config.toml,
+# merge just the [functions.*] blocks below. Set project_id here or pass
+# --project-ref on `supabase functions deploy`.
+# project_id = "<your-project-ref>"
+
+[functions.razorpay-paylink]
+# Authenticated Payments client calls this; keep JWT verification on.
+verify_jwt = true
+
+[functions.razorpay-webhook]
+# Razorpay calls this with an X-Razorpay-Signature HMAC, not a Supabase JWT,
+# so JWT verification MUST be off (the function verifies the HMAC itself).
+verify_jwt = false

@@ -568,3 +568,103 @@ export function formatPoText(po: PoTextInput): string {
   out.push("", `Total (excl. GST): ${inr(po.totalPaise)}`, "", "Please confirm availability and dispatch. Thank you.");
   return out.join("\n");
 }
+
+// ── Vendor schemes (SALT-026) ────────────────────────────────────────────────
+// A vendor scheme is a standing deal: a trade discount and/or a free-goods ratio,
+// optionally scoped to one item, optionally time-boxed. At GRN entry we pick the
+// active scheme for the (vendor, item) and auto-apply it, then flag when the keyed
+// line diverges. Pure: the screen passes the rows it fetched from vendor_schemes.
+
+export interface VendorScheme {
+  id: string;
+  vendorId: string;
+  /** Null = vendor-wide (applies to any item); set = scoped to that item. */
+  itemId: string | null;
+  label: string | null;
+  discountType: DiscountType | null;
+  discountValue: number;
+  schemeBuyQty: number;
+  schemeFreeQty: number;
+  /** YYYY-MM-DD or null (open-ended). */
+  validFrom: string | null;
+  validTo: string | null;
+  active: boolean;
+}
+
+/** True when `scheme` is active and `onDate` falls within its validity window. */
+export function schemeIsActive(scheme: VendorScheme, onDate: string): boolean {
+  if (!scheme.active) return false;
+  if (scheme.validFrom && onDate < scheme.validFrom) return false;
+  if (scheme.validTo && onDate > scheme.validTo) return false;
+  return true;
+}
+
+/**
+ * The scheme to apply for a (vendor, item) on a date: an item-specific scheme
+ * wins over a vendor-wide one; among equals, the most recently valid (latest
+ * validFrom) wins. Returns null when nothing active matches.
+ */
+export function activeSchemeFor(
+  schemes: VendorScheme[],
+  vendorId: string,
+  itemId: string | null,
+  onDate: string,
+): VendorScheme | null {
+  const candidates = schemes.filter(
+    (s) =>
+      s.vendorId === vendorId &&
+      schemeIsActive(s, onDate) &&
+      (s.itemId === null || s.itemId === itemId),
+  );
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => {
+    // Item-specific first.
+    if ((a.itemId === null) !== (b.itemId === null)) return a.itemId === null ? 1 : -1;
+    // Then latest validFrom (nulls last).
+    return (b.validFrom ?? "").localeCompare(a.validFrom ?? "");
+  });
+  return candidates[0];
+}
+
+/** Free units a scheme grants for a received qty: floor(qty/buy) × free. */
+export function schemeFreeQtyFor(scheme: VendorScheme, qty: number): number {
+  if (scheme.schemeBuyQty <= 0 || scheme.schemeFreeQty <= 0) return 0;
+  return Math.floor(qty / scheme.schemeBuyQty) * scheme.schemeFreeQty;
+}
+
+export interface SchemeMismatch {
+  /** The keyed line diverges from the scheme on the discount and/or free goods. */
+  discountOff: boolean;
+  freeQtyOff: boolean;
+  /** What the scheme would apply, for the flag message. */
+  expectedDiscountType: DiscountType | null;
+  expectedDiscountValue: number;
+  expectedFreeQty: number;
+}
+
+/**
+ * Compare a keyed GRN line against the scheme. `expectedFreeQty` is computed from
+ * the line qty + the buy/free ratio. Returns null when the line matches (or when
+ * there is nothing to check).
+ */
+export function schemeMismatch(
+  line: { qty: number; freeQty?: number; discountType?: DiscountType | null; discountValue?: number },
+  scheme: VendorScheme,
+): SchemeMismatch | null {
+  const expectedFreeQty = schemeFreeQtyFor(scheme, line.qty);
+  const expectedDiscountValue = scheme.discountType ? scheme.discountValue : 0;
+  const keyedDiscountValue = line.discountType ? (line.discountValue ?? 0) : 0;
+  // Discount diverges if the type differs (when the scheme has one) or the value differs.
+  const discountOff = scheme.discountType
+    ? line.discountType !== scheme.discountType || keyedDiscountValue !== expectedDiscountValue
+    : false;
+  const freeQtyOff = expectedFreeQty !== (line.freeQty ?? 0);
+  if (!discountOff && !freeQtyOff) return null;
+  return {
+    discountOff,
+    freeQtyOff,
+    expectedDiscountType: scheme.discountType,
+    expectedDiscountValue,
+    expectedFreeQty,
+  };
+}

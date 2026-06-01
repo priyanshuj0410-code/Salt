@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/patterns/page-header";
 import { supabase } from "@/lib/supabase";
 import { useAuth, type Shop } from "@/lib/auth";
 import { formatPaise } from "@/lib/currency";
+import { invalidateInvoiceConfig } from "@/lib/print";
 import {
   DEFAULT_FORMAT,
   DEFAULT_INVOICE_TEMPLATE,
@@ -103,6 +104,9 @@ export function PrintTemplatesPage() {
         }
         setRowId(data.id as string);
       }
+      // The print path caches the invoice config per session (SALT-165); clear it
+      // so the very next bill print reflects this save without a page reload.
+      invalidateInvoiceConfig();
       setDirty(false);
       setSavedTick(true);
       setTimeout(() => setSavedTick(false), 2500);

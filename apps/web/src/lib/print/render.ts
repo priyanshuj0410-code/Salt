@@ -8,6 +8,7 @@ import { taxSummary } from "./taxSummary";
 import { DOC_META, SALE_DOC_TYPES, type DocMeta, type DocType } from "./docType";
 import { templateStorageKey, type PrintTemplate } from "./template";
 import { pick, LABELS, LANG_LABEL, PRINT_LANGS, type PrintLang, type LabelKey } from "./i18n";
+import { type InvoiceConfig, DEFAULT_FOOTER_TEXT } from "./invoiceConfig";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -35,8 +36,8 @@ const lineDisc = (l: InvoiceLine): number => l.mrpPaise * l.qty - l.netPaise;
 
 // ─────────────────────────────────────────── receipt (thermal 58 / 80 mm)
 
-function receiptLineRow(l: InvoiceLine): string {
-  const sub = [l.pack, l.batchNo && `B: ${l.batchNo}`, l.expiry && `Exp ${l.expiry}`]
+function receiptLineRow(l: InvoiceLine, showBatchExpiry: boolean): string {
+  const sub = [l.pack, showBatchExpiry && l.batchNo && `B: ${l.batchNo}`, showBatchExpiry && l.expiry && `Exp ${l.expiry}`]
     .filter(Boolean)
     .map((s) => esc(String(s)))
     .join(" · ");
@@ -53,8 +54,14 @@ function receiptTotalRow(label: string, value: string, strong = false): string {
   return `<tr class="${strong ? "tot" : ""}"><td colspan="3" class="r">${label}</td><td class="r">${esc(value)}</td></tr>`;
 }
 
-function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: PrintLang): string {
-  const shopMeta = [d.shop.address, d.shop.phone && `Ph: ${d.shop.phone}`, d.shop.gstin && `GSTIN: ${d.shop.gstin}`]
+function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: PrintLang, cfg: InvoiceConfig): string {
+  const tagline = t.tagline ?? cfg.tagline;
+  const terms = t.terms ?? cfg.termsText;
+  const shopMeta = [
+    d.shop.address,
+    d.shop.phone && `Ph: ${d.shop.phone}`,
+    cfg.showGstin && d.shop.gstin && `GSTIN: ${d.shop.gstin}`,
+  ]
     .filter(Boolean)
     .map((s) => esc(String(s)))
     .join("<br>");
@@ -67,8 +74,10 @@ function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang:
     : receiptTotalRow(L("cgst", lang), formatPaise(d.cgst)) + receiptTotalRow(L("sgst", lang), formatPaise(d.sgst));
   const payLabel = d.payment.method === "credit" ? "Credit" : "Cash";
   const refLine = d.reference ? `<div class="note-only ref">${esc(d.reference)}</div>` : "";
+  // Footer: a bilingual "thank you" when left at the default, else the custom text verbatim.
+  const footer = cfg.footerText === DEFAULT_FOOTER_TEXT ? L("thankYou", lang) : esc(cfg.footerText);
   return `<div class="receipt">
-    <div class="shop">${tplLogo(t.logo)}<h1>${esc(d.shop.name)}</h1>${tplText("tagline", t.tagline)}<div class="meta">${shopMeta}</div>${tplText("licenses", t.licenses, "div", " meta")}</div>
+    <div class="shop">${tplLogo(t.logo)}<h1>${esc(d.shop.name)}</h1>${tplText("tagline", tagline)}<div class="meta">${shopMeta}</div>${tplText("licenses", t.licenses, "div", " meta")}</div>
     <hr>
     <div class="row"><span class="doctitle">${esc(meta.title)}</span><span>${esc(d.dateTime)}</span></div>
     <div class="row"><span>${L("ref", lang)}: ${esc(d.ref)}</span><span>${esc(payLabel)}</span></div>
@@ -76,7 +85,7 @@ function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang:
     <div class="bill-to"><strong>${esc(d.customerName)}</strong>${custMeta ? `<br><span class="meta">${custMeta}</span>` : ""}</div>
     <table>
       <thead><tr><th class="l">${L("item", lang)}</th><th class="r">${L("qty", lang)}</th><th class="r">${L("mrp", lang)}</th><th class="r">${L("amt", lang)}</th></tr></thead>
-      <tbody>${d.lines.map(receiptLineRow).join("")}</tbody>
+      <tbody>${d.lines.map((l) => receiptLineRow(l, cfg.showBatchExpiry)).join("")}</tbody>
       <tfoot>
         ${receiptTotalRow(L("grossMrp", lang), formatPaise(d.gross))}
         ${d.discount > 0 ? receiptTotalRow(L("discount", lang), `- ${formatPaise(d.discount)}`) : ""}
@@ -87,18 +96,18 @@ function receiptBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang:
       </tfoot>
     </table>
     <div class="words">${esc(rupeesInWords(d.grand))}</div>
-    ${tplText("terms", t.terms)}
-    <div class="foot">${L("thankYou", lang)}</div>
+    ${tplText("terms", terms)}
+    <div class="foot">${footer}</div>
     ${tplText("footer", t.footer)}
   </div>`;
 }
 
 // ─────────────────────────────────────────── sheet (A4)
 
-function sheetItemRow(l: InvoiceLine, i: number): string {
+function sheetItemRow(l: InvoiceLine, i: number, showBatchExpiry: boolean): string {
   const { taxable } = splitInclusiveGst(l.netPaise, l.gstRate);
   const disc = lineDisc(l);
-  const sub = [l.batchNo && `B: ${l.batchNo}`, l.expiry && `Exp ${l.expiry}`]
+  const sub = [showBatchExpiry && l.batchNo && `B: ${l.batchNo}`, showBatchExpiry && l.expiry && `Exp ${l.expiry}`]
     .filter(Boolean)
     .map((s) => esc(String(s)))
     .join(" · ");
@@ -115,7 +124,9 @@ function sheetItemRow(l: InvoiceLine, i: number): string {
   </tr>`;
 }
 
-function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: PrintLang): string {
+function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: PrintLang, cfg: InvoiceConfig): string {
+  const tagline = t.tagline ?? cfg.tagline;
+  const terms = t.terms ?? cfg.termsText;
   const shopLines = [d.shop.address, d.shop.phone && `Ph: ${d.shop.phone}`]
     .filter(Boolean)
     .map((s) => `<div>${esc(String(s))}</div>`)
@@ -148,9 +159,9 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: P
       <div class="s-shop">
         ${tplLogo(t.logo)}
         <h1>${esc(d.shop.name)}</h1>
-        ${tplText("tagline", t.tagline)}
+        ${tplText("tagline", tagline)}
         ${shopLines}
-        ${d.shop.gstin ? `<div><strong>GSTIN: ${esc(d.shop.gstin)}</strong></div>` : ""}
+        ${cfg.showGstin && d.shop.gstin ? `<div><strong>GSTIN: ${esc(d.shop.gstin)}</strong></div>` : ""}
         ${tplText("licenses", t.licenses)}
       </div>
       <div class="s-title">
@@ -174,7 +185,7 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: P
         <th class="r">#</th><th>${L("item", lang)}</th><th>${L("hsn", lang)}</th><th class="r">${L("qty", lang)}</th>
         <th class="r">${L("mrp", lang)}</th><th class="r">${L("disc", lang)}</th><th class="r">${L("taxable", lang)}</th><th class="r">${L("gst", lang)}</th><th class="r">${L("amount", lang)}</th>
       </tr></thead>
-      <tbody>${d.lines.map(sheetItemRow).join("")}</tbody>
+      <tbody>${d.lines.map((l, i) => sheetItemRow(l, i, cfg.showBatchExpiry)).join("")}</tbody>
     </table>
     <div class="s-bottom">
       <div class="s-notes">
@@ -191,12 +202,12 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: P
       </table>
     </div>
     <div class="s-words"><span class="lbl">${L("amountInWords", lang)}</span>${esc(rupeesInWords(d.grand))}</div>
-    ${tplText("terms", t.terms)}
+    ${tplText("terms", terms)}
     <div class="s-foot-row">
       <div class="s-decl taxdoc-only">${L("declaration", lang)}</div>
       <div class="s-sign">For ${esc(d.shop.name)}<div class="s-sign-line"><span class="tpl-signatureLabel">${esc(t.signatureLabel ?? "Authorised signatory")}</span></div></div>
     </div>
-    ${tplText("footer", t.footer)}
+    ${tplText("footer", t.footer ?? (cfg.footerText === DEFAULT_FOOTER_TEXT ? undefined : cfg.footerText))}
   </div>`;
 }
 
@@ -228,12 +239,15 @@ function monoWrap(s: string): string[] {
   return out;
 }
 
-function monoBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string {
+function monoBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, cfg: InvoiceConfig): string {
+  const tagline = t.tagline ?? cfg.tagline;
+  const terms = t.terms ?? cfg.termsText;
+  const footer = t.footer ?? (cfg.footerText || "Thank you. Get well soon.");
   const lines: string[] = [];
   lines.push(monoCenter(d.shop.name.toUpperCase()));
-  if (t.tagline) lines.push(monoCenter(t.tagline));
+  if (tagline) lines.push(monoCenter(tagline));
   if (d.shop.address) lines.push(monoCenter(d.shop.address));
-  const idLine = [d.shop.phone && `Ph: ${d.shop.phone}`, d.shop.gstin && `GSTIN: ${d.shop.gstin}`]
+  const idLine = [d.shop.phone && `Ph: ${d.shop.phone}`, cfg.showGstin && d.shop.gstin && `GSTIN: ${d.shop.gstin}`]
     .filter(Boolean)
     .join("  ");
   if (idLine) lines.push(monoCenter(idLine));
@@ -248,7 +262,7 @@ function monoBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string 
   lines.push(monoDash);
   for (const l of d.lines) {
     lines.push(padR(l.name, 30) + " " + padL(String(l.qty), 5) + " " + padL(rs(l.mrpPaise), 11) + " " + padL(rs(l.netPaise), 12));
-    const sub = [l.pack, l.batchNo && `B:${l.batchNo}`, l.expiry && `Exp ${l.expiry}`].filter(Boolean).join("  ");
+    const sub = [l.pack, cfg.showBatchExpiry && l.batchNo && `B:${l.batchNo}`, cfg.showBatchExpiry && l.expiry && `Exp ${l.expiry}`].filter(Boolean).join("  ");
     if (sub) lines.push(padR("  " + sub, MONO_W));
   }
   lines.push(monoDash);
@@ -265,12 +279,12 @@ function monoBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate): string 
   lines.push(monoTotal("TOTAL", rs(d.grand)));
   lines.push("");
   for (const wl of monoWrap(rupeesInWords(d.grand))) lines.push(wl);
-  if (t.terms) {
+  if (terms) {
     lines.push("");
-    for (const wl of monoWrap(t.terms)) lines.push(wl);
+    for (const wl of monoWrap(terms)) lines.push(wl);
   }
   lines.push(monoRule);
-  lines.push(monoCenter(t.footer || "Thank you. Get well soon."));
+  lines.push(monoCenter(footer));
   return `<div class="mono-title doctitle">${esc(meta.title)}</div><pre class="mono">${esc(lines.join("\n"))}</pre>`;
 }
 
@@ -378,10 +392,13 @@ body[data-doctype="sales-return"] .taxdoc-only{display:none}
 .tpl-editor label{width:92px;color:#71717a;flex:none}
 .tpl-editor input,.tpl-editor textarea{flex:1;font:inherit;padding:4px 6px;border:1px solid #d4d4d8;border-radius:5px;min-width:0}
 .tpl-editor .tpl-note{color:#a1a1aa;font-size:11px;margin-top:2px}
+/* copies: a page break between repeated bodies; a faint rule on screen */
+.copy-break{break-before:page;border-top:1px dashed #d4d4d8;margin:14px 0}
 @media print{
   body{background:#fff;padding:0}
   .toolbar,.tpl-editor{display:none!important}
   .doc{box-shadow:none;margin:0;padding:0;width:auto!important}
+  .copy-break{border:none;margin:0}
 }`;
 
 /**
@@ -470,13 +487,20 @@ function editorPanel(t: PrintTemplate): string {
 </div>`;
 }
 
+/** Repeat one rendered body `copies` times, page-breaking between copies. */
+function withCopies(body: string, copies: number): string {
+  if (copies <= 1) return body;
+  return Array.from({ length: copies }, (_, i) => (i === 0 ? body : `<div class="copy-break"></div>${body}`)).join("");
+}
+
 /** Build the invoice HTML document (self-contained, inline styles, all formats). */
 export function invoiceHtml(
   d: InvoicePrintData,
-  opts: { format: PrintFormat; docType: DocType; template: PrintTemplate; lang: PrintLang },
+  opts: { format: PrintFormat; docType: DocType; template: PrintTemplate; lang: PrintLang; config: InvoiceConfig },
 ): string {
-  const { format: fmt, docType, template, lang } = opts;
+  const { format: fmt, docType, template, lang, config } = opts;
   const meta = DOC_META[docType];
+  const copies = config.copies;
   const fmtButtons = PRINT_FORMATS.map(
     (f) => `<button data-f="${f}"${f === fmt ? ' class="on"' : ""}>${esc(FORMAT_LABEL[f])}</button>`,
   ).join("");
@@ -508,9 +532,9 @@ export function invoiceHtml(
   <button id="close">Close</button>
 </div>
 ${editorPanel(template)}
-<div class="doc" id="doc-receipt">${receiptBody(d, meta, template, lang)}</div>
-<div class="doc" id="doc-sheet">${sheetBody(d, meta, template, lang)}</div>
-<div class="doc" id="doc-mono">${monoBody(d, meta, template)}</div>
+<div class="doc" id="doc-receipt">${withCopies(receiptBody(d, meta, template, lang, config), copies)}</div>
+<div class="doc" id="doc-sheet">${withCopies(sheetBody(d, meta, template, lang, config), copies)}</div>
+<div class="doc" id="doc-mono">${withCopies(monoBody(d, meta, template, config), copies)}</div>
 ${dataScript}
 <script>${SCRIPT}</script>
 </body></html>`;

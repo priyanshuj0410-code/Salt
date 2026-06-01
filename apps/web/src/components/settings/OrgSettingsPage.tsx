@@ -4,6 +4,7 @@ import { ArrowLeft, Building2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { FormRow } from "@/components/patterns/form-row";
 import { UserMenu } from "@/components/auth/UserMenu";
 import { supabase } from "@/lib/supabase";
 import { useAuth, type Shop } from "@/lib/auth";
@@ -111,10 +112,10 @@ function ShopEditor({ shop }: { shop: Shop }) {
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <Field label="Shop name" required>
+        <FormRow label="Shop name" required>
           <Input value={draft.name ?? ""} onChange={(e) => edit("name", e.target.value)} className="h-8" />
-        </Field>
-        <Field label="State" required>
+        </FormRow>
+        <FormRow label="State" required>
           <select
             value={draft.state_code ?? ""}
             onChange={(e) => edit("state_code", e.target.value || null)}
@@ -130,32 +131,32 @@ function ShopEditor({ shop }: { shop: Shop }) {
           {draft.state_code && (
             <span className="text-[11px] text-muted-foreground">{stateName(draft.state_code)}</span>
           )}
-        </Field>
-        <Field label="GSTIN">
+        </FormRow>
+        <FormRow label="GSTIN">
           <Input
             value={draft.gstin ?? ""}
             onChange={(e) => edit("gstin", e.target.value)}
             placeholder="—"
             className="h-8 font-mono text-xs uppercase"
           />
-        </Field>
-        <Field label="Phone">
+        </FormRow>
+        <FormRow label="Phone">
           <Input value={draft.phone ?? ""} onChange={(e) => edit("phone", e.target.value)} placeholder="—" className="h-8" />
-        </Field>
-        <Field label="Address">
+        </FormRow>
+        <FormRow label="Address">
           <Input value={draft.address ?? ""} onChange={(e) => edit("address", e.target.value)} placeholder="—" className="h-8" />
-        </Field>
-        <Field label="UPI ID (VPA)" hint="Adds a pay link to payment reminders, e.g. shop@okhdfcbank.">
+        </FormRow>
+        <FormRow label="UPI ID (VPA)" helper="Adds a pay link to payment reminders, e.g. shop@okhdfcbank.">
           <Input
             value={draft.upi_vpa ?? ""}
             onChange={(e) => edit("upi_vpa", e.target.value)}
             placeholder="—"
             className="h-8 font-mono text-xs"
           />
-        </Field>
-        <Field
+        </FormRow>
+        <FormRow
           label="Cutover date"
-          hint="Historical docs before this date are saved as non-posting (opening snapshot only)."
+          helper="Historical docs before this date are saved as non-posting (opening snapshot only)."
         >
           <Input
             type="date"
@@ -163,7 +164,7 @@ function ShopEditor({ shop }: { shop: Shop }) {
             onChange={(e) => edit("cutover_date", e.target.value || null)}
             className="h-8"
           />
-        </Field>
+        </FormRow>
       </div>
 
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
@@ -174,28 +175,5 @@ function ShopEditor({ shop }: { shop: Shop }) {
         </Button>
       </div>
     </section>
-  );
-}
-
-function Field({
-  label,
-  required,
-  hint,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  hint?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-xs font-medium text-muted-foreground">
-        {label}
-        {required && <span className="ml-0.5 text-destructive">*</span>}
-      </span>
-      {children}
-      {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
-    </label>
   );
 }

@@ -6,8 +6,12 @@ import { formatPaise, formatSigned } from "@/lib/currency";
 import { gstSplit } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
+import { useHeldBills } from "@/store/heldBills";
 import { GstinPrompt } from "./GstinPrompt";
 import { H1Notice } from "./H1Gate";
+import { CreditNotice } from "./CreditNotice";
+import { SplitTender } from "./SplitTender";
+import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -73,9 +77,15 @@ export function BillSummary({
 }) {
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
-  const parkBill = useBill((s) => s.parkBill);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
-  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
+  const hold = useHeldBills((s) => s.hold);
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, savedOffline, error, shopId } = checkout;
+  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
+  const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
+  const { discountGate, cancelDiscountApproval } = checkout;
+  // Save is blocked while a split does not balance, or while an over-limit discount is
+  // awaiting manager approval (the server / gate would reject it anyway).
+  const blockSave =
+    empty || saving || usingSeed || !shopId || (splitMode && !tenderChk.ok) || discountGate.status === "pending";
   const tax = gstSplit(t.gst, isInterstate);
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
@@ -128,55 +138,81 @@ export function BillSummary({
       <Separator />
 
       <div>
-        <p className="mb-1.5 text-xs font-medium text-text-tertiary">Payment</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="text-xs font-medium text-text-tertiary">Payment</p>
           <Button
-            variant={payment.method === "cash" ? "default" : "outline"}
-            onClick={() => setPaymentMethod("cash")}
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 px-1.5 text-xs"
+            onClick={() => setSplit(!splitMode)}
           >
-            <Banknote />
-            Cash
-          </Button>
-          <Button
-            variant={payment.method === "credit" ? "default" : "outline"}
-            onClick={() => setPaymentMethod("credit")}
-          >
-            <CalendarClock />
-            Credit
+            {splitMode ? "Single payment" : "Split payment"}
           </Button>
         </div>
 
-        {payment.method === "credit" && (
-          <div className="mt-2 rounded-md border border-border p-2.5">
-            <p className="mb-1.5 text-xs text-text-tertiary">Repayment period</p>
-            <div className="flex items-center gap-1.5">
-              {CREDIT_PRESETS.map((d) => (
-                <Button
-                  key={d}
-                  size="sm"
-                  variant={payment.creditDays === d ? "secondary" : "outline"}
-                  onClick={() => setCreditDays(d)}
-                >
-                  {d}d
-                </Button>
-              ))}
-              <input
-                type="number"
-                min={1}
-                value={payment.creditDays}
-                onChange={(e) => setCreditDays(Number(e.target.value) || 0)}
-                aria-label="Custom repayment days"
-                className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
-              />
-              <span className="text-sm text-text-tertiary">days</span>
+        {splitMode ? (
+          <SplitTender
+            amounts={tenderAmounts}
+            setAmount={setTenderAmount}
+            fillRemainder={fillRemainder}
+            check={tenderChk}
+            creditDays={payment.creditDays}
+            setCreditDays={setCreditDays}
+            hasParty={party !== null}
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant={payment.method === "cash" ? "default" : "outline"}
+                onClick={() => setPaymentMethod("cash")}
+              >
+                <Banknote />
+                Cash
+              </Button>
+              <Button
+                variant={payment.method === "credit" ? "default" : "outline"}
+                onClick={() => setPaymentMethod("credit")}
+              >
+                <CalendarClock />
+                Credit
+              </Button>
             </div>
-            <p className="mt-1.5 text-xs text-text-tertiary">
-              Due by{" "}
-              <span className="font-medium text-text-primary">
-                {format(addDays(new Date(), payment.creditDays), "d MMM yyyy")}
-              </span>
-            </p>
-          </div>
+
+            {payment.method === "credit" && (
+              <div className="mt-2 rounded-md border border-border p-2.5">
+                <p className="mb-1.5 text-xs text-text-tertiary">Repayment period</p>
+                <div className="flex items-center gap-1.5">
+                  {CREDIT_PRESETS.map((d) => (
+                    <Button
+                      key={d}
+                      size="sm"
+                      variant={payment.creditDays === d ? "secondary" : "outline"}
+                      onClick={() => setCreditDays(d)}
+                    >
+                      {d}d
+                    </Button>
+                  ))}
+                  <input
+                    type="number"
+                    min={1}
+                    value={payment.creditDays}
+                    onChange={(e) => setCreditDays(Number(e.target.value) || 0)}
+                    aria-label="Custom repayment days"
+                    className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                  />
+                  <span className="text-sm text-text-tertiary">days</span>
+                </div>
+                <p className="mt-1.5 text-xs text-text-tertiary">
+                  Due by{" "}
+                  <span className="font-medium text-text-primary">
+                    {format(addDays(new Date(), payment.creditDays), "d MMM yyyy")}
+                  </span>
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -184,14 +220,22 @@ export function BillSummary({
         {needsRx && (
           <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
         )}
+        <DiscountApprovalNotice gate={discountGate} onCancel={cancelDiscountApproval} />
+        {creditWarn.over && <CreditNotice check={creditWarn} />}
         <Button
           size="lg"
-          disabled={empty || saving || usingSeed || !shopId}
+          disabled={blockSave}
           onClick={() => saveAndPrint()}
           title={usingSeed ? "Import your items to save bills" : undefined}
         >
-          {saved ? <Check /> : <Printer />}
-          {saved ? "Saved" : saving ? "Saving…" : "Save & Print · F9"}
+          {saved || savedOffline ? <Check /> : <Printer />}
+          {saved
+            ? "Saved"
+            : savedOffline
+              ? "Saved offline"
+              : saving
+                ? "Saving…"
+                : "Save & Print · F9"}
         </Button>
         {usingSeed && (
           <p className="text-center text-xs text-text-tertiary">
@@ -203,12 +247,17 @@ export function BillSummary({
           <Button
             variant="outline"
             size="sm"
-            disabled={empty || saving || usingSeed || !shopId}
+            disabled={blockSave}
             onClick={() => saveOnly()}
           >
             Save only
           </Button>
-          <Button variant="outline" size="sm" disabled={empty} onClick={parkBill}>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={empty || !shopId}
+            onClick={() => shopId && hold(shopId)}
+          >
             Hold · F4
           </Button>
         </div>

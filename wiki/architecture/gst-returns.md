@@ -4,13 +4,16 @@ updated: 2026-06-01
 tags: [gst, compliance, sales]
 ---
 
-# GST returns & liability (GSTR-1, GSTR-3B, live liability)
+# GST & compliance — returns, liability, ITC, exports
 
-The **GST & compliance** module's screens (SALT-002, SALT-063, SALT-069; product-modules §9):
-read-only views that aggregate one shop's documents into the GSTN sections / a live tax
-position, with portal-ready JSON + CSV export. Screens under `/gst`
-(`components/gst/Gstr1Page.tsx`, `Gstr3bPage.tsx`, `GstLiabilityPage.tsx`); all aggregation
-in `lib/gst.ts`, which is **pure** (no Supabase) and unit-smoke-tested.
+The **GST & compliance** module's eight screens (SALT-002/063/064/065/067/068/069/070/170; product-modules §9):
+read-only views that aggregate one shop's documents into the GSTN sections, a live tax position,
+the ITC ledger, accountant exports, and the Schedule H1/X dispensing register — with portal-ready
+JSON / CSV / Tally XML / inspector PDF. Screens under `/gst` (`Gstr1Page`, `Gstr3bPage`,
+`GstLiabilityPage`, `ItcRegisterPage`, `TallyExportPage`, `HsnReportPage`, `H1RegisterPage`, `InvoiceSeriesPage` in
+`components/gst/`); the returns aggregation lives in `lib/gst.ts` and the register in `lib/h1.ts`,
+both **pure** (no
+Supabase) and unit-smoke-tested.
 
 ## Read contract (as-built)
 
@@ -49,15 +52,16 @@ Section breakdowns and the headline totals both derive from the **lines**, so th
 
 ## GSTR-3B (summary return)
 
-`buildGstr3b(period, sales, purchases)` (screen `/gst/gstr3b`) nets the month's tax:
+`buildGstr3b(period, sales, purchases, reversalPaise)` (screen `/gst/gstr3b`) nets the month's tax:
 
 - **Output tax** — summed per head (CGST/SGST/IGST) from the period's `sales_invoices`
   (same scope as GSTR-1: shop, `status='placed'`, `posts_effects=true`).
-- **Eligible ITC** — summed per head from `purchases` (`status='received'`,
+- **Gross ITC** — summed per head from `purchases` (`status='received'`,
   `posts_effects=true`, `received_date` in month); `receive_purchase` stores the split the
   same way `create_sales_invoice` does.
-- **Net payable** = `max(0, output − ITC)` after full credit set-off (the cash figure);
-  per-head `balance` is shown for detail; surplus ITC is reported as credit carried forward.
+- **Net payable** = `max(0, output − net ITC)` after full credit set-off (the cash figure),
+  where net ITC = gross ITC − the Table-4B reversal below; per-head `balance` is shown for
+  detail; surplus ITC is reported as credit carried forward.
 - `buildGstr3bJson` → GSTN-style `{ gstin, ret_period, sup_details, itc_elg, net_payable }`;
   `gstr3bToCsv` for spreadsheets.
 - **ITC reversal (Table 4B)** is wired from **expiry write-offs** (`stock_movements`,
@@ -112,12 +116,40 @@ are referenced by name (Tally maps/creates them on import). Same scope filters a
 for one month, but spanning a quarter or year for GSTR-9 / analytics. CSV export. Same scope as
 the returns (shop, `status='placed'`, `posts_effects=true`).
 
-## Deferred
+## H1/X register
 
-Credit notes (CDNR — Returns module unbuilt) · server-side `v_gstr1_*` / `v_gstr3b_summary`
-views (proposed `0022_gst_compliance.sql` matches the live schema and can be promoted by the
-database chat) · GSTR-2B recon (SALT-007, smart-import), ITC register, H1/X register,
-drug-license alerts (other GST slices).
+`/gst/h1` (`H1RegisterPage`, SALT-065) is the legal Schedule **H1/X dispensing register** for the
+drug inspector — `create_sales_invoice` writes an `h1_register` row per H1/X line at checkout
+(migration `0032`, carrying the H1 gate's prescriber + patient details). The screen filters by date
+range, schedule (H1/X), and a drug/doctor/patient search, resolves the pharmacist via `profiles`,
+and exports **CSV** + a print/PDF inspector register (A4 landscape, 3-year-retention footer). The
+filter + CSV + register-HTML helpers live in **`lib/h1.ts`** (pure, smoke-tested); `printH1Register`
+is the thin `window.print()` wrapper (same pattern as `lib/destruction.ts`).
+
+## Invoice series
+
+`/gst/series` (`InvoiceSeriesPage`, SALT-067) manages a shop's **named GST invoice series**
+(`invoice_series`, 0024 + 0033 — `code` / `prefix` / `number_width` / `is_default` / `active`,
+RLS-CRUDable). Add a series (RETAIL / WS / branch), set the **default**, edit prefix/width, and
+activate/deactivate — per Indian financial year. The running number is allocated **gap-free**
+server-side by `next_doc_no(shop, 'sales_invoice', code)`, and `create_sales_invoice` pulls from
+the shop's default active series (so changing the default re-routes new bills immediately). Pure
+helpers (`currentIndianFy`, `seriesPreview`, `normalizeSeriesCode`) in **`lib/series.ts`**
+(smoke-tested). The per-bill series **picker at the counter** is the billing lane's half — filed
+as **SALT-209**.
+
+## Status & next
+
+**Shipped** (all in-lane GST work — 9 tickets): GSTR-1, GSTR-3B (+ Table-4B write-off reversal),
+live liability, ITC register, Tally export, HSN summary, the **H1/X register** (SALT-065, on the
+live `h1_register` / 0032), and **invoice-series management** (SALT-067, on `invoice_series` / 0033).
+
+**Elsewhere / handed off:** GSTR-2B recon (SALT-007, smart-import lane) · the drug-license
+renewal banner (SALT-066, owner lane — store + 90/60/30-day alerts already ship in
+`settings/DrugLicensesPage`) · e-invoicing IRN/QR (SALT-071) and direct GSTN filing (SALT-072)
+await GSP/IRP credentials. Sales credit-note GST reversal rides the Returns engine
+(`lib/returns.ts`); the Reports lane also exposes a Tax-reports suite at `/reports/tax` over the
+`v_*` views — complementary to these filing screens.
 
 Links: [product/product-modules](../product/product-modules.md) §9 ·
 [domain/orders](../domain/orders.md) ·

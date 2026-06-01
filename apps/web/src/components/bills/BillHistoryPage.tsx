@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
 import { MessageThread } from "@/components/messages/MessageThread";
+import { ReturnDialog } from "@/components/bills/ReturnDialog";
 import { buildSavedInvoicePrintData, printSavedBill } from "@/lib/billPrint";
 import { buildBillShareSubject, buildBillShareText, mailtoLink, smsLink } from "@/lib/billShare";
 import { normalizePhoneForWa, whatsappUrl } from "@/lib/collection";
@@ -41,6 +42,7 @@ interface BillRow {
   status: string;
   party_id: string | null;
   posts_effects: boolean | null;
+  is_interstate: boolean | null;
   discount_paise: number;
   taxable_paise: number;
   cgst_paise: number;
@@ -76,6 +78,7 @@ export function BillHistoryPage() {
   const [voidReason, setVoidReason] = useState("");
   const [voiding, setVoiding] = useState(false);
   const [voidErr, setVoidErr] = useState<string | null>(null);
+  const [returnOpen, setReturnOpen] = useState(false);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -83,7 +86,7 @@ export function BillHistoryPage() {
     supabase
       .from("sales_invoices")
       .select(
-        "id,invoice_no,invoice_date,created_at,total_paise,paid_paise,payment_method,credit_days,due_date,status,party_id,posts_effects,discount_paise,taxable_paise,cgst_paise,sgst_paise,igst_paise,ledgers(name)",
+        "id,invoice_no,invoice_date,created_at,total_paise,paid_paise,payment_method,credit_days,due_date,status,party_id,posts_effects,is_interstate,discount_paise,taxable_paise,cgst_paise,sgst_paise,igst_paise,ledgers(name)",
       )
       .eq("org_id", orgId)
       .order("created_at", { ascending: false })
@@ -106,6 +109,7 @@ export function BillHistoryPage() {
     setConfirmVoid(false);
     setVoidReason("");
     setVoidErr(null);
+    setReturnOpen(false);
     if (!supabase) return;
     const { data } = await supabase
       .from("sale_lines")
@@ -430,6 +434,11 @@ export function BillHistoryPage() {
                   <Wallet className="size-4" /> Record receipt
                 </Button>
               )}
+              {openBill && openBill.status !== "cancelled" && openBill.posts_effects !== false && (
+                <Button variant="outline" onClick={() => setReturnOpen(true)}>
+                  <Undo2 className="size-4" /> Return items
+                </Button>
+              )}
               {waUrl ? (
                 <Button variant="outline" render={<a href={waUrl} target="_blank" rel="noopener noreferrer" />}>
                   <MessageCircle className="size-4" /> WhatsApp
@@ -460,6 +469,24 @@ export function BillHistoryPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {openBill && (
+        <ReturnDialog
+          open={returnOpen}
+          onOpenChange={setReturnOpen}
+          invoiceId={openBill.id}
+          invoiceNo={invoiceNo(openBill)}
+          shopId={auth.shopId ?? null}
+          partyId={openBill.party_id}
+          isInterstate={openBill.is_interstate === true}
+          defaultRefundMode={openBill.payment_method === "credit" ? "credit" : "cash"}
+          onDone={() => {
+            // The return restocks + posts; mark the source bill so the UI reflects it.
+            // (A bill can be partially returned, so we do not auto-cancel — just refresh.)
+            setOpenBill(null);
+          }}
+        />
+      )}
     </>
   );
 }

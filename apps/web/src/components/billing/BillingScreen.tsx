@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { ChevronDown, User } from "lucide-react";
+import { ChevronDown, CloudOff, RefreshCw, User } from "lucide-react";
 import { ItemSearch } from "./ItemSearch";
 import { BillTable } from "./BillTable";
 import { BillSummary } from "./BillSummary";
@@ -15,7 +15,11 @@ import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import { useBill } from "@/store/bill";
+import { useHeldBills } from "@/store/heldBills";
+import { useOutbox } from "@/lib/outbox";
 import { supabase } from "@/lib/supabase";
+import { fetchPartyCredit } from "@/lib/credit";
+import { subscribeTableChanges } from "@/lib/realtime";
 import { cn } from "@/lib/utils";
 
 function Hint({ keys, label }: { keys: string; label: string }) {
@@ -75,11 +79,16 @@ function CustomerBar({
 export function BillingScreen() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [customerOpen, setCustomerOpen] = useState(false);
-  const orgId = useAuth().membership?.orgId;
+  const { membership, shopId } = useAuth();
+  const orgId = membership?.orgId;
   const loadCatalog = useCatalog((s) => s.load);
   const party = useBill((s) => s.party);
   const setParty = useBill((s) => s.setParty);
-  const parkBill = useBill((s) => s.parkBill);
+  const hold = useHeldBills((s) => s.hold);
+  const loadHeld = useHeldBills((s) => s.load);
+  // Mount the offline outbox here (SALT-205): this drives the auto-flush on reconnect and the
+  // "waiting to sync" count. The sales handler is registered in useCheckout.
+  const { online, pending: pendingWrites } = useOutbox();
 
   // Detail for the selected customer: drives the header phone, the "Add GSTIN"
   // prompt, and the intra/inter-state GST split. Refetched after a GSTIN is saved.
@@ -89,6 +98,8 @@ export function BillingScreen() {
     state_code: string | null;
   } | null>(null);
   const [custKey, setCustKey] = useState(0);
+  // The bound party's credit limit + current dues, for the over-limit warning (SALT-004).
+  const [credit, setCredit] = useState<{ creditLimitPaise: number; duePaise: number } | null>(null);
   // Gate detail on `party` so a cleared bill (after save, or walk-in) never shows
   // the previous customer's phone/GSTIN even if the fetched detail is briefly stale.
   const customerGstin = party ? (customer?.gstin ?? null) : null;
@@ -98,11 +109,25 @@ export function BillingScreen() {
     () => (party ? { gstin: customerGstin, phone: customerPhone, state_code: customerState } : null),
     [party, customerGstin, customerPhone, customerState],
   );
-  const checkout = useCheckout({ customer: customerDetail });
+  const checkout = useCheckout({ customer: customerDetail, credit: party ? credit : null });
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
   }, [orgId, loadCatalog]);
+
+  // Held bills (SALT-191B): load this shop's set-aside bills, then keep the strip live
+  // across counters — any hold/resume/discard on any device re-pulls the list.
+  useEffect(() => {
+    if (!shopId) return;
+    void loadHeld(shopId);
+    return subscribeTableChanges({
+      channel: `held-${shopId}`,
+      table: "held_bills",
+      filter: `shop_id=eq.${shopId}`,
+      event: "*",
+      onChange: () => void loadHeld(shopId),
+    });
+  }, [shopId, loadHeld]);
 
   useEffect(() => {
     const id = party?.id;
@@ -123,6 +148,19 @@ export function BillingScreen() {
       active = false;
     };
   }, [party?.id, custKey]);
+
+  // Credit limit + current dues for the bound party — drives the over-limit warning (SALT-004).
+  useEffect(() => {
+    const id = party?.id;
+    if (!supabase || !id || !orgId) return;
+    let active = true;
+    void fetchPartyCredit(orgId, id).then((c) => {
+      if (active) setCredit(c);
+    });
+    return () => {
+      active = false;
+    };
+  }, [party?.id, orgId, custKey]);
 
   useHotkeys(
     "shift+/",
@@ -147,10 +185,10 @@ export function BillingScreen() {
     "f4",
     (e) => {
       e.preventDefault();
-      parkBill();
+      if (shopId) void hold(shopId);
     },
     { enableOnFormTags: true },
-    [parkBill],
+    [hold, shopId],
   );
 
   const refetchCustomer = () => setCustKey((k) => k + 1);
@@ -166,7 +204,22 @@ export function BillingScreen() {
           onChange={() => setCustomerOpen(true)}
           className="min-w-0 flex-1 md:w-72 md:flex-none"
         />
-        <span className="ml-auto hidden shrink-0 text-sm text-text-tertiary md:block">Counter 1</span>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {!online && (
+            <span className="flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-xs font-medium text-warning">
+              <CloudOff className="size-3.5" /> Offline
+            </span>
+          )}
+          {pendingWrites > 0 && (
+            <span
+              className="flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-text-secondary"
+              title="Bills saved offline, waiting to sync"
+            >
+              <RefreshCw className="size-3.5" /> {pendingWrites} to sync
+            </span>
+          )}
+          <span className="hidden text-sm text-text-tertiary md:block">Counter 1</span>
+        </div>
       </header>
 
       <ParkedBills />
@@ -197,6 +250,7 @@ export function BillingScreen() {
         onSelect={(p) => {
           setParty(p);
           setCustomer(null);
+          setCredit(null);
         }}
       />
       <ShopSetupDialog

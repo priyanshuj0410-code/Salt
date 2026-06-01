@@ -22,6 +22,8 @@ const PoListPage = lazy(() => import("@/components/grn/PoListPage").then((m) => 
 const PoEntryPage = lazy(() => import("@/components/grn/PoEntryPage").then((m) => ({ default: m.PoEntryPage })));
 const PoDetailPage = lazy(() => import("@/components/grn/PoDetailPage").then((m) => ({ default: m.PoDetailPage })));
 const AutoPoPage = lazy(() => import("@/components/grn/AutoPoPage").then((m) => ({ default: m.AutoPoPage })));
+const VendorSchemesPage = lazy(() => import("@/components/grn/VendorSchemesPage").then((m) => ({ default: m.VendorSchemesPage })));
+const OcrInvoiceImportPage = lazy(() => import("@/components/grn/OcrInvoiceImportPage").then((m) => ({ default: m.OcrInvoiceImportPage })));
 const DebitNoteListPage = lazy(() => import("@/components/grn/DebitNoteListPage").then((m) => ({ default: m.DebitNoteListPage })));
 const DebitNoteEntryPage = lazy(() => import("@/components/grn/DebitNoteEntryPage").then((m) => ({ default: m.DebitNoteEntryPage })));
 const DebitNoteDetailPage = lazy(() => import("@/components/grn/DebitNoteDetailPage").then((m) => ({ default: m.DebitNoteDetailPage })));
@@ -45,6 +47,8 @@ const GstLiabilityPage = lazy(() => import("@/components/gst/GstLiabilityPage").
 const ItcRegisterPage = lazy(() => import("@/components/gst/ItcRegisterPage").then((m) => ({ default: m.ItcRegisterPage })));
 const TallyExportPage = lazy(() => import("@/components/gst/TallyExportPage").then((m) => ({ default: m.TallyExportPage })));
 const HsnReportPage = lazy(() => import("@/components/gst/HsnReportPage").then((m) => ({ default: m.HsnReportPage })));
+const H1RegisterPage = lazy(() => import("@/components/gst/H1RegisterPage").then((m) => ({ default: m.H1RegisterPage })));
+const InvoiceSeriesPage = lazy(() => import("@/components/gst/InvoiceSeriesPage").then((m) => ({ default: m.InvoiceSeriesPage })));
 const PaymentsPage = lazy(() => import("@/components/payments/PaymentsPage").then((m) => ({ default: m.PaymentsPage })));
 const MakePaymentPage = lazy(() => import("@/components/payments/MakePaymentPage").then((m) => ({ default: m.MakePaymentPage })));
 const CatalogPage = lazy(() => import("@/components/catalog/CatalogPage").then((m) => ({ default: m.CatalogPage })));
@@ -67,6 +71,8 @@ const DataExportPage = lazy(() => import("@/components/settings/DataExportPage")
 const PrintTemplatesPage = lazy(() => import("@/components/settings/PrintTemplatesPage").then((m) => ({ default: m.PrintTemplatesPage })));
 const AuditLogPage = lazy(() => import("@/components/settings/AuditLogPage").then((m) => ({ default: m.AuditLogPage })));
 const ShopsManagerPage = lazy(() => import("@/components/settings/ShopsManagerPage").then((m) => ({ default: m.ShopsManagerPage })));
+const PartyPrivacyPage = lazy(() => import("@/components/settings/PartyPrivacyPage").then((m) => ({ default: m.PartyPrivacyPage })));
+const DiscountLimitsPage = lazy(() => import("@/components/settings/DiscountLimitsPage").then((m) => ({ default: m.DiscountLimitsPage })));
 const SmartImportPage = lazy(() => import("@/components/import/smart/SmartImportPage").then((m) => ({ default: m.SmartImportPage })));
 
 function PageFallback() {
@@ -201,6 +207,22 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <PoDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/schemes"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <VendorSchemesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/purchases/scan"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <OcrInvoiceImportPage />
           </ProtectedRoute>
         }
       />
@@ -381,6 +403,22 @@ function App() {
         }
       />
       <Route
+        path="/gst/h1"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <H1RegisterPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gst/series"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <InvoiceSeriesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/reports"
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
@@ -553,6 +591,22 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <AuditLogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/privacy"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PartyPrivacyPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/limits"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DiscountLimitsPage />
           </ProtectedRoute>
         }
       />
