@@ -30,9 +30,9 @@ export function UserMenu() {
         </>
       )}
       {membership && (
-        <span className="hidden text-xs text-muted-foreground sm:inline">{membership.orgName}</span>
+        <span className="hidden text-xs text-text-tertiary sm:inline">{membership.orgName}</span>
       )}
-      <span className="hidden text-xs text-muted-foreground md:inline">{user?.email}</span>
+      <span className="hidden text-xs text-text-tertiary md:inline">{user?.email}</span>
       {membership && (
         <Badge variant={membership.role === "owner" ? "default" : "secondary"}>
           {membership.role}

@@ -55,14 +55,14 @@ export function LoginPage() {
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-surface-2/30 p-4">
         <div className="w-full max-w-sm rounded-xl border bg-background p-6 text-sm">
           <h1 className="mb-2 text-lg font-semibold">Salt</h1>
-          <p className="text-muted-foreground">
+          <p className="text-text-tertiary">
             Supabase isn’t configured yet. Add{" "}
-            <code className="rounded bg-muted px-1">VITE_SUPABASE_URL</code> and{" "}
-            <code className="rounded bg-muted px-1">VITE_SUPABASE_ANON_KEY</code> to{" "}
-            <code className="rounded bg-muted px-1">.env.local</code> and reload.
+            <code className="rounded bg-surface-2 px-1">VITE_SUPABASE_URL</code> and{" "}
+            <code className="rounded bg-surface-2 px-1">VITE_SUPABASE_ANON_KEY</code> to{" "}
+            <code className="rounded bg-surface-2 px-1">.env.local</code> and reload.
           </p>
         </div>
       </div>
@@ -142,11 +142,11 @@ export function LoginPage() {
     mode === "signin" ? "Sign in" : mode === "signup" ? "Sign up" : "Send reset link";
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-surface-2/30 p-4">
       <div className="w-full max-w-sm rounded-xl border bg-background p-6 shadow-sm">
         <div className="mb-5 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">Salt</h1>
-          <p className="text-sm text-muted-foreground">{heading}</p>
+          <p className="text-sm text-text-tertiary">{heading}</p>
         </div>
 
         {mode === "phone" ? (
@@ -169,7 +169,7 @@ export function LoginPage() {
                   Continue with phone
                 </Button>
 
-                <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+                <div className="my-4 flex items-center gap-3 text-xs text-text-tertiary">
                   <span className="h-px flex-1 bg-border" />
                   or
                   <span className="h-px flex-1 bg-border" />
@@ -225,7 +225,7 @@ export function LoginPage() {
             </form>
 
             {mode === "signup" && (
-              <p className="mt-3 text-center text-xs text-muted-foreground">
+              <p className="mt-3 text-center text-xs text-text-tertiary">
                 Didn’t get the confirmation email?{" "}
                 <button
                   type="button"
@@ -237,7 +237,7 @@ export function LoginPage() {
               </p>
             )}
 
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            <p className="mt-4 text-center text-sm text-text-tertiary">
               {mode === "reset" ? (
                 <>
                   Remembered it?{" "}

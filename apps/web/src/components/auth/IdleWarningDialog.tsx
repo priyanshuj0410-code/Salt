@@ -23,7 +23,7 @@ export function IdleWarningDialog({
         role="alert"
         className="pointer-events-auto flex items-center gap-3 rounded-xl border bg-background px-4 py-2.5 text-sm shadow-lg"
       >
-        <Clock className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <Clock className="size-4 shrink-0 text-text-tertiary" aria-hidden />
         <span className="text-foreground">
           Signing out due to inactivity in{" "}
           <span aria-hidden className="font-mono font-semibold tabular-nums">
