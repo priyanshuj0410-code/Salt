@@ -1,11 +1,19 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { supabase } from "@/lib/supabase";
 import { buildSalesInvoicePayload, withTimeout, TimeoutError, type RxDetails } from "@/lib/orders";
 import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
+import { formatPaise } from "@/lib/currency";
 import { gatedLines, requiresRx } from "@/lib/billing";
 import { creditCheck } from "@/lib/credit";
+import { requestApproval, subscribeApprovals, cancelApproval } from "@/lib/approvals";
+import {
+  parseDiscountLimits,
+  checkDiscountLimit,
+  NO_DISCOUNT_LIMITS,
+  type DiscountLimits,
+} from "@/lib/discountLimits";
 import {
   activeTenders,
   checkTenders,
@@ -58,8 +66,23 @@ export function useCheckout({
   // When on, the bill is settled by per-mode legs that must sum to the total.
   const [splitMode, setSplitMode] = useState(false);
   const [tenderAmounts, setTenderAmounts] = useState<TenderAmounts>(NO_TENDERS);
+  // Discount-approval gate (SALT-206): the org's limits (loaded once) + the in-flight or
+  // resolved manager override for an over-limit discount.
+  const [discountLimits, setDiscountLimits] = useState<DiscountLimits>(NO_DISCOUNT_LIMITS);
+  const [approval, setApproval] = useState<
+    { status: "pending" | "approved" | "rejected"; id: string; approverName: string | null; coversPaise: number } | null
+  >(null);
   // Remembered across the H1 gate / shop-setup detours so a resumed save still prints.
   const printIntent = useRef(false);
+  // Always points at the latest `save` so the realtime approval handler can resume it.
+  const saveRef = useRef<
+    | ((opts?: {
+        rx?: RxDetails;
+        print?: boolean;
+        approval?: { approverName: string | null; coversPaise: number };
+      }) => Promise<string | null>)
+    | null
+  >(null);
   const t = billTotals(lines, billDiscount);
   const empty = lines.length === 0;
   // Live split check (mirrors the server guards) — drives the remainder readout + Save gate.
@@ -80,13 +103,56 @@ export function useCheckout({
   // Inter-state ⇒ IGST; intra-state (incl. walk-in / no party state) ⇒ CGST+SGST.
   const isInterstate = !!(customer?.state_code && shop?.state_code && customer.state_code !== shop.state_code);
 
+  // Discount gate (SALT-206): total discount (line + bill) vs the org cap. `discountApproved`
+  // = a manager override that covers at least the current discount.
+  const discountPaise = t.discount + t.billDiscount;
+  const discChk = checkDiscountLimit(discountLimits, t.gross, discountPaise);
+  const discountApproved = approval?.status === "approved" && approval.coversPaise >= discountPaise;
+
+  // Load the org's discount policy once (cached for the session's billing screen).
+  useEffect(() => {
+    if (!supabase || !orgId) return;
+    let active = true;
+    void supabase
+      .from("org_settings")
+      .select("settings")
+      .eq("org_id", orgId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setDiscountLimits(parseDiscountLimits((data?.settings as Record<string, unknown> | null) ?? null));
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId]);
+
+  // While a discount override is pending, watch the org's approvals live. On approval,
+  // resume the save the cashier already asked for (override passed explicitly to dodge
+  // the state-update race); on rejection, hand the bill back with a message.
+  useEffect(() => {
+    if (!orgId || approval?.status !== "pending") return;
+    const reqId = approval.id;
+    return subscribeApprovals(orgId, (r) => {
+      if (r.id !== reqId) return;
+      if (r.status === "approved") {
+        setApproval({ status: "approved", id: r.id, approverName: r.decided_by_name, coversPaise: r.amount_paise ?? 0 });
+        void saveRef.current?.({ approval: { approverName: r.decided_by_name, coversPaise: r.amount_paise ?? 0 } });
+      } else if (r.status === "rejected" || r.status === "cancelled") {
+        setApproval({ status: "rejected", id: r.id, approverName: r.decided_by_name, coversPaise: 0 });
+        setError("Manager declined the discount. Adjust it and try again.");
+      }
+    });
+  }, [orgId, approval?.status, approval?.id]);
+
   // `rx` lives in the bill store, so `clear()` (after a save, or a manual Clear)
   // resets it — one customer's prescription never carries to the next bill.
   // `opts.rx` lets the gate dialog pass details on confirm without waiting for the
   // state update; `opts.print` sets the print intent (omitted on a resume, which
   // keeps the prior intent through the H1 gate / shop-setup detours). Returns the
   // new invoice id on success, else null.
-  async function save(opts: { rx?: RxDetails; print?: boolean } = {}): Promise<string | null> {
+  async function save(
+    opts: { rx?: RxDetails; print?: boolean; approval?: { approverName: string | null; coversPaise: number } } = {},
+  ): Promise<string | null> {
     if (!supabase || empty || usingSeed || saving || !shopId) return null;
     if (opts.print !== undefined) printIntent.current = opts.print;
     const rxToUse = opts.rx ?? rx;
@@ -112,11 +178,35 @@ export function useCheckout({
         return null;
       }
     }
+    // Discount-limit gate (SALT-206): an over-cap discount needs a manager override.
+    // Raise a discount_override request and bail; the live approval handler resumes
+    // this save with `opts.approval` once a manager approves it.
+    const override =
+      opts.approval ?? (discountApproved && approval ? { approverName: approval.approverName, coversPaise: approval.coversPaise } : null);
+    if (discChk.over && !(override && override.coversPaise >= discountPaise)) {
+      if (orgId && approval?.status !== "pending") {
+        setError(null);
+        try {
+          const req = await requestApproval({
+            orgId,
+            kind: "discount_override",
+            summary: `Discount ${discChk.pct.toFixed(1)}% (${formatPaise(discountPaise)}) on a ${formatPaise(t.grand)} bill`,
+            amountPaise: discountPaise,
+            context: { grossPaise: t.gross, discountPaise, pct: discChk.pct, grandPaise: t.grand, party: party?.name ?? null },
+          });
+          if (req) setApproval({ status: "pending", id: req.id, approverName: null, coversPaise: discountPaise });
+        } catch {
+          setError("Could not send the approval request. Please try again.");
+        }
+      }
+      return null; // waiting on the manager (request just raised, or still pending)
+    }
     setSaving(true);
     setError(null);
     try {
       const tenders = splitMode ? activeTenders(tenderAmounts) : null;
-      const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders);
+      const notes = override ? `Discount override approved by ${override.approverName ?? "manager"}` : null;
+      const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes);
       const { data, error: err } = await withTimeout(supabase.rpc("create_sales_invoice", args), 15000);
       if (err) {
         // Oversell guard fired (another counter took the last unit): the server rejects
@@ -149,6 +239,7 @@ export function useCheckout({
       }
       clear();
       setSplit(false); // back to single-payment for the next bill
+      setApproval(null); // each new bill re-gates from scratch
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       printIntent.current = false;
@@ -165,6 +256,11 @@ export function useCheckout({
       setSaving(false);
     }
   }
+  // Keep the ref pointing at the latest `save` (assigning in render is disallowed) so the
+  // realtime approval handler resumes the current closure.
+  useEffect(() => {
+    saveRef.current = save;
+  });
 
   // Confirm from the gate dialog: keep the details, close, then save straight away
   // (passing them through so we don't race the state update; print intent persists).
@@ -181,7 +277,7 @@ export function useCheckout({
       void save({ print: true });
     },
     { enableOnFormTags: true },
-    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount, splitMode, tenderAmounts],
+    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount, splitMode, tenderAmounts, discountLimits, approval],
   );
 
   return {
@@ -207,6 +303,28 @@ export function useCheckout({
     setTenderAmount,
     fillRemainder,
     tenderChk,
+    // Discount-approval gate (SALT-206). `status`: ok | needed | pending | approved | rejected.
+    discountGate: {
+      over: discChk.over,
+      status: !discChk.over
+        ? ("ok" as const)
+        : approval?.status === "pending"
+          ? ("pending" as const)
+          : discountApproved
+            ? ("approved" as const)
+            : approval?.status === "rejected"
+              ? ("rejected" as const)
+              : ("needed" as const),
+      approverName: approval?.approverName ?? null,
+      pct: discChk.pct,
+      discountPaise,
+      maxPct: discountLimits.maxPct,
+      maxPaise: discountLimits.maxPaise,
+    },
+    cancelDiscountApproval: () => {
+      if (approval?.status === "pending") void cancelApproval(approval.id);
+      setApproval(null);
+    },
     saveAndPrint: () => save({ print: true }),
     saveOnly: () => save({ print: false }),
     resumeSave: () => save(),
