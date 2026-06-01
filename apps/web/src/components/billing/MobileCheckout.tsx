@@ -12,6 +12,7 @@ import { Row, BillDiscountInput } from "./BillSummary";
 import { H1Notice } from "./H1Gate";
 import { CreditNotice } from "./CreditNotice";
 import { SplitTender } from "./SplitTender";
+import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -35,11 +36,12 @@ export function MobileCheckout({
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
   const hold = useHeldBills((s) => s.hold);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, savedOffline, error, shopId } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
-  // Block charging while a split is unbalanced (the server would reject it anyway).
-  const blockSave = saving || usingSeed || (splitMode && !tenderChk.ok);
+  const { discountGate, cancelDiscountApproval } = checkout;
+  // Block charging while a split is unbalanced or an over-limit discount awaits approval.
+  const blockSave = saving || usingSeed || (splitMode && !tenderChk.ok) || discountGate.status === "pending";
   const tax = gstSplit(t.gst, isInterstate);
   const [open, setOpen] = useState(false);
   const loss = t.margin < 0;
@@ -168,6 +170,11 @@ export function MobileCheckout({
           <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
         </div>
       )}
+      {discountGate.over && (
+        <div className="px-3 pt-3">
+          <DiscountApprovalNotice gate={discountGate} onCancel={cancelDiscountApproval} />
+        </div>
+      )}
       {creditWarn.over && (
         <div className="px-3 pt-3">
           <CreditNotice check={creditWarn} />
@@ -186,6 +193,10 @@ export function MobileCheckout({
           {saved ? (
             <>
               <Check /> Saved
+            </>
+          ) : savedOffline ? (
+            <>
+              <Check /> Saved offline
             </>
           ) : saving ? (
             "Saving…"

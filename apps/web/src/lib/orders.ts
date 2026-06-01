@@ -115,6 +115,7 @@ export function buildSalesInvoicePayload(
   rx: RxDetails | null = null,
   billDiscount: BillDiscount = NO_BILL_DISCOUNT,
   tenders: Tender[] | null = null,
+  notes: string | null = null,
 ): SalesInvoiceArgs {
   // Send the post-bill-discount net as each line total, so the server's GST split
   // (backed out of line_total_paise) matches what the counter displayed.
@@ -134,7 +135,7 @@ export function buildSalesInvoicePayload(
     p_doctor_reg_no: rx?.doctorRegNo.trim() || null,
     p_patient_name: rx?.patientName.trim() || null,
     p_patient_address: rx?.patientAddress.trim() || null,
-    p_notes: null,
+    p_notes: notes,
     p_lines: lines.map((l, i) => ({
       item_id: l.itemId,
       name: l.name,

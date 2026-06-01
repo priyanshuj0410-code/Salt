@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { ChevronDown, User } from "lucide-react";
+import { ChevronDown, CloudOff, RefreshCw, User } from "lucide-react";
 import { ItemSearch } from "./ItemSearch";
 import { BillTable } from "./BillTable";
 import { BillSummary } from "./BillSummary";
@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import { useBill } from "@/store/bill";
 import { useHeldBills } from "@/store/heldBills";
+import { useOutbox } from "@/lib/outbox";
 import { supabase } from "@/lib/supabase";
 import { fetchPartyCredit } from "@/lib/credit";
 import { subscribeTableChanges } from "@/lib/realtime";
@@ -85,6 +86,9 @@ export function BillingScreen() {
   const setParty = useBill((s) => s.setParty);
   const hold = useHeldBills((s) => s.hold);
   const loadHeld = useHeldBills((s) => s.load);
+  // Mount the offline outbox here (SALT-205): this drives the auto-flush on reconnect and the
+  // "waiting to sync" count. The sales handler is registered in useCheckout.
+  const { online, pending: pendingWrites } = useOutbox();
 
   // Detail for the selected customer: drives the header phone, the "Add GSTIN"
   // prompt, and the intra/inter-state GST split. Refetched after a GSTIN is saved.
@@ -200,7 +204,22 @@ export function BillingScreen() {
           onChange={() => setCustomerOpen(true)}
           className="min-w-0 flex-1 md:w-72 md:flex-none"
         />
-        <span className="ml-auto hidden shrink-0 text-sm text-text-tertiary md:block">Counter 1</span>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {!online && (
+            <span className="flex items-center gap-1 rounded-full bg-warning-bg px-2 py-0.5 text-xs font-medium text-warning">
+              <CloudOff className="size-3.5" /> Offline
+            </span>
+          )}
+          {pendingWrites > 0 && (
+            <span
+              className="flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-text-secondary"
+              title="Bills saved offline, waiting to sync"
+            >
+              <RefreshCw className="size-3.5" /> {pendingWrites} to sync
+            </span>
+          )}
+          <span className="hidden text-sm text-text-tertiary md:block">Counter 1</span>
+        </div>
       </header>
 
       <ParkedBills />

@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/patterns/empty-state";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
+import { licenseStatus } from "@/lib/licenses";
 
 /** A row of the `drug_licenses` table (per-org RLS via is_member). */
 interface DrugLicense {
@@ -47,40 +48,6 @@ const LICENSE_TYPES = [
   "Form 20C (homeopathic — retail)",
   "Form 20D (homeopathic — wholesale)",
 ];
-
-type StatusVariant = "danger" | "warning" | "info" | "success" | "neutral";
-
-interface LicenseStatus {
-  label: string;
-  variant: StatusVariant;
-  /** Sort key: smaller = more urgent (expired/soonest first); no-expiry sorts last. */
-  sortKey: number;
-  /** Expired or expiring within 90 days — feeds the renewal alert. */
-  attention: boolean;
-  expired: boolean;
-}
-
-/** Whole-day difference from today (local midnight, so date-only strings don't drift). */
-function daysUntil(dateStr: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = parseISO(dateStr);
-  d.setHours(0, 0, 0, 0);
-  return Math.round((d.getTime() - today.getTime()) / 86_400_000);
-}
-
-/** The IA's 90 / 60 / 30-day renewal windows, plus expired and no-expiry. */
-function licenseStatus(l: DrugLicense): LicenseStatus {
-  if (!l.expiry_date) {
-    return { label: "No expiry set", variant: "neutral", sortKey: Number.MAX_SAFE_INTEGER, attention: false, expired: false };
-  }
-  const days = daysUntil(l.expiry_date);
-  if (days < 0) return { label: `Expired ${Math.abs(days)}d ago`, variant: "danger", sortKey: days, attention: true, expired: true };
-  if (days <= 30) return { label: days === 0 ? "Expires today" : `Expires in ${days}d`, variant: "danger", sortKey: days, attention: true, expired: false };
-  if (days <= 60) return { label: `Expires in ${days}d`, variant: "warning", sortKey: days, attention: true, expired: false };
-  if (days <= 90) return { label: `Expires in ${days}d`, variant: "info", sortKey: days, attention: true, expired: false };
-  return { label: "Valid", variant: "success", sortKey: days, attention: false, expired: false };
-}
 
 const fmtDate = (d: string | null) => (d ? format(parseISO(d), "d MMM yyyy") : "—");
 
