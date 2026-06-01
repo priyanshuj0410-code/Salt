@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import type { PermissionOverrides } from "./permissions";
 import { IdleWarningDialog } from "@/components/auth/IdleWarningDialog";
 import { UpdatePasswordDialog } from "@/components/auth/UpdatePasswordDialog";
 import { MfaChallengeDialog } from "@/components/auth/MfaChallengeDialog";
@@ -55,12 +56,14 @@ function needsMfaChallenge(
   return !!aal && aal.currentLevel === "aal1" && aal.nextLevel === "aal2";
 }
 
-export type UserRole = "cashier" | "owner";
+export type UserRole = "owner" | "manager" | "accountant" | "pharmacist" | "cashier";
 
 export interface Membership {
   orgId: string;
   orgName: string;
   role: UserRole;
+  /** Per-user capability overrides layered on the role (SALT-091). */
+  permissions: PermissionOverrides;
 }
 
 /** Primary-shop snapshot used app-wide for place-of-supply, GSTIN, header info. */
@@ -129,16 +132,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadMembership = useCallback(async (userId: string) => {
     if (!supabase) return;
-    const { data } = await supabase
+    // Include the per-user permission overrides (0046); fall back to the legacy
+    // columns if that migration is not applied yet, so the app still loads.
+    const primary = await supabase
       .from("memberships")
-      .select("role, org_id, orgs(name)")
+      .select("role, org_id, permissions, orgs(name)")
       .eq("user_id", userId)
       .limit(1)
       .maybeSingle();
+    let data = primary.data as Record<string, unknown> | null;
+    if (primary.error) {
+      const fb = await supabase
+        .from("memberships")
+        .select("role, org_id, orgs(name)")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+      data = fb.data as Record<string, unknown> | null;
+    }
     if (data) {
       const org = data.orgs as { name: string } | { name: string }[] | null;
       const orgName = Array.isArray(org) ? (org[0]?.name ?? "") : (org?.name ?? "");
-      setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole });
+      const permissions = (data.permissions ?? {}) as PermissionOverrides;
+      setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole, permissions });
       // Resolve the org's working shop. Prefer the one flagged `is_primary`;
       // if none is flagged, fall back to the oldest shop in the org and
       // self-heal by promoting it so subsequent loads are deterministic. This
