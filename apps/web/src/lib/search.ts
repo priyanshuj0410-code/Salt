@@ -11,26 +11,6 @@ export function fefoBatch(item: Item) {
     .sort((a, b) => a.expiry.localeCompare(b.expiry))[0];
 }
 
-/** Per-unit margin (MRP − PTR) of the batch that would be sold next (FEFO), in paise. */
-export function itemMargin(item: Item): number {
-  const b = fefoBatch(item);
-  return b ? b.mrpPaise - b.ptrPaise : 0;
-}
-
-/**
- * Same-salt, in-stock alternatives to an item, best first — what the counter
- * offers when the asked-for item is out of stock. Ranked by per-unit **margin**
- * (most profitable for the shop) then **velocity** (fastest moving). Empty when
- * the item has no salt recorded or no in-stock same-salt peer exists.
- */
-export function substitutes(item: Item, items: Item[], limit = 3): Item[] {
-  if (!item.salt) return [];
-  return items
-    .filter((c) => c.id !== item.id && c.salt === item.salt && itemStock(c) > 0)
-    .sort((a, b) => itemMargin(b) - itemMargin(a) || b.velocity - a.velocity)
-    .slice(0, limit);
-}
-
 function fieldScore(field: string | undefined, q: string): number {
   if (!field) return 0;
   const f = field.toLowerCase();
