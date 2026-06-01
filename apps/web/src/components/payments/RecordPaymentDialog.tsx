@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FormRow } from "@/components/patterns/form-row";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { TimeoutError } from "@/lib/orders";
 import {
   buildRecordPaymentArgs,
@@ -39,6 +40,7 @@ export function RecordPaymentDialog({
   initialPartyId?: string;
 }) {
   const shopId = useAuth().shopId;
+  const orgId = useAuth().membership?.orgId;
   const seedParty = initialPartyId ? (parties.find((p) => p.id === initialPartyId) ?? null) : null;
 
   const [partyId, setPartyId] = useState<string | null>(seedParty?.id ?? null);
@@ -52,8 +54,28 @@ export function RecordPaymentDialog({
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [salesmen, setSalesmen] = useState<{ id: string; name: string }[]>([]);
+  const [salesmanId, setSalesmanId] = useState("");
 
   const party = useMemo(() => parties.find((p) => p.id === partyId) ?? null, [parties, partyId]);
+
+  // Active salesmen for the "collected by" selector on receipts (SALT-193).
+  useEffect(() => {
+    if (!supabase || !orgId) return;
+    let active = true;
+    supabase
+      .from("salesmen")
+      .select("id,name")
+      .eq("org_id", orgId)
+      .eq("is_active", true)
+      .order("name")
+      .then(({ data }) => {
+        if (active && data) setSalesmen(data as { id: string; name: string }[]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [orgId]);
 
   // Reset to defaults — called on close and after a successful record (event
   // handlers, never an effect, per the react-hooks/set-state-in-effect rule).
@@ -64,6 +86,7 @@ export function RecordPaymentDialog({
     setAmount("");
     setReference("");
     setNotes("");
+    setSalesmanId("");
     setError(null);
     setDirection(seedParty ? defaultDirection(seedParty.type) : "received");
   }
@@ -98,7 +121,16 @@ export function RecordPaymentDialog({
     setError(null);
     try {
       const id = await recordPayment(
-        buildRecordPaymentArgs({ shopId, partyId, direction, mode, amountPaise: paise, reference, notes }),
+        buildRecordPaymentArgs({
+          shopId,
+          partyId,
+          direction,
+          mode,
+          amountPaise: paise,
+          reference,
+          notes,
+          salesmanId: direction === "received" ? salesmanId || undefined : undefined,
+        }),
       );
       resetForm();
       onRecorded(id);
@@ -229,6 +261,24 @@ export function RecordPaymentDialog({
           <FormRow label="Notes (optional)">
             <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="—" className="h-9" />
           </FormRow>
+
+          {/* Collected by (salesman) — receipts only (SALT-193) */}
+          {direction === "received" && salesmen.length > 0 && (
+            <FormRow label="Collected by (optional)">
+              <select
+                value={salesmanId}
+                onChange={(e) => setSalesmanId(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+              >
+                <option value="">—</option>
+                {salesmen.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </FormRow>
+          )}
 
           {!shopId && <p className="text-xs text-warning">No shop selected — pick a shop before recording.</p>}
           {error && <p className="text-sm text-destructive">{error}</p>}
