@@ -73,6 +73,7 @@ const AuditLogPage = lazy(() => import("@/components/settings/AuditLogPage").the
 const ShopsManagerPage = lazy(() => import("@/components/settings/ShopsManagerPage").then((m) => ({ default: m.ShopsManagerPage })));
 const PartyPrivacyPage = lazy(() => import("@/components/settings/PartyPrivacyPage").then((m) => ({ default: m.PartyPrivacyPage })));
 const DiscountLimitsPage = lazy(() => import("@/components/settings/DiscountLimitsPage").then((m) => ({ default: m.DiscountLimitsPage })));
+const UsersRolesPage = lazy(() => import("@/components/settings/UsersRolesPage").then((m) => ({ default: m.UsersRolesPage })));
 const SmartImportPage = lazy(() => import("@/components/import/smart/SmartImportPage").then((m) => ({ default: m.SmartImportPage })));
 
 function PageFallback() {
@@ -607,6 +608,14 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <DiscountLimitsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/users"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <UsersRolesPage />
           </ProtectedRoute>
         }
       />

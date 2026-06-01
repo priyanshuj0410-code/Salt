@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
+import type { PermissionOverrides } from "./permissions";
 import { IdleWarningDialog } from "@/components/auth/IdleWarningDialog";
 import { UpdatePasswordDialog } from "@/components/auth/UpdatePasswordDialog";
 import { MfaChallengeDialog } from "@/components/auth/MfaChallengeDialog";
@@ -24,6 +25,25 @@ const WARN_SECONDS = 60;
 const ACTIVITY_WRITE_THROTTLE_MS = 5_000;
 const LAST_ACTIVITY_KEY = "salt:last-activity";
 const IDLE_LOGOUT_KEY = "salt:idle-logout";
+
+/** Per-org localStorage key for the session's active shop (SALT-173). */
+const activeShopKey = (orgId: string) => `salt:active-shop:${orgId}`;
+
+function readActiveShop(orgId: string): string | null {
+  try {
+    return localStorage.getItem(activeShopKey(orgId));
+  } catch {
+    return null; // storage unavailable (private mode / disabled)
+  }
+}
+
+function writeActiveShop(orgId: string, shopId: string): void {
+  try {
+    localStorage.setItem(activeShopKey(orgId), shopId);
+  } catch {
+    /* storage unavailable — the in-memory active shop still works this session */
+  }
+}
 
 /** Idle window in ms from env; missing / non-numeric / ≤0 fall back to default. */
 function resolveIdleMs(raw: string | undefined, fallbackMinutes = 30): number {
@@ -55,15 +75,17 @@ function needsMfaChallenge(
   return !!aal && aal.currentLevel === "aal1" && aal.nextLevel === "aal2";
 }
 
-export type UserRole = "cashier" | "owner";
+export type UserRole = "owner" | "manager" | "accountant" | "pharmacist" | "cashier";
 
 export interface Membership {
   orgId: string;
   orgName: string;
   role: UserRole;
+  /** Per-user capability overrides layered on the role (SALT-091). */
+  permissions: PermissionOverrides;
 }
 
-/** Primary-shop snapshot used app-wide for place-of-supply, GSTIN, header info. */
+/** Shop snapshot used app-wide for place-of-supply, GSTIN, header info. */
 export interface Shop {
   id: string;
   name: string;
@@ -81,10 +103,17 @@ interface AuthContextValue {
   user: User | null;
   /** The user's org + role, or null if they haven't joined/created an org yet. */
   membership: Membership | null;
-  /** The org's primary shop id (kept for back-compat with existing call sites). */
+  /** The active shop id — what every shop-scoped screen reads (SALT-173). */
   shopId: string | null;
-  /** Full primary-shop record. null until resolved, or if no shop exists yet. */
+  /** Full active-shop record. null until resolved, or if no shop exists yet. */
   shop: Shop | null;
+  /** All shops in the org, primary first then oldest — drives the shop switcher. */
+  shops: Shop[];
+  /**
+   * Switch the session's active shop (SALT-173). Persists per-org to
+   * localStorage; does NOT change the org-wide primary (`is_primary`).
+   */
+  setActiveShop: (shopId: string) => void;
   loading: boolean;
   refresh: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -97,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [membership, setMembership] = useState<Membership | null>(null);
   const [shopId, setShopId] = useState<string | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
+  const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(supabase != null);
   /** The user id the loading gate is tracking, so we ignore same-user refires. */
   const currentUserId = useRef<string | null>(null);
@@ -129,42 +159,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadMembership = useCallback(async (userId: string) => {
     if (!supabase) return;
-    const { data } = await supabase
+    // Include the per-user permission overrides (0046); fall back to the legacy
+    // columns if that migration is not applied yet, so the app still loads.
+    const primary = await supabase
       .from("memberships")
-      .select("role, org_id, orgs(name)")
+      .select("role, org_id, permissions, orgs(name)")
       .eq("user_id", userId)
       .limit(1)
       .maybeSingle();
+    let data = primary.data as Record<string, unknown> | null;
+    if (primary.error) {
+      const fb = await supabase
+        .from("memberships")
+        .select("role, org_id, orgs(name)")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+      data = fb.data as Record<string, unknown> | null;
+    }
     if (data) {
       const org = data.orgs as { name: string } | { name: string }[] | null;
       const orgName = Array.isArray(org) ? (org[0]?.name ?? "") : (org?.name ?? "");
-      setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole });
-      // Resolve the org's working shop. Prefer the one flagged `is_primary`;
-      // if none is flagged, fall back to the oldest shop in the org and
-      // self-heal by promoting it so subsequent loads are deterministic. This
-      // covers orgs whose imports created shops without ever marking one
-      // primary (the common case for the four-file Saral import). Tolerates
-      // absence (pre-migration or no shop yet): leaves shop null and billing
-      // guards on it.
-      const { data: shopRow } = await supabase
+      const permissions = (data.permissions ?? {}) as PermissionOverrides;
+      setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole, permissions });
+      // Resolve the org's shops (SALT-173). Ordered primary-first then oldest,
+      // so the primary (or, absent one, the oldest) is the deterministic
+      // fallback. This covers orgs whose imports created shops without ever
+      // marking one primary (the common case for the four-file Saral import).
+      // Tolerates absence (pre-migration or no shop yet): leaves shop null and
+      // billing guards on it.
+      const orgId = data.org_id as string;
+      const { data: shopRows } = await supabase
         .from("shops")
         .select("id, name, state_code, gstin, address, phone, upi_vpa, cutover_date, is_primary")
-        .eq("org_id", data.org_id as string)
+        .eq("org_id", orgId)
         .order("is_primary", { ascending: false })
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (shopRow) {
-        const { is_primary, ...shopFields } = shopRow as Shop & { is_primary: boolean };
-        setShop(shopFields);
-        setShopId(shopFields.id);
-        if (!is_primary) {
-          // Self-heal: promote this shop to primary. Errors are swallowed —
-          // a unique-per-org race (another tab promoting a different shop)
-          // resolves on the next refresh().
-          await supabase.from("shops").update({ is_primary: true }).eq("id", shopFields.id);
+        .order("created_at", { ascending: true });
+      const rows = (shopRows ?? []) as Array<Shop & { is_primary: boolean }>;
+      if (rows.length > 0) {
+        const list: Shop[] = rows.map((r) => ({
+          id: r.id,
+          name: r.name,
+          state_code: r.state_code,
+          gstin: r.gstin,
+          address: r.address,
+          phone: r.phone,
+          upi_vpa: r.upi_vpa,
+          cutover_date: r.cutover_date,
+        }));
+        setShops(list);
+        // Ensure a deterministic primary fallback exists: if none is flagged,
+        // self-heal by promoting the oldest (rows[0] after the ordering).
+        const hasPrimary = rows.some((r) => r.is_primary);
+        const primaryId = (hasPrimary ? rows.find((r) => r.is_primary) : rows[0])!.id;
+        if (!hasPrimary) {
+          // Errors are swallowed — a unique-per-org race (another tab promoting a
+          // different shop) resolves on the next refresh().
+          await supabase.from("shops").update({ is_primary: true }).eq("id", primaryId);
         }
+        // Active shop = the session's stored choice if it still exists, else the
+        // primary. Never flips is_primary; the choice persists across reloads.
+        const stored = readActiveShop(orgId);
+        const active = list.find((s) => s.id === stored) ?? list.find((s) => s.id === primaryId) ?? list[0];
+        setShop(active);
+        setShopId(active.id);
       } else {
+        setShops([]);
         setShop(null);
         setShopId(null);
       }
@@ -172,6 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setMembership(null);
       setShopId(null);
       setShop(null);
+      setShops([]);
     }
   }, []);
 
@@ -203,6 +264,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setMembership(null);
         setShopId(null);
         setShop(null);
+        setShops([]);
         setMfaChallengeRequired(false);
         setLoading(false); // signed out
       }
@@ -298,6 +360,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
+  const setActiveShop = useCallback(
+    (id: string) => {
+      const next = shops.find((s) => s.id === id);
+      if (!next || !membership) return;
+      setShop(next);
+      setShopId(next.id);
+      writeActiveShop(membership.orgId, id);
+    },
+    [shops, membership],
+  );
+
   const refresh = useCallback(async () => {
     const userId = session?.user.id;
     if (userId) await loadMembership(userId);
@@ -309,7 +382,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, user: session?.user ?? null, membership, shopId, shop, loading, refresh, signOut }}
+      value={{ session, user: session?.user ?? null, membership, shopId, shop, shops, setActiveShop, loading, refresh, signOut }}
     >
       {children}
       {idleSecondsLeft !== null && (

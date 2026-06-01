@@ -1,0 +1,28 @@
+molecule,note
+# Schedule X molecule keywords (Drugs & Cosmetics Rules, Schedule X — psychotropics /
+# barbiturates / stimulants needing a Form 20F/21F licence + special record-keeping).
+# Compiled from Schedule X of the D&C Rules; verify against the gazette before compliance use.
+# Note: opioids like buprenorphine/pentazocine/codeine are handled as habit-forming H1 here
+# (see schedule_h1.csv); the curated drugs.csv may classify specific narcotic items more strictly.
+# --- barbiturates ---
+Phenobarbitone,barbiturate
+Phenobarbital,barbiturate
+Pentobarbital,barbiturate
+Amobarbital,barbiturate
+Secobarbital,barbiturate
+Cyclobarbital,barbiturate
+Barbitone,barbiturate
+# --- amphetamine-type stimulants ---
+Amphetamine,stimulant
+Dexamphetamine,stimulant
+Methamphetamine,stimulant
+Methylphenidate,stimulant
+Phenmetrazine,stimulant
+# --- other psychotropics ---
+Methaqualone,sedative-hypnotic
+Mecloqualone,sedative-hypnotic
+Glutethimide,sedative-hypnotic
+Ethchlorvynol,sedative-hypnotic
+Phencyclidine,dissociative
+# --- distribution-controlled ---
+Oseltamivir,restricted (Schedule X distribution control)

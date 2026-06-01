@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileUp, Upload, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,11 +22,14 @@ export function EntityStep({
   entity,
   orgId,
   shopId,
+  initialFile,
   onComplete,
 }: {
   entity: EntityConfig;
   orgId: string | undefined;
   shopId?: string | null;
+  /** Pre-loaded by the drop-all router (SALT-153); auto-parsed on mount. */
+  initialFile?: File | null;
   onComplete: () => void;
 }) {
   const [phase, setPhase] = useState<"upload" | "map" | "result">("upload");
@@ -39,6 +42,30 @@ export function EntityStep({
   const [error, setError] = useState<string | null>(null);
   const [bulkField, setBulkField] = useState(entity.fields[0].key);
   const [bulkValue, setBulkValue] = useState("");
+
+  // Auto-load a file routed in by the drop-all panel. State is set only after the
+  // async parse (never synchronously in the effect body).
+  useEffect(() => {
+    if (!initialFile) return;
+    let cancelled = false;
+    parseFile(initialFile, entity.fields)
+      .then((p) => {
+        if (cancelled) return;
+        if (p.headers.length === 0) {
+          setError("Could not read any columns from that file.");
+          return;
+        }
+        setParsed(p);
+        setMapping(autoMap(p.headers, entity.fields));
+        setPhase("map");
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Could not read that file.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialFile, entity]);
 
   async function onFile(file: File) {
     setError(null);

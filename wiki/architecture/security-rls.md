@@ -26,7 +26,7 @@ Tenancy and authorization are enforced **in the database**, not just the UI — 
 | **Unchanged `is_member` (POS path)** | `sales_invoices`, `sale_lines`, `sale_tenders`, `h1_register`, `held_bills`, `stock_movements`, `credit_notes`, `credit_note_lines`, `activity_events`, `entity_messages`, `approval_requests` | `is_member` | `is_member` |
 
 - `ledgers` **reads stay `is_member`** so a cashier can pick a customer at billing; only party *management* (writes) is owner-only.
-- **Known limitation:** `security definer` write RPCs (`receive_purchase`, `create_debit_note`, import RPCs) bypass RLS, so a cashier could still invoke them. Gating those RPC bodies on `has_role` is a tracked follow-on — 0044 closes the **direct-table** hole (the bulk of FR-U-012).
+- **SECURITY DEFINER write RPCs** bypass table RLS, so the owner-only ones check the role inside the function: `import_catalog` / `import_gl_opening` (built owner-only) and, from migration **0046**, `receive_purchase` + `create_debit_note` (`if not has_role(org,'owner') then raise`). The cashier POS RPCs stay open (`create_sales_invoice`, `create_credit_note`, `hold_bill`/`resume_bill`/`discard_held_bill`, `record_payment`, `record_gateway_payment`).
 - `master_items` / `known_vendors` are global (no `org_id`) reference tables and keep their existing read-only policies.
 
 ## Security-definer RPCs
@@ -46,7 +46,7 @@ When adding a security-definer function, always re-check membership and `set sea
 
 ## Gaps vs PRD
 
-PRD §5.4 wants role-based access at the API layer — now enforced both org-level (`is_member`) **and** per-role (`has_role`, migration 0044). MFA for owners (not built), at-rest encryption (Supabase-managed), and an append-only audit log (**built** — `audit_log` capture triggers + DB-level lockdown, migration 0038). Remaining: gate the `security definer` write RPCs on `has_role` (follow-on). Data residency (India region) depends on the Supabase project region.
+PRD §5.4 wants role-based access at the API layer — now enforced both org-level (`is_member`) **and** per-role (`has_role`, migration 0044). MFA for owners (not built), at-rest encryption (Supabase-managed), and an append-only audit log (**built** — `audit_log` capture triggers + DB-level lockdown, migration 0038). Owner-only `security definer` write RPCs are now role-gated inside the function (migration 0046). Data residency (India region) depends on the Supabase project region.
 
 ## Related
 [data-model.md](data-model.md) · [decisions/0004-strict-rls-isolation.md](../decisions/0004-strict-rls-isolation.md)

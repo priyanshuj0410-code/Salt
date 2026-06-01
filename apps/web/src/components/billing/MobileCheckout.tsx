@@ -10,9 +10,11 @@ import { useHeldBills } from "@/store/heldBills";
 import { GstinPrompt } from "./GstinPrompt";
 import { Row, BillDiscountInput } from "./BillSummary";
 import { H1Notice } from "./H1Gate";
-import { CreditNotice } from "./CreditNotice";
+import { CreditApprovalNotice } from "./CreditApprovalNotice";
 import { SplitTender } from "./SplitTender";
 import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
+import { SeriesPicker } from "./SeriesPicker";
+import { SaveRetryBanner } from "./SaveRetryBanner";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -36,12 +38,18 @@ export function MobileCheckout({
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
   const hold = useHeldBills((s) => s.hold);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, savedOffline, error, shopId } = checkout;
-  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saved, savedOffline, error, shopId } = checkout;
+  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
-  const { discountGate, cancelDiscountApproval } = checkout;
-  // Block charging while a split is unbalanced or an over-limit discount awaits approval.
-  const blockSave = saving || usingSeed || (splitMode && !tenderChk.ok) || discountGate.status === "pending";
+  const { discountGate, cancelDiscountApproval, creditGate, cancelCreditApproval } = checkout;
+  const { series, seriesId, setSeriesId, failedSave, retryFailedSave, dismissFailedSave } = checkout;
+  // Block charging while a split is unbalanced or an over-limit discount/credit sale awaits approval.
+  // The save itself is optimistic (SALT-155) and never blocks on the network.
+  const blockSave =
+    usingSeed ||
+    (splitMode && !tenderChk.ok) ||
+    discountGate.status === "pending" ||
+    creditGate.status === "pending";
   const tax = gstSplit(t.gst, isInterstate);
   const [open, setOpen] = useState(false);
   const loss = t.margin < 0;
@@ -53,7 +61,7 @@ export function MobileCheckout({
     <div className="border-t border-border bg-background md:hidden">
       {open && (
         <div className="max-h-[55vh] space-y-2 overflow-auto border-b border-border p-3">
-          <Row label="Gross (MRP)" value={formatPaise(t.gross)} muted />
+          <Row label="Gross" value={formatPaise(t.gross)} muted />
           <Row
             label="Discount"
             value={t.discount > 0 ? `− ${formatPaise(t.discount)}` : formatPaise(0)}
@@ -76,6 +84,8 @@ export function MobileCheckout({
             <span>{loss ? "Est. loss" : "Est. earnings"}</span>
             <span className="tabular-nums">{formatSigned(t.margin)}</span>
           </div>
+
+          <SeriesPicker series={series} value={seriesId} onChange={setSeriesId} />
 
           <div className="flex items-center justify-between pt-1">
             <p className="text-xs font-medium text-text-tertiary">Payment</p>
@@ -175,9 +185,9 @@ export function MobileCheckout({
           <DiscountApprovalNotice gate={discountGate} onCancel={cancelDiscountApproval} />
         </div>
       )}
-      {creditWarn.over && (
+      {creditGate.over && (
         <div className="px-3 pt-3">
-          <CreditNotice check={creditWarn} />
+          <CreditApprovalNotice gate={creditGate} onCancel={cancelCreditApproval} />
         </div>
       )}
 
@@ -189,7 +199,7 @@ export function MobileCheckout({
           </div>
           <div className="text-lg font-semibold tabular-nums">{formatPaise(t.grand)}</div>
         </button>
-        <Button size="lg" disabled={saving || usingSeed} onClick={() => saveAndPrint()}>
+        <Button size="lg" disabled={blockSave} onClick={() => saveAndPrint()}>
           {saved ? (
             <>
               <Check /> Saved
@@ -198,8 +208,6 @@ export function MobileCheckout({
             <>
               <Check /> Saved offline
             </>
-          ) : saving ? (
-            "Saving…"
           ) : (
             <>
               <Printer /> {formatPaise(t.grand)}
@@ -208,6 +216,16 @@ export function MobileCheckout({
         </Button>
       </div>
       {error && <p className="px-3 pb-2 text-xs text-destructive">{error}</p>}
+      {failedSave && (
+        <div className="px-3 pb-2">
+          <SaveRetryBanner
+            message={failedSave.message}
+            retryable={failedSave.retryable}
+            onRetry={retryFailedSave}
+            onDismiss={dismissFailedSave}
+          />
+        </div>
+      )}
       {usingSeed && (
         <p className="px-3 pb-2 text-center text-xs text-text-tertiary">
           Demo catalogue — import your items to save bills.

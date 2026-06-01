@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, Lock, LogOut, PanelLeft } from "lucide-react
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { NAV, type NavLeaf, type NavModule } from "./navConfig";
+import { ShopSwitcher } from "./ShopSwitcher";
 
 const COLLAPSE_KEY = "salt.nav.collapsed";
 const pathOf = (p?: string) => (p ? p.split("?")[0] : undefined);
@@ -166,8 +167,10 @@ export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; 
         )}
       </nav>
 
-      {/* Footer: signed-in user. design.md — brand at top, user here, not on each screen. */}
+      {/* Footer: active-shop switcher (multi-shop orgs) + signed-in user.
+          design.md — brand at top, user here, not on each screen. */}
       <div className="border-t border-sidebar-border p-2">
+        {!collapsed && <ShopSwitcher />}
         {collapsed ? (
           <button
             type="button"

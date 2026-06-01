@@ -45,6 +45,12 @@ function makeLine(item: Item, batch: Batch): BillLine {
     expiry: batch.expiry,
     mrpPaise: batch.mrpPaise,
     ptrPaise: batch.ptrPaise,
+    // Billed rate starts at MRP; the price-resolution effect (SALT-191A) lowers it if a
+    // customer pricing rule applies. `pricedForParty: null` flags it as not-yet-resolved.
+    ratePaise: batch.mrpPaise,
+    ruleLabel: "MRP",
+    priceOverridden: false,
+    pricedForParty: null,
     stock: itemStock(item),
     qty: 1,
     discountType: "pct",
@@ -76,6 +82,12 @@ interface BillState {
   addItem: (item: Item, batchNo?: string) => void;
   setQty: (key: string, qty: number) => void;
   setDiscount: (key: string, type: DiscountType, value: number) => void;
+  /** Apply a resolved price (SALT-191A): set the billed rate + the "why" label, unless the
+   *  line was manually overridden. `partyKey` records who it was priced for so the resolver
+   *  re-runs when the customer changes. */
+  applyResolvedPrice: (key: string, pricePaise: number, ruleLabel: string, partyKey: string) => void;
+  /** Manually set a line's billed rate — a sticky override that resolution won't overwrite. */
+  setRate: (key: string, pricePaise: number) => void;
   /** Move a line to a different batch of the same item (re-keys, merges if needed). */
   setBatch: (key: string, item: Item, batch: Batch) => void;
   removeLine: (key: string) => void;
@@ -138,6 +150,24 @@ export const useBill = create<BillState>((set) => ({
       ),
     })),
 
+  applyResolvedPrice: (key, pricePaise, ruleLabel, partyKey) =>
+    set((state) => ({
+      lines: state.lines.map((l) =>
+        l.key === key && !l.priceOverridden
+          ? { ...l, ratePaise: Math.max(0, Math.round(pricePaise)), ruleLabel, pricedForParty: partyKey }
+          : l,
+      ),
+    })),
+
+  setRate: (key, pricePaise) =>
+    set((state) => ({
+      lines: state.lines.map((l) =>
+        l.key === key
+          ? { ...l, ratePaise: Math.max(0, Math.round(pricePaise)), priceOverridden: true, ruleLabel: "Manual" }
+          : l,
+      ),
+    })),
+
   setBatch: (key, item, batch) =>
     set((state) => {
       const line = state.lines.find((l) => l.key === key);
@@ -165,6 +195,10 @@ export const useBill = create<BillState>((set) => ({
                 expiry: batch.expiry,
                 mrpPaise: batch.mrpPaise,
                 ptrPaise: batch.ptrPaise,
+                // New batch ⇒ new MRP; a non-overridden line re-prices from it (SALT-191A).
+                ...(l.priceOverridden
+                  ? {}
+                  : { ratePaise: batch.mrpPaise, ruleLabel: "MRP", pricedForParty: null }),
               }
             : l,
         ),

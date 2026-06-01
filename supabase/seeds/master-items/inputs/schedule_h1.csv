@@ -1,0 +1,60 @@
+molecule,note
+# Schedule H1 molecule keywords (Drugs & Cosmetics Rules, GSR 588(E) 2013 + amendments).
+# The ETL tags schedule=H1 on bulk rows (NLEM/PMBJP) whose name/salt contains one of these.
+# Compiled from GSR 588(E) + later additions; errs toward INCLUSION (over-tagging a controlled
+# drug is the safe direction). Verify against the official gazette before compliance use.
+# --- 3rd / 4th generation cephalosporins ---
+Cefixime,3rd-gen cephalosporin
+Cefpodoxime,3rd-gen cephalosporin
+Cefdinir,3rd-gen cephalosporin
+Cefditoren,3rd-gen cephalosporin
+Cefetamet,3rd-gen cephalosporin
+Cefoperazone,3rd-gen cephalosporin
+Cefotaxime,3rd-gen cephalosporin
+Ceftazidime,3rd-gen cephalosporin
+Ceftibuten,3rd-gen cephalosporin
+Ceftizoxime,3rd-gen cephalosporin
+Ceftriaxone,3rd-gen cephalosporin
+Cefepime,4th-gen cephalosporin
+Cefpirome,4th-gen cephalosporin
+# --- carbapenems / penems ---
+Meropenem,carbapenem
+Imipenem,carbapenem
+Ertapenem,carbapenem
+Doripenem,carbapenem
+Faropenem,penem
+# --- beta-lactamase inhibitors (appear in combinations) ---
+Sulbactam,beta-lactamase inhibitor
+Tazobactam,beta-lactamase inhibitor
+# --- newer fluoroquinolones ---
+Levofloxacin,newer fluoroquinolone
+Moxifloxacin,newer fluoroquinolone
+Gatifloxacin,newer fluoroquinolone
+Sparfloxacin,newer fluoroquinolone
+Prulifloxacin,newer fluoroquinolone
+Nadifloxacin,newer fluoroquinolone
+Gemifloxacin,newer fluoroquinolone
+Balofloxacin,newer fluoroquinolone
+# --- other reserve antibacterials ---
+Clarithromycin,macrolide (reserve)
+Linezolid,oxazolidinone (reserve)
+# --- anti-tuberculosis ---
+Rifampicin,anti-TB
+Rifabutin,anti-TB
+Isoniazid,anti-TB
+Ethambutol,anti-TB
+Pyrazinamide,anti-TB
+Cycloserine,anti-TB (second line)
+Ethionamide,anti-TB (second line)
+Capreomycin,anti-TB (second line)
+# --- habit-forming / CNS (the non-antimicrobial H1 members) ---
+Tramadol,habit-forming analgesic
+Alprazolam,benzodiazepine
+Clonazepam,benzodiazepine
+Diazepam,benzodiazepine
+Lorazepam,benzodiazepine
+Nitrazepam,benzodiazepine
+Midazolam,benzodiazepine
+Chlordiazepoxide,benzodiazepine
+Zolpidem,Z-drug hypnotic
+Zopiclone,Z-drug hypnotic

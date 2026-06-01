@@ -9,9 +9,11 @@ import { useBill } from "@/store/bill";
 import { useHeldBills } from "@/store/heldBills";
 import { GstinPrompt } from "./GstinPrompt";
 import { H1Notice } from "./H1Gate";
-import { CreditNotice } from "./CreditNotice";
+import { CreditApprovalNotice } from "./CreditApprovalNotice";
 import { SplitTender } from "./SplitTender";
 import { DiscountApprovalNotice } from "./DiscountApprovalNotice";
+import { SeriesPicker } from "./SeriesPicker";
+import { SaveRetryBanner } from "./SaveRetryBanner";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -78,21 +80,28 @@ export function BillSummary({
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
   const hold = useHeldBills((s) => s.hold);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, savedOffline, error, shopId } = checkout;
-  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saved, savedOffline, error, shopId } = checkout;
+  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
   const { splitMode, setSplit, tenderAmounts, setTenderAmount, fillRemainder, tenderChk } = checkout;
-  const { discountGate, cancelDiscountApproval } = checkout;
-  // Save is blocked while a split does not balance, or while an over-limit discount is
-  // awaiting manager approval (the server / gate would reject it anyway).
+  const { discountGate, cancelDiscountApproval, creditGate, cancelCreditApproval } = checkout;
+  const { series, seriesId, setSeriesId, failedSave, retryFailedSave, dismissFailedSave } = checkout;
+  // Save is blocked while a split does not balance, or while an over-limit discount/credit sale
+  // is awaiting manager approval (the server / gate would reject it anyway). The save itself is
+  // optimistic (SALT-155) — it never blocks on the network.
   const blockSave =
-    empty || saving || usingSeed || !shopId || (splitMode && !tenderChk.ok) || discountGate.status === "pending";
+    empty ||
+    usingSeed ||
+    !shopId ||
+    (splitMode && !tenderChk.ok) ||
+    discountGate.status === "pending" ||
+    creditGate.status === "pending";
   const tax = gstSplit(t.gst, isInterstate);
   const marginPct = t.grand > 0 ? Math.round((t.margin / t.grand) * 100) : 0;
   const loss = t.margin < 0;
 
   return (
     <div className="hidden flex-col gap-3 overflow-auto rounded-lg border border-border p-4 md:flex">
-      <Row label="Gross (MRP)" value={formatPaise(t.gross)} muted />
+      <Row label="Gross" value={formatPaise(t.gross)} muted />
       <Row
         label="Discount"
         value={t.discount > 0 ? `− ${formatPaise(t.discount)}` : formatPaise(0)}
@@ -136,6 +145,8 @@ export function BillSummary({
       {party && !customerGstin && <GstinPrompt partyId={party.id} onSaved={onCustomerUpdated} />}
 
       <Separator />
+
+      <SeriesPicker series={series} value={seriesId} onChange={setSeriesId} />
 
       <div>
         <div className="mb-1.5 flex items-center justify-between">
@@ -221,7 +232,7 @@ export function BillSummary({
           <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
         )}
         <DiscountApprovalNotice gate={discountGate} onCancel={cancelDiscountApproval} />
-        {creditWarn.over && <CreditNotice check={creditWarn} />}
+        <CreditApprovalNotice gate={creditGate} onCancel={cancelCreditApproval} />
         <Button
           size="lg"
           disabled={blockSave}
@@ -229,13 +240,7 @@ export function BillSummary({
           title={usingSeed ? "Import your items to save bills" : undefined}
         >
           {saved || savedOffline ? <Check /> : <Printer />}
-          {saved
-            ? "Saved"
-            : savedOffline
-              ? "Saved offline"
-              : saving
-                ? "Saving…"
-                : "Save & Print · F9"}
+          {saved ? "Saved" : savedOffline ? "Saved offline" : "Save & Print · F9"}
         </Button>
         {usingSeed && (
           <p className="text-center text-xs text-text-tertiary">
@@ -243,6 +248,14 @@ export function BillSummary({
           </p>
         )}
         {error && <p className="text-center text-xs text-destructive">{error}</p>}
+        {failedSave && (
+          <SaveRetryBanner
+            message={failedSave.message}
+            retryable={failedSave.retryable}
+            onRetry={retryFailedSave}
+            onDismiss={dismissFailedSave}
+          />
+        )}
         <div className="grid grid-cols-2 gap-2">
           <Button
             variant="outline"

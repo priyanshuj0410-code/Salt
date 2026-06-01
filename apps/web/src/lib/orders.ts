@@ -88,6 +88,10 @@ export interface SalesInvoiceArgs {
   p_credit_days: number;
   p_lines: OrderLinePayload[];
   p_invoice_no: string | null;
+  /** Which named GST series to number this bill from (SALT-209). Omitted ⇒ the shop's
+   *  default active sales series. Any `invoice_series` row of the desired code works —
+   *  the server reads its code and allocates the current-FY number via next_doc_no. */
+  p_series_id?: string;
   /** Schedule H1/X prescription, sent structured so the server writes the h1_register row
    *  + passes enforce_h1_gate (SALT-148/185); the gate rolls the invoice back if incomplete. */
   p_doctor_name: string | null;
@@ -116,6 +120,7 @@ export function buildSalesInvoicePayload(
   billDiscount: BillDiscount = NO_BILL_DISCOUNT,
   tenders: Tender[] | null = null,
   notes: string | null = null,
+  seriesId: string | null = null,
 ): SalesInvoiceArgs {
   // Send the post-bill-discount net as each line total, so the server's GST split
   // (backed out of line_total_paise) matches what the counter displayed.
@@ -142,7 +147,9 @@ export function buildSalesInvoicePayload(
       batch_no: l.batchNo,
       expiry: l.expiry,
       qty: l.qty,
-      rate_paise: l.mrpPaise,
+      // The billed unit rate (SALT-191A) — the customer-pricing rate when set, else MRP.
+      // line_total_paise (the net) already reflects it; the server backs GST out of that.
+      rate_paise: l.ratePaise ?? l.mrpPaise,
       discount_type: l.discountType,
       discount_value: l.discountValue,
       gst_rate: l.gstRate,
@@ -152,6 +159,9 @@ export function buildSalesInvoicePayload(
   // Only attach p_tenders for a real split — a single-payment bill omits the key so
   // the RPC resolves cleanly even before migration 0034 is applied (graceful rollout).
   if (tenders && tenders.length > 0) args.p_tenders = tenders;
+  // Only attach p_series_id when a non-default series was picked (SALT-209); otherwise the
+  // server falls back to the shop's default series exactly as before.
+  if (seriesId) args.p_series_id = seriesId;
   return args;
 }
 

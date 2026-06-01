@@ -7,7 +7,8 @@ import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
-import { ViewTabs, RangeControls, ExportButton, type ReportView } from "@/components/reports/report-controls";
+import { ViewTabs, RangeControls, ExportButton, ShopSelect, type ReportView } from "@/components/reports/report-controls";
+import { useOrgShops, scopeLabelFor, ALL_SHOPS } from "@/components/reports/useOrgShops";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatPaise } from "@/lib/currency";
@@ -70,9 +71,11 @@ const gstOf = (i: SalesInvoiceRow) => i.cgst_paise + i.sgst_paise + i.igst_paise
 const payLabel = (m: string | null) => (m ? m.charAt(0).toUpperCase() + m.slice(1) : "—");
 
 export function SalesReportsPage() {
-  const { membership, shopId, shop, loading: authLoading } = useAuth();
+  const { membership, shop } = useAuth();
   const orgId = membership?.orgId;
   const navigate = useNavigate();
+  const { shops } = useOrgShops();
+  const [shopFilter, setShopFilter] = useState<string>(ALL_SHOPS);
   const [range, setRange] = useState(() => presetRange("month"));
   const [view, setView] = useState<ViewKey>("register");
   const [invoices, setInvoices] = useState<SalesInvoiceRow[]>([]);
@@ -81,39 +84,39 @@ export function SalesReportsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!supabase || !orgId || !shopId) return;
+    if (!supabase || !orgId) return;
     let active = true;
     const db = supabase;
     const { from, to } = range;
+    const oneShop = shopFilter === ALL_SHOPS ? null : shopFilter;
 
     (async () => {
       setLoading(true);
       const [invs, lns] = await Promise.all([
-        fetchAllPaged<SalesInvoiceRow>((f, t) =>
-          db
+        fetchAllPaged<SalesInvoiceRow>((f, t) => {
+          let q = db
             .from("sales_invoices")
             .select(INV_COLS)
             .eq("org_id", orgId)
-            .eq("shop_id", shopId)
             .eq("posts_effects", true)
             .in("status", ["placed", "cancelled"])
             .gte("invoice_date", from)
-            .lte("invoice_date", to)
-            .order("invoice_date", { ascending: false })
-            .range(f, t),
-        ),
-        fetchAllPaged<SaleLineRow>((f, t) =>
-          db
+            .lte("invoice_date", to);
+          if (oneShop) q = q.eq("shop_id", oneShop);
+          return q.order("invoice_date", { ascending: false }).range(f, t);
+        }),
+        fetchAllPaged<SaleLineRow>((f, t) => {
+          let q = db
             .from("sale_lines")
             .select(LINE_COLS)
             .eq("org_id", orgId)
-            .eq("sales_invoices.shop_id", shopId)
             .eq("sales_invoices.status", "placed")
             .eq("sales_invoices.posts_effects", true)
             .gte("sales_invoices.invoice_date", from)
-            .lte("sales_invoices.invoice_date", to)
-            .range(f, t),
-        ),
+            .lte("sales_invoices.invoice_date", to);
+          if (oneShop) q = q.eq("sales_invoices.shop_id", oneShop);
+          return q.range(f, t);
+        }),
       ]);
       if (!active) return;
       setInvoices(invs);
@@ -138,7 +141,7 @@ export function SalesReportsPage() {
     return () => {
       active = false;
     };
-  }, [orgId, shopId, range]);
+  }, [orgId, shopFilter, range]);
 
   const placed = useMemo(() => invoices.filter((i) => i.status === "placed"), [invoices]);
   const cancelled = useMemo(() => invoices.filter((i) => i.status === "cancelled"), [invoices]);
@@ -238,18 +241,17 @@ export function SalesReportsPage() {
       <PageHeader
         icon={FileText}
         title="Sales reports"
-        subtitle={shop?.name ?? "This shop"}
+        subtitle={scopeLabelFor(shops, shopFilter, shop?.name)}
         actions={
           <>
+            <ShopSelect shops={shops} value={shopFilter} onChange={setShopFilter} />
             <RangeControls from={range.from} to={range.to} onChange={setRange} />
             <ExportButton onExport={exporters[view]} disabled={!hasAny} />
           </>
         }
       />
 
-      {!authLoading && !shopId ? (
-        <EmptyState title="No shop selected" hint="Sales reports summarise one shop. Pick a shop to continue." />
-      ) : (
+      {
         <div className="flex flex-col gap-5">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard label="Invoices" value={totals.count} hint={`${range.from} → ${range.to}`} />
@@ -372,7 +374,7 @@ export function SalesReportsPage() {
             cancelled invoices are excluded from totals.
           </p>
         </div>
-      )}
+      }
     </Page>
   );
 }

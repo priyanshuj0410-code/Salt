@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FileUp, Upload, Wand2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -28,10 +28,13 @@ interface Result {
 export function PaymentStep({
   orgId,
   shopId,
+  initialFile,
   onComplete,
 }: {
   orgId: string | undefined;
   shopId: string | null | undefined;
+  /** Pre-loaded by the drop-all router (SALT-153); auto-parsed on mount. */
+  initialFile?: File | null;
   onComplete: () => void;
 }) {
   const cfg = PAYMENT_CONFIG;
@@ -42,6 +45,29 @@ export function PaymentStep({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
+
+  // Auto-load a file routed in by the drop-all panel (state set only post-parse).
+  useEffect(() => {
+    if (!initialFile) return;
+    let cancelled = false;
+    parseFile(initialFile, cfg.fields)
+      .then((p) => {
+        if (cancelled) return;
+        if (p.headers.length === 0) {
+          setError("Could not read any columns from that file.");
+          return;
+        }
+        setParsed(p);
+        setMapping(autoMap(p.headers, cfg.fields));
+        setPhase("map");
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : "Could not read that file.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialFile, cfg]);
 
   async function onFile(file: File) {
     setError(null);
