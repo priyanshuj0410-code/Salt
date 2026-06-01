@@ -79,11 +79,46 @@ export function ItemDetailPage() {
   const [aiMsg, setAiMsg] = useState<string | null>(null);
   const [promoteBusy, setPromoteBusy] = useState(false);
   const [promoteMsg, setPromoteMsg] = useState<string | null>(null);
+  const [crowd, setCrowd] = useState<{
+    n_orgs: number;
+    n_lines: number;
+    ptr_median_paise: number | null;
+    mrp_median_paise: number | null;
+  } | null>(null);
   const autoFilled = useRef<string | null>(null);
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
   }, [orgId, loadCatalog]);
+
+  // Crowd-sourced cross-shop median PTR/MRP from the master (SALT-182): only present when this
+  // item links to a master row with aggregates (>= 3 shops). Aggregates only — never raw rows.
+  // setState lives in the async IIFE (never the effect body); degrades to null if 0056 is unapplied.
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      if (!supabase || !id) return;
+      const { data: it } = await supabase.from("items").select("master_item_id").eq("id", id).maybeSingle();
+      const mid = (it as { master_item_id: string | null } | null)?.master_item_id;
+      if (!mid) {
+        if (active) setCrowd(null);
+        return;
+      }
+      const { data } = await supabase
+        .from("master_price_stats")
+        .select("n_orgs,n_lines,ptr_median_paise,mrp_median_paise")
+        .eq("master_item_id", mid)
+        .maybeSingle();
+      if (active)
+        setCrowd(
+          (data as { n_orgs: number; n_lines: number; ptr_median_paise: number | null; mrp_median_paise: number | null } | null) ??
+            null,
+        );
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
 
   // Alternate names / barcodes for this item (item_aliases), for counter lookup.
   useEffect(() => {
@@ -768,6 +803,29 @@ export function ItemDetailPage() {
           </>
         )}
       </section>
+
+      {/* Crowd prices — anonymized cross-shop median from the master (SALT-182) */}
+      {crowd && (crowd.ptr_median_paise != null || crowd.mrp_median_paise != null) && (
+        <section className="mt-6">
+          <div className="mb-2 flex items-baseline justify-between">
+            <h2 className="text-sm font-medium text-text-primary">Crowd prices</h2>
+            <span className="text-xs text-text-tertiary">
+              Anonymized median across {crowd.n_orgs} shops — never any single shop&rsquo;s data.
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard
+              label="Crowd PTR"
+              value={crowd.ptr_median_paise != null ? formatPaise(Number(crowd.ptr_median_paise)) : "—"}
+              hint={`${crowd.n_orgs} shops · ${crowd.n_lines} buys`}
+            />
+            <StatCard
+              label="Crowd MRP"
+              value={crowd.mrp_median_paise != null ? formatPaise(Number(crowd.mrp_median_paise)) : "—"}
+            />
+          </div>
+        </section>
+      )}
 
       {/* Substitutes — same salt, in stock, ranked by margin then velocity (SALT-083) */}
       <section className="mt-6">
