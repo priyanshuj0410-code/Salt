@@ -5,7 +5,11 @@ updated: 2026-05-29
 
 # Screens & routing
 
-All routes are declared in `apps/web/src/App.tsx`. The router is react-router-dom v7.
+All routes are declared in `apps/web/src/App.tsx`. The router is react-router-dom v7. The sidebar + keyboard go-to map are driven by `apps/web/src/components/nav/navConfig.ts` — the single source of truth for what is navigable.
+
+> **CI-guarded invariant (SALT-142).** `apps/web/scripts/check-nav.mjs` (CI step "Nav route invariant"; locally `pnpm --filter web check:nav`) fails the build when navConfig and App.tsx drift: every `built: true` nav node must carry a `path`, and every nav `path` must resolve to a real `<Route>`. So "per-module on ship" — add the route + flip `built: true` — is enforced, not just convention.
+
+> ⚠️ **The route table below is partial / stale** (it predates the inventory, GST, reports, payments, catalogue, settings and purchases routes). `App.tsx` + `navConfig.ts` are authoritative; reconciling this table fully is its own task.
 
 ## Route table
 
