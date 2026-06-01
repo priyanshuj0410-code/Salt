@@ -1,6 +1,6 @@
 ---
 type: log
-updated: 2026-06-01
+updated: 2026-06-02
 ---
 
 # Log
@@ -277,3 +277,6 @@ First integrations-module surface. New **`lib/whatsapp.ts`**: one `sendWhatsApp`
 
 ## [2026-06-01] build | Razorpay payment links (SALT-108)
 Second integrations surface. New **`lib/razorpay.ts`**: connection config (publishable key id + enable + endpoint, localStorage, no secret), a pure **`buildPaymentLinkRequest`** (paise is Razorpay's native unit, so no conversion; conditional customer/notify/notes), **`createPaymentLink`** that POSTs to a new **`supabase/functions/razorpay-link/`** edge function (holds `RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET`, Basic-auths to the Razorpay Payment Links API), and **`paymentLinkMessage`** for sharing. UI: **`components/integrations/RazorpayPage.tsx`** (connection panel + composer) — the created link is shared via the SALT-107 **`WhatsAppButton`** (the two integrations compose). Secret stays server-side; default state is "not connected", with the existing UPI deep link as the zero-setup fallback. Follow-ups filed: webhook→`record_payment` reconciliation (SALT-230, touches payments/DB) + per-screen wiring (SALT-231). Smoke 22/22; lint + typecheck + build green. → [architecture/integrations-razorpay](architecture/integrations-razorpay.md)
+
+## [2026-06-02] decision | `master_items` seeded (SALT-081 done) — 2,829 rows; long tail bridged by enrichment
+SALT-081 (pre-seed the national drug master) is **done** and **applied to the live DB**: `master_items` went 6 → **2,829 rows** (verified). Shipped: `0046_gst_rate_schedule.sql` + `0047_seed_master_items.sql` + the ETL (`build_seed.py`, `extract_nlem.py`, `extract_pmbjp.py`, `inputs/`). **Scope reconciled:** the 20–50k target was only reachable via the 1mg/PharmEasy scrapes this ticket forbids, so the license-clean reality is ~2,830 government-sourced (NLEM + Jan Aushadhi + curated) **molecule-level** rows — identity-only, pricing null. Only these ~2,829 items carry seeded master data; **brand breadth** (the real goal behind "50k") is delivered by the brand→molecule layer instead: `brand_aliases` (4,062 rows, PR #195/#196) feeding brand-aware "Fill from master", placeholder-salt handling for `OTHERS` (PR #197), and the `gemini-enrich` Edge Function (PR #198) as the AI fallback for whatever neither table resolves. So the long tail is bridged **at enrich time**, not seeded. → [architecture/import-pipeline](import-pipeline.md)

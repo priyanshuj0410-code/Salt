@@ -4,6 +4,14 @@ Generates the seed migration for the global drug reference table `master_items` 
 **open, license-clean** sources. Brand/manufacturer/MRP are intentionally left empty —
 those accrue per-shop via crowd-sourced GRN (the network-effects moat in the PRD).
 
+## Live coverage (as of 2026-06)
+`master_items` is **seeded and applied in production: 2,829 rows** (NLEM + Jan Aushadhi + curated),
+identity-only, pricing null. That is the license-clean *molecule-level* master — deliberately **not**
+the 20–50k brand universe, which would require the commercial-catalogue scrapes we refuse to use.
+Brand-level breadth is the job of the brand→molecule crosswalk (`brand_reference.csv` → `brand_aliases`)
+and the `gemini-enrich` Edge Function, which bridge the long tail of branded SKUs **at enrichment
+time**, not in this seed.
+
 ## What this produces
 `build_seed.py` reads the `inputs/` CSVs and writes
 `supabase/migrations/0047_seed_master_items.sql` (idempotent: `on conflict (norm) do nothing`).
