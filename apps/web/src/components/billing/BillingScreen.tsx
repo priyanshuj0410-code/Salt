@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth";
 import { useCatalog } from "@/store/catalog";
 import { useBill } from "@/store/bill";
 import { supabase } from "@/lib/supabase";
+import { fetchPartyCredit } from "@/lib/credit";
 import { cn } from "@/lib/utils";
 
 function Hint({ keys, label }: { keys: string; label: string }) {
@@ -89,6 +90,8 @@ export function BillingScreen() {
     state_code: string | null;
   } | null>(null);
   const [custKey, setCustKey] = useState(0);
+  // The bound party's credit limit + current dues, for the over-limit warning (SALT-004).
+  const [credit, setCredit] = useState<{ creditLimitPaise: number; duePaise: number } | null>(null);
   // Gate detail on `party` so a cleared bill (after save, or walk-in) never shows
   // the previous customer's phone/GSTIN even if the fetched detail is briefly stale.
   const customerGstin = party ? (customer?.gstin ?? null) : null;
@@ -98,7 +101,7 @@ export function BillingScreen() {
     () => (party ? { gstin: customerGstin, phone: customerPhone, state_code: customerState } : null),
     [party, customerGstin, customerPhone, customerState],
   );
-  const checkout = useCheckout({ customer: customerDetail });
+  const checkout = useCheckout({ customer: customerDetail, credit: party ? credit : null });
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -123,6 +126,19 @@ export function BillingScreen() {
       active = false;
     };
   }, [party?.id, custKey]);
+
+  // Credit limit + current dues for the bound party — drives the over-limit warning (SALT-004).
+  useEffect(() => {
+    const id = party?.id;
+    if (!supabase || !id || !orgId) return;
+    let active = true;
+    void fetchPartyCredit(orgId, id).then((c) => {
+      if (active) setCredit(c);
+    });
+    return () => {
+      active = false;
+    };
+  }, [party?.id, orgId, custKey]);
 
   useHotkeys(
     "shift+/",
@@ -197,6 +213,7 @@ export function BillingScreen() {
         onSelect={(p) => {
           setParty(p);
           setCustomer(null);
+          setCredit(null);
         }}
       />
       <ShopSetupDialog

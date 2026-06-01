@@ -5,6 +5,7 @@ import { buildSalesInvoicePayload, withTimeout, TimeoutError, type RxDetails } f
 import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { gatedLines, requiresRx } from "@/lib/billing";
+import { creditCheck } from "@/lib/credit";
 import { buildInvoiceData, printInvoice, type CustomerDetail } from "@/lib/printInvoice";
 import { billTotals, useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
@@ -19,7 +20,13 @@ import { useCatalog } from "@/store/catalog";
  * catalogue / missing shop / re-entry; routes through the shop-setup rescue dialog
  * when the shop lacks a state_code; treats a timeout as "unknown, not failed".
  */
-export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
+export function useCheckout({
+  customer,
+  credit,
+}: {
+  customer: CustomerDetail | null;
+  credit: { creditLimitPaise: number; duePaise: number } | null;
+}) {
   const lines = useBill((s) => s.lines);
   const clear = useBill((s) => s.clear);
   const payment = useBill((s) => s.payment);
@@ -43,6 +50,9 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
   const printIntent = useRef(false);
   const t = billTotals(lines, billDiscount);
   const empty = lines.length === 0;
+  // Credit-limit warning (SALT-004): advisory, non-blocking. Only for a credit sale to a
+  // party with a limit set, where dues + this bill exceed it.
+  const creditWarn = creditCheck(payment.method, credit?.creditLimitPaise ?? 0, credit?.duePaise ?? 0, t.grand);
   const needsRx = requiresRx(lines);
   // Inter-state ⇒ IGST; intra-state (incl. walk-in / no party state) ⇒ CGST+SGST.
   const isInterstate = !!(customer?.state_code && shop?.state_code && customer.state_code !== shop.state_code);
@@ -143,6 +153,7 @@ export function useCheckout({ customer }: { customer: CustomerDetail | null }) {
     setupOpen,
     setSetupOpen,
     isInterstate,
+    creditWarn,
     saveAndPrint: () => save({ print: true }),
     saveOnly: () => save({ print: false }),
     resumeSave: () => save(),

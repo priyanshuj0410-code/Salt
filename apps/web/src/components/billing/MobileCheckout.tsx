@@ -9,6 +9,7 @@ import { useBill } from "@/store/bill";
 import { GstinPrompt } from "./GstinPrompt";
 import { Row, BillDiscountInput } from "./BillSummary";
 import { H1Notice } from "./H1Gate";
+import { CreditNotice } from "./CreditNotice";
 import type { Checkout } from "./useCheckout";
 
 const CREDIT_PRESETS = [7, 15, 30];
@@ -33,7 +34,7 @@ export function MobileCheckout({
   const clear = useBill((s) => s.clear);
   const parkBill = useBill((s) => s.parkBill);
   const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error } = checkout;
-  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly } = checkout;
+  const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const tax = gstSplit(t.gst, isInterstate);
   const [open, setOpen] = useState(false);
   const loss = t.margin < 0;
@@ -128,6 +129,11 @@ export function MobileCheckout({
       {needsRx && (
         <div className="px-3 pt-3">
           <H1Notice rxCaptured={rxCaptured} doctorName={rx?.doctorName} onEdit={openRx} />
+        </div>
+      )}
+      {creditWarn.over && (
+        <div className="px-3 pt-3">
+          <CreditNotice check={creditWarn} />
         </div>
       )}
 
