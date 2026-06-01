@@ -6,6 +6,7 @@ import { formatPaise, formatSigned } from "@/lib/currency";
 import { gstSplit } from "@/lib/billing";
 import { cn } from "@/lib/utils";
 import { useBill } from "@/store/bill";
+import { useHeldBills } from "@/store/heldBills";
 import { GstinPrompt } from "./GstinPrompt";
 import { Row, BillDiscountInput } from "./BillSummary";
 import { H1Notice } from "./H1Gate";
@@ -32,8 +33,8 @@ export function MobileCheckout({
 }) {
   const party = useBill((s) => s.party);
   const clear = useBill((s) => s.clear);
-  const parkBill = useBill((s) => s.parkBill);
-  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error } = checkout;
+  const hold = useHeldBills((s) => s.hold);
+  const { t, empty, usingSeed, payment, setPaymentMethod, setCreditDays, saving, saved, error, shopId } = checkout;
   const { needsRx, rxCaptured, rx, openRx, isInterstate, saveAndPrint, saveOnly, creditWarn } = checkout;
   const tax = gstSplit(t.gst, isInterstate);
   const [open, setOpen] = useState(false);
@@ -116,7 +117,12 @@ export function MobileCheckout({
             >
               Save
             </Button>
-            <Button variant="outline" size="sm" onClick={parkBill}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={empty || !shopId}
+              onClick={() => shopId && hold(shopId)}
+            >
               Hold
             </Button>
             <Button variant="ghost" size="sm" onClick={clear}>

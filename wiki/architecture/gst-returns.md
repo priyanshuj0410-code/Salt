@@ -6,11 +6,13 @@ tags: [gst, compliance, sales]
 
 # GST & compliance — returns, liability, ITC, exports
 
-The **GST & compliance** module's six screens (SALT-002/063/064/068/069/070/170; product-modules §9):
+The **GST & compliance** module's seven screens (SALT-002/063/064/065/068/069/070/170; product-modules §9):
 read-only views that aggregate one shop's documents into the GSTN sections, a live tax position,
-the ITC ledger, and accountant exports — all with portal-ready JSON / CSV / Tally XML. Screens
-under `/gst` (`Gstr1Page`, `Gstr3bPage`, `GstLiabilityPage`, `ItcRegisterPage`, `TallyExportPage`,
-`HsnReportPage` in `components/gst/`); all aggregation in `lib/gst.ts`, which is **pure** (no
+the ITC ledger, accountant exports, and the Schedule H1/X dispensing register — with portal-ready
+JSON / CSV / Tally XML / inspector PDF. Screens under `/gst` (`Gstr1Page`, `Gstr3bPage`,
+`GstLiabilityPage`, `ItcRegisterPage`, `TallyExportPage`, `HsnReportPage`, `H1RegisterPage` in
+`components/gst/`); the returns aggregation lives in `lib/gst.ts` and the register in `lib/h1.ts`,
+both **pure** (no
 Supabase) and unit-smoke-tested.
 
 ## Read contract (as-built)
@@ -114,14 +116,24 @@ are referenced by name (Tally maps/creates them on import). Same scope filters a
 for one month, but spanning a quarter or year for GSTR-9 / analytics. CSV export. Same scope as
 the returns (shop, `status='placed'`, `posts_effects=true`).
 
+## H1/X register
+
+`/gst/h1` (`H1RegisterPage`, SALT-065) is the legal Schedule **H1/X dispensing register** for the
+drug inspector — `create_sales_invoice` writes an `h1_register` row per H1/X line at checkout
+(migration `0032`, carrying the H1 gate's prescriber + patient details). The screen filters by date
+range, schedule (H1/X), and a drug/doctor/patient search, resolves the pharmacist via `profiles`,
+and exports **CSV** + a print/PDF inspector register (A4 landscape, 3-year-retention footer). The
+filter + CSV + register-HTML helpers live in **`lib/h1.ts`** (pure, smoke-tested); `printH1Register`
+is the thin `window.print()` wrapper (same pattern as `lib/destruction.ts`).
+
 ## Status & next
 
 **Shipped** (all in-lane GST filing/insight work): GSTR-1, GSTR-3B (+ Table-4B write-off
-reversal), live liability, ITC register, Tally export, HSN summary.
+reversal), live liability, ITC register, Tally export, HSN summary, and the **H1/X register**
+(SALT-065, on the now-live `h1_register` / migration `0032`).
 
-**Newly unblocked** (DB schema landed): **H1/X register** (SALT-065 — `h1_register` /
-`enforce_h1_gate` live, migration `0032`) and **multiple GST series per shop** (SALT-067 —
-series schema, `0033`).
+**Newly unblocked** (DB schema landed): **multiple GST series per shop** (SALT-067 — series
+schema, migration `0033`).
 
 **Elsewhere / handed off:** GSTR-2B recon (SALT-007, smart-import lane) · the drug-license
 renewal banner (SALT-066, owner lane — store + 90/60/30-day alerts already ship in

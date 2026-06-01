@@ -47,6 +47,7 @@ const GstLiabilityPage = lazy(() => import("@/components/gst/GstLiabilityPage").
 const ItcRegisterPage = lazy(() => import("@/components/gst/ItcRegisterPage").then((m) => ({ default: m.ItcRegisterPage })));
 const TallyExportPage = lazy(() => import("@/components/gst/TallyExportPage").then((m) => ({ default: m.TallyExportPage })));
 const HsnReportPage = lazy(() => import("@/components/gst/HsnReportPage").then((m) => ({ default: m.HsnReportPage })));
+const H1RegisterPage = lazy(() => import("@/components/gst/H1RegisterPage").then((m) => ({ default: m.H1RegisterPage })));
 const PaymentsPage = lazy(() => import("@/components/payments/PaymentsPage").then((m) => ({ default: m.PaymentsPage })));
 const MakePaymentPage = lazy(() => import("@/components/payments/MakePaymentPage").then((m) => ({ default: m.MakePaymentPage })));
 const CatalogPage = lazy(() => import("@/components/catalog/CatalogPage").then((m) => ({ default: m.CatalogPage })));
@@ -69,6 +70,8 @@ const DataExportPage = lazy(() => import("@/components/settings/DataExportPage")
 const PrintTemplatesPage = lazy(() => import("@/components/settings/PrintTemplatesPage").then((m) => ({ default: m.PrintTemplatesPage })));
 const AuditLogPage = lazy(() => import("@/components/settings/AuditLogPage").then((m) => ({ default: m.AuditLogPage })));
 const ShopsManagerPage = lazy(() => import("@/components/settings/ShopsManagerPage").then((m) => ({ default: m.ShopsManagerPage })));
+const PartyPrivacyPage = lazy(() => import("@/components/settings/PartyPrivacyPage").then((m) => ({ default: m.PartyPrivacyPage })));
+const DiscountLimitsPage = lazy(() => import("@/components/settings/DiscountLimitsPage").then((m) => ({ default: m.DiscountLimitsPage })));
 const SmartImportPage = lazy(() => import("@/components/import/smart/SmartImportPage").then((m) => ({ default: m.SmartImportPage })));
 
 function PageFallback() {
@@ -399,6 +402,14 @@ function App() {
         }
       />
       <Route
+        path="/gst/h1"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <H1RegisterPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/reports"
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
@@ -571,6 +582,22 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <AuditLogPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/privacy"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <PartyPrivacyPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/limits"
+        element={
+          <ProtectedRoute allowedRoles={["owner"]}>
+            <DiscountLimitsPage />
           </ProtectedRoute>
         }
       />

@@ -160,7 +160,7 @@ export const NAV: NavModule[] = [
       { label: "ITC register", path: "/gst/itc", built: true },
       { label: "Tally export", path: "/gst/tally", built: true },
       { label: "HSN summary", path: "/gst/hsn", built: true },
-      { label: "H1 / X register", built: false },
+      { label: "H1 / X register", path: "/gst/h1", built: true },
       { label: "Drug licenses", built: false },
     ],
   },
@@ -214,6 +214,8 @@ export const NAV: NavModule[] = [
       { label: "Print templates", path: "/settings/print", built: true },
       { label: "Data export", path: "/settings/export", built: true },
       { label: "Audit log", path: "/settings/audit", built: true },
+      { label: "Data privacy", path: "/settings/privacy", built: true },
+      { label: "Discount limits", path: "/settings/limits", built: true },
     ],
   },
 ];
