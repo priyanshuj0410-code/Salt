@@ -18,6 +18,7 @@ import { upcomingPayments, UPCOMING_BANDS, type UpcomingBuckets } from "@/lib/ca
 import { INDIAN_STATE_CODES } from "@/lib/stateCodes";
 import { CUSTOMER_GROUPS } from "@/lib/partyGroups";
 import { cn } from "@/lib/utils";
+import { cacheGet, cacheKey, cachePut, formatStaleness } from "@/lib/offline/cache";
 
 interface LedgerRow {
   id: string;
@@ -114,6 +115,8 @@ export function PartiesPage() {
   const [vendorPay, setVendorPay] = useState<{ buckets: UpcomingBuckets; next: NextPayment[] } | null>(null);
   const [retagging, setRetagging] = useState<string | null>(null);
   const [hasGroup, setHasGroup] = useState(false);
+  /** When serving the offline read-cache, the epoch-ms it was written; null when live (SALT-207). */
+  const [cachedAt, setCachedAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -171,6 +174,9 @@ export function PartiesPage() {
           return { ...l, billRefs: refs, billCount: refs.length };
         });
         setRows(parties);
+        // Cache the working set for offline reads (SALT-207); live data → no staleness hint.
+        void cachePut(cacheKey("parties", orgId), parties);
+        setCachedAt(null);
         // Org-wide aging from imported open bills (per-party view adds live orders).
         setAging(agingFor(bills, []));
         // Upcoming vendor payments (SALT-055): dated cr payables on vendor parties.
@@ -192,9 +198,18 @@ export function PartiesPage() {
         setError(null);
         setLoading(false);
       })
-      .catch((e) => {
+      .catch(async (e) => {
         if (!active) return;
-        setError(e instanceof Error ? e.message : "Failed to load parties");
+        // Offline / load failure → fall back to the last cached working set (SALT-207).
+        const cached = await cacheGet<Party[]>(cacheKey("parties", orgId));
+        if (!active) return;
+        if (cached && cached.data.length > 0) {
+          setRows(cached.data);
+          setCachedAt(cached.cachedAt);
+          setError(null);
+        } else {
+          setError(e instanceof Error ? e.message : "Failed to load parties");
+        }
         setLoading(false);
       });
     return () => {
@@ -437,6 +452,11 @@ export function PartiesPage() {
         )}
 
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+        {cachedAt != null && (
+          <p className="mt-4 text-sm text-warning">
+            Offline — showing saved parties from {formatStaleness(cachedAt)}. Some figures may be out of date.
+          </p>
+        )}
 
         {/* Merge suggestions */}
         {suggestions.length > 0 && (
