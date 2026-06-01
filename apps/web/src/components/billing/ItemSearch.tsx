@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleBadge } from "./ScheduleBadge";
 import { formatPaise } from "@/lib/currency";
-import { fefoBatch, itemStock, searchCatalog, substitutes } from "@/lib/search";
+import { itemStock, searchCatalog } from "@/lib/search";
+import { findSubstitutes } from "@/lib/substitutes";
 import type { Item } from "@/lib/types";
 import { useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
@@ -54,7 +55,7 @@ export function ItemSearch() {
       const item = results[highlight];
       if (!item) return;
       // In stock → add it; out of stock → add the best (top-ranked) substitute.
-      add(itemStock(item) > 0 ? item : (substitutes(item, catalog)[0] ?? item));
+      add(itemStock(item) > 0 ? item : (findSubstitutes(item, catalog)[0]?.item ?? item));
     } else if (e.key === "Escape") {
       setQuery("");
     }
@@ -83,14 +84,14 @@ export function ItemSearch() {
           {results.map((item, i) => {
             const stock = itemStock(item);
             const inStock = stock > 0;
-            const subs = inStock ? [] : substitutes(item, catalog);
+            const subs = inStock ? [] : findSubstitutes(item, catalog);
             const topSub = subs[0];
-            const price = item.batches[0]?.mrpPaise ?? topSub?.batches[0]?.mrpPaise ?? 0;
+            const price = item.batches[0]?.mrpPaise ?? topSub?.mrpPaise ?? 0;
             return (
               <li
                 key={item.id}
                 onMouseEnter={() => setHighlight(i)}
-                onClick={() => (inStock ? add(item) : topSub && add(topSub))}
+                onClick={() => (inStock ? add(item) : topSub && add(topSub.item))}
                 className={cn(
                   "flex cursor-pointer items-start gap-3 border-l-2 border-transparent px-3 py-2 text-sm",
                   i === highlight && "border-l-primary bg-primary/10",
@@ -115,16 +116,16 @@ export function ItemSearch() {
                       <span className="text-xs text-text-tertiary">In-stock substitutes (same salt):</span>
                       {subs.map((s, si) => (
                         <button
-                          key={s.id}
+                          key={s.item.id}
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            add(s);
+                            add(s.item);
                           }}
                           className="flex items-center justify-between gap-2 rounded-md border border-border bg-surface px-2 py-1 text-left hover:border-primary hover:bg-primary/5"
                         >
                           <span className="flex min-w-0 items-center gap-1.5">
-                            <span className="truncate font-medium">{s.name}</span>
+                            <span className="truncate font-medium">{s.item.name}</span>
                             {si === 0 && (
                               <span className="rounded bg-success-bg px-1 text-[10px] font-medium text-success">
                                 Best
@@ -132,7 +133,7 @@ export function ItemSearch() {
                             )}
                           </span>
                           <span className="shrink-0 text-xs text-muted-foreground">
-                            {itemStock(s)} in stock · {formatPaise(fefoBatch(s)?.mrpPaise ?? 0)}
+                            {s.stock} in stock · {formatPaise(s.mrpPaise)}
                           </span>
                         </button>
                       ))}
