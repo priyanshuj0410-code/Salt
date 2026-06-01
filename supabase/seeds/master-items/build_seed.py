@@ -136,7 +136,15 @@ def main():
             ")"
         )
     lines.append(",\n".join(values))
-    lines.append("on conflict (norm) do nothing;")
+    # Upsert (not do-nothing): re-running the regenerated seed syncs corrected
+    # schedule/HSN/GST onto existing rows by norm. id is stable, so items.master_item_id
+    # FKs survive. The inputs/ CSVs are the source of truth (manual DB edits are not).
+    lines.append(
+        "on conflict (norm) do update set\n"
+        "  name = excluded.name, salt = excluded.salt, manufacturer = excluded.manufacturer,\n"
+        "  pack = excluded.pack, hsn = excluded.hsn, gst_rate = excluded.gst_rate,\n"
+        "  gst_rate_class = excluded.gst_rate_class, schedule = excluded.schedule, source = excluded.source;"
+    )
     lines.append("")
 
     OUT.write_text("\n".join(lines))
