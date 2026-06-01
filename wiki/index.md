@@ -38,6 +38,7 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/payments](architecture/payments.md) — money in/out on the payments ledger: the `record_payment` RPC + tables contract, the as-built `/payments` UI (SALT-003), the allocation/back-dating gaps, and the module roadmap.
 - [architecture/realtime](architecture/realtime.md) — the real-time / multi-counter substrate: Supabase Realtime (vs PRD's Yjs/ElectricSQL), the per-org Postgres-changes primitive, and the shop-wide activity feed (`activity_events` + triggers, `/activity`, SALT-104).
 - [architecture/reports](architecture/reports.md) — the Reports module (SALT-073…078): dashboard + sales/purchase/inventory/financial/tax suites over the `v_*` views (0023); the operational-basis filter, `lib/reports.ts` + `fetchAllPaged`, per-suite views, and the org-level financials decision.
+- [architecture/operations](architecture/operations.md) — NFR & ops posture (SALT-134/136/137/138): Supabase backup/PITR + restore runbook, at-rest/transit/RLS + no-PII-logs, India residency, audit-trail ownership, and the scale load-test method; with an account-owner action-items table.
 
 ## Domain
 - [domain/medical-retail](domain/medical-retail.md) — glossary: salt, schedules, batches/FEFO, MRP/PTR, GST/HSN, drug DB plan.
