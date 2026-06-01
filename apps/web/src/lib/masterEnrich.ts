@@ -265,9 +265,16 @@ export function planMasterUpdates(items: Item[], master: MasterRow[]): MasterUpd
       patch.gst_rate = mRate;
       changes.push(`GST ${it.gstRate}%→${mRate}%`);
     }
-    if (m.hsn?.trim() && m.hsn.trim() !== (it.hsn?.trim() ?? "")) {
-      patch.hsn = m.hsn.trim();
-      changes.push(`HSN ${it.hsn?.trim() || "—"}→${m.hsn.trim()}`);
+    // HSN is hierarchical: a 4-digit heading (3004) ⊃ 6-digit sub-heading (300490) ⊃ 8-digit
+    // tariff item (30049099). NEVER downgrade — skip when the item's HSN already extends the
+    // master's (same heading, equal or more specific). Only push when the master is genuinely
+    // different or MORE specific. Compare digits-only so separators/spacing don't matter.
+    const ihsn = (it.hsn ?? "").replace(/\D/g, "");
+    const mhsnRaw = m.hsn?.trim() ?? "";
+    const mhsn = mhsnRaw.replace(/\D/g, "");
+    if (mhsn && mhsn !== ihsn && !ihsn.startsWith(mhsn)) {
+      patch.hsn = mhsnRaw;
+      changes.push(`HSN ${it.hsn?.trim() || "—"}→${mhsnRaw}`);
     }
     if (changes.length) out.push({ itemId: it.id, itemName: it.name, patch, changes });
   }
