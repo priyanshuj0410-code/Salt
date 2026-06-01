@@ -338,95 +338,10 @@ export function discrepancyLabel(d: LineDiscrepancy): string {
   }
 }
 
-// ── Debit note / purchase return (SALT-025) ──────────────────────────────────
-// Returning received goods to a vendor: the reverse of a GRN. Stock goes down,
-// the vendor payable goes down, and the ITC claimed at GRN is reversed. The live
-// `create_debit_note` RPC does the stock-out + GST split + double entry
-// atomically; these helpers compute the same tax-exclusive split (via
-// computeGrnLine) so the UI total equals what the server stores, and build the
-// RPC payload. A return line carries no scheme/free/discount — just qty × PTR.
-
-/** One line entered in the debit-note (purchase-return) form. */
-export interface DebitNoteLine {
-  itemId: string;
-  /** Specific received batch being returned, if known (else matched by batch_no). */
-  batchId?: string | null;
-  name: string;
-  batchNo: string;
-  expiry?: string;
-  qty: number;
-  ptrPaise: number;
-  gstRate: number;
-}
-
-/** One `create_debit_note` p_lines[] entry (snake_case to match the RPC). */
-export interface DebitNoteLinePayload {
-  item_id: string;
-  batch_id: string | null;
-  name: string;
-  batch_no: string;
-  qty: number;
-  ptr_paise: number;
-  gst_rate: number;
-  /** Tax-exclusive taxable (qty × ptr); the RPC reverses GST off this. */
-  taxable_paise: number;
-}
-
-/** Document totals for a debit note. `itcReversalPaise` = the GST being reversed. */
-export interface DebitNoteTotals {
-  taxablePaise: number;
-  cgstPaise: number;
-  sgstPaise: number;
-  igstPaise: number;
-  /** Total GST reversed = CGST+SGST+IGST input credit given back. */
-  itcReversalPaise: number;
-  grandTotalPaise: number;
-  byRate: GrnRateBucket[];
-}
-
-/** Roll up debit-note lines (reuses the tax-exclusive line split of computeGrnLine). */
-export function debitNoteTotals(lines: DebitNoteLine[], interstate: boolean): DebitNoteTotals {
-  let taxablePaise = 0;
-  let cgstPaise = 0;
-  let sgstPaise = 0;
-  let igstPaise = 0;
-  const buckets = new Map<number, GrnRateBucket>();
-  for (const l of lines) {
-    const c = computeGrnLine({ qty: l.qty, ptrPaise: l.ptrPaise, gstRate: l.gstRate }, interstate);
-    taxablePaise += c.taxablePaise;
-    cgstPaise += c.cgstPaise;
-    sgstPaise += c.sgstPaise;
-    igstPaise += c.igstPaise;
-    const b = buckets.get(l.gstRate) ?? { rate: l.gstRate, taxablePaise: 0, gstPaise: 0 };
-    b.taxablePaise += c.taxablePaise;
-    b.gstPaise += c.gstPaise;
-    buckets.set(l.gstRate, b);
-  }
-  const itcReversalPaise = cgstPaise + sgstPaise + igstPaise;
-  return {
-    taxablePaise,
-    cgstPaise,
-    sgstPaise,
-    igstPaise,
-    itcReversalPaise,
-    grandTotalPaise: taxablePaise + itcReversalPaise,
-    byRate: [...buckets.values()].sort((a, b) => a.rate - b.rate),
-  };
-}
-
-/** Build the `create_debit_note` p_lines[] (taxable computed so it matches the UI). */
-export function buildDebitNoteLines(lines: DebitNoteLine[], interstate: boolean): DebitNoteLinePayload[] {
-  return lines.map((l) => ({
-    item_id: l.itemId,
-    batch_id: l.batchId ?? null,
-    name: l.name,
-    batch_no: l.batchNo,
-    qty: l.qty,
-    ptr_paise: l.ptrPaise,
-    gst_rate: l.gstRate,
-    taxable_paise: computeGrnLine({ qty: l.qty, ptrPaise: l.ptrPaise, gstRate: l.gstRate }, interstate).taxablePaise,
-  }));
-}
+// Note: purchase-return / debit-note economics moved to lib/returns.ts (SALT-190).
+// The naive `debitNoteTotals`/`buildDebitNoteLines` (raw qty×PTR) over-reversed ITC
+// for partial returns of scheme/discounted batches; DebitNoteEntryPage now uses the
+// effective-cost engine (`recomputeReturnNote`) against the originating purchase line.
 
 // ── Auto-PO / reorder suggestions (SALT-022) ─────────────────────────────────
 // Surface items that need reordering and propose an order quantity, so the user
