@@ -1,11 +1,11 @@
 import { Check } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { formatPaise } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import type { BillLine } from "@/lib/types";
@@ -25,14 +25,14 @@ export function BatchPicker({
   const batches = (item?.batches ?? []).filter((b) => b.qty > 0);
 
   return (
-    <Dialog open={!!line} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogHeader>
-          <DialogTitle>{item?.name} — select batch</DialogTitle>
-          <DialogDescription>
+    <Sheet open={!!line} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-xl">
+        <SheetHeader>
+          <SheetTitle>{item?.name} — select batch</SheetTitle>
+          <SheetDescription>
             {item?.salt} · {item?.pack}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
         <div className="overflow-hidden rounded-lg border">
           <div className="grid grid-cols-[1fr_3rem_5.5rem_5.5rem_5.5rem] gap-x-4 border-b bg-muted/50 px-3 py-2 text-xs font-medium text-muted-foreground">
             <span>Batch / Expiry</span>
@@ -76,7 +76,7 @@ export function BatchPicker({
             );
           })}
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }
