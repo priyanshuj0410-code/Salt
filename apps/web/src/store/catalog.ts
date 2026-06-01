@@ -50,6 +50,12 @@ interface CatalogState {
   usingSeed: boolean;
   /** When serving the offline read-cache, the epoch-ms it was written; null when live (SALT-204). */
   cachedAt: number | null;
+  /** Date-effective GST rate schedule (migration 0046), loaded once with the catalogue.
+   *  Exposed so date-sensitive screens (GRN entry) can resolve a line's rate by the
+   *  vendor invoice date via `gstRateForClass(item.gstRateClass, date, gstSchedule)`
+   *  without re-querying. Empty when unavailable (offline / seed / migration unapplied)
+   *  ⇒ callers fall back to the item's flat `gstRate`. */
+  gstSchedule: GstScheduleRow[];
   load: (orgId: string) => Promise<void>;
   /** Add or replace a single item (e.g. one just created at GRN entry) without a
    *  full reload. The first real item also drops the demo seed. */
@@ -83,6 +89,9 @@ function mapRows(items: ItemRow[], batches: BatchRow[], schedule: GstScheduleRow
     pack: r.pack ?? "",
     hsn: r.hsn ?? "",
     gstRate: gstRateForClass(r.master_items?.gst_rate_class, today, schedule) ?? (Number(r.gst_rate) || 0),
+    // Carry the master rate class so date-sensitive screens (GRN) can re-resolve the
+    // rate by a document date other than today, using the store's `gstSchedule`.
+    gstRateClass: r.master_items?.gst_rate_class ?? undefined,
     schedule: r.schedule as Schedule,
     barcode: r.barcode ?? undefined,
     ayush: r.ayush_flag ?? false,
@@ -100,6 +109,7 @@ export const useCatalog = create<CatalogState>((set) => ({
   loaded: false,
   usingSeed: true,
   cachedAt: null,
+  gstSchedule: [],
 
   load: async (orgId) => {
     if (!supabase) return;
@@ -135,11 +145,11 @@ export const useCatalog = create<CatalogState>((set) => ({
       const batches = await batchesPromise;
       const schedule = ((await schedulePromise).data as GstScheduleRow[] | null) ?? [];
       if (items.length === 0) {
-        set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true, cachedAt: null });
+        set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true, cachedAt: null, gstSchedule: [] });
         return;
       }
       const mapped = mapRows(items, batches, schedule);
-      set({ items: mapped, usingSeed: false, loading: false, loaded: true, cachedAt: null });
+      set({ items: mapped, usingSeed: false, loading: false, loaded: true, cachedAt: null, gstSchedule: schedule });
       // Persist the working set so the counter can bill offline (SALT-204 / ADR 0017).
       void cachePut(cacheKey("catalog", orgId), mapped);
     } catch {
@@ -147,9 +157,9 @@ export const useCatalog = create<CatalogState>((set) => ({
       // offline read-cache over the demo seed; only seed if nothing is cached.
       const cached = await cacheGet<Item[]>(cacheKey("catalog", orgId));
       if (cached && cached.data.length > 0) {
-        set({ items: cached.data, usingSeed: false, loading: false, loaded: true, cachedAt: cached.cachedAt });
+        set({ items: cached.data, usingSeed: false, loading: false, loaded: true, cachedAt: cached.cachedAt, gstSchedule: [] });
       } else {
-        set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true, cachedAt: null });
+        set({ items: seedCatalog, usingSeed: true, loading: false, loaded: true, cachedAt: null, gstSchedule: [] });
       }
     }
   },

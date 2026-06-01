@@ -20,6 +20,12 @@ export interface Item {
   hsn: string;
   /** GST rate as a percentage, e.g. 5, 12, 18. */
   gstRate: number;
+  /** Date-effective GST rate class from the linked master item (`master_items.gst_rate_class`),
+   *  e.g. "std" | "ayush" | "nil" | "gst18". With the catalog store's loaded `gstSchedule`,
+   *  date-sensitive screens resolve the rate in force on a document date via
+   *  `gstRateForClass` (back-dated GRNs, the 22-Sep-2025 medicine cutover). Absent ⇒
+   *  unlinked / pre-schedule item ⇒ fall back to the flat `gstRate`. */
+  gstRateClass?: string;
   schedule: Schedule;
   barcode?: string;
   /** AYUSH / non-allopathic item (ayurveda, siddha, unani, homeopathy). These

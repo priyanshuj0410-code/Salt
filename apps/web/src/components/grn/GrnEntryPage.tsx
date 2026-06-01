@@ -29,8 +29,7 @@ import {
 } from "@/lib/grn";
 import { useCatalog } from "@/store/catalog";
 import type { Item, Payment } from "@/lib/types";
-import { gstRateForOn, type GstRateRow } from "@/lib/gst";
-import { selectAll } from "@/lib/selectAll";
+import { gstRateForClass } from "@/lib/gstSchedule";
 import { CreateItemDialog } from "./CreateItemDialog";
 import { VendorPicker, type PickedVendor } from "./VendorPicker";
 
@@ -65,6 +64,10 @@ export function GrnEntryPage() {
   const usingSeed = useCatalog((s) => s.usingSeed);
   const loadCatalog = useCatalog((s) => s.load);
   const upsertItem = useCatalog((s) => s.upsertItem);
+  // Date-effective GST schedule (migration 0046), loaded once by the catalog store
+  // (SALT-211); each item carries its master `gstRateClass`. A new GRN line defaults
+  // to the rate in force on the vendor invoice date (SALT-212) from these — no extra query.
+  const gstSchedule = useCatalog((s) => s.gstSchedule);
 
   const blockers = useShopBlockers();
   const [vendor, setVendor] = useState<PickedVendor | null>(null);
@@ -84,10 +87,6 @@ export function GrnEntryPage() {
   const [poRef, setPoRef] = useState<string | null>(null);
   // Active schemes for the chosen vendor (SALT-026) — auto-applied + flagged.
   const [schemes, setSchemes] = useState<VendorScheme[]>([]);
-  // Date-effective GST (SALT-212): the rate schedule + each item's master rate
-  // class, so a new line defaults to the rate in force on the invoice date.
-  const [rateSchedule, setRateSchedule] = useState<GstRateRow[]>([]);
-  const [rateClassByItem, setRateClassByItem] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (orgId) loadCatalog(orgId);
@@ -202,60 +201,6 @@ export function GrnEntryPage() {
     };
   }, [orgId, vendor]);
 
-  // Load the date-effective GST schedule once (SALT-212). Defensive: if migration
-  // 0046 is unapplied the select errors and lines keep the item's own rate.
-  useEffect(() => {
-    if (!supabase) return;
-    let active = true;
-    supabase
-      .from("gst_rate_schedule")
-      .select("rate_class,rate,effective_from,effective_to")
-      .then(({ data, error }) => {
-        if (!active || error || !data) return;
-        setRateSchedule(
-          (data as { rate_class: string; rate: number | string; effective_from: string; effective_to: string | null }[]).map((r) => ({
-            rateClass: r.rate_class,
-            rate: Number(r.rate) || 0,
-            effectiveFrom: r.effective_from,
-            effectiveTo: r.effective_to,
-          })),
-        );
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Map each item to its master rate class (items.master_item_id ->
-  // master_items.gst_rate_class) so addItem can resolve the date-effective rate.
-  // Unlinked items are absent from the map and fall back to the item's own rate.
-  useEffect(() => {
-    if (!supabase || !orgId) return;
-    let active = true;
-    (async () => {
-      try {
-        const rows = await selectAll<{
-          id: string;
-          master_items: { gst_rate_class: string | null } | { gst_rate_class: string | null }[] | null;
-        }>((from, to) =>
-          supabase!.from("items").select("id,master_items(gst_rate_class)").eq("org_id", orgId).range(from, to),
-        );
-        if (!active) return;
-        const m = new Map<string, string>();
-        for (const row of rows) {
-          const master = Array.isArray(row.master_items) ? row.master_items[0] : row.master_items;
-          if (master?.gst_rate_class) m.set(row.id, master.gst_rate_class);
-        }
-        setRateClassByItem(m);
-      } catch {
-        // master link / schedule unavailable — lines fall back to the item rate.
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [orgId]);
-
   const interstate = isInterstate(vendor?.stateCode, shopState);
   const results = useMemo(() => (query ? searchCatalog(query, items).slice(0, MAX_RESULTS) : []), [query, items]);
   const hasExactMatch = useMemo(
@@ -295,8 +240,7 @@ export function GrnEntryPage() {
     // Default GST to the rate in force on the invoice date for this item's master
     // rate class (SALT-212); fall back to the item's own snapshot rate when the
     // item is not master-linked or the schedule is unavailable. Operator can override.
-    const rateClass = rateClassByItem.get(item.id);
-    const datedRate = rateClass ? gstRateForOn(rateSchedule, rateClass, onDate) : null;
+    const datedRate = gstRateForClass(item.gstRateClass, onDate, gstSchedule);
     setLines((ls) => [
       ...ls,
       {

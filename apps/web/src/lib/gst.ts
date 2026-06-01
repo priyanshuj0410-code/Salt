@@ -18,39 +18,8 @@
 /** A B2C inter-state invoice above ₹2.5 lakh is itemised in B2CL; the rest fall into B2CS. */
 export const B2CL_THRESHOLD_PAISE = 25_000_000;
 
-// ---- Date-effective GST rate schedule (SALT-081 / SALT-212) -----------------
-
-/** One row of `public.gst_rate_schedule` (migration 0046): the rate for a class
- *  over a date range. `effectiveTo` null ⇒ currently in force. */
-export interface GstRateRow {
-  rateClass: string;
-  rate: number;
-  /** YYYY-MM-DD, inclusive. */
-  effectiveFrom: string;
-  /** YYYY-MM-DD inclusive, or null = open-ended. */
-  effectiveTo: string | null;
-}
-
-/**
- * GST rate for `rateClass` in force on `onDate` (YYYY-MM-DD) — the latest schedule
- * range whose [effectiveFrom, effectiveTo] contains the date. A pure mirror of the
- * SQL `public.gst_rate_for(class, on_date)` (0046) so a client-side default equals
- * the server's stored value — matters around the 22-Sep-2025 medicine-GST cutover.
- * Returns null when no range matches (unknown class, or a date before any range) so
- * callers fall back to the item's own snapshot rate. Dates compare lexically (ISO
- * is chronological).
- */
-export function gstRateForOn(schedule: GstRateRow[], rateClass: string, onDate: string): number | null {
-  if (!rateClass || !onDate) return null;
-  let best: GstRateRow | null = null;
-  for (const r of schedule) {
-    if (r.rateClass !== rateClass) continue;
-    if (r.effectiveFrom > onDate) continue; // not yet in force
-    if (r.effectiveTo && r.effectiveTo < onDate) continue; // already expired
-    if (!best || r.effectiveFrom > best.effectiveFrom) best = r; // latest range wins
-  }
-  return best ? best.rate : null;
-}
+// The date-effective GST rate resolver lives in `lib/gstSchedule.ts`
+// (`gstRateForClass`) — the single client mirror of SQL `gst_rate_for` (0046).
 
 // ---- Input rows (shape returned by the page's PostgREST query) --------------
 
