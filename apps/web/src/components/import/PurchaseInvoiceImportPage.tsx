@@ -21,6 +21,8 @@ import {
   type PurchaseImportResult,
   type PurchaseRawRow,
 } from "@/lib/importPurchaseInvoice";
+import { useShopBlockers } from "@/lib/useShopBlockers";
+import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 
 interface VendorRow { id: string; name: string; gstin: string | null }
 interface ItemRow { id: string; name: string; item_code: string | null; barcode: string | null }
@@ -91,6 +93,7 @@ export function PurchaseInvoiceImportPage() {
   const { membership, shopId } = useAuth();
   const orgId = membership?.orgId;
   const loadCatalog = useCatalog((s) => s.load);
+  const blockers = useShopBlockers();
   const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<PurchaseImportResult | null>(null);
   const [vendors, setVendors] = useState<VendorRow[]>([]);
@@ -98,6 +101,7 @@ export function PurchaseInvoiceImportPage() {
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  const [setupOpen, setSetupOpen] = useState(false);
 
   // Load the masters once so the dry-run preview can mark each vendor/item as
   // existing vs "will create". setState only in the async .then (lint rule).
@@ -133,8 +137,11 @@ export function PurchaseInvoiceImportPage() {
 
   async function doImport() {
     if (!supabase || !orgId || !result) return;
-    if (!shopId) {
-      setError("Set up your shop (state) before importing purchases.");
+    // Pre-flight: the shop needs a state_code or receive_purchase trips the
+    // is_interstate NOT NULL. Pop the rescue dialog and bail; it retries the import.
+    if (!blockers.ready || !shopId) {
+      setError(null);
+      setSetupOpen(true);
       return;
     }
     setImporting(true);
@@ -394,6 +401,8 @@ export function PurchaseInvoiceImportPage() {
       )}
 
       {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+
+      <ShopSetupDialog open={setupOpen} onOpenChange={setSetupOpen} onResolved={() => void doImport()} />
     </Page>
   );
 }
