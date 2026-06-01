@@ -1,3 +1,4 @@
+import { Snowflake } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Schedule } from "@/lib/types";
 
@@ -27,6 +28,15 @@ export function AyushBadge() {
   return (
     <Badge variant="success" title="AYUSH / non-allopathic — no Drugs-&-Cosmetics schedule">
       AYUSH
+    </Badge>
+  );
+}
+
+/** Cold-chain marker — temperature-controlled storage (insulin, vaccines). */
+export function ColdChainBadge() {
+  return (
+    <Badge variant="info" title="Cold chain — keep refrigerated (2–8°C)">
+      <Snowflake /> Cold chain
     </Badge>
   );
 }
