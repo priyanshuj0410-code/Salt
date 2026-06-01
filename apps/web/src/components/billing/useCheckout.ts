@@ -27,6 +27,7 @@ import {
 import { buildInvoiceData, printInvoice, type CustomerDetail } from "@/lib/printInvoice";
 import { billTotals, useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
+import { useKeymap } from "@/store/shortcuts";
 
 /**
  * The counter's checkout logic, shared by both presentations of the ActionBar —
@@ -56,6 +57,7 @@ export function useCheckout({
   const billDiscount = useBill((s) => s.billDiscount);
   const usingSeed = useCatalog((s) => s.usingSeed);
   const loadCatalog = useCatalog((s) => s.load);
+  const saveKey = useKeymap((s) => s.keymap.save); // rebindable Save & Print key (SALT-178)
   const { shopId, shop, membership } = useAuth();
   const orgId = membership?.orgId;
   const blockers = useShopBlockers();
@@ -437,13 +439,13 @@ export function useCheckout({
   }
 
   useHotkeys(
-    "f9",
+    saveKey,
     (e) => {
       e.preventDefault();
       void save({ print: true });
     },
     { enableOnFormTags: true },
-    [lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount, splitMode, tenderAmounts, discountLimits, approval],
+    [saveKey, lines, payment, party, usingSeed, shopId, blockers.ready, needsRx, rx, isInterstate, customer, shop, billDiscount, splitMode, tenderAmounts, discountLimits, approval, creditApproval],
   );
 
   return {
