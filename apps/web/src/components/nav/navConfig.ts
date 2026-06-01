@@ -215,6 +215,7 @@ export const NAV: NavModule[] = [
       { label: "Data export", path: "/settings/export", built: true },
       { label: "Audit log", path: "/settings/audit", built: true },
       { label: "Data privacy", path: "/settings/privacy", built: true },
+      { label: "Discount limits", path: "/settings/limits", built: true },
     ],
   },
 ];
