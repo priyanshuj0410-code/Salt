@@ -41,6 +41,9 @@ export interface EnrichPlanRow {
   source?: "master" | "brand";
   /** `brand_aliases` confidence when source === "brand" (high-verified | high | med). */
   confidence?: string;
+  /** When the new salt replaced a placeholder (e.g. "OTHERS"), the value it overwrote —
+   *  surfaced so the (reviewed) overwrite is transparent. */
+  replacedSalt?: string;
 }
 
 /**
@@ -50,6 +53,21 @@ export interface EnrichPlanRow {
  */
 function key(s: string | null | undefined): string {
   return (s ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Marg / legacy catalogues stamp un-classified items with a junk salt placeholder
+ * ("OTHERS", "NA", "-") rather than leaving it blank. Treat those as blank so they
+ * become eligible for enrichment — but never a real molecule. Matched case-insensitively
+ * after trimming. (No real molecule name collides with these.)
+ */
+const SALT_PLACEHOLDERS = new Set([
+  "others", "other", "na", "n/a", "nil", "none", "general", "misc",
+  "miscellaneous", "unknown", "-", "--", "---", ".", "0", "x", "xxx",
+]);
+function isBlankish(s: string | null | undefined): boolean {
+  const t = (s ?? "").trim();
+  return t === "" || SALT_PLACEHOLDERS.has(t.toLowerCase());
 }
 
 /** Index master rows by salt-key then name-key (salt first — it's the molecule-level match). */
@@ -63,8 +81,10 @@ export function buildMasterIndex(master: MasterRow[]): Map<string, MasterRow> {
 }
 
 function matchMaster(item: Item, idx: Map<string, MasterRow>): MasterRow | undefined {
-  // Prefer matching on the item's salt (molecule), then its name.
-  return idx.get(key(item.salt)) ?? idx.get(key(item.name));
+  // Prefer matching on the item's salt (molecule), then its name. A placeholder
+  // salt ("OTHERS") is not a molecule, so don't match on it — fall through to the name.
+  const saltKey = isBlankish(item.salt) ? "" : key(item.salt);
+  return (saltKey ? idx.get(saltKey) : undefined) ?? idx.get(key(item.name));
 }
 
 const CONF_RANK: Record<string, number> = { "high-verified": 0, high: 1, med: 2, low: 3 };
@@ -126,13 +146,15 @@ export function planEnrichment(
     let masterName = "";
     let source: "master" | "brand" | undefined;
     let confidence: string | undefined;
+    const origSalt = (it.salt ?? "").trim();
+    const saltOpen = isBlankish(it.salt); // blank OR a placeholder ("OTHERS") -> fillable
 
     const m = matchMaster(it, idx);
     if (m) {
       patch.master_item_id = m.id;
       masterName = m.name;
       source = "master";
-      if (!it.salt?.trim() && m.salt?.trim()) {
+      if (saltOpen && m.salt?.trim()) {
         patch.salt = m.salt.trim();
         fills.push("salt");
       }
@@ -148,7 +170,7 @@ export function planEnrichment(
     }
 
     // Brand crosswalk: fill the molecule (and category) when the master could not.
-    if (!patch.salt && !it.salt?.trim() && bidx.size) {
+    if (!patch.salt && saltOpen && bidx.size) {
       const ba = matchBrand(it, bidx);
       if (ba) {
         patch.salt = ba.composition!.trim();
@@ -156,7 +178,7 @@ export function planEnrichment(
         source = "brand";
         confidence = ba.confidence ?? undefined;
         if (!masterName) masterName = ba.brand;
-        if (ba.category?.trim() && !it.therapeuticCategory?.trim()) {
+        if (ba.category?.trim() && isBlankish(it.therapeuticCategory)) {
           patch.therapeutic_category = ba.category.trim();
           fills.push("category");
         }
@@ -164,7 +186,8 @@ export function planEnrichment(
     }
 
     if (fills.length === 0) continue; // matched but nothing missing to fill
-    plan.push({ itemId: it.id, itemName: it.name, masterName, patch, fills, source, confidence });
+    const replacedSalt = patch.salt && origSalt !== "" ? origSalt : undefined;
+    plan.push({ itemId: it.id, itemName: it.name, masterName, patch, fills, source, confidence, replacedSalt });
   }
   return plan;
 }
