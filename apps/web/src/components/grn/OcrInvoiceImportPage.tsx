@@ -19,7 +19,7 @@ import {
   type ParsedPurchaseInvoice,
   type PurchaseImportResult,
 } from "@/lib/importPurchaseInvoice";
-import { createScan, invokeExtract, updateScan, vendorGuess } from "@/lib/invoiceScans";
+import { createScan, invokeExtract, kickoffProcessScans, updateScan, vendorGuess } from "@/lib/invoiceScans";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { findExistingInvoice } from "@/lib/purchaseDedup";
@@ -74,10 +74,20 @@ export function OcrInvoiceImportPage() {
   const [setupOpen, setSetupOpen] = useState(false);
   // Invoice keys already posted for this org → existing GRN ref (dedup).
   const [dupes, setDupes] = useState<Map<string, string>>(new Map());
+  // Multi-file: queued background extraction (process-scans). batchMsg is the receipt.
+  const [batching, setBatching] = useState(false);
+  const [batchMsg, setBatchMsg] = useState<string | null>(null);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !supabase || !orgId) return;
+    const files = e.target.files;
+    if (!files || files.length === 0 || !supabase || !orgId) return;
+    // Several files → upload all + extract in the background; the user reviews from scan
+    // history. A single file keeps the inline extract → review → post flow.
+    if (files.length > 1) {
+      await onMultiFile(Array.from(files));
+      return;
+    }
+    const file = files[0];
     setFileName(file.name);
     setResult(null);
     setReport(null);
@@ -122,6 +132,36 @@ export function OcrInvoiceImportPage() {
       setError(err instanceof Error ? err.message : "Could not process the file.");
     } finally {
       setExtracting(false);
+    }
+  }
+
+  // Upload every selected file to storage as a pending scan, then fire the worker —
+  // extraction runs server-side so the user can leave; they review from scan history.
+  async function onMultiFile(files: File[]) {
+    if (!supabase || !orgId) return;
+    setResult(null);
+    setReport(null);
+    setError(null);
+    setNotConfigured(false);
+    setOcrIssues([]);
+    setBatchMsg(null);
+    setBatching(true);
+    try {
+      const batchId = crypto.randomUUID();
+      let uploaded = 0;
+      for (const file of files) {
+        const b64 = await readAsBase64(file);
+        const created = await createScan(orgId, shopId ?? null, file, b64, batchId);
+        if (!created.error) uploaded += 1;
+      }
+      if (uploaded === 0) {
+        setError("Could not save any files. Is scan history set up (migration 0049)?");
+        return;
+      }
+      await kickoffProcessScans(batchId);
+      setBatchMsg(`Queued ${uploaded} invoice${uploaded === 1 ? "" : "s"} — extracting in the background. Review and post them from Scan history.`);
+    } finally {
+      setBatching(false);
     }
   }
 
@@ -277,15 +317,25 @@ export function OcrInvoiceImportPage() {
       />
 
       <div className="flex flex-wrap items-center gap-3">
-        <label htmlFor="ocr-file" className={cn(buttonVariants({ variant: "default" }), "cursor-pointer", extracting && "pointer-events-none opacity-60")}>
+        <label htmlFor="ocr-file" className={cn(buttonVariants({ variant: "default" }), "cursor-pointer", (extracting || batching) && "pointer-events-none opacity-60")}>
           <FileUp />
-          {extracting ? "Extracting…" : fileName ?? "Choose PDF / image"}
+          {batching ? "Uploading…" : extracting ? "Extracting…" : fileName ?? "Choose PDF(s) / image(s)"}
         </label>
-        <input id="ocr-file" type="file" accept="application/pdf,image/*" className="hidden" onChange={onFile} disabled={extracting} />
+        <input id="ocr-file" type="file" accept="application/pdf,image/*" multiple className="hidden" onChange={onFile} disabled={extracting || batching} />
+        <Link to="/purchases/scans" className="text-sm text-text-tertiary hover:text-text-primary">
+          scan history →
+        </Link>
         <Link to="/import/purchases" className="text-sm text-text-tertiary hover:text-text-primary">
           or import a CSV instead →
         </Link>
       </div>
+
+      {batchMsg && (
+        <div className="mt-6 rounded-lg border border-border bg-surface p-4 text-sm">
+          <p>{batchMsg}</p>
+          <Link to="/purchases/scans" className="mt-1 inline-block font-medium text-primary underline">Open Scan history →</Link>
+        </div>
+      )}
 
       {notConfigured && (
         <div className="mt-6 rounded-lg border border-warning-border bg-warning-bg p-4 text-sm text-warning">
