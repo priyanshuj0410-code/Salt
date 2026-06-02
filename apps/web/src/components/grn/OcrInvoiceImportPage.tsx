@@ -28,11 +28,8 @@ import {
   getScanJson,
   insertExtractedScan,
   invokeExtract,
-  kickoffProcessScans,
-  scanInvoiceNo,
   updateScan,
   uploadScanFile,
-  vendorGuess,
 } from "@/lib/invoiceScans";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
@@ -191,65 +188,16 @@ export function OcrInvoiceImportPage() {
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0 || !supabase || !orgId) return;
-    // Single document (PDF/image) → inline extract → review → post (fast path).
-    if (files.length === 1 && !isCsv(files[0])) {
-      await onSingleDoc(files[0]);
-      return;
-    }
-    // CSV-only (one or many) → parse client-side + inline bulk review (queue-backed).
+    // CSV-only (one or many) → parse client-side + inline bulk review (free + instant,
+    // no OCR cost).
     if (files.every(isCsv)) {
       await onCsvFiles(files);
       return;
     }
-    // Many / mixed → queue everything; the user reviews from scan history.
+    // Any PDF/image (single, many, or mixed) → the free local-Gemma queue. The user
+    // reviews from scan history once the worker extracts (or hits "Fetch now" there for
+    // instant Flash). This is the default per the queue flip — no Gemini cost per upload.
     await onMultiFile(files);
-  }
-
-  async function onSingleDoc(file: File) {
-    resetForUpload(file.name);
-    setExtracting(true);
-    try {
-      const b64 = await readAsBase64(file);
-      // Persist the file + a pending audit row BEFORE calling OCR, so a failed or
-      // interrupted scan is still on record and retryable from storage.
-      const created = await createScan(orgId!, shopId ?? null, file, b64);
-      const sid = created.id || null;
-      if (created.error) {
-        setOcrIssues((cur) => [...cur, `Could not save to scan history: ${created.error}`]);
-      }
-      const out = await invokeExtract(b64, file.type || "application/octet-stream");
-      if (out.notConfigured) {
-        setNotConfigured(true);
-        if (sid) await updateScan(sid, { status: "failed", error: "ocr_not_configured" });
-        return;
-      }
-      if (out.error || !out.json) {
-        setError(`Extraction failed: ${out.error ?? "no data returned"}`);
-        if (sid) await updateScan(sid, { status: "failed", error: out.error ?? "no data" });
-        return;
-      }
-      if (sid) {
-        await updateScan(sid, {
-          status: "extracted",
-          extracted_json: out.json,
-          invoice_no: scanInvoiceNo(out.json),
-          vendor_guess: vendorGuess(out.json),
-        });
-      }
-      const mapped = ocrInvoiceToRows(out.json);
-      setOcrIssues((cur) => [...cur, ...mapped.issues]);
-      const parsed = parsePurchaseInvoices(mapped.rows);
-      const m = new Map<string, string>();
-      if (sid) for (const inv of parsed.invoices) m.set(inv.key, sid);
-      const dup = await computeDupes(parsed.invoices, sid ? [sid] : []);
-      setScanIdByKey(m);
-      setDupes(dup);
-      setResult(parsed);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not process the file.");
-    } finally {
-      setExtracting(false);
-    }
   }
 
   // CSV-only upload: parse + persist each file as extracted scan rows, then show the
@@ -287,9 +235,9 @@ export function OcrInvoiceImportPage() {
     }
   }
 
-  // Many / mixed files: queue them and let the user review from scan history. CSVs are
-  // parsed client-side here too (instant + free) and land `extracted`; PDFs/images go in
-  // `pending` for the background worker. A single kickoff drains the batch.
+  // PDF/image uploads → the free local-Gemma queue (lane=queue, pending), drained by the
+  // worker (~6h TAT). CSVs are parsed client-side here too (instant + free) and land
+  // `extracted`. No Gemini kickoff — "Fetch now" in scan history is the paid instant path.
   async function onMultiFile(files: File[]) {
     resetForUpload(files.length === 1 ? files[0].name : `${files.length} files`);
     setBatching(true);
@@ -311,8 +259,7 @@ export function OcrInvoiceImportPage() {
         setError("Could not queue any invoices. Is scan history set up (migration 0049)?");
         return;
       }
-      await kickoffProcessScans(batchId);
-      setBatchMsg(`Queued ${queued} invoice${queued === 1 ? "" : "s"} — extracting in the background. Review and post them from Scan history.`);
+      setBatchMsg(`Queued ${queued} invoice${queued === 1 ? "" : "s"} for free extraction (~6h). Track them in Scan history — or use Fetch now there for instant results.`);
     } finally {
       setBatching(false);
     }
@@ -476,7 +423,7 @@ export function OcrInvoiceImportPage() {
       <PageHeader
         icon={ScanLine}
         title="Import invoices"
-        subtitle="Upload distributor invoices — PDF, photo, or CSV. We extract the lines for review, then post each as a GRN (stock, payable, ITC). Missing vendors/items are created. Several files extract in the background."
+        subtitle="Upload distributor invoices — PDF, photo, or CSV. PDFs and photos queue for free background extraction (~6h); CSVs parse instantly. Review each in Scan history, then post as a GRN (stock, payable, ITC) — missing vendors/items are created. Need one now? Use Fetch now (instant) in Scan history."
       />
 
       <div className="flex flex-wrap items-center gap-3">

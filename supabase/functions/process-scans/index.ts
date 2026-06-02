@@ -1,18 +1,19 @@
-// Edge Function: process-scans — background extraction of queued invoice scans.
+// Edge Function: process-scans — the FLASH-LANE driver for the OCR queue.
 //
-// The client uploads several invoice files to the `invoice-scans` bucket as `pending`
-// invoice_scans rows (a shared batch_id), then fires this once. It drains the org's
-// pending scans SEQUENTIALLY, server-side, so the work survives the user navigating
-// away: for each it downloads the file, calls `extract-invoice` (reusing its Gemini
-// model-chain — no duplication), dedups against posted GRNs, and updates the scan to
-// `extracted` / `duplicate` / `failed`. It NEVER posts a GRN — the user reviews + posts
-// from scan history (extracting blindly is unsafe given OCR can misread).
+// Two-lane model (prd-gemma-ocr-worker.md): the free `queue` lane is drained by the
+// local Gemma worker; this function drains the paid/instant `flash` lane with Gemini
+// (extract-invoice). It is invoked:
+//   • by a shop user (their JWT) right after "Fetch now" flips a job to lane=flash
+//     (ocr_request_instant) — drains THAT org's pending flash jobs;
+//   • by the M4 cron (pg_net, service-role bearer) — drains ALL orgs' pending flash
+//     jobs, so escalated stragglers get Flashed even when every laptop is offline.
 //
-// Auth: invoked with the caller's JWT (verify_jwt default on). We resolve their org
-// from the JWT, then use the SERVICE ROLE key for the cross-RLS reads/updates + storage
-// + the internal extract-invoice call. Scans are always org-scoped to the caller.
+// For each flash job it downloads the file, calls extract-invoice (reusing its Gemini
+// model-chain), then writes the terminal state through the SECURITY DEFINER RPCs
+// ocr_complete / ocr_fail (0062) — same idempotency + cross-channel dedup as the Gemma
+// lane. It NEVER posts a GRN; the user reviews + posts from scan history.
 //
-// DEPLOY (user/infra — the agent cannot do this):
+// DEPLOY (user/infra — the agent cannot do this), AFTER 0062_ocr_queue.sql is applied:
 //   supabase functions deploy process-scans
 //   (GEMINI_API_KEY already set for extract-invoice; SUPABASE_* are auto-injected.)
 
@@ -38,26 +39,38 @@ Deno.serve(async (req: Request) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const authHeader = req.headers.get("Authorization") ?? "";
-
-  // 1. Resolve the caller's org from their JWT (so we only ever process their scans).
-  const userClient = createClient(url, anonKey, { global: { headers: { Authorization: authHeader } } });
-  const { data: auth } = await userClient.auth.getUser();
-  if (!auth?.user) return json({ error: "unauthorized" }, 401);
+  const bearer = authHeader.replace(/^Bearer\s+/i, "");
 
   const svc = createClient(url, serviceKey);
-  const { data: mem } = await svc
-    .from("memberships").select("org_id").eq("user_id", auth.user.id).limit(1).maybeSingle();
-  const orgId = (mem as { org_id?: string } | null)?.org_id;
-  if (!orgId) return json({ error: "no organization for current user" }, 400);
+
+  // Resolve scope. A user JWT → that org's flash jobs. The service-role key as bearer
+  // (the M4 cron via pg_net) → all orgs. Anything else is unauthorized.
+  let orgId: string | null = null;
+  let allOrgs = false;
+  const userClient = createClient(url, anonKey, { global: { headers: { Authorization: authHeader } } });
+  const { data: auth } = await userClient.auth.getUser();
+  if (auth?.user) {
+    const { data: mem } = await svc
+      .from("memberships").select("org_id").eq("user_id", auth.user.id).limit(1).maybeSingle();
+    orgId = (mem as { org_id?: string } | null)?.org_id ?? null;
+    if (!orgId) return json({ error: "no organization for current user" }, 400);
+  } else if (bearer && bearer === serviceKey) {
+    allOrgs = true;
+  } else {
+    return json({ error: "unauthorized" }, 401);
+  }
 
   const body = await req.json().catch(() => ({}));
   const batchId = (body as { batch_id?: string }).batch_id ?? null;
 
-  // 2. Claim this org's pending scans, oldest first.
+  // Claim this scope's pending FLASH jobs (priority first, then oldest). The free
+  // `queue` lane is left for the local Gemma worker.
   let q = svc
     .from("invoice_scans").select("id,storage_path,mime")
-    .eq("org_id", orgId).eq("status", "pending")
-    .order("created_at", { ascending: true }).limit(MAX_PER_RUN);
+    .eq("status", "pending").eq("lane", "flash")
+    .order("priority", { ascending: false }).order("queued_at", { ascending: true })
+    .limit(MAX_PER_RUN);
+  if (!allOrgs && orgId) q = q.eq("org_id", orgId);
   if (batchId) q = q.eq("batch_id", batchId);
   const { data: scans, error: listErr } = await q;
   if (listErr) return json({ error: listErr.message }, 500);
@@ -65,9 +78,9 @@ Deno.serve(async (req: Request) => {
   const stamp = () => new Date().toISOString();
   let extracted = 0, failed = 0, duplicate = 0;
 
-  // 3. Process sequentially.
   for (const s of (scans as { id: string; storage_path: string; mime: string | null }[]) ?? []) {
-    await svc.from("invoice_scans").update({ status: "processing", updated_at: stamp() }).eq("id", s.id);
+    // Mark processing first → a concurrent invocation won't re-claim it (it filters pending).
+    await svc.from("invoice_scans").update({ status: "processing", model: "flash", updated_at: stamp() }).eq("id", s.id);
     try {
       const dl = await svc.storage.from(BUCKET).download(s.storage_path);
       if (dl.error || !dl.data) throw new Error(dl.error?.message ?? "could not download file");
@@ -84,44 +97,18 @@ Deno.serve(async (req: Request) => {
       const out = await res.json();
       if (!res.ok || out?.error) throw new Error(out?.error ?? `extract-invoice ${res.status}`);
 
-      const invoiceNo = typeof out.invoice_no === "string" ? out.invoice_no.trim() : "";
-      const vendor = typeof out.vendor === "string" ? out.vendor.trim() || null : null;
+      const invoiceNo = typeof out.invoice_no === "string" ? out.invoice_no.trim() || null : null;
+      // Terminal state + dedup + model tag, all via the shared RPC (parity with the Gemma lane).
+      const { error: cErr } = await svc.rpc("ocr_complete", {
+        p_job_id: s.id, p_model: "flash", p_json: out, p_source_doc_no: invoiceNo,
+      });
+      if (cErr) throw new Error(`ocr_complete: ${cErr.message}`);
 
-      // Dedup against the whole queue: a posted GRN OR another scan (any channel) with
-      // the same invoice number. Sequential processing means an earlier sibling is
-      // already 'extracted' (its invoice_no set), so the later upload is flagged.
-      let dup = false;
-      if (invoiceNo) {
-        const { data: exGrn } = await svc
-          .from("purchases").select("id").eq("org_id", orgId).ilike("vendor_invoice_no", invoiceNo).limit(1);
-        dup = ((exGrn as unknown[] | null)?.length ?? 0) > 0;
-        if (!dup) {
-          const { data: exScan } = await svc
-            .from("invoice_scans").select("id")
-            .eq("org_id", orgId).ilike("invoice_no", invoiceNo)
-            .in("status", ["extracted", "duplicate", "posted"]).neq("id", s.id).limit(1);
-          dup = ((exScan as unknown[] | null)?.length ?? 0) > 0;
-        }
-      }
-
-      // Primary update — no invoice_no here, so the row always advances out of
-      // 'processing' even if migration 0061 hasn't been applied yet.
-      await svc.from("invoice_scans").update({
-        status: dup ? "duplicate" : "extracted",
-        extracted_json: out,
-        vendor_guess: vendor,
-        error: dup ? "already imported" : null,
-        updated_at: stamp(),
-      }).eq("id", s.id);
-      // Best-effort dedup column (migration 0061); ignore the error if it is absent.
-      if (invoiceNo) await svc.from("invoice_scans").update({ invoice_no: invoiceNo }).eq("id", s.id);
-      if (dup) duplicate++; else extracted++;
+      // ocr_complete decided extracted vs duplicate — read it back for the response.
+      const { data: after } = await svc.from("invoice_scans").select("status").eq("id", s.id).maybeSingle();
+      if ((after as { status?: string } | null)?.status === "duplicate") duplicate++; else extracted++;
     } catch (e) {
-      await svc.from("invoice_scans").update({
-        status: "failed",
-        error: e instanceof Error ? e.message : "extraction failed",
-        updated_at: stamp(),
-      }).eq("id", s.id);
+      await svc.rpc("ocr_fail", { p_job_id: s.id, p_error: e instanceof Error ? e.message : "extraction failed" });
       failed++;
     }
   }

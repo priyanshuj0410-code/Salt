@@ -9,7 +9,18 @@ import type { OcrInvoiceJson } from "./ocrInvoice";
 
 export const INVOICE_SCANS_BUCKET = "invoice-scans";
 
-export type ScanStatus = "pending" | "processing" | "extracted" | "failed" | "posted" | "duplicate";
+export type ScanStatus =
+  | "pending"
+  | "leased"
+  | "processing"
+  | "extracted"
+  | "failed"
+  | "posted"
+  | "duplicate"
+  | "superseded";
+
+/** Which OCR lane a job is on: free local Gemma vs paid/instant Gemini Flash (0062). */
+export type ScanLane = "queue" | "flash";
 
 /** A row of public.invoice_scans (snake_case as stored / fetched). */
 export interface InvoiceScanRow {
@@ -18,11 +29,13 @@ export interface InvoiceScanRow {
   original_filename: string | null;
   mime: string | null;
   status: ScanStatus;
+  lane: ScanLane;
   invoice_no: string | null;
   vendor_guess: string | null;
   error: string | null;
   purchase_id: string | null;
   created_at: string;
+  queued_at: string | null;
 }
 
 /** Lower-cased file extension from a name or mime, defaulting to "bin". */
@@ -45,14 +58,19 @@ export function scanStoragePath(orgId: string, scanId: string, filename: string,
 
 const STATUS_LABEL: Record<ScanStatus, string> = {
   pending: "Queued",
+  leased: "Extracting…",
   processing: "Extracting…",
   extracted: "Extracted",
   failed: "Failed",
   posted: "Posted",
   duplicate: "Duplicate",
+  superseded: "Superseded",
 };
 
-export function scanStatusLabel(s: ScanStatus): string {
+/** Human label for a scan's status. Lane-aware for `pending`: a free-queue job shows
+ *  its ~6h TAT, while a flash job (instant requested / escalated) shows it's fetching. */
+export function scanStatusLabel(s: ScanStatus, lane?: ScanLane): string {
+  if (s === "pending") return lane === "flash" ? "Fetching…" : "Queued · ~6h";
   return STATUS_LABEL[s] ?? s;
 }
 
@@ -63,6 +81,7 @@ export function scanStatusVariant(s: ScanStatus): "neutral" | "info" | "success"
       return "success";
     case "extracted":
     case "processing":
+    case "leased":
       return "info";
     case "failed":
       return "danger";
@@ -228,12 +247,24 @@ export async function insertExtractedScan(
   });
 }
 
-/** Fire the background extraction worker for a batch (fire-and-forget). It drains the
- *  org's pending scans server-side via the process-scans function, so the user can
- *  navigate away while their multi-file upload extracts. */
+/** Fire the flash-lane driver for a batch (fire-and-forget). It drains the org's
+ *  pending FLASH scans server-side via the process-scans function. Used by "Fetch now"
+ *  and by re-running an instant extraction; the free `queue` lane is drained by the
+ *  local Gemma worker, not this call. */
 export async function kickoffProcessScans(batchId?: string | null): Promise<void> {
   if (!supabase) return;
   void supabase.functions.invoke("process-scans", { body: batchId ? { batch_id: batchId } : {} });
+}
+
+/** Paid "Fetch now" (0062 + M3): supersede a queued job onto the flash lane and kick
+ *  the Flash driver so it extracts in seconds instead of waiting for the local worker.
+ *  Member-gated server-side by ocr_request_instant. */
+export async function requestInstant(scanId: string): Promise<{ ok: boolean; error?: string }> {
+  if (!supabase) return { ok: false, error: "Not connected." };
+  const { error } = await supabase.rpc("ocr_request_instant", { p_job_id: scanId });
+  if (error) return { ok: false, error: error.message };
+  await kickoffProcessScans();
+  return { ok: true };
 }
 
 export interface ProcessScansResult {

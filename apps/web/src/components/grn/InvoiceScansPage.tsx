@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { FileText, Loader2, RefreshCw, RotateCcw, ScanLine, Trash2 } from "lucide-react";
+import { FileText, Loader2, RotateCcw, ScanLine, Trash2, Zap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
@@ -14,7 +14,7 @@ import { supabase } from "@/lib/supabase";
 import {
   downloadScanBase64,
   invokeExtract,
-  runProcessScans,
+  requestInstant,
   updateScan,
   vendorGuess,
   scanInvoiceNo,
@@ -45,8 +45,8 @@ export function InvoiceScansPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [delErr, setDelErr] = useState<string | null>(null);
-  // Manual "Process queued" — runs the worker and surfaces its result.
-  const [processing, setProcessing] = useState(false);
+  // Per-row "Fetch now" (paid instant) — flips a queued job to the flash lane.
+  const [fetchingId, setFetchingId] = useState<string | null>(null);
   const [procMsg, setProcMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -54,7 +54,7 @@ export function InvoiceScansPage() {
     let active = true;
     supabase
       .from("invoice_scans")
-      .select("id,storage_path,original_filename,mime,status,invoice_no,vendor_guess,error,purchase_id,created_at")
+      .select("id,storage_path,original_filename,mime,status,lane,invoice_no,vendor_guess,error,purchase_id,created_at,queued_at")
       .eq("org_id", orgId)
       .order("created_at", { ascending: false })
       .limit(500)
@@ -76,7 +76,7 @@ export function InvoiceScansPage() {
 
   // Auto-refresh while anything is in flight, so background extraction is visible as it
   // happens (the worker updates rows server-side; without this the list looks frozen).
-  const inFlight = rows.some((r) => r.status === "pending" || r.status === "processing");
+  const inFlight = rows.some((r) => r.status === "pending" || r.status === "processing" || r.status === "leased");
   useEffect(() => {
     if (!inFlight) return;
     const t = setInterval(() => setReloadKey((k) => k + 1), 4000);
@@ -119,27 +119,18 @@ export function InvoiceScansPage() {
     }
   }
 
-  // Run the background worker now and report what it did. Awaits the call (unlike the
-  // fire-and-forget kickoff at upload) so a stuck queue gets a real answer — it either
-  // drains here, or surfaces why (e.g. the process-scans function isn't deployed).
-  async function processNow() {
-    setProcessing(true);
+  // Paid instant: flip this queued job to the flash lane + kick the Flash driver, so it
+  // extracts in seconds instead of waiting ~6h for the free local worker. The list
+  // auto-refreshes; if process-scans is undeployed the row stays "Fetching…".
+  async function fetchNow(r: InvoiceScanRow) {
+    setFetchingId(r.id);
     setProcMsg(null);
     try {
-      const res = await runProcessScans();
-      if (!res.ok) {
-        setProcMsg(`Could not run extraction: ${res.error}`);
-      } else if ((res.total ?? 0) === 0) {
-        setProcMsg("Worker ran but found nothing pending to extract.");
-      } else {
-        const parts = [`extracted ${res.extracted ?? 0}`];
-        if (res.duplicate) parts.push(`${res.duplicate} duplicate`);
-        if (res.failed) parts.push(`${res.failed} failed`);
-        setProcMsg(`Processed ${res.total} — ${parts.join(", ")}.`);
-      }
+      const res = await requestInstant(r.id);
+      if (!res.ok) setProcMsg(`Could not fetch now: ${res.error}`);
       setReloadKey((k) => k + 1);
     } finally {
-      setProcessing(false);
+      setFetchingId(null);
     }
   }
 
@@ -160,8 +151,10 @@ export function InvoiceScansPage() {
     }
   }
 
-  const pending = rows.filter((r) => r.status === "pending").length;
-  const extractingCount = rows.filter((r) => r.status === "processing").length;
+  const queuedFree = rows.filter((r) => r.status === "pending" && r.lane === "queue").length;
+  const fetching = rows.filter(
+    (r) => (r.status === "pending" && r.lane === "flash") || r.status === "processing" || r.status === "leased",
+  ).length;
   const extractedCount = rows.filter((r) => r.status === "extracted").length;
   const postedCount = rows.filter((r) => r.status === "posted").length;
   const dupCount = rows.filter((r) => r.status === "duplicate").length;
@@ -186,33 +179,25 @@ export function InvoiceScansPage() {
         title="Scan history"
         subtitle={rows.length > 0 ? `${rows.length} scanned invoices` : "Audit trail of OCR-scanned invoices"}
         actions={
-          <div className="flex items-center gap-2">
-            {pending > 0 && (
-              <Button variant="outline" onClick={processNow} disabled={processing}>
-                {processing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
-                {processing ? "Processing…" : `Process queued (${pending})`}
-              </Button>
-            )}
-            <Button onClick={() => navigate("/purchases/scan")}>
-              <ScanLine /> Scan invoice
-            </Button>
-          </div>
+          <Button onClick={() => navigate("/purchases/scan")}>
+            <ScanLine /> Scan invoice
+          </Button>
         }
       />
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Queued" value={pending} />
-        <StatCard label="Extracting" value={extractingCount} />
+        <StatCard label="Queued (free)" value={queuedFree} />
+        <StatCard label="Fetching" value={fetching} />
         <StatCard label="Extracted" value={extractedCount} />
         <StatCard label="Posted" value={postedCount} />
       </div>
 
-      {(pending > 0 || extractingCount > 0) && (
+      {(queuedFree > 0 || fetching > 0) && (
         <p className="mb-3 flex items-center gap-1.5 text-xs text-text-tertiary">
-          {extractingCount > 0 && <Loader2 className="size-3 animate-spin" />}
-          {extractingCount > 0
-            ? "Extracting in the background — this list refreshes automatically."
-            : "Queued invoices are waiting for the background worker. The list auto-refreshes; if they do not move, click Process queued."}
+          {fetching > 0 && <Loader2 className="size-3 animate-spin" />}
+          {fetching > 0
+            ? "Extracting — this list refreshes automatically."
+            : "Queued for free extraction by the local worker (~6h). The list auto-refreshes; need one sooner? Use Fetch now."}
         </p>
       )}
       {(dupCount > 0 || failedCount > 0) && (
@@ -255,7 +240,7 @@ export function InvoiceScansPage() {
               </span>
             ),
           },
-          { key: "status", header: "Status", cell: (r) => <Badge variant={scanStatusVariant(r.status)}>{scanStatusLabel(r.status)}</Badge> },
+          { key: "status", header: "Status", cell: (r) => <Badge variant={scanStatusVariant(r.status)}>{scanStatusLabel(r.status, r.lane)}</Badge> },
           {
             key: "action",
             header: "",
@@ -273,6 +258,10 @@ export function InvoiceScansPage() {
                   <Link to={`/purchases/scan?scan=${r.id}`} className="text-sm text-primary hover:underline">
                     Review &amp; post →
                   </Link>
+                ) : r.status === "pending" && r.lane === "queue" ? (
+                  <Button size="sm" variant="outline" disabled={fetchingId === r.id} onClick={() => fetchNow(r)} title="Extract instantly with Gemini (paid)">
+                    <Zap /> {fetchingId === r.id ? "Fetching…" : "Fetch now"}
+                  </Button>
                 ) : null}
                 {confirmId === r.id ? (
                   <button
