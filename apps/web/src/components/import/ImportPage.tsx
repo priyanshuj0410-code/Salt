@@ -180,15 +180,15 @@ export function ImportPage() {
         </Link>
 
         <Link
-          to="/import/purchases"
+          to="/purchases/scan"
           className="mt-3 flex items-start gap-3 rounded-lg border p-4 hover:bg-surface-2/40"
         >
           <PackagePlus className="mt-0.5 size-5 shrink-0 text-primary" />
           <div className="flex-1">
-            <p className="text-sm font-medium">Import purchase invoices</p>
+            <p className="text-sm font-medium">Scan or import invoices (PDF · image · CSV)</p>
             <p className="text-sm text-text-tertiary">
-              Upload vendor bills to post as GRNs — adds stock, payable and ITC. Missing vendors and items are
-              created for you.
+              Upload vendor bills — PDFs, photos, or CSVs — to post as GRNs (stock, payable, ITC). Several files
+              extract in the background; review and post from scan history. Missing vendors and items are created.
             </p>
           </div>
           <span className="self-center text-primary">→</span>
