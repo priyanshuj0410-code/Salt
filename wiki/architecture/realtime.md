@@ -1,73 +1,161 @@
 ---
 type: architecture
-updated: 2026-06-01
-tags: [realtime, multi-counter, activity, supabase]
+updated: 2026-06-02
+tags: [realtime, multi-counter, offline, activity, approvals, presence, supabase]
 ---
 
-# Real-time / multi-counter substrate
+# Real-time & offline (multi-counter substrate)
 
-The PRD's strategic wedge (Phase 5) is **offline-first + real-time multi-counter** sync — what no competitor has. The roadmap is honest that none of it was built: the app was an online-only Supabase SPA. This page tracks the substrate as it gets built, ticket by ticket (SALT-100…106, module `realtime`).
+The PRD's strategic wedge (§7, Phase 5) is **offline-first + real-time multi-counter** — the thing no competitor (Marg/Tally/eVitalRx) has. As-built it is **not** the PRD's self-hosted Yjs/ElectricSQL stack; it rides **Supabase Realtime** (Postgres Changes + Presence) + a **client-side write outbox**. This module owns the shared substrate (`lib/realtime.ts`, `lib/offline.ts`) and the live shop surfaces built on it; the *consuming* features (live stock in the counter, parked bills, the offline checkout) live in other modules and adopt the substrate via handoff tickets.
 
-## Tech choice: Supabase Realtime (not self-hosted Yjs / ElectricSQL)
+Seven tickets shipped: **SALT-100** (offline outbox), **SALT-101** (presence), **SALT-102** (multi-counter conflict resolution), **SALT-104** (activity feed), **SALT-105** (internal messages), **SALT-106** (manager approvals), **SALT-210** (write-queue consolidation).
 
-> **PRD-vs-as-built divergence (flagged).** The PRD (§7) names **self-hosted Yjs** and **ElectricSQL** for sync. As-built rides **Supabase Realtime** (Postgres Changes + Broadcast + Presence) instead — the same reasoning as ADR [0002](../decisions/0002-stack-divergence-from-prd.md): the backend is already Supabase, so Realtime is zero new infra, RLS-aware, and ships today. Yjs/ElectricSQL remain options for the *offline* CRDT/local-first tickets (SALT-100/101) where Supabase Realtime alone is insufficient; they are not needed for server-authoritative live features (activity, presence, live stock, approvals).
+## Tech choice — Supabase Realtime + an outbox, not Yjs/ElectricSQL
 
-The reusable primitive is a **per-org Postgres-changes channel**: subscribe to row changes on a table, optionally filtered, RLS enforced. Extracted as **`lib/realtime.ts`** — `subscribeTableInserts<T>` (INSERTs) and `subscribeTableChanges<T>` (INSERT + UPDATE, for state that changes after creation, e.g. an approval going `pending → approved`). Every live feature — activity feed, internal messages, approvals — rides these; point them at a table + filter.
+> **PRD-vs-as-built divergence (flagged), per ADR [0002](../decisions/0002-stack-divergence-from-prd.md) + [0017](../decisions/0017-offline-first-approach.md).** The backend is already Supabase, so **Realtime** (server-authoritative live features) and a **local write outbox** (offline writes) are zero new infra, RLS-aware, and ship today. ElectricSQL/Yjs (full CRDT local-first) were deferred, not adopted — the real need is *offline writes* + *live read fan-out*, not whole-DB replication.
 
-## Activity feed — SALT-104 ✅ (first slice)
+## Screens & flows
 
-Shop-wide event log: every sale, payment and GRN, on every counter, live.
+### `/activity` — Activity feed (SALT-104)
 
-**Capture (server-side, decoupled).** Migration `0028_activity_events.sql` adds:
-- `activity_events` — append-only log (`kind`, `entity_type/id`, `actor_id/name`, `party_id/name`, `title`, `amount_paise`, `ref`, `meta`), org-scoped, standard `is_member` RLS, indexed `(org_id, created_at desc)`, added to the `supabase_realtime` publication.
-- `tg_log_activity()` — one generic `AFTER INSERT` trigger function, parameterized via `TG_ARGV(kind, entity_type)`, attached to `sales_invoices`, `payments`, `purchases`. It reads `to_jsonb(NEW)` and pulls fields with **NULL-safe `->>` over candidate column names**, so the migration can't fail on a column a table happens not to have — the only hard dependency is `id` + `org_id` (guaranteed by the tenancy convention). Actor = `coalesce(created_by, auth.uid())`. Rows are **denormalized** (party/actor names resolved in-trigger) so the realtime payload is self-contained — no client join. Imported/non-posting rows (`posts_effects = false`) are skipped so bulk imports don't flood. Logging is wrapped in `exception when others → return NEW`: it can never break the underlying sale/payment/GRN.
+`components/activity/ActivityPage.tsx` · nav `g v` · **owner + cashier** (cross-counter awareness is the point).
 
-Capturing via triggers — rather than editing billing/payments/GRN code to emit — keeps the cross-cutting feed **decoupled** from those modules (the `realtime` lane owns only its own files).
+| Feature | What it does |
+|---|---|
+| **Live feed** | Every sale / payment / GRN across all counters, newest-first. 200-row initial fetch + live prepend (de-duped, capped 500) via `subscribeActivity`. |
+| **Filters** | By kind (sales/purchases/payments), today-only, free-text (party / counter / ref). Client-side over the fetched window. |
+| **Live indicator** | A `Dot` that flips connecting → live on channel `SUBSCRIBED`. |
+| **Open a thread** | Click any event → a `Dialog` with that entity's `<MessageThread>` (SALT-105) — so messaging is usable without touching other modules. |
 
-**Stream + UI.** `lib/activity.ts` (`fetchRecentActivity` + `subscribeActivity`) and `components/activity/ActivityPage.tsx` (`/activity`, nav key `g v`, visible to owner **and** cashier — multi-counter awareness is the point). Initial 200-row fetch + live prepend (de-duped, capped 500); filters by kind (sales/purchases/payments), today-only, and free-text (party/counter/ref); a live/connecting indicator.
+### `/approvals` — Manager approvals (SALT-106)
 
-## Internal messages — SALT-105 ✅
+`components/approvals/ApprovalsPage.tsx` · nav `g o` · **owner + cashier**.
 
-Live staff notes/chat attached to any entity (a bill, customer or item). Same substrate.
+| Feature | What it does |
+|---|---|
+| **Pending inbox** | Live list of open requests; **Approve/Reject** for owners, **Cancel** for the requester. Updates live (INSERT + UPDATE) via `subscribeApprovals`. |
+| **Decided history** | Recent approved/rejected/cancelled, with decider + time. |
+| **Raise request** | A dialog (kind chips + summary + optional amount) any member can use — so the raise → decide loop is demoable in-lane. |
 
-**Storage.** Migration `0029_entity_messages.sql`: `entity_messages` (a thread is `(entity_type, entity_id)`), `is_member` RLS, in the `supabase_realtime` publication, indexed `(org_id, entity_type, entity_id, created_at)`. A `before insert` trigger **stamps the author** from `auth.uid()` (can't be spoofed) and denormalizes `author_name`.
+### Embedded primitives (used across the app)
 
-**Reusable UI.** `components/messages/MessageThread.tsx` — drop `<MessageThread entityType entityId />` into any detail screen: initial fetch + live append (de-duped), a composer, own-vs-other bubble alignment. Data/realtime layer in `lib/messages.ts` (`fetchMessages` / `postMessage` / `subscribeMessages`, on `subscribeTableInserts`, filtered by `entity_id`).
+- **`<MessageThread entityType entityId />`** (`components/messages/`) — a reusable live note/chat thread for any entity; composer + own-vs-other bubbles. Embedded in `/activity`; per-screen embedding on bill/party/item handed off (SALT-160/161/162).
+- **`<OnlineCounters />`** (`components/presence/`) — "who is at the counters" avatars + count; shown in the `/activity` and `/approvals` headers.
 
-**Entry point (in-lane).** Wired into the `/activity` feed: click any event → a dialog opens that event's thread. So messaging is usable today without touching other modules. Embedding the same component directly on the bill / party / item detail screens is **handed off** (those files belong to other modules): tickets **SALT-160** (bills), **SALT-161** (parties), **SALT-162** (catalogue, gated on the item screen existing).
+## The realtime substrate — `lib/realtime.ts`
 
-## Approve-from-manager-device — SALT-106 ✅
+One reusable primitive: a **per-org Postgres-changes channel**, RLS-enforced (the subscriber only receives rows it can `select`).
 
-A cashier raises an approval request on one device; an owner approves/rejects from another; the decision flows back **live**. This is the first feature to need **UPDATE** delivery (a request goes `pending → approved`), so the substrate gained `subscribeTableChanges<T>` (INSERT + UPDATE) alongside the inserts-only helper.
+| Export | Use |
+|---|---|
+| `subscribeTableInserts<T>({ channel, table, filter?, onInsert, onStatus? })` | INSERT-only fan-out (activity feed, messages). |
+| `subscribeTableChanges<T>({ channel, table, filter?, event?, onChange, onStatus? })` | INSERT **+ UPDATE** (+ DELETE) — for state that changes after creation (an approval `pending → approved`; live stock). |
 
-**Storage + security.** Migration `0030_approval_requests.sql`: `approval_requests` (kind, summary, amount, context, status, requester/decider + names), `is_member` RLS for **select**, member **insert** (a `before insert` trigger stamps the requester and pins `status = pending`, so a request can't be self-approved). There is **no client UPDATE policy** — status is written only by two `security definer` RPCs: `decide_approval_request(id, approved)` (**owner-only**, enforced via `memberships.role`) and `cancel_approval_request(id)` (**requester-only**). In the `supabase_realtime` publication.
+Both return an unsubscribe fn and no-op when `supabase` is null. **Presence** is separate (ephemeral, not a table) — `lib/presence.ts → usePresence(orgId, userId, name, role)` wraps a Supabase Presence channel and returns the de-duplicated online members.
 
-**UI.** `lib/approvals.ts` (`fetchApprovals` / `requestApproval` / `decideApproval` / `cancelApproval` / `subscribeApprovals`) and `/approvals` (`components/approvals/ApprovalsPage.tsx`, nav `g o`, owner + cashier): a live **Pending** inbox (Approve/Reject for owners, Cancel for the requester) + a **Decided** history, plus a **Raise request** dialog (kind chips + summary + optional amount) any member can use — so the full request → decide loop is demoable **in-lane**, no other module touched.
+> **Publication requirement (gotcha).** `postgres_changes` only fires for tables in the `supabase_realtime` publication. Each migration here runs `alter publication supabase_realtime add table …` (wrapped in a `DO`/exception block so a re-run or non-Supabase Postgres is a no-op). A subscription to a table **not** in the publication is silently dormant — exactly the state of live-stock until SALT-217 publishes `batches`.
 
-**Handoff.** Auto-raising requests from the counter (discount/credit over-limit gates, blocking checkout until approved) lands in **billing** files → **SALT-175**. `requestApproval()` is the API it calls; a small `useApprovalRequest` await-hook is suggested there.
+## Data model
 
-## Counter presence — SALT-101 (presence slice ✅)
+All three tables are org-scoped (`org_id → orgs ON DELETE CASCADE`), carry `created_at timestamptz default now()`, have standard `is_member(org_id)` RLS, and are in the `supabase_realtime` publication.
 
-"Who is at the counters right now." Uses Supabase Realtime **Presence** (ephemeral — no table, no migration): each client `track()`s itself on a per-org presence channel and reads the synced state. `lib/presence.ts → usePresence(orgId, userId, name, role)` returns the de-duplicated online members; `components/presence/OnlineCounters.tsx` renders the avatars + count, shown in the `/activity` and `/approvals` headers. Droppable into the global app shell — left as a small handoff for the **nav** module (one line in `AppLayout`).
+### `activity_events` — `0028_activity_events.sql`
 
-SALT-101 also asks for **live stock** and **parked-bill sync**, which surface on the **billing** screen (its store/files) → handed off as **SALT-179** (live stock on the counter) and **SALT-180** (parked-bill sync). Both reuse `subscribeTableChanges`; the realtime substrate is ready for them. The "<1s on LAN / self-hosted Yjs" framing is met functionally by Supabase Realtime (server round-trip, typically <1s); true LAN-local latency would need the shop-local server (SALT-103).
+Append-only shop event log. Written **server-side by triggers**, never by app code.
 
-## Offline-first write outbox — SALT-100 (substrate ✅)
+| Column | Notes |
+|---|---|
+| `kind` | `sale` / `purchase` / `payment_in` / `payment_out` |
+| `entity_type`, `entity_id` | Source table + row (deep-link target) |
+| `actor_id`, `actor_name` | Who acted — denormalized so the realtime payload needs no join |
+| `party_id`, `party_name` | Customer/vendor, denormalized |
+| `title`, `amount_paise`, `ref` | Human label · money · invoice_no/grn_no/reference |
+| `meta` | `jsonb`, extensible |
 
-"Bill through an outage, sync on reconnect." The awareness layer (`useOnlineStatus` + `OfflineBanner`, SALT-135) only *warns*; this is the write path. Decision in ADR [0017](../decisions/0017-offline-first-approach.md): a **local write outbox** on the Supabase stack, **not ElectricSQL** (same logic as ADR 0002 — fits the stack, zero new infra, right scope for the actual need).
+**`tg_log_activity()`** — one generic `AFTER INSERT` trigger, parameterized via `TG_ARGV(kind, entity_type)`, on `sales_invoices` / `payments` / `purchases`. Reads `to_jsonb(NEW)` and extracts fields with **NULL-safe `->>` over candidate column names** (so it cannot fail on a column a table lacks — only `id` + `org_id` are required); `actor = coalesce(created_by, auth.uid())`; skips imported rows (`posts_effects = 'false'`); wrapped `exception when others → return NEW` so logging can never break the business write. Index `(org_id, created_at desc)`.
 
-**Built (pure + tested).** `lib/offline.ts` — an `Outbox` that enqueues mutations to a durable store and replays them **FIFO, stop-on-failure**; the record `id` is a client UUID doubling as the **idempotency key**; storage is an injectable interface with `IndexedDbOutboxStore` (durable, survives reloads) + `InMemoryOutboxStore` (tests/SSR). No React/Supabase imports → smoke-tested 14/14 (ordering, mid-flush failure + recovery drain, exactly-once, unhandled-kind safety). `lib/outbox.ts` — the browser singleton + `useOutbox()` / `usePendingWrites()` with **online-aware auto-flush** (reuses `useOnlineStatus`).
+### `entity_messages` — `0029_entity_messages.sql`
 
-**Decoupled by design.** Consumers `outbox.register(kind, handler)` + `outbox.enqueue(kind, payload)` — they own *what* gets queued. Adoption in the sales write path (`create_sales_invoice`) lands in **billing** files → handed off as **SALT-205** (route checkout through the outbox + server idempotency key). The `OfflineBanner` (nfr lane) can show `usePendingWrites()`.
+Internal staff notes/chat. A thread is `(entity_type, entity_id)`.
 
-## Not yet built (same module)
+| Column | Notes |
+|---|---|
+| `entity_type`, `entity_id` | The thread target (`sales_invoice` / `customer` / `item` / …) |
+| `body` | The message |
+| `author_id`, `author_name` | Stamped server-side (see trigger) |
 
-| Ticket | What | Builds on |
+**`tg_stamp_message_author()`** (`before insert`) — `author_id := coalesce(author_id, auth.uid())` (un-spoofable) and resolves `author_name` from `profiles`. Index `(org_id, entity_type, entity_id, created_at)`.
+
+### `approval_requests` — `0030_approval_requests.sql`
+
+Cross-device approvals.
+
+| Column | Notes |
+|---|---|
+| `kind` | `discount_override` / `credit_override` / `price_override` / `return_auth` / `void_bill` / `other` |
+| `summary`, `amount_paise`, `context` (`jsonb`) | What needs sign-off + entity refs |
+| `status` | `pending` / `approved` / `rejected` / `cancelled` |
+| `requested_by(_name)`, `decided_by(_name)`, `decided_at` | Stamped server-side |
+
+**Security model:** `is_member` for **select** + member **insert** (a `before insert` trigger stamps the requester and pins `status='pending'` — no self-approve). **No client UPDATE policy** — status is written only by two `security definer` RPCs: **`decide_approval_request(p_id, p_approved)`** (owner-only, enforced via `memberships.role`) and **`cancel_approval_request(p_id)`** (requester-only). Index `(org_id, status, created_at desc)`.
+
+### Offline outbox — **client-side IndexedDB, no Postgres table** (SALT-100)
+
+Durable queue in IndexedDB (`salt-offline` DB, `outbox` store, `keyPath: "id"`). Record: `{ id (client UUID = idempotency key), kind, payload, createdAt, attempts, status: "pending"|"parked", lastError }`.
+
+## Offline-first write outbox — `lib/offline.ts` + `lib/outbox.ts` (SALT-100, SALT-210)
+
+"Bill through an outage, sync on reconnect." The awareness layer (`useOnlineStatus` + `OfflineBanner`, SALT-135) only *warns*; this is the write path.
+
+- **`lib/offline.ts`** (pure — no React/Supabase imports, so it is smoke-testable): an `Outbox` that `enqueue`s mutations to an injectable `OutboxStore` (`IndexedDbOutboxStore` durable / `InMemoryOutboxStore` for tests) and `flush()`es them **FIFO, stop-on-transient-failure**. A record that fails `maxAttempts` (default 5) is **parked** (`status='parked'`, skipped) so one poison write never dead-locks the queue head (added in SALT-210, the consolidation that retired a duplicate `lib/offline/writeQueue.ts`). `pending()` excludes parked.
+- **`lib/outbox.ts`** — the browser singleton + `useOutbox()` / `usePendingWrites()` with **online-aware auto-flush** (subscribes to `useOnlineStatus`).
+- **Decoupled:** consumers `outbox.register(kind, handler)` + `outbox.enqueue(kind, payload)`. Billing wired the sales path (SALT-205): `useCheckout` registers `create_sales_invoice` and enqueues when offline, printing a provisional `OFFLINE-xxxx` ref; the queue auto-flushes on reconnect.
+
+## Multi-counter conflict resolution (SALT-102 — done)
+
+Closed by two halves that both landed:
+
+1. **Server guarantee (SALT-181, billing):** `create_sales_invoice` decrements stock atomically — `update batches set qty = qty - n where id = :id and qty >= n` then `if not found then raise 'insufficient stock'`. Two counters racing the last unit → exactly one succeeds; the other gets a recoverable error. Active regardless of Realtime.
+2. **Collision-reducing UX (SALT-179, billing):** live stock on the counter rides `subscribeTableChanges` on `batches` → patches the in-memory catalogue, so FEFO/stock-cap reflect other counters within ~1s. Code merged; **fully lights up when SALT-217 publishes `batches`** to the publication.
+
+## Key files
+
+| File | Role |
+|---|---|
+| `lib/realtime.ts` | The substrate: `subscribeTableInserts` / `subscribeTableChanges` |
+| `lib/activity.ts` · `components/activity/ActivityPage.tsx` | Activity feed data + screen |
+| `lib/messages.ts` · `components/messages/MessageThread.tsx` | Message threads data + reusable UI |
+| `lib/approvals.ts` · `components/approvals/ApprovalsPage.tsx` | Approvals data/RPC wrappers + inbox |
+| `lib/presence.ts` · `components/presence/OnlineCounters.tsx` | Presence hook + indicator |
+| `lib/offline.ts` · `lib/outbox.ts` | Offline write outbox + React bindings |
+| `supabase/migrations/0028–0030` | activity_events · entity_messages · approval_requests |
+
+## Key decisions & gotchas
+
+- **Capture via DB triggers, not app edits.** The activity feed reads three other modules' tables but emits via triggers in the realtime migration — so the cross-cutting feed never touches billing/payments/GRN code, and *any* writer (UI, RPC, import) is captured.
+- **Schema-resilient triggers.** `to_jsonb(NEW)` + NULL-safe `->>` over candidate columns means the migration cannot fail on a missing column — robust against the live schema drifting from the older `data-model.md` snapshot.
+- **Denormalized realtime payloads.** Names (actor/party/author) are resolved in-trigger so a `postgres_changes` row renders with no extra round-trip.
+- **Writes go through SECURITY DEFINER RPCs, never client UPDATE** (approvals) — the authoritative state transitions are server-guarded (owner-only decide), not enforced only in the UI.
+- **Idempotency key = the outbox record id.** Replay is at-least-once today; exactly-once needs the RPCs to honour the key (SALT-201, DB lane).
+- **Publication is easy to forget** — a subscription to an unpublished table is silently dormant (the live-stock-awaiting-SALT-217 case).
+
+## Current state vs planned
+
+| Feature | Ticket | Status |
 |---|---|---|
-| SALT-102 | Multi-counter conflict resolution (atomic last-unit) | server guard **done** (SALT-181); blocked on live stock (SALT-179) — billing |
-| SALT-103 | Shop-local server | **de-scoped to optional** per ADR 0017 (outbox covers offline; Realtime covers online sync) |
+| Activity feed (`/activity`) | SALT-104 | ✅ Shipped |
+| Internal messages (`<MessageThread>`) | SALT-105 | ✅ Shipped; per-screen embeds → SALT-160/161/162 |
+| Manager approvals (`/approvals`) | SALT-106 | ✅ Shipped; counter gates SALT-175 ✅ (billing) |
+| Counter presence | SALT-101 | ✅ Shipped (presence); global-shell placement pending |
+| Offline write outbox | SALT-100 | ✅ Shipped; checkout adoption SALT-205 ✅ (billing) |
+| Write-queue consolidation + poison-parking | SALT-210 | ✅ Shipped |
+| Multi-counter conflict resolution | SALT-102 | ✅ Done (SALT-181 guard + SALT-179 live stock) |
+| Live stock / parked-bill sync on counter | SALT-179 / 180 | ✅ Shipped (billing); live stock activates on SALT-217 |
+| Publish `batches`/`stock_movements` to Realtime | SALT-217 | ⏳ DB lane — un-dormants live stock |
+| Server idempotency for replay (exactly-once) | SALT-201 | ⏳ DB lane |
+| Shop-local server | SALT-103 | ⛔ De-scoped to optional (ADR 0017); revisit only for true LAN latency / ElectricSQL |
 
-Live stock (SALT-101), atomic last-unit (SALT-102), and outbox adoption (SALT-100) land in **billing/inventory** files → filed as tickets for those modules rather than edited here.
-
-## Related
-[product/roadmap](../product/roadmap.md) · [decisions/0002](../decisions/0002-stack-divergence-from-prd.md) · [decisions/0017 — offline outbox](../decisions/0017-offline-first-approach.md) · [data-model](data-model.md) · [security-rls](security-rls.md) · [billing-screen](billing-screen.md)
+## Related pages
+- [decisions/0002 — stack divergence from PRD](../decisions/0002-stack-divergence-from-prd.md)
+- [decisions/0017 — offline-first via a local write outbox](../decisions/0017-offline-first-approach.md)
+- [product/roadmap](../product/roadmap.md) · [data-model](data-model.md) · [security-rls](security-rls.md) · [billing-screen](billing-screen.md)
