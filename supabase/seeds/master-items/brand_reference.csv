@@ -3513,6 +3513,7 @@ lntrio10,LN TRIO 10,Eris,Telmisartan 40mg + Cilnidipine 10mg + Chlorthalidone 12
 lntrio20,LN TRIO 20,Eris,Telmisartan + Cilnidipine + Chlorthalidone,Antihypertensive,high-verified
 lntrio625,LN TRIO 6.25,Eris,Telmisartan + Cilnidipine + Chlorthalidone,Antihypertensive,high-verified
 lntriols10,LN TRIO LS 10,Eris,Telmisartan + Cilnidipine + Chlorthalidone,Antihypertensive,high-verified
+lobak,LOBAK,Geno Pharmaceuticals,Chlorzoxazone + Diclofenac + Paracetamol,Analgesic / Muscle relaxant,high-verified
 lobategmneo,LOBATE GM NEO,Goapptive,Clobetasol + Gentamicin + Miconazole + Iodochlorhydroxyquinoline (topical),Dermatological (Steroid+Antibiotic+Antifungal),high
 lobategmneo,LOBATE GM NEO,Goapptive,Clobetasol + Gentamicin + Miconazole + Neomycin,Dermatological (topical),med
 lobategn,LOBATE GN,Abbott,Clobetasol + Gentamicin + Miconazole,Topical antifungal/steroid,med
@@ -5493,6 +5494,7 @@ rifastop200,RIFASTOP 200,Mankind,Rifaximin 200mg,Antibiotic (Gut),high
 rifastop400,RIFASTOP 400,Mankind,Rifaximin 400mg,Antibiotic (Gut),high
 riflect200,RIFLECT 200,Ranbaxy,Rifaximin,Antibiotic,med
 ringout,RING OUT,Mankind,Clotrimazole 1% (dusting powder),Antifungal (topical),high-verified
+ringoutplus,RING OUT PLUS,Mankind,Clotrimazole + Clobetasol + Neomycin,Dermatology / Antifungal,high-verified
 riometduo1,RIOMET DUO 1,Ranbaxy,Metformin + Glimepiride,Antidiabetic,med
 riometduo2,RIOMET DUO 2,Ranbaxy,Metformin + Glimepiride,Antidiabetic,med
 riometod500ab,RIOMET OD 500 AB,Ranbaxy,Metformin,Antidiabetic,high
