@@ -1,7 +1,7 @@
 ---
 type: architecture
-updated: 2026-06-02
-tags: [grn, purchase, inventory, itc, gst, po, returns, ocr, schemes]
+updated: 2026-06-03
+tags: [grn, purchase, inventory, itc, gst, po, returns, ocr, schemes, csv, dedup]
 ---
 
 # GRN / Purchases (goods receipt)
@@ -17,7 +17,7 @@ matching, debit notes (purchase returns), vendor schemes, and OCR invoice captur
 Screens under `components/grn/`; pure economics in `lib/grn.ts`; RPC contracts in
 `lib/orders.ts`.
 
-## What shipped (15 tickets)
+## What shipped
 
 | Capability | Tickets |
 |---|---|
@@ -31,6 +31,11 @@ Screens under `components/grn/`; pure economics in `lib/grn.ts`; RPC contracts i
 | Bulk GRN from invoice PDF/OCR + scan audit/retry | SALT-027, 221 |
 | Line GST by vendor invoice date (rate schedule) | SALT-212 |
 | Adopt the ActionBar primitive | SALT-220 |
+| OCR/CSV: PTR-vs-PTS auto-detect + store both rates | #257, #262 |
+| CSV importer → AI fallback for odd layouts | #259 |
+| Dedup — skip already-imported invoices | #260 |
+| Delete a scan · fully reverse + delete its GRN | #258, #261 |
+| Multi-file → background extraction | #263 |
 
 ## Data model (as-built)
 
@@ -44,19 +49,22 @@ Screens under `components/grn/`; pure economics in `lib/grn.ts`; RPC contracts i
   po_id?, grn_no, vendor_invoice_no, vendor_invoice_date, received_date, is_interstate,
   subtotal/discount/taxable/cgst/sgst/igst/round_off/total/paid _paise, status ∈
   {draft,received,cancelled}, notes, created_by`.
-- **`purchase_lines`** (`0019`) — `purchase_id, po_line_id?, item_id (FK, nullable), name,
-  batch_no, expiry, qty, free_qty, ptr_paise (cost/unit, **tax-exclusive**), mrp_paise,
-  discount_type, discount_value, scheme_text, taxable_paise, gst_rate, cgst/sgst/igst_paise,
-  line_total_paise`.
+- **`purchase_lines`** (`0019` + `0059`) — `purchase_id, po_line_id?, item_id (FK, nullable),
+  name, batch_no, expiry, qty, free_qty, ptr_paise (**printed PTR**), pts_paise (**printed
+  PTS**), cost_basis ∈ {ptr,pts}, mrp_paise, discount_type, discount_value, scheme_text,
+  taxable_paise, gst_rate, cgst/sgst/igst_paise, line_total_paise`. Both printed rates are kept
+  (`0059`); the **landed cost** (stock valuation + taxable) is `cost_basis === 'pts' ? pts_paise
+  : ptr_paise`.
 - **`purchase_orders` / `po_lines`** (`0019`) — pre-GRN PO (`status ∈ {draft,sent,partial,
   received,closed,cancelled}`); `receive_purchase(p_po_id)` marks it received.
 - **`debit_notes` / `debit_note_lines`** (`0020`) — purchase returns; each line keeps
   `purchase_line_id` so the returnable balance is cumulative across notes. See [returns](returns.md).
 - **`vendor_schemes`** (`0039`, SALT-026) — per-vendor (optionally per-item) trade-discount /
   buy-qty+free-qty schemes with validity dates + an `active` flag.
-- **`invoice_scans`** (`0049`, SALT-221) — one row per OCR upload (`status ∈ {pending,
-  extracted,failed,posted}`, `extracted_json`, `vendor_guess`, `error`, `purchase_id?`),
-  plus a private **`invoice-scans` Storage bucket** (RLS keyed on the `{org_id}/…` path).
+- **`invoice_scans`** (`0049` + `0060`, SALT-221) — one row per OCR upload (`status ∈ {pending,
+  processing,extracted,failed,posted,duplicate}`, `extracted_json`, `vendor_guess`, `error`,
+  `purchase_id?`, `batch_id?` grouping one multi-file upload), plus a private **`invoice-scans`
+  Storage bucket** (RLS keyed on the `{org_id}/…` path).
 - **`gst_rate_schedule`** (`0046`, SALT-081) — date-ranged GST rates per `rate_class`
   (`std/ayush/nil/gst18`); reference data, authenticated-read.
 
@@ -64,8 +72,10 @@ Screens under `components/grn/`; pure economics in `lib/grn.ts`; RPC contracts i
 
 - **`receive_purchase(p_shop_id, p_vendor_id, p_vendor_invoice_no, p_vendor_invoice_date,
   p_payment_method, p_credit_days, p_lines jsonb, p_po_id?, p_grn_no?, p_notes?) → uuid`**
-  (`0019`, owner-guarded in `0046`). Per line: **taxable** = sent `taxable_paise` (so trade
-  discounts land) else `qty × ptr`; **tax** = `round(taxable × rate/100)`, split by place of
+  (cumulative `0019 → 0046` owner-guard `→ 0059` PTR/PTS). Stores both printed rates +
+  `cost_basis`; the **landed cost** for stock/taxable is the cost_basis rate. Per line:
+  **taxable** = sent `taxable_paise` (so trade discounts land) else `qty × cost`; **tax** =
+  `round(taxable × rate/100)`, split by place of
   supply — intra → `cgst = tax/2` (Postgres **integer** division = floor), `sgst = tax − cgst`;
   inter → all `igst`. Adds `qty + free_qty` to the `(shop,item,batch)` batch + a `purchase`
   `stock_movements` row; raises the payable (or pays it for cash/card/upi/bank); posts the
@@ -76,6 +86,11 @@ Screens under `components/grn/`; pure economics in `lib/grn.ts`; RPC contracts i
   the client's per-line `taxable_paise` so the reversal equals what the UI showed.
 - **`gst_rate_for(p_class text, p_on date) → numeric`** (`0046`) — the rate in force on a
   date (latest schedule range containing it). The client mirrors it (below) for live defaults.
+- **`delete_purchase(p_purchase_id) → void`** (`0058`, owner-only) — fully reverses a GRN:
+  subtracts the received + free stock from the batch, deletes the purchase's `ledger_entries`
+  (payable + ITC) and `stock_movements`, and deletes the purchase (lines cascade; `debit_notes` /
+  `invoice_scans` links null out). **Stock is allowed to go negative** on purpose — a below-zero
+  on-hand after a delete flags an already-sold item whose purchase invoice is now missing.
 
 ## Economics — `lib/grn.ts` (pure)
 
@@ -108,6 +123,18 @@ once). `gstRateForClass(class, date, schedule)` in `lib/gstSchedule.ts` (mirrors
 on the **vendor invoice date** — correct ITC for back-dated GRNs and around the 22-Sep-2025
 12%→5% medicine cutover — with a per-line **GST %** column to override an unexpected billed
 rate. Falls back to the item's own rate when unlinked.
+
+**PTR vs PTS (`resolvePurchaseRate`, lib/importPurchaseInvoice.ts).** Pharma bills often print
+both Price-To-Retailer and Price-To-Stockist; the line value is computed from only one.
+`resolvePurchaseRate` reconciles each rate's `qty·rate·(1−disc)` against the printed line
+**amount** (within 5%) to pick the billed one, derives the rate from the amount if neither
+matches, and returns the billed cost **plus both printed rates + the basis** — so nothing is
+lost and the importers + `receive_purchase` store the full picture. Shared by OCR + CSV; the
+review flags PTS / derived / ambiguous lines.
+
+**Dedup (`findExistingInvoice`, lib/purchaseDedup.ts).** Both importers check each extracted
+invoice number against posted GRNs (`purchases.vendor_invoice_no`, lenient vendor match), badge
+duplicates with the existing GRN ref, and exclude them from posting — a bill can't be captured twice.
 
 ## Screens (`components/grn/`)
 
@@ -144,7 +171,19 @@ missing vendors/items. Reuses the whole CSV-import path — no duplicate posting
 - **Audit/retry (SALT-221):** every upload persists its file to the private `invoice-scans`
   bucket + an `invoice_scans` row *before* OCR, so a failed/interrupted scan is on record and
   retried from storage (`InvoiceScansPage`) instead of re-uploading; a posted scan links to its
-  GRN. Helpers in `lib/invoiceScans.ts`.
+  GRN. Scan history also supports **delete** (`deleteScan` → `delete_purchase` for a posted scan).
+  Helpers in `lib/invoiceScans.ts`.
+- **Robust JSON (#257):** `parseModelJson` brace-matches the **first complete object** from the
+  model reply (tolerating trailing prose / a second object Gemini sometimes appends).
+- **CSV → AI fallback (#259):** the CSV importer runs the deterministic column parser first;
+  only when it yields no valid invoice does the CSV text go to `extract-invoice` (which now
+  accepts a `text/*` part) to normalise an arbitrary layout — free for clean files, AI rescue
+  for messy ones.
+- **Multi-file background (#263):** selecting several files uploads each as a `pending` scan
+  (shared `batch_id`) and fires the **`process-scans`** Edge Function — a service-role worker
+  that drains the org's pending scans server-side (so work survives the user leaving), reusing
+  `extract-invoice` per file and marking `extracted` / `duplicate` / `failed`. **Extract-only** —
+  the user reviews + posts from scan history.
 
 ## Decisions & gotchas
 
@@ -157,6 +196,10 @@ missing vendors/items. Reuses the whole CSV-import path — no duplicate posting
   shared `components/patterns/action-bar` primitive (sticky thumb bar on mobile, static footer
   on `md+`); [decisions/0015](../decisions/0015-dual-modality-interaction.md). The counter
   keeps its richer bespoke `BillSummary`/`MobileCheckout`.
+- **Background can't post.** `receive_purchase` / `create_debit_note` resolve org + owner +
+  `created_by` from `auth.uid()`, so the `process-scans` worker stops at extraction — posting
+  stays user-driven (also the safe choice given OCR can misread). A deleted GRN deliberately
+  allows **negative stock** as a missing-invoice signal.
 
 ## Contract for other modules
 
@@ -170,7 +213,9 @@ missing vendors/items. Reuses the whole CSV-import path — no duplicate posting
 
 ## Current state vs planned
 
-All product-modules §3 items are live. Open follow-ups: distributor-API PO submission (vs the
+All product-modules §3 items are live, plus the OCR/CSV import hardening (PTR/PTS, AI fallback,
+dedup, multi-file background extraction) and GRN delete. Open follow-ups: a token-saving
+header-only pre-call + a pg_cron drain for the scan worker; distributor-API PO submission (vs the
 shipped WhatsApp/email/text share); GSTR-2B auto-reconciliation against supplier filings; and
 reconciling [data-model.md](data-model.md) to the as-built `purchases` shape.
 
