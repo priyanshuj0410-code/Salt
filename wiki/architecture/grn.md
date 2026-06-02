@@ -1,78 +1,81 @@
 ---
 type: architecture
-updated: 2026-06-01
-tags: [grn, purchase, inventory, itc, gst]
+updated: 2026-06-02
+tags: [grn, purchase, inventory, itc, gst, po, returns, ocr, schemes]
 ---
 
-# GRN / Purchase (goods receipt)
+# GRN / Purchases (goods receipt)
 
-The **inbound** side of inventory (product-modules §3): when stock arrives from a vendor it
-is received here, which (1) **adds stock** — including scheme free goods, (2) raises the
+The **inbound** side of inventory (product-modules §3): stock arriving from a distributor is
+received here, which (1) **adds stock** — including scheme free goods, (2) raises the
 **vendor payable**, and (3) records **ITC** (input tax credit) on the GST paid. The
-counterpart to the [billing screen](billing-screen.md) (outbound) and the source the
-[GSTR-1/ITC](gst-returns.md) and payables reporting read from.
+counterpart to the [billing screen](billing-screen.md) (outbound), and the source the
+[GSTR-1 / ITC](gst-returns.md) and payables reporting read from.
 
-Screens under `components/grn/`; pure economics in `lib/grn.ts`; the RPC contract in
-`lib/orders.ts`. **Frontend-only build — no migration**: the backbone was already live.
+Now a full subsystem, not just a receive screen: purchase orders, auto-PO, GRN↔PO↔invoice
+matching, debit notes (purchase returns), vendor schemes, and OCR invoice capture all ship.
+Screens under `components/grn/`; pure economics in `lib/grn.ts`; RPC contracts in
+`lib/orders.ts`.
 
-## Read/write contract (as-built)
+## What shipped (15 tickets)
 
-> ⚠️ **Stale-wiki flag.** The live purchase tables — **`purchases` / `purchase_lines` /
-> `purchase_orders` / `po_lines`** + the **`receive_purchase`** RPC — are the
-> [proposed model](proposed-data-model.md) (`supabase/migrations/0019_purchases.sql`), which
-> has been **applied** despite still being labelled "DO NOT RUN". [data-model.md](data-model.md)
-> still describes purchases as `orders`/`order_lines` + `place_order` (migrations 0010/0011);
-> that is the old model. Verified by live column-probing on 2026-06-01. Same situation the
-> [GSTR-1 slice](gst-returns.md) found for sales (`sales_invoices`/`sale_lines`). Full
-> reconciliation of data-model.md is its own ticket.
+| Capability | Tickets |
+|---|---|
+| Receive into stock (GRN) + history/detail | SALT-001, 020 |
+| Scheme/free-qty (10+1) → effective cost + multi-rate ITC | SALT-018 |
+| New-item review (no silent add) | SALT-019 |
+| Manual PO · auto-PO (reorder + velocity) · send PO | SALT-021, 022, 023 |
+| GRN↔PO↔invoice matching + discrepancy flags | SALT-024 |
+| Debit note (purchase return) → stock/payable down, ITC reversal | SALT-025, 190 |
+| Vendor scheme log + price list (auto-apply + flag) | SALT-026 |
+| Bulk GRN from invoice PDF/OCR + scan audit/retry | SALT-027, 221 |
+| Line GST by vendor invoice date (rate schedule) | SALT-212 |
+| Adopt the ActionBar primitive | SALT-220 |
 
-**`purchases`** (GRN header) — `org_id, shop_id, vendor_id (FK ledgers, RESTRICT), po_id?,
-grn_no, vendor_invoice_no, vendor_invoice_date, received_date, is_interstate,
-subtotal_paise, discount_paise, taxable_paise, cgst_paise, sgst_paise, igst_paise,
-round_off_paise, total_paise, paid_paise, status ∈ {draft,received,cancelled}, notes,
-created_by`.
+## Data model (as-built)
 
-**`purchase_lines`** — `purchase_id, po_line_id?, item_id (FK, nullable), name, batch_no,
-expiry, qty, free_qty, ptr_paise (cost/unit, tax-exclusive), mrp_paise, discount_type,
-discount_value, scheme_text, taxable_paise, gst_rate, cgst_paise, sgst_paise, igst_paise,
-line_total_paise`.
+> The purchase tables and `receive_purchase` were authored in the "proposed" model and have
+> since been **promoted to canonical migrations** (`supabase/migrations/0019_purchases.sql`,
+> SALT-140) and applied — verified by live column-probing. [data-model.md](data-model.md)
+> still describes the *old* `orders`/`order_lines` shape; full reconciliation of that page is
+> its own ticket.
 
-**`purchase_orders` / `po_lines`** — optional pre-GRN PO (`status ∈ {draft,sent,partial,
-received,closed,cancelled}`). Present but **not yet surfaced** (Phase 2 — see below).
+- **`purchases`** (GRN header, `0019`) — `org_id, shop_id, vendor_id (FK ledgers RESTRICT),
+  po_id?, grn_no, vendor_invoice_no, vendor_invoice_date, received_date, is_interstate,
+  subtotal/discount/taxable/cgst/sgst/igst/round_off/total/paid _paise, status ∈
+  {draft,received,cancelled}, notes, created_by`.
+- **`purchase_lines`** (`0019`) — `purchase_id, po_line_id?, item_id (FK, nullable), name,
+  batch_no, expiry, qty, free_qty, ptr_paise (cost/unit, **tax-exclusive**), mrp_paise,
+  discount_type, discount_value, scheme_text, taxable_paise, gst_rate, cgst/sgst/igst_paise,
+  line_total_paise`.
+- **`purchase_orders` / `po_lines`** (`0019`) — pre-GRN PO (`status ∈ {draft,sent,partial,
+  received,closed,cancelled}`); `receive_purchase(p_po_id)` marks it received.
+- **`debit_notes` / `debit_note_lines`** (`0020`) — purchase returns; each line keeps
+  `purchase_line_id` so the returnable balance is cumulative across notes. See [returns](returns.md).
+- **`vendor_schemes`** (`0039`, SALT-026) — per-vendor (optionally per-item) trade-discount /
+  buy-qty+free-qty schemes with validity dates + an `active` flag.
+- **`invoice_scans`** (`0049`, SALT-221) — one row per OCR upload (`status ∈ {pending,
+  extracted,failed,posted}`, `extracted_json`, `vendor_guess`, `error`, `purchase_id?`),
+  plus a private **`invoice-scans` Storage bucket** (RLS keyed on the `{org_id}/…` path).
+- **`gst_rate_schedule`** (`0046`, SALT-081) — date-ranged GST rates per `rate_class`
+  (`std/ayush/nil/gst18`); reference data, authenticated-read.
 
-## `receive_purchase` RPC
+## RPCs
 
-```
-receive_purchase(
-  p_shop_id uuid, p_vendor_id uuid,
-  p_vendor_invoice_no text, p_vendor_invoice_date date,
-  p_payment_method text, p_credit_days integer,
-  p_lines jsonb,
-  p_po_id uuid = null, p_grn_no text = null, p_notes text = null
-) returns uuid           -- the new purchase (GRN) id
-```
-
-`p_lines[]` = `{item_id, name, batch_no, expiry, qty, free_qty, ptr_paise, mrp_paise,
-discount_type, discount_value, gst_rate, taxable_paise, scheme_text}`. Security-definer;
-resolves org from `memberships`; vendor + shop must be in the org. Per line it:
-
-- **taxable** = the `taxable_paise` sent if present, **else** `qty × ptr` — so trade
-  discounts only land if the client computes and sends taxable. (We do — via `computeGrnLine`.)
-- **tax** = `round(taxable × rate/100)`; **split** by place of supply: intra-state →
-  `cgst = tax/2` (Postgres **integer** division, i.e. floor), `sgst = tax − cgst`;
-  inter-state → all `igst`. `is_interstate` is derived server-side from vendor vs shop
-  `state_code`.
-- **stock** += `qty + free_qty` — free goods enter stock (upsert the `(shop,item,batch)`
-  batch, refresh ptr/mrp/expiry) and a `purchase` row is written to `stock_movements`.
-- **payable**: cash/card/upi/bank ⇒ `paid_paise = total`; credit ⇒ unpaid, `due_date =
-  today + credit_days`.
-- **double entry** (`ledger_entries`, see [decisions/0009](../decisions/0009-target-data-model.md)):
-  Dr Purchase + Dr CGST/SGST/IGST input (ITC) = Cr vendor (or Cr cash/bank if paid).
-- If `p_po_id` given, marks that PO `received`.
-
-**Pre-flight:** the shop must have a `state_code` or the insert trips `is_interstate NOT
-NULL`. `GrnEntryPage` guards via `useShopBlockers()` and the `ShopSetupDialog` rescue
-(same pattern as billing), retrying the save on resolve.
+- **`receive_purchase(p_shop_id, p_vendor_id, p_vendor_invoice_no, p_vendor_invoice_date,
+  p_payment_method, p_credit_days, p_lines jsonb, p_po_id?, p_grn_no?, p_notes?) → uuid`**
+  (`0019`, owner-guarded in `0046`). Per line: **taxable** = sent `taxable_paise` (so trade
+  discounts land) else `qty × ptr`; **tax** = `round(taxable × rate/100)`, split by place of
+  supply — intra → `cgst = tax/2` (Postgres **integer** division = floor), `sgst = tax − cgst`;
+  inter → all `igst`. Adds `qty + free_qty` to the `(shop,item,batch)` batch + a `purchase`
+  `stock_movements` row; raises the payable (or pays it for cash/card/upi/bank); posts the
+  double entry (Dr Purchase + Dr GST input = Cr vendor). `is_interstate` is derived from
+  vendor vs shop `state_code`.
+- **`create_debit_note(...)`** (`0020`, owner-guarded `0046`) — reverses stock, lowers the
+  payable (or refunds cash/bank), reverses ITC. Driven by the effective-cost engine; trusts
+  the client's per-line `taxable_paise` so the reversal equals what the UI showed.
+- **`gst_rate_for(p_class text, p_on date) → numeric`** (`0046`) — the rate in force on a
+  date (latest schedule range containing it). The client mirrors it (below) for live defaults.
 
 ## Economics — `lib/grn.ts` (pure)
 
@@ -80,54 +83,100 @@ The inverse of retail: purchases are **tax-exclusive** (GST on top of PTR), wher
 MRP-inclusive (`splitInclusiveGst` in `currency.ts`). Mirrors the RPC exactly so what the
 user sees equals what is stored.
 
-- `computeGrnLine(line, interstate)` → `{ grossPaise, discountPaise, taxablePaise, cgstPaise,
-  sgstPaise, igstPaise, gstPaise, lineTotalPaise, stockQty, effectiveCostPaise }`.
-  - `taxable = qty×ptr − discount`; `gst = round(taxable × rate/100)`; CGST uses
-    **`Math.floor(gst/2)`** to match the server's integer division, SGST takes the remainder.
-  - `stockQty = qty + freeQty`; **`effectiveCostPaise = taxable / stockQty`** — the
-    "10+1 lowers your real cost" number (free goods carry zero ITC but real stock).
-- `grnTotals(lines, interstate)` → document totals **with a per-GST-rate breakup**
-  (`byRate[]`) for the multi-rate footer and ITC/GSTR-2 reporting.
-- `grnLineDiscount(gross, type, value)` — "pct" of gross or "flat" paise, capped at gross.
+- `computeGrnLine(line, interstate)` → `{ grossPaise, discountPaise, taxablePaise,
+  cgst/sgst/igst/gstPaise, lineTotalPaise, stockQty, effectiveCostPaise }`. `taxable =
+  qty×ptr − discount`; CGST uses **`Math.floor(gst/2)`** to match the server; `stockQty =
+  qty + freeQty`; **`effectiveCostPaise = taxable / stockQty`** — the "10+1 lowers your real
+  cost" number (free goods carry zero ITC but real stock).
+- `grnTotals(lines, interstate)` → document totals with a **per-GST-rate breakup** (`byRate[]`)
+  for the multi-rate footer and ITC reporting.
 - `isInterstate(vendorStateCode, shopStateCode)` — place of supply; unknown vendor state ⇒
-  intra (matches the server, which can't split what it doesn't know).
+  intra (matches the server).
+- **Vendor schemes** (SALT-026): `activeSchemeFor`, `schemeFreeQtyFor`, `schemeMismatch` —
+  auto-apply the vendor's active scheme to a new line (seed free qty + trade discount) and
+  flag a line that diverges from it.
+- **PO / matching**: `suggestReorders` (reorder level + sales velocity → auto-PO, SALT-022),
+  `matchGrnToPo` + `discrepancyLabel` (ordered vs received, SALT-024), `formatPoText` /
+  `poTotal` / `buildPoLineRows` (PO share text, SALT-023).
+- **Returns** apportionment lives in [`lib/returns.ts`](returns.md) (SALT-099), adopted by the
+  debit-note screen in SALT-190 — not duplicated here.
+
+**Date-effective GST (SALT-212).** Each item carries its master `gstRateClass` (from
+`master_items`, embedded by the catalog store, which also loads the 6-row `gst_rate_schedule`
+once). `gstRateForClass(class, date, schedule)` in `lib/gstSchedule.ts` (mirrors the SQL
+`gst_rate_for`) resolves the in-force rate; `GrnEntryPage` defaults each new line to the rate
+on the **vendor invoice date** — correct ITC for back-dated GRNs and around the 22-Sep-2025
+12%→5% medicine cutover — with a per-line **GST %** column to override an unexpected billed
+rate. Falls back to the item's own rate when unlinked.
 
 ## Screens (`components/grn/`)
 
-- **`GrnEntryPage`** (`/purchases/new?vendor=:id`) — receive stock. Vendor picker
-  (`VendorPicker`, preselects from `?vendor=`), vendor-invoice no + date, a line grid with
-  **free qty / trade-disc % / MRP**, live per-line **effective cost + GST**, and a footer
-  with the **multi-rate GST breakup**, grand total, and ITC claimable. Saves via
-  `buildReceivePurchasePayload` → `receive_purchase`, then routes to the new GRN's detail.
-- **`CreateItemDialog`** — **no silent add** (SALT-019): an item not in the catalogue is
-  created explicitly (name, salt, manufacturer, pack, HSN, GST%, schedule) → `insert` into
-  `items` (org-scoped; `items` has **no** `shop_id`), then dropped onto the GRN and into the
-  `useCatalog` store via `upsertItem`.
-- **`GrnListPage`** (`/purchases`) — history (date, vendor, ref, taxable, ITC, total) +
-  StatCards (GRNs, taxable, ITC). **`GrnDetailPage`** (`/purchases/:id`) — read-only header +
-  lines + totals.
+- **Receive + history** — `GrnEntryPage` (`/purchases/new`): vendor picker, invoice no/date,
+  a line grid with free qty / trade-disc % / **GST %** / MRP, live per-line effective cost +
+  GST, an [ActionBar](#decisions--gotchas) footer (total · lines · ITC) and the multi-rate
+  breakup. `GrnListPage` (`/purchases`) + `GrnDetailPage` (`/purchases/:id`). `CreateItemDialog`
+  — **no silent add** (SALT-019): an unknown item is created explicitly, then dropped onto the
+  GRN and into the `useCatalog` store.
+- **Purchase orders** — `PoEntryPage` / `PoListPage` / `PoDetailPage`, `AutoPoPage`
+  (reorder-level + velocity suggestions), `SendPoDialog` (share as text via WhatsApp/email/copy;
+  distributor-API submission is the planned channel — [decisions/0016](../decisions/0016-vendor-ordering-channel.md)).
+  Receiving against a PO is `/purchases/new?po=:id` → prefilled grid + a match banner.
+- **Returns (debit notes)** — `DebitNoteEntryPage` (`/purchases/returns/new?purchase=:id`),
+  `DebitNoteListPage`, `DebitNoteDetailPage`. Driven off the originating GRN's lines with a
+  cumulative returnable cap; economics from [returns.md](returns.md).
+- **Vendor schemes** — `VendorSchemesPage` + `SchemeDialog` (CRUD the scheme/price list).
+- **OCR import** — `OcrInvoiceImportPage` + `InvoiceScansPage` (below).
 
-Nav: the **Purchases** module is `built: true` (`navConfig.ts`), `g p` shortcut. Reached
-also from a vendor profile's **New purchase** button (`/purchases/new?vendor=`).
+Nav: **Purchases** module `built: true` (`navConfig.ts`), `g p` shortcut; also reached from a
+vendor profile's **New purchase** button.
+
+## OCR invoice capture (SALT-027 / 221)
+
+Upload a distributor invoice (PDF/image) → the **`extract-invoice` Edge Function** asks
+**Google Gemini** for strict JSON of the header + lines → `lib/ocrInvoice.ts:ocrInvoiceToRows`
+maps it to the CSV-importer row shape (`normalizeExpiry` fixes `MM/YYYY`→`YYYY-MM`) →
+`parsePurchaseInvoices` dry-run → posts each invoice via `receive_purchase`, auto-creating
+missing vendors/items. Reuses the whole CSV-import path — no duplicate posting logic.
+
+- **Reliability:** the function walks a **model-fallback chain** with backoff retry on 503/429
+  (free-tier capacity shedding); the durable fix for sustained 503s is enabling billing on the
+  key. The vision key (`GEMINI_API_KEY`) is a server-side Supabase secret only.
+- **Audit/retry (SALT-221):** every upload persists its file to the private `invoice-scans`
+  bucket + an `invoice_scans` row *before* OCR, so a failed/interrupted scan is on record and
+  retried from storage (`InvoiceScansPage`) instead of re-uploading; a posted scan links to its
+  GRN. Helpers in `lib/invoiceScans.ts`.
+
+## Decisions & gotchas
+
+- **Shop state is mandatory.** `is_interstate = NOT(intra)` becomes NULL (→ NOT-NULL violation)
+  when the shop has no `state_code` but the vendor does. All purchase entry points
+  (`GrnEntryPage`, `DebitNoteEntryPage`, OCR + CSV import) guard via `useShopBlockers()` and the
+  just-in-time **`ShopSetupDialog`**, which collects the state inline and retries the save.
+- **Money is integer paise** everywhere ([decisions/0003](../decisions/0003-money-as-paise.md)).
+- **ActionBar (SALT-220)** — `GrnEntryPage` + `DebitNoteEntryPage` are the first adopters of the
+  shared `components/patterns/action-bar` primitive (sticky thumb bar on mobile, static footer
+  on `md+`); [decisions/0015](../decisions/0015-dual-modality-interaction.md). The counter
+  keeps its richer bespoke `BillSummary`/`MobileCheckout`.
 
 ## Contract for other modules
 
-- **GST/ITC** ([gst-returns.md](gst-returns.md)): per-line `cgst_paise/sgst_paise/igst_paise`
-  on `purchase_lines` (and the header totals) are the **ITC claimable** — the input side of
-  GSTR-3B and the basis for GSTR-2B reconciliation. Free goods contribute **zero** ITC.
-- **Inventory/Returns**: each receipt writes `stock_movements (reason='purchase')`; a purchase
-  return (debit note) will reverse stock + pre-compute the ITC reversal off these line splits.
+- **GST/ITC** ([gst-returns.md](gst-returns.md)): per-line `cgst/sgst/igst_paise` on
+  `purchase_lines` are the **ITC claimable** (input side of GSTR-3B / basis for GSTR-2B). Free
+  goods contribute **zero** ITC.
+- **Inventory**: each receipt writes `stock_movements (reason='purchase')`; a debit note
+  reverses it.
 - **Payments**: a credit GRN raises the vendor payable; `record_payment(direction='paid')`
-  settles it (already built on the party profile).
+  settles it (party profile).
 
-## Not built yet (Phase 2 — SALT-021…024)
+## Current state vs planned
 
-Manual **PO**, auto-PO (reorder level + sales velocity), send PO (WhatsApp/PDF), and
-**GRN↔PO↔invoice matching** with discrepancy flags. The `purchase_orders`/`po_lines` tables
-and `receive_purchase`'s `p_po_id` already exist to hang these on. Debit notes (purchase
-returns) belong to the Returns module.
+All product-modules §3 items are live. Open follow-ups: distributor-API PO submission (vs the
+shipped WhatsApp/email/text share); GSTR-2B auto-reconciliation against supplier filings; and
+reconciling [data-model.md](data-model.md) to the as-built `purchases` shape.
 
 ## Related
-[product/product-modules §3](../product/product-modules.md) · [billing-screen](billing-screen.md) ·
-[gst-returns](gst-returns.md) · [data-model](data-model.md) · [proposed-data-model](proposed-data-model.md) ·
-[domain/orders](../domain/orders.md) · [decisions/0009](../decisions/0009-target-data-model.md)
+[product/product-modules §3](../product/product-modules.md) · [returns](returns.md) ·
+[billing-screen](billing-screen.md) · [gst-returns](gst-returns.md) ·
+[data-model](data-model.md) · [domain/orders](../domain/orders.md) ·
+[decisions/0009](../decisions/0009-target-data-model.md) ·
+[decisions/0016](../decisions/0016-vendor-ordering-channel.md)
