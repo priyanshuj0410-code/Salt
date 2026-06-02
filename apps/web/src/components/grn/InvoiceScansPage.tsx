@@ -190,6 +190,10 @@ export function InvoiceScansPage() {
                   <Link to={`/purchases/${r.purchase_id}`} className="text-sm text-primary hover:underline">
                     View GRN →
                   </Link>
+                ) : r.status === "extracted" || r.status === "duplicate" ? (
+                  <Link to={`/purchases/scan?scan=${r.id}`} className="text-sm text-primary hover:underline">
+                    Review &amp; post →
+                  </Link>
                 ) : null}
                 {confirmId === r.id ? (
                   <button
