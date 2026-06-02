@@ -18,6 +18,7 @@ export interface InvoiceScanRow {
   original_filename: string | null;
   mime: string | null;
   status: ScanStatus;
+  invoice_no: string | null;
   vendor_guess: string | null;
   error: string | null;
   purchase_id: string | null;
@@ -115,8 +116,69 @@ export function vendorGuess(json: OcrInvoiceJson | null): string | null {
   return v.trim() || null;
 }
 
-/** Upload the file to the bucket + insert a `pending` invoice_scans row. Returns
- *  the new scan id (and its storage path), or an error string. */
+/** Best-effort invoice number from the extracted JSON, for the dedup column. */
+export function scanInvoiceNo(json: OcrInvoiceJson | null): string | null {
+  const v = json && typeof (json as { invoice_no?: unknown }).invoice_no === "string" ? (json as { invoice_no: string }).invoice_no : "";
+  return v.trim() || null;
+}
+
+/** Upload a file to the bucket under `{orgId}/{fileId}.{ext}`. Returns the object key
+ *  (storage path). For CSV uploads the file is stored once and shared by the N rows it
+ *  parses into, so the file id is independent of the scan-row ids. */
+export async function uploadScanFile(
+  orgId: string,
+  file: File,
+  fileBase64: string,
+  fileId: string = crypto.randomUUID(),
+): Promise<{ path: string; error?: string }> {
+  if (!supabase) return { path: "", error: "Not connected." };
+  const path = scanStoragePath(orgId, fileId, file.name, file.type);
+  // Upload from the raw bytes (decode our base64 back to a Blob keeps one source of truth).
+  const bytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0));
+  const up = await supabase.storage
+    .from(INVOICE_SCANS_BUCKET)
+    .upload(path, bytes, { contentType: file.type || "application/octet-stream", upsert: false });
+  return { path, error: up.error?.message };
+}
+
+interface ScanRowInput {
+  id?: string;
+  orgId: string;
+  shopId: string | null;
+  storagePath: string;
+  originalFilename: string | null;
+  mime: string | null;
+  status: ScanStatus;
+  batchId?: string | null;
+  extractedJson?: unknown;
+  invoiceNo?: string | null;
+  vendorGuess?: string | null;
+  error?: string | null;
+}
+
+/** Insert one invoice_scans row. Low-level — callers set the status + payload. */
+export async function insertScanRow(p: ScanRowInput): Promise<{ id: string; error?: string }> {
+  if (!supabase) return { id: p.id ?? "", error: "Not connected." };
+  const id = p.id ?? crypto.randomUUID();
+  const ins = await supabase.from("invoice_scans").insert({
+    id,
+    org_id: p.orgId,
+    shop_id: p.shopId,
+    storage_path: p.storagePath,
+    original_filename: p.originalFilename,
+    mime: p.mime,
+    status: p.status,
+    batch_id: p.batchId ?? null,
+    extracted_json: p.extractedJson ?? null,
+    invoice_no: p.invoiceNo ?? null,
+    vendor_guess: p.vendorGuess ?? null,
+    error: p.error ?? null,
+  });
+  return { id, error: ins.error?.message };
+}
+
+/** Upload the file to the bucket + insert a `pending` invoice_scans row (the OCR path,
+ *  where extraction happens after upload). Returns the new scan id (= the file id). */
 export async function createScan(
   orgId: string,
   shopId: string | null,
@@ -124,27 +186,46 @@ export async function createScan(
   fileBase64: string,
   batchId?: string | null,
 ): Promise<{ id: string; error?: string }> {
-  if (!supabase) return { id: "", error: "Not connected." };
   const id = crypto.randomUUID();
-  const path = scanStoragePath(orgId, id, file.name, file.type);
-  // Upload from the raw bytes (decode our base64 back to a Blob keeps one source of truth).
-  const bytes = Uint8Array.from(atob(fileBase64), (c) => c.charCodeAt(0));
-  const up = await supabase.storage
-    .from(INVOICE_SCANS_BUCKET)
-    .upload(path, bytes, { contentType: file.type || "application/octet-stream", upsert: false });
-  if (up.error) return { id, error: up.error.message };
-  const ins = await supabase.from("invoice_scans").insert({
+  const up = await uploadScanFile(orgId, file, fileBase64, id);
+  if (up.error) return { id, error: up.error };
+  return insertScanRow({
     id,
-    org_id: orgId,
-    shop_id: shopId,
-    storage_path: path,
-    original_filename: file.name,
+    orgId,
+    shopId,
+    storagePath: up.path,
+    originalFilename: file.name,
     mime: file.type || null,
     status: "pending",
-    batch_id: batchId ?? null,
+    batchId: batchId ?? null,
   });
-  if (ins.error) return { id, error: ins.error.message };
-  return { id };
+}
+
+/** Insert an already-extracted scan row (the CSV path — parsing is client-side, so the
+ *  row lands `extracted` straight away). The file is uploaded once via `uploadScanFile`;
+ *  one row per invoice it contains shares that `storagePath`. When `dupRef` is given the
+ *  invoice already exists (posted GRN or queued scan) so the row is marked `duplicate`. */
+export async function insertExtractedScan(
+  orgId: string,
+  shopId: string | null,
+  file: { path: string; filename: string | null; mime: string | null },
+  invoiceJson: OcrInvoiceJson,
+  dupRef?: string | null,
+  batchId?: string | null,
+): Promise<{ id: string; error?: string }> {
+  return insertScanRow({
+    orgId,
+    shopId,
+    storagePath: file.path,
+    originalFilename: file.filename,
+    mime: file.mime,
+    status: dupRef ? "duplicate" : "extracted",
+    extractedJson: invoiceJson,
+    invoiceNo: scanInvoiceNo(invoiceJson),
+    vendorGuess: vendorGuess(invoiceJson),
+    error: dupRef ? `already imported (${dupRef})` : null,
+    batchId: batchId ?? null,
+  });
 }
 
 /** Fire the background extraction worker for a batch (fire-and-forget). It drains the
@@ -155,10 +236,10 @@ export async function kickoffProcessScans(batchId?: string | null): Promise<void
   void supabase.functions.invoke("process-scans", { body: batchId ? { batch_id: batchId } : {} });
 }
 
-/** Patch a scan row (status + the extracted json / error / posted GRN). */
+/** Patch a scan row (status + the extracted json / invoice no / error / posted GRN). */
 export async function updateScan(
   id: string,
-  patch: Partial<{ status: ScanStatus; extracted_json: unknown; vendor_guess: string | null; error: string | null; purchase_id: string }>,
+  patch: Partial<{ status: ScanStatus; extracted_json: unknown; invoice_no: string | null; vendor_guess: string | null; error: string | null; purchase_id: string }>,
 ): Promise<void> {
   if (!supabase) return;
   await supabase.from("invoice_scans").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id);
@@ -193,7 +274,14 @@ export async function deleteScan(id: string, storagePath: string, purchaseId?: s
     const { error: e } = await supabase.rpc("delete_purchase", { p_purchase_id: purchaseId });
     if (e) return { error: `Could not delete the GRN: ${e.message}` };
   }
-  await supabase.storage.from(INVOICE_SCANS_BUCKET).remove([storagePath]);
+  // A CSV upload stores its file once and shares it across the N rows it parsed into —
+  // only remove the stored file when no sibling row still points at it.
+  const { count } = await supabase
+    .from("invoice_scans")
+    .select("id", { count: "exact", head: true })
+    .eq("storage_path", storagePath)
+    .neq("id", id);
+  if (!count) await supabase.storage.from(INVOICE_SCANS_BUCKET).remove([storagePath]);
   const { error } = await supabase.from("invoice_scans").delete().eq("id", id);
   return error ? { error: error.message } : {};
 }

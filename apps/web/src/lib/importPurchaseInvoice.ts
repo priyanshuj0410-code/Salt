@@ -7,7 +7,7 @@ import type { RowIssue } from "./import";
  * Smart Import purchase *register* (non-posting history), each parsed invoice is
  * committed through the `receive_purchase` RPC, so it adds stock + vendor payable +
  * ITC exactly like a hand-entered GRN. Vendors and items that don't exist yet are
- * auto-created at commit time (see PurchaseInvoiceImportPage).
+ * auto-created at commit time (see the unified import page, OcrInvoiceImportPage).
  *
  * Pure + type-only imports, so it stays unit-testable; money totals are computed in
  * the page via grnTotals from lib/grn.

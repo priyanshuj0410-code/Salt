@@ -63,7 +63,6 @@ const InventoryReportsPage = lazy(() => import("@/components/reports/InventoryRe
 const FinancialReportsPage = lazy(() => import("@/components/reports/FinancialReportsPage").then((m) => ({ default: m.FinancialReportsPage })));
 const TaxReportsPage = lazy(() => import("@/components/reports/TaxReportsPage").then((m) => ({ default: m.TaxReportsPage })));
 const ImportPage = lazy(() => import("@/components/import/ImportPage").then((m) => ({ default: m.ImportPage })));
-const PurchaseInvoiceImportPage = lazy(() => import("@/components/import/PurchaseInvoiceImportPage").then((m) => ({ default: m.PurchaseInvoiceImportPage })));
 const GlOpeningImportPage = lazy(() => import("@/components/import/GlOpeningImportPage").then((m) => ({ default: m.GlOpeningImportPage })));
 const OrgSettingsPage = lazy(() => import("@/components/settings/OrgSettingsPage").then((m) => ({ default: m.OrgSettingsPage })));
 const SetupWizard = lazy(() => import("@/components/onboarding/SetupWizard").then((m) => ({ default: m.SetupWizard })));
@@ -541,14 +540,8 @@ function App() {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/import/purchases"
-        element={
-          <ProtectedRoute allowedRoles={["owner"]}>
-            <PurchaseInvoiceImportPage />
-          </ProtectedRoute>
-        }
-      />
+      {/* Purchase-invoice import is now unified into the scan/import page (PDF · image · CSV). */}
+      <Route path="/import/purchases" element={<Navigate to="/purchases/scan" replace />} />
       <Route
         path="/import/gl"
         element={

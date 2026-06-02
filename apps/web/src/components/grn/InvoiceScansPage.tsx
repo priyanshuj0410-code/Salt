@@ -16,6 +16,7 @@ import {
   invokeExtract,
   updateScan,
   vendorGuess,
+  scanInvoiceNo,
   signedScanUrl,
   deleteScan,
   scanStatusLabel,
@@ -49,7 +50,7 @@ export function InvoiceScansPage() {
     let active = true;
     supabase
       .from("invoice_scans")
-      .select("id,storage_path,original_filename,mime,status,vendor_guess,error,purchase_id,created_at")
+      .select("id,storage_path,original_filename,mime,status,invoice_no,vendor_guess,error,purchase_id,created_at")
       .eq("org_id", orgId)
       .order("created_at", { ascending: false })
       .limit(500)
@@ -89,7 +90,7 @@ export function InvoiceScansPage() {
         setReloadKey((k) => k + 1);
         return;
       }
-      await updateScan(r.id, { status: "extracted", extracted_json: out.json, vendor_guess: vendorGuess(out.json), error: null });
+      await updateScan(r.id, { status: "extracted", extracted_json: out.json, invoice_no: scanInvoiceNo(out.json), vendor_guess: vendorGuess(out.json), error: null });
       // Sanity: make sure it actually parses to at least one invoice before sending
       // the user to review; if not, leave it extracted with a note.
       const parsed = parsePurchaseInvoices(ocrInvoiceToRows(out.json).rows);
@@ -175,7 +176,16 @@ export function InvoiceScansPage() {
               </button>
             ),
           },
-          { key: "vendor", header: "Vendor", cell: (r) => r.vendor_guess ?? <span className="text-text-tertiary">—</span> },
+          {
+            key: "vendor",
+            header: "Vendor",
+            cell: (r) => (
+              <span>
+                {r.vendor_guess ?? <span className="text-text-tertiary">—</span>}
+                {r.invoice_no && <span className="ml-1.5 text-xs text-text-tertiary">{r.invoice_no}</span>}
+              </span>
+            ),
+          },
           { key: "status", header: "Status", cell: (r) => <Badge variant={scanStatusVariant(r.status)}>{scanStatusLabel(r.status)}</Badge> },
           {
             key: "action",

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { Plus, Truck } from "lucide-react";
+import { Plus, Truck, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dot } from "@/components/ui/dot";
 import { Page } from "@/components/patterns/page";
@@ -11,7 +11,9 @@ import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 import { formatPaise } from "@/lib/currency";
+import { updateScan } from "@/lib/invoiceScans";
 
 interface GrnRow {
   id: string;
@@ -33,10 +35,16 @@ const grnRef = (g: GrnRow) => g.vendor_invoice_no ?? g.grn_no ?? `#${g.id.slice(
 const itc = (g: GrnRow) => g.cgst_paise + g.sgst_paise + g.igst_paise;
 
 export function GrnListPage() {
-  const orgId = useAuth().membership?.orgId;
+  const { membership } = useAuth();
+  const orgId = membership?.orgId;
+  const isOwner = membership?.role === "owner";
   const navigate = useNavigate();
   const [rows, setRows] = useState<GrnRow[]>([]);
   const [loading, setLoading] = useState(true);
+  // Pull-back (reverse) needs a deliberate second click (no native confirm).
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [reversing, setReversing] = useState<string | null>(null);
+  const [revErr, setRevErr] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -62,6 +70,31 @@ export function GrnListPage() {
   const totalTaxable = useMemo(() => rows.reduce((s, r) => s + r.taxable_paise, 0), [rows]);
   const totalItc = useMemo(() => rows.reduce((s, r) => s + itc(r), 0), [rows]);
 
+  // Pull back (reverse) a posted GRN: delete_purchase (0058) fully undoes stock (on-hand
+  // may go negative — the deliberate "purchase invoice missing" flag), vendor payable and
+  // ITC, then removes the GRN. Owner-only (the RPC enforces it too). Any scan that posted
+  // this GRN returns to the queue as re-postable (its FK link nulls on delete).
+  async function doReverse(g: GrnRow) {
+    if (!supabase) return;
+    setReversing(g.id);
+    setRevErr(null);
+    try {
+      const { data: linked } = await supabase.from("invoice_scans").select("id").eq("purchase_id", g.id);
+      const { error } = await supabase.rpc("delete_purchase", { p_purchase_id: g.id });
+      if (error) {
+        setRevErr(`Could not pull back ${grnRef(g)}: ${error.message}`);
+        return;
+      }
+      for (const s of (linked as { id: string }[] | null) ?? []) {
+        await updateScan(s.id, { status: "extracted" });
+      }
+      setRows((rs) => rs.filter((x) => x.id !== g.id));
+    } finally {
+      setReversing(null);
+      setConfirmId(null);
+    }
+  }
+
   return (
     <Page width="lg">
       <PageHeader
@@ -84,7 +117,7 @@ export function GrnListPage() {
       <DataTable<GrnRow>
         rows={rows}
         rowKey={(g) => g.id}
-        cols="1fr 1.4fr 0.9fr 0.9fr 0.9fr"
+        cols="1fr 1.4fr 0.9fr 0.9fr 0.9fr auto"
         onRowActivate={(g) => navigate(`/purchases/${g.id}`)}
         loading={loading}
         empty={
@@ -135,8 +168,45 @@ export function GrnListPage() {
               );
             },
           },
+          {
+            // role="button" spans, not <button> — the row itself is a <button> when
+            // onRowActivate is set, and nesting real buttons is invalid HTML.
+            // stopPropagation keeps the click/Enter from also opening the GRN.
+            key: "action",
+            header: "",
+            cell: (g) =>
+              isOwner ? (
+                <div className="flex justify-end">
+                  {confirmId === g.id ? (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); if (reversing !== g.id) void doReverse(g); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); void doReverse(g); } }}
+                      className={cn("cursor-pointer text-xs font-medium text-destructive hover:underline", reversing === g.id && "pointer-events-none opacity-50")}
+                    >
+                      {reversing === g.id ? "Reversing…" : "Pull back GRN?"}
+                    </span>
+                  ) : (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); setConfirmId(g.id); }}
+                      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setConfirmId(g.id); } }}
+                      className="cursor-pointer text-text-tertiary hover:text-destructive"
+                      aria-label="Pull back GRN"
+                      title="Pull back (reverse) this GRN"
+                    >
+                      <Undo2 className="size-3.5" />
+                    </span>
+                  )}
+                </div>
+              ) : null,
+          },
         ]}
       />
+
+      {revErr && <p className="mt-3 text-sm text-destructive">{revErr}</p>}
     </Page>
   );
 }

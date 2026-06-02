@@ -91,3 +91,54 @@ export function ocrInvoiceToRows(json: OcrInvoiceJson): OcrMapResult {
 
   return { rows, issues };
 }
+
+export interface KeyedOcrInvoice {
+  /** Group key: invoice_no + vendor (lower-cased) — matches parsePurchaseInvoices. */
+  key: string;
+  json: OcrInvoiceJson;
+}
+
+/**
+ * Inverse of `ocrInvoiceToRows`: group canonical purchase rows back into one
+ * `OcrInvoiceJson` per invoice (keyed by invoice_no + vendor — the same grouping
+ * `parsePurchaseInvoices` uses). This lets a CSV import store each invoice in the
+ * SAME `extracted_json` shape every queue row uses, so all channels share one review/
+ * post path. Lossless: the raw `ptr`/`pts`/`amount` strings are preserved verbatim, so
+ * the PTR/PTS reconciliation still re-derives the same way. Pure → unit-testable.
+ */
+export function rowsToOcrInvoices(rows: PurchaseRawRow[]): KeyedOcrInvoice[] {
+  const order: string[] = [];
+  const byKey = new Map<string, { json: OcrInvoiceJson; lines: Record<string, string>[] }>();
+  for (const raw of rows) {
+    const invoiceNo = str(raw.invoice_no);
+    const vendor = str(raw.vendor);
+    if (!invoiceNo || !vendor) continue; // mirrors parsePurchaseInvoices' skip rules
+    const key = `${invoiceNo.toLowerCase()}|${vendor.toLowerCase()}`;
+    let inv = byKey.get(key);
+    if (!inv) {
+      const lines: Record<string, string>[] = [];
+      inv = {
+        json: { invoice_no: invoiceNo, date: str(raw.date), vendor, vendor_gstin: str(raw.vendor_gstin), lines },
+        lines,
+      };
+      byKey.set(key, inv);
+      order.push(key);
+    }
+    inv.lines.push({
+      item_name: str(raw.item_name),
+      item_code: str(raw.item_code),
+      hsn: str(raw.hsn),
+      batch_no: str(raw.batch_no),
+      expiry: str(raw.expiry),
+      qty: str(raw.qty),
+      free_qty: str(raw.free_qty),
+      ptr: str(raw.ptr),
+      pts: str(raw.pts),
+      amount: str(raw.amount),
+      mrp: str(raw.mrp),
+      gst_rate: str(raw.gst_rate),
+      discount_pct: str(raw.discount_pct),
+    });
+  }
+  return order.map((key) => ({ key, json: byKey.get(key)!.json }));
+}

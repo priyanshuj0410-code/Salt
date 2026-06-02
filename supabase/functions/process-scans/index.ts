@@ -87,17 +87,27 @@ Deno.serve(async (req: Request) => {
       const invoiceNo = typeof out.invoice_no === "string" ? out.invoice_no.trim() : "";
       const vendor = typeof out.vendor === "string" ? out.vendor.trim() || null : null;
 
-      // Dedup: is this invoice number already a posted GRN for the org?
+      // Dedup against the whole queue: a posted GRN OR another scan (any channel) with
+      // the same invoice number. Sequential processing means an earlier sibling is
+      // already 'extracted' (its invoice_no set), so the later upload is flagged.
       let dup = false;
       if (invoiceNo) {
-        const { data: ex } = await svc
+        const { data: exGrn } = await svc
           .from("purchases").select("id").eq("org_id", orgId).ilike("vendor_invoice_no", invoiceNo).limit(1);
-        dup = ((ex as unknown[] | null)?.length ?? 0) > 0;
+        dup = ((exGrn as unknown[] | null)?.length ?? 0) > 0;
+        if (!dup) {
+          const { data: exScan } = await svc
+            .from("invoice_scans").select("id")
+            .eq("org_id", orgId).ilike("invoice_no", invoiceNo)
+            .in("status", ["extracted", "duplicate", "posted"]).neq("id", s.id).limit(1);
+          dup = ((exScan as unknown[] | null)?.length ?? 0) > 0;
+        }
       }
 
       await svc.from("invoice_scans").update({
         status: dup ? "duplicate" : "extracted",
         extracted_json: out,
+        invoice_no: invoiceNo || null,
         vendor_guess: vendor,
         error: dup ? "already imported" : null,
         updated_at: stamp(),
