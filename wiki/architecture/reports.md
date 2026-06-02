@@ -1,6 +1,6 @@
 ---
 type: architecture
-updated: 2026-06-01
+updated: 2026-06-02
 tags: [reports, analytics, dashboard, accounting, gst]
 ---
 
@@ -8,7 +8,10 @@ tags: [reports, analytics, dashboard, accounting, gst]
 
 The **Reports** module (`R`, `g r`) — the owner's read surface over everything the
 operational modules write. One dashboard plus five report suites, all owner-gated,
-each a single screen with switchable views and CSV export. Built in SALT-073…078.
+each a single screen with switchable views, a cross-shop scope switcher, and CSV
+export. Built across **seven shipped tickets**: SALT-073 (dashboard), 074 (sales),
+075 (purchase), 076 (inventory), 077 (financial), 078 (tax), and 118 (the
+cross-shop switcher).
 
 Maps the [Reports & Analytics product module](../product/product-modules.md) onto
 the [information architecture](information-architecture.md) `/reports/*` routes.
@@ -45,6 +48,13 @@ the "DO NOT RUN" headers; same finding as the GST/GRN slices):
 | `v_trial_balance` / `v_pnl` / `v_balance_sheet` + `ledger_entries` | financial |
 | `drug_licenses` | dashboard (license status) |
 | `physical_count_lines` | inventory (count variance) |
+| `shops` (via `useOrgShops`) | the cross-shop switcher (SALT-118) |
+
+**No new migrations or RPCs** — the whole module is **pure reads** over the existing
+0014–0024 backbone; the `v_*` views live in `supabase/migrations/0023_reports.sql`,
+the accounting in `0017`, documents in `0018`–`0019`, inventory in `0016`. Every
+query is per-org RLS-scoped (`security_invoker` views), so reports show only the
+caller's org.
 
 Two shared libs underpin the suite:
 
@@ -58,8 +68,12 @@ Two shared libs underpin the suite:
   `(from,to) => query.range(...)`; the helper loops.
 
 Shared UI: `components/reports/report-controls.tsx` (`ViewTabs` segmented control,
-`RangeControls` from/to + presets, `ExportButton`). Tables reuse the `patterns/`
-`DataTable` / `StatCard` / `EmptyState`.
+`RangeControls` from/to + presets, `ExportButton`, `ShopSelect`) and
+`components/reports/useOrgShops.ts` (`useOrgShops` + `scopeLabelFor`). Tables reuse
+the `patterns/` `DataTable` / `StatCard` / `EmptyState`. The six page components
+(`DashboardPage`, `Sales/Purchase/Inventory/Financial/TaxReportsPage`) are
+route-lazy-loaded in `App.tsx`, so the analytics code never weighs on the cashier
+cold-start.
 
 ## The suites
 
@@ -107,6 +121,25 @@ current-state / as-of-now.
   rows → falls back to a short id).
 - Sales returns / credit notes are excluded until the **Returns** module exists
   (noted on the cancelled + tax views).
+
+## Current state vs planned
+
+**Shipped (7 tickets):** the dashboard + all five suites, the cross-shop switcher,
+per-view CSV export, and drill-downs (dashboard / register rows → party, invoice,
+GRN). Every figure reconciles with the GST module by sharing the operational-basis
+filter. lint + build green; the pure helpers in `lib/reports.ts` are smoke-tested
+(rollups, aging, IST/FY dates, the trial-balance / P&L / balance-sheet builders incl.
+the balance-sheet tie-out).
+
+**Planned / deferred:**
+- **Sales-return / credit-note** lines in the registers — await the Returns module
+  (the recompute engine [`lib/returns.ts`](returns.md) exists; the report wiring is downstream).
+- **Cash-basis P&L** — today's P&L is accrual from the double-entry ledger.
+- **GSTR-2B reconciliation** lives in [GST & compliance](gst-returns.md), not here; the tax suite only
+  previews GSTR-1/3B and links across.
+- **Scheduled / emailed reports** and richer PDF (beyond browser print + CSV) — not built.
+- **Reorder** is fully actionable only once the catalogue exposes `items.reorder_level`
+  in the item form (**SALT-167**).
 
 ## Related
 [information-architecture](information-architecture.md) · [gst-returns](gst-returns.md) · [grn](grn.md) · [payments](payments.md) · [data-model](data-model.md) · [product/product-modules](../product/product-modules.md)
