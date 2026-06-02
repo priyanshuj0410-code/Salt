@@ -19,6 +19,7 @@ import { normalizePhoneForWa, reminderMessage, whatsappUrl } from "@/lib/collect
 import { AgingTable } from "@/components/parties/AgingTable";
 import { ClinicalSection } from "@/components/parties/ClinicalSection";
 import { PricingRulesSection } from "@/components/parties/PricingRulesSection";
+import { PaymentLinkButton } from "@/components/parties/PaymentLinkButton";
 import { MessageThread } from "@/components/messages/MessageThread";
 import {
   partyDue,
@@ -327,6 +328,13 @@ export function PartyProfilePage() {
                 <MessageCircle /> Send reminder
               </Button>
             )}
+            <PaymentLinkButton
+              duePaise={due}
+              customerName={ledger.name}
+              phone={ledger.phone}
+              referenceId={ledger.id}
+              shopName={shop?.name ?? orgName}
+            />
             <Button
               variant="outline"
               onClick={() => {
