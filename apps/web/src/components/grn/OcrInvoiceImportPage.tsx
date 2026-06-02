@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { FileUp, ScanLine, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
 import { createScan, invokeExtract, updateScan, vendorGuess } from "@/lib/invoiceScans";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
+import { findExistingInvoice } from "@/lib/purchaseDedup";
 
 interface VendorRow { id: string; name: string; gstin: string | null }
 interface ItemRow { id: string; name: string; item_code: string | null; barcode: string | null }
@@ -71,6 +72,8 @@ export function OcrInvoiceImportPage() {
   // and its id ties the posted GRN back to the scan.
   const [scanId, setScanId] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
+  // Invoice keys already posted for this org → existing GRN ref (dedup).
+  const [dupes, setDupes] = useState<Map<string, string>>(new Map());
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -122,6 +125,25 @@ export function OcrInvoiceImportPage() {
     }
   }
 
+  // Flag invoices already posted for this org (dedup, check-before-post). Runs when a
+  // fresh extraction lands; dupes are badged in review + excluded from the post count.
+  useEffect(() => {
+    if (!orgId || !result) return;
+    let active = true;
+    (async () => {
+      const m = new Map<string, string>();
+      for (const inv of result.invoices) {
+        if (!inv.invoiceNo) continue;
+        const ex = await findExistingInvoice(orgId, inv.invoiceNo, inv.vendorName);
+        if (ex) m.set(inv.key, ex.ref);
+      }
+      if (active) setDupes(m);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [orgId, result]);
+
   async function doImport() {
     if (!supabase || !orgId || !result) return;
     // Pre-flight: the shop needs a state_code or receive_purchase trips the
@@ -134,7 +156,7 @@ export function OcrInvoiceImportPage() {
     setImporting(true);
     setError(null);
     try {
-      const valid = result.invoices.filter((i) => i.valid && i.lines.length > 0);
+      const valid = result.invoices.filter((i) => i.valid && i.lines.length > 0 && !dupes.has(i.key));
       if (!valid.length) {
         setError("No valid invoice to import — fix the flagged fields or use the CSV importer.");
         return;
@@ -316,6 +338,7 @@ export function OcrInvoiceImportPage() {
                     <span className="text-text-tertiary">·</span>
                     <span className="truncate">{inv.vendorName || "(no vendor)"}</span>
                     {!inv.valid && <Badge variant="danger">has errors</Badge>}
+                    {dupes.has(inv.key) && <Badge variant="warning">duplicate · {dupes.get(inv.key)}</Badge>}
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs text-text-tertiary">
                     <span>{inv.date ?? "no date"}</span>
@@ -339,8 +362,8 @@ export function OcrInvoiceImportPage() {
           )}
           <div className="flex items-center justify-between gap-3 border-t border-border p-3">
             <p className="text-xs text-text-tertiary">Check the extracted figures — OCR can misread. Each invoice posts on its own.</p>
-            <Button onClick={doImport} disabled={importing || result.invoices.filter((i) => i.valid).length === 0}>
-              <Upload /> {importing ? "Posting…" : `Post ${result.invoices.filter((i) => i.valid).length} invoice(s)`}
+            <Button onClick={doImport} disabled={importing || result.invoices.filter((i) => i.valid && !dupes.has(i.key)).length === 0}>
+              <Upload /> {importing ? "Posting…" : `Post ${result.invoices.filter((i) => i.valid && !dupes.has(i.key)).length} invoice(s)`}
             </Button>
           </div>
         </div>
