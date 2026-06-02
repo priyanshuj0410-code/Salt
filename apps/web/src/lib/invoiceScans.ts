@@ -9,7 +9,7 @@ import type { OcrInvoiceJson } from "./ocrInvoice";
 
 export const INVOICE_SCANS_BUCKET = "invoice-scans";
 
-export type ScanStatus = "pending" | "extracted" | "failed" | "posted";
+export type ScanStatus = "pending" | "processing" | "extracted" | "failed" | "posted" | "duplicate";
 
 /** A row of public.invoice_scans (snake_case as stored / fetched). */
 export interface InvoiceScanRow {
@@ -43,10 +43,12 @@ export function scanStoragePath(orgId: string, scanId: string, filename: string,
 }
 
 const STATUS_LABEL: Record<ScanStatus, string> = {
-  pending: "Uploading…",
+  pending: "Queued",
+  processing: "Extracting…",
   extracted: "Extracted",
   failed: "Failed",
   posted: "Posted",
+  duplicate: "Duplicate",
 };
 
 export function scanStatusLabel(s: ScanStatus): string {
@@ -54,14 +56,17 @@ export function scanStatusLabel(s: ScanStatus): string {
 }
 
 /** Badge tone for a status (maps to the ui/badge variants). */
-export function scanStatusVariant(s: ScanStatus): "neutral" | "info" | "success" | "danger" {
+export function scanStatusVariant(s: ScanStatus): "neutral" | "info" | "success" | "danger" | "warning" {
   switch (s) {
     case "posted":
       return "success";
     case "extracted":
+    case "processing":
       return "info";
     case "failed":
       return "danger";
+    case "duplicate":
+      return "warning";
     default:
       return "neutral";
   }
@@ -117,6 +122,7 @@ export async function createScan(
   shopId: string | null,
   file: File,
   fileBase64: string,
+  batchId?: string | null,
 ): Promise<{ id: string; error?: string }> {
   if (!supabase) return { id: "", error: "Not connected." };
   const id = crypto.randomUUID();
@@ -135,9 +141,18 @@ export async function createScan(
     original_filename: file.name,
     mime: file.type || null,
     status: "pending",
+    batch_id: batchId ?? null,
   });
   if (ins.error) return { id, error: ins.error.message };
   return { id };
+}
+
+/** Fire the background extraction worker for a batch (fire-and-forget). It drains the
+ *  org's pending scans server-side via the process-scans function, so the user can
+ *  navigate away while their multi-file upload extracts. */
+export async function kickoffProcessScans(batchId?: string | null): Promise<void> {
+  if (!supabase) return;
+  void supabase.functions.invoke("process-scans", { body: batchId ? { batch_id: batchId } : {} });
 }
 
 /** Patch a scan row (status + the extracted json / error / posted GRN). */
