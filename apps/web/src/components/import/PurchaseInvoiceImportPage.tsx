@@ -150,43 +150,47 @@ export function PurchaseInvoiceImportPage() {
   }, [orgId, result]);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFileName(file.name);
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    setFileName(files.length === 1 ? files[0].name : `${files.length} files`);
     setReport(null);
     setError(null);
     setAiNote(null);
-    // 1. Deterministic first — instant + free for well-formed CSVs.
-    const text = await file.text();
-    const parsed = Papa.parse<PurchaseRawRow>(text, {
-      header: true,
-      skipEmptyLines: true,
-      transformHeader: canonicalPurchaseHeader,
-    });
-    const det = parsePurchaseInvoices(parsed.data);
-    if (det.invoices.some((i) => i.valid)) {
-      setResult(det);
-      return;
-    }
-    // 2. No valid invoice from the fixed columns → let AI normalise the layout.
     setAiBusy(true);
     try {
-      const bytes = new TextEncoder().encode(text);
-      let bin = "";
-      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-      const out = await invokeExtract(btoa(bin), "text/csv");
-      if (out.notConfigured) {
-        setError("These columns weren't recognised, and AI normalisation isn't configured. Use the template below, or set up OCR.");
-        setResult(det);
-        return;
+      // Each file: deterministic parse first (instant + free); if its columns aren't
+      // recognised, let AI normalise that file. Merge every file's rows into ONE review —
+      // parsePurchaseInvoices groups by invoice no, so multiple CSVs combine naturally.
+      const allRows: PurchaseRawRow[] = [];
+      let usedAi = false;
+      let failed = false;
+      for (const file of files) {
+        const text = await file.text();
+        const parsed = Papa.parse<PurchaseRawRow>(text, {
+          header: true,
+          skipEmptyLines: true,
+          transformHeader: canonicalPurchaseHeader,
+        });
+        if (parsePurchaseInvoices(parsed.data).invoices.some((i) => i.valid)) {
+          allRows.push(...parsed.data);
+          continue;
+        }
+        const bytes = new TextEncoder().encode(text);
+        let bin = "";
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        const out = await invokeExtract(btoa(bin), "text/csv");
+        if (out.json) {
+          usedAi = true;
+          allRows.push(...ocrInvoiceToRows(out.json).rows);
+        } else {
+          failed = true;
+        }
       }
-      if (out.error || !out.json) {
-        setError(`Could not normalise this CSV: ${out.error ?? "no data"}`);
-        setResult(det);
-        return;
+      if (usedAi) setAiNote("Some columns weren't recognised — normalised with AI. Double-check the figures before posting.");
+      if (failed && allRows.length === 0) {
+        setError("Couldn't read these CSVs. Use the template below, or set up OCR for AI normalisation.");
       }
-      setAiNote("Columns weren't recognised — normalised with AI. Double-check the figures before posting.");
-      setResult(parsePurchaseInvoices(ocrInvoiceToRows(out.json).rows));
+      setResult(parsePurchaseInvoices(allRows));
     } finally {
       setAiBusy(false);
     }
@@ -227,7 +231,7 @@ export function PurchaseInvoiceImportPage() {
         const payload = [...newVendors.values()].map((v) => ({
           org_id: orgId,
           name: v.name,
-          type: "supplier",
+          type: "vendor",
           gstin: v.gstin || null,
           state_code: v.gstin ? parseGstin(v.gstin).stateCode : null,
         }));
@@ -366,9 +370,9 @@ export function PurchaseInvoiceImportPage() {
         </Button>
         <label htmlFor="purchase-file" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer", aiBusy && "pointer-events-none opacity-60")}>
           <FileUp />
-          {aiBusy ? "Normalising with AI…" : (fileName ?? "Choose CSV file")}
+          {aiBusy ? "Reading…" : (fileName ?? "Choose CSV file(s)")}
         </label>
-        <input id="purchase-file" type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} disabled={aiBusy} />
+        <input id="purchase-file" type="file" accept=".csv,text/csv" multiple className="hidden" onChange={onFile} disabled={aiBusy} />
       </div>
 
       {aiNote && (
