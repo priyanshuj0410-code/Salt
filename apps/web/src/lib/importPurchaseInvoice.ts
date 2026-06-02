@@ -67,6 +67,8 @@ export const PURCHASE_IMPORT_COLUMNS = [
   "qty",
   "free_qty",
   "ptr",
+  "pts",
+  "amount",
   "mrp",
   "gst_rate",
   "discount_pct",
@@ -87,6 +89,8 @@ const RAW_ALIASES: Record<string, string> = {
   quantity: "qty", pcs: "qty", received: "qty",
   free: "free_qty", freeqty: "free_qty", schemeqty: "free_qty", fqty: "free_qty",
   purchaserate: "ptr", cost: "ptr", costprice: "ptr", prate: "ptr", purchaseprice: "ptr", rate: "ptr", ptrrate: "ptr",
+  pricetostockist: "pts", ptsrate: "pts", stockistrate: "pts", stockistprice: "pts",
+  value: "amount", netvalue: "amount", netamount: "amount", taxablevalue: "amount", taxableamount: "amount", linevalue: "amount",
   maxretailprice: "mrp", mrprate: "mrp",
   gst: "gst_rate", gstrate: "gst_rate", igst: "gst_rate", tax: "gst_rate", taxrate: "gst_rate",
   discount: "discount_pct", disc: "discount_pct", discpct: "discount_pct", tradediscount: "discount_pct", schemepct: "discount_pct",
@@ -122,6 +126,62 @@ export function parseInvoiceDate(raw: string): string | null {
   return null;
 }
 
+/** Which column a line's purchase rate was taken from. */
+export type PriceSource = "ptr" | "pts" | "amount";
+
+export interface ResolvedRate {
+  /** Chosen per-unit purchase rate, in paise. */
+  ratePaise: number;
+  source: PriceSource;
+  /** True when both PTR & PTS were printed but no amount could disambiguate (defaulted to PTR). */
+  ambiguous: boolean;
+}
+
+/**
+ * Pick the per-unit rate an invoice actually billed each line on. Pharma invoices
+ * often print BOTH PTR (price to retailer) and PTS (price to stockist), but the line
+ * value is computed from only one of them — so trusting PTR blindly is wrong on a
+ * PTS-billed bill. When the printed net `amount` (post scheme/discount, pre-GST) is
+ * present, choose whichever rate's `qty·rate·(1−disc)` matches it (within 5%); if
+ * neither matches, derive the rate from the amount itself (faithful to the bill).
+ * With no amount to reconcile, default to PTR (retailer norm), else PTS. Pure → tested.
+ */
+export function resolvePurchaseRate(args: {
+  qty: number;
+  ptr: number;
+  pts: number;
+  amount: number;
+  discountPct: number;
+}): ResolvedRate {
+  const { qty, ptr, pts, amount } = args;
+  const factor = 1 - (args.discountPct > 0 ? args.discountPct : 0) / 100; // discount off the gross
+  const toPaise = (r: number) => Math.round(r * 100);
+  const candidates: { rate: number; source: PriceSource }[] = [];
+  if (ptr > 0) candidates.push({ rate: ptr, source: "ptr" });
+  if (pts > 0) candidates.push({ rate: pts, source: "pts" });
+
+  if (amount > 0 && qty > 0 && factor > 0) {
+    let best: { rate: number; source: PriceSource } | null = null;
+    let bestErr = Infinity;
+    for (const c of candidates) {
+      const err = Math.abs(c.rate * qty * factor - amount) / amount;
+      if (err < bestErr) {
+        bestErr = err;
+        best = c;
+      }
+    }
+    if (best && bestErr <= 0.05) return { ratePaise: toPaise(best.rate), source: best.source, ambiguous: false };
+    // Neither labelled rate matches the printed amount → trust the bill: derive from it.
+    return { ratePaise: toPaise(amount / (qty * factor)), source: "amount", ambiguous: false };
+  }
+
+  // No amount to reconcile against.
+  if (ptr > 0) return { ratePaise: toPaise(ptr), source: "ptr", ambiguous: pts > 0 };
+  if (pts > 0) return { ratePaise: toPaise(pts), source: "pts", ambiguous: false };
+  if (amount > 0 && qty > 0 && factor > 0) return { ratePaise: toPaise(amount / (qty * factor)), source: "amount", ambiguous: false };
+  return { ratePaise: 0, source: "ptr", ambiguous: false };
+}
+
 export function parsePurchaseInvoices(rows: PurchaseRawRow[]): PurchaseImportResult {
   const groups = new Map<string, ParsedPurchaseInvoice>();
   const issues: RowIssue[] = [];
@@ -155,22 +215,38 @@ export function parsePurchaseInvoices(rows: PurchaseRawRow[]): PurchaseImportRes
       errorRows.add(key);
       return;
     }
-    const ptr = num(raw.ptr);
-    if (ptr == null || ptr <= 0) {
-      issues.push({ row: line, level: "error", message: `"${name}": purchase rate (PTR) must be greater than 0` });
+    const discountValue = num(raw.discount_pct) ?? 0;
+    // The invoice may print PTR and/or PTS; pick the rate the bill actually charged on
+    // by reconciling against the printed line amount (auto-detect). Falls back to PTR.
+    const resolved = resolvePurchaseRate({
+      qty,
+      ptr: num(raw.ptr) ?? 0,
+      pts: num(raw.pts) ?? 0,
+      amount: num(raw.amount) ?? 0,
+      discountPct: discountValue,
+    });
+    if (resolved.ratePaise <= 0) {
+      issues.push({ row: line, level: "error", message: `"${name}": no usable purchase rate — set PTR, PTS or the line amount` });
       errorRows.add(key);
       return;
+    }
+    const rate = resolved.ratePaise / 100;
+    if (resolved.source === "pts") {
+      issues.push({ row: line, level: "warning", message: `"${name}": billed on PTS ₹${rate.toFixed(2)}/unit (matches the invoice amount), not PTR` });
+    } else if (resolved.source === "amount") {
+      issues.push({ row: line, level: "warning", message: `"${name}": rate ₹${rate.toFixed(2)}/unit derived from the printed amount — verify` });
+    } else if (resolved.ambiguous) {
+      issues.push({ row: line, level: "warning", message: `"${name}": invoice shows PTR & PTS but no line amount — used PTR; confirm it should not be PTS` });
     }
     const mrp = num(raw.mrp) ?? 0;
     if (mrp <= 0) {
       issues.push({ row: line, level: "warning", message: `"${name}": no MRP — the received batch will not be sellable until you set one` });
-    } else if (mrp < ptr) {
+    } else if (mrp < rate) {
       issues.push({ row: line, level: "warning", message: `"${name}": MRP is below purchase rate` });
     }
 
     const free = num(raw.free_qty) ?? 0;
     const gstRate = num(raw.gst_rate) ?? 0;
-    const discountValue = num(raw.discount_pct) ?? 0;
     const expiry = s(raw.expiry);
     if (expiry && !/^\d{4}-\d{2}$/.test(expiry)) {
       issues.push({ row: line, level: "warning", message: `"${name}": expiry "${expiry}" is not YYYY-MM` });
@@ -199,7 +275,7 @@ export function parsePurchaseInvoices(rows: PurchaseRawRow[]): PurchaseImportRes
       expiry,
       qty,
       freeQty: free < 0 ? 0 : free,
-      ptrPaise: Math.round(ptr * 100),
+      ptrPaise: resolved.ratePaise,
       mrpPaise: Math.round(mrp * 100),
       gstRate,
       discountType: discountValue > 0 ? "pct" : null,
@@ -230,8 +306,8 @@ function csvCell(v: string): string {
 export function purchaseTemplateCsv(): string {
   const rows: string[][] = [
     [...PURCHASE_IMPORT_COLUMNS],
-    ["INV-001", "2026-05-28", "Cipla Distributors", "27AAPFU0939F1ZV", "CIP100", "Dolo 650", "DL2411", "2027-03", "100", "10", "25.20", "31.50", "12", "0"],
-    ["INV-001", "2026-05-28", "Cipla Distributors", "27AAPFU0939F1ZV", "CIP205", "Augmentin 625 Duo", "AG2501", "2026-08", "50", "0", "187.70", "223.40", "12", "2"],
+    ["INV-001", "2026-05-28", "Cipla Distributors", "27AAPFU0939F1ZV", "CIP100", "Dolo 650", "DL2411", "2027-03", "100", "10", "25.20", "22.00", "2520.00", "31.50", "12", "0"],
+    ["INV-001", "2026-05-28", "Cipla Distributors", "27AAPFU0939F1ZV", "CIP205", "Augmentin 625 Duo", "AG2501", "2026-08", "50", "0", "187.70", "165.00", "9197.30", "223.40", "12", "2"],
   ];
   return rows.map((r) => r.map(csvCell).join(",")).join("\n") + "\n";
 }

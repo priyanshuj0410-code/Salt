@@ -56,7 +56,9 @@ Return ONLY valid JSON (no prose, no markdown fence) of this exact shape:
       "expiry": string,      // MM/YYYY or YYYY-MM if present, else ""
       "qty": number,
       "free_qty": number,    // scheme free units, else 0
-      "ptr": number,         // price to retailer per unit (rupees, tax-exclusive)
+      "ptr": number,         // price to retailer per unit (rupees, tax-exclusive), else 0
+      "pts": number,         // price to stockist per unit (rupees, tax-exclusive), else 0 — fill BOTH if the bill prints both
+      "amount": number,      // the line net/taxable VALUE as printed (after scheme/discount, before GST), else 0
       "mrp": number,         // printed MRP per unit (rupees), else 0
       "gst_rate": number,    // % (0/5/12/18), use the line's IGST or CGST+SGST sum
       "discount_pct": number // trade discount %, else 0
@@ -65,6 +67,8 @@ Return ONLY valid JSON (no prose, no markdown fence) of this exact shape:
 }
 Rules: numbers are plain (no currency symbols/commas). If a field is absent use ""
 for strings and 0 for numbers. Do NOT invent lines; transcribe only what is printed.
+When the bill prints both PTR and PTS, capture BOTH, plus the line value/amount column
+as "amount" — the rate the line total was computed from is reconciled downstream.
 Money is per-unit in rupees, not paise.`;
 
 /**
