@@ -23,6 +23,9 @@ import csv
 import re
 import sys
 from collections import Counter, defaultdict
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
 
 # --- token vocab -----------------------------------------------------------
 _TAB = {"TAB", "TABS", "TABLET", "TABLETS", "CAP", "CAPS", "CAPSULE", "CAPSULES"}
@@ -159,6 +162,26 @@ def build(enrichment_csv: str, worklist_csv: str, out_csv: str) -> None:
                 or (_ORDER.get(row["confidence"], 9) == _ORDER.get(keep["confidence"], 9)
                     and len(row["composition"]) > len(keep["composition"]))):
             merged[ck] = row
+
+    # Merge curated brands absent from the shop catalogue (reseed-safe): web-verified fixes
+    # for SKUs that never appeared in the source worklist. Same dedup/precedence as above.
+    curated = HERE / "brand_curated.csv"
+    if curated.exists():
+        for r in csv.DictReader(open(curated)):
+            brand = clean_brand(r["brand"])
+            m = (r.get("manufacturer") or "").strip()
+            row = {
+                "brand_key": norm_key(brand),
+                "brand": brand,
+                "manufacturer": MFR_FIX.get(m, m),
+                "composition": (r.get("composition") or "").strip(),
+                "category": (r.get("category") or "").strip(),
+                "confidence": (r.get("confidence") or "med").strip(),
+            }
+            ck = (row["brand_key"], norm_key(row["manufacturer"]), canon_comp(row["composition"]))
+            keep = merged.get(ck)
+            if keep is None or _ORDER.get(row["confidence"], 9) < _ORDER.get(keep["confidence"], 9):
+                merged[ck] = row
 
     rows = sorted(merged.values(), key=lambda x: (x["brand_key"], x["composition"]))
     with open(out_csv, "w", newline="") as fh:

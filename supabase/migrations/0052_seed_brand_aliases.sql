@@ -3557,6 +3557,7 @@ values
   ('lntrio20', 'LN TRIO 20', 'Eris', 'Telmisartan + Cilnidipine + Chlorthalidone', 'Antihypertensive', 'high-verified'),
   ('lntrio625', 'LN TRIO 6.25', 'Eris', 'Telmisartan + Cilnidipine + Chlorthalidone', 'Antihypertensive', 'high-verified'),
   ('lntriols10', 'LN TRIO LS 10', 'Eris', 'Telmisartan + Cilnidipine + Chlorthalidone', 'Antihypertensive', 'high-verified'),
+  ('lobak', 'LOBAK', 'Geno Pharmaceuticals', 'Chlorzoxazone + Diclofenac + Paracetamol', 'Analgesic / Muscle relaxant', 'high-verified'),
   ('lobategmneo', 'LOBATE GM NEO', 'Goapptive', 'Clobetasol + Gentamicin + Miconazole + Iodochlorhydroxyquinoline (topical)', 'Dermatological (Steroid+Antibiotic+Antifungal)', 'high'),
   ('lobategmneo', 'LOBATE GM NEO', 'Goapptive', 'Clobetasol + Gentamicin + Miconazole + Neomycin', 'Dermatological (topical)', 'med'),
   ('lobategn', 'LOBATE GN', 'Abbott', 'Clobetasol + Gentamicin + Miconazole', 'Topical antifungal/steroid', 'med'),
@@ -4041,13 +4042,13 @@ values
   ('mirator05', 'MIRATOR 0.5', 'Torrent', 'Pramipexole', 'Anti-Parkinson', 'high-verified'),
   ('mirtaz15', 'MIRTAZ 15', 'Sun Pharma', 'Mirtazapine 15mg', 'CNS (Antidepressant)', 'high'),
   ('mirtaz30', 'MIRTAZ 30', 'Sun Pharma', 'Mirtazapine 30mg', 'CNS (Antidepressant)', 'high'),
-  ('mirtaz75', 'MIRTAZ 7.5', 'Sun Pharma', 'Mirtazapine', 'Antidepressant', 'high'),
-  ('mirumigest', 'MIRUMIGEST', 'Alembic', 'Progesterone', 'Hormone (progestin)', 'low')
+  ('mirtaz75', 'MIRTAZ 7.5', 'Sun Pharma', 'Mirtazapine', 'Antidepressant', 'high')
 on conflict (brand_key, manufacturer, composition) do nothing;
 
 insert into public.brand_aliases
   (brand_key, brand, manufacturer, composition, category, confidence)
 values
+  ('mirumigest', 'MIRUMIGEST', 'Alembic', 'Progesterone', 'Hormone (progestin)', 'low'),
   ('misoprost200', 'MISOPROST 200', 'Cipla', 'Misoprostol 200mcg', 'Hormone (Prostaglandin)', 'high'),
   ('misoprost25', 'MISOPROST 25', 'Cipla', 'Misoprostol', 'Uterotonic/prostaglandin', 'high'),
   ('misoprost600', 'MISOPROST 600', 'Cipla', 'Misoprostol', 'Uterotonic/prostaglandin', 'high'),
@@ -4546,13 +4547,13 @@ values
   ('nucoxiarelax', 'NUCOXIA RELAX', 'Cadila Pharmaceuticals', 'Etoricoxib + Thiocolchicoside', 'NSAID/muscle relaxant', 'med'),
   ('nucoxiasp', 'NUCOXIA SP', 'Cadila Pharmaceuticals', 'Etoricoxib + Serratiopeptidase', 'NSAID', 'med'),
   ('nucoxiaxp', 'NUCOXIA XP', 'Cadila Pharmaceuticals', 'Etoricoxib + Paracetamol', 'NSAID/analgesic', 'med'),
-  ('nuforce', 'NUFORCE', 'Mankind', 'Medicated soap (antifungal)', 'Dermatological (Topical)', 'med'),
-  ('nuforce150', 'NUFORCE 150', 'Mankind', 'Fluconazole 150mg', 'Antifungal', 'high-verified')
+  ('nuforce', 'NUFORCE', 'Mankind', 'Medicated soap (antifungal)', 'Dermatological (Topical)', 'med')
 on conflict (brand_key, manufacturer, composition) do nothing;
 
 insert into public.brand_aliases
   (brand_key, brand, manufacturer, composition, category, confidence)
 values
+  ('nuforce150', 'NUFORCE 150', 'Mankind', 'Fluconazole 150mg', 'Antifungal', 'high-verified'),
   ('nuforce200', 'NUFORCE 200', 'Mankind', 'Fluconazole 200mg', 'Antifungal', 'high'),
   ('nuforce400', 'NUFORCE 400', 'Mankind', 'Fluconazole 400mg', 'Antifungal', 'high'),
   ('nuforce50', 'NUFORCE 50', 'Mankind', 'Fluconazole 50mg', 'Antifungal', 'high-verified'),
@@ -5051,13 +5052,13 @@ values
   ('pegmove', 'PEGMOVE', 'Sun Pharma', 'Polyethylene Glycol 3350 (+ electrolytes)', 'GI (Osmotic laxative)', 'high'),
   ('pegurapeg335017', 'PEGURA PEG3350 17', 'Cipla', 'Polyethylene glycol 3350', 'Laxative', 'high'),
   ('peguraprg33501211', 'PEGURA PRG 3350 121.1', 'Cipla', 'Polyethylene glycol 3350 + electrolytes', 'Laxative (bowel prep)', 'med'),
-  ('penclav625', 'PENCLAV 625', 'Zydus', 'Amoxicillin + Clavulanic acid', 'Antibiotic', 'high'),
-  ('penidure6lac', 'PENIDURE 6 LAC', 'Pfizer', 'Benzathine benzylpenicillin', 'Antibiotic', 'high')
+  ('penclav625', 'PENCLAV 625', 'Zydus', 'Amoxicillin + Clavulanic acid', 'Antibiotic', 'high')
 on conflict (brand_key, manufacturer, composition) do nothing;
 
 insert into public.brand_aliases
   (brand_key, brand, manufacturer, composition, category, confidence)
 values
+  ('penidure6lac', 'PENIDURE 6 LAC', 'Pfizer', 'Benzathine benzylpenicillin', 'Antibiotic', 'high'),
   ('penidurela12', 'PENIDURE LA 12', 'Pfizer', 'Benzathine benzylpenicillin', 'Antibiotic', 'high'),
   ('pentanerv450sr', 'PENTANERV 450 SR', 'Alkem', 'Gabapentin', 'Neuropathic pain', 'high-verified'),
   ('pentanervm', 'PENTANERV M', 'Alkem', 'Gabapentin 300mg + Methylcobalamin 500mcg', 'Neuropathic pain', 'high-verified'),
@@ -5552,17 +5553,18 @@ values
   ('rifastop400', 'RIFASTOP 400', 'Mankind', 'Rifaximin 400mg', 'Antibiotic (Gut)', 'high'),
   ('riflect200', 'RIFLECT 200', 'Ranbaxy', 'Rifaximin', 'Antibiotic', 'med'),
   ('ringout', 'RING OUT', 'Mankind', 'Clotrimazole 1% (dusting powder)', 'Antifungal (topical)', 'high-verified'),
+  ('ringoutplus', 'RING OUT PLUS', 'Mankind', 'Clotrimazole + Clobetasol + Neomycin', 'Dermatology / Antifungal', 'high-verified'),
   ('riometduo1', 'RIOMET DUO 1', 'Ranbaxy', 'Metformin + Glimepiride', 'Antidiabetic', 'med'),
   ('riometduo2', 'RIOMET DUO 2', 'Ranbaxy', 'Metformin + Glimepiride', 'Antidiabetic', 'med'),
   ('riometod500ab', 'RIOMET OD 500 AB', 'Ranbaxy', 'Metformin', 'Antidiabetic', 'high'),
-  ('risnia', 'RISNIA', 'Cipla', 'Risperidone', 'CNS (Antipsychotic)', 'high'),
-  ('risniamd1', 'RISNIA MD 1', 'Cipla', 'Risperidone', 'Antipsychotic', 'high'),
-  ('risniamd2', 'RISNIA MD 2', 'Cipla', 'Risperidone', 'Antipsychotic', 'high')
+  ('risnia', 'RISNIA', 'Cipla', 'Risperidone', 'CNS (Antipsychotic)', 'high')
 on conflict (brand_key, manufacturer, composition) do nothing;
 
 insert into public.brand_aliases
   (brand_key, brand, manufacturer, composition, category, confidence)
 values
+  ('risniamd1', 'RISNIA MD 1', 'Cipla', 'Risperidone', 'Antipsychotic', 'high'),
+  ('risniamd2', 'RISNIA MD 2', 'Cipla', 'Risperidone', 'Antipsychotic', 'high'),
   ('risniamd3', 'RISNIA MD 3', 'Cipla', 'Risperidone', 'Antipsychotic', 'high'),
   ('risofos35', 'RISOFOS 35', 'Cipla', 'Risedronate 35mg', 'Bone (Bisphosphonate)', 'high'),
   ('rivaflo10', 'RIVAFLO 10', 'Sun Pharma', 'Rivaroxaban 10mg', 'Anticoagulant', 'high'),
@@ -6060,14 +6062,14 @@ values
   ('sonatahealthsupplement1ph', 'SONATA HEALTH SUPPLEMENT 1''PH', 'Sun Pharma', '', 'Probiotic/supplement', 'low'),
   ('sonatalr', 'SONATA-LR', 'Sun Pharma', 'Lactobacillus reuteri', 'Probiotic', 'med'),
   ('sonatasch', 'SONATA SCH ##', 'Sun Pharma', 'Saccharomyces boulardii', 'Probiotic', 'med'),
-  ('sonaxa75', 'SONAXA 75', 'Eris', 'Pregabalin', 'Neuropathic pain', 'med'),
-  ('sonaxam15s', 'SONAXA M 15 S', 'Eris', 'Pregabalin + Methylcobalamin', 'Neuropathic pain', 'med'),
-  ('sonaxame', 'SONAXA ME', 'Eris', 'Pregabalin 75mg + Methylcobalamin 1500mcg', 'CNS (Neuropathic pain)', 'high-verified')
+  ('sonaxa75', 'SONAXA 75', 'Eris', 'Pregabalin', 'Neuropathic pain', 'med')
 on conflict (brand_key, manufacturer, composition) do nothing;
 
 insert into public.brand_aliases
   (brand_key, brand, manufacturer, composition, category, confidence)
 values
+  ('sonaxam15s', 'SONAXA M 15 S', 'Eris', 'Pregabalin + Methylcobalamin', 'Neuropathic pain', 'med'),
+  ('sonaxame', 'SONAXA ME', 'Eris', 'Pregabalin 75mg + Methylcobalamin 1500mcg', 'CNS (Neuropathic pain)', 'high-verified'),
   ('sonaxant1015s', 'SONAXA NT 10 15 S', 'Eris', 'Pregabalin 75mg + Nortriptyline 10mg', 'Neuropathic pain', 'high-verified'),
   ('sonaxant20', 'SONAXA NT 20', 'Eris', 'Pregabalin + Nortriptyline', 'Neuropathic pain', 'med'),
   ('sonaxatrio', 'SONAXA TRIO', 'Eris', 'Pregabalin + Methylcobalamin + Nortriptyline', 'Neuropathic pain', 'med'),
@@ -6565,14 +6567,14 @@ values
   ('terbicip', 'TERBICIP', 'Cipla', 'Terbinafine', 'Antifungal (Topical)', 'high'),
   ('terbikem', 'TERBIKEM', 'Alkem', 'Terbinafine', 'Antifungal', 'high'),
   ('terbikem250', 'TERBIKEM 250', 'Alkem', 'Terbinafine', 'Antifungal', 'high'),
-  ('terbinaforce', 'TERBINAFORCE', 'Mankind', 'Terbinafine (dusting powder)', 'Antifungal (topical)', 'high'),
-  ('terbinaforce500', 'TERBINAFORCE 500', 'Mankind', 'Terbinafine 500mg', 'Antifungal', 'high'),
-  ('terbinaforceplus', 'TERBINAFORCE PLUS', 'Mankind', 'Terbinafine', 'Antifungal', 'med')
+  ('terbinaforce', 'TERBINAFORCE', 'Mankind', 'Terbinafine (dusting powder)', 'Antifungal (topical)', 'high')
 on conflict (brand_key, manufacturer, composition) do nothing;
 
 insert into public.brand_aliases
   (brand_key, brand, manufacturer, composition, category, confidence)
 values
+  ('terbinaforce500', 'TERBINAFORCE 500', 'Mankind', 'Terbinafine 500mg', 'Antifungal', 'high'),
+  ('terbinaforceplus', 'TERBINAFORCE PLUS', 'Mankind', 'Terbinafine', 'Antifungal', 'med'),
   ('terbinaforceplusnf', 'TERBINAFORCE PLUS NF', 'Mankind', 'Clotrimazole 1% + Clobetasol 0.05% + Neomycin 0.5%', 'Dermatological (topical)', 'high-verified'),
   ('terconal', 'TERCONAL', 'Global', '', '', 'low'),
   ('terlyz', 'TERLYZ', 'Sun Pharma', 'Terlipressin', 'Vasopressor/Hepatology', 'high'),
@@ -7070,14 +7072,14 @@ values
   ('valpex500cr', 'VALPEX 500CR', 'Ulticare', 'Divalproex Sodium (Valproate) 500mg CR', 'Anticonvulsant', 'high'),
   ('valpridcr500', 'VALPRID CR 500', 'Alembic', 'Divalproex Sodium', 'Anti-epileptic', 'high'),
   ('valprolcr500', 'VALPROL CR 500', 'Alembic', 'Divalproex Sodium', 'Anti-epileptic', 'high'),
-  ('valteccr200', 'VALTEC CR 200', 'Cipla', 'Divalproex Sodium / Sodium Valproate', 'Anti-epileptic', 'med'),
-  ('valteccr300', 'VALTEC CR 300', 'Cipla', 'Sodium Valproate 200mg + Valproic Acid 87mg (Divalproex 300 CR)', 'Anticonvulsant', 'high-verified'),
-  ('valteccr500', 'VALTEC CR 500', 'Cipla', 'Sodium Valproate + Valproic Acid 500mg (Divalproex)', 'CNS (Anticonvulsant)', 'high-verified')
+  ('valteccr200', 'VALTEC CR 200', 'Cipla', 'Divalproex Sodium / Sodium Valproate', 'Anti-epileptic', 'med')
 on conflict (brand_key, manufacturer, composition) do nothing;
 
 insert into public.brand_aliases
   (brand_key, brand, manufacturer, composition, category, confidence)
 values
+  ('valteccr300', 'VALTEC CR 300', 'Cipla', 'Sodium Valproate 200mg + Valproic Acid 87mg (Divalproex 300 CR)', 'Anticonvulsant', 'high-verified'),
+  ('valteccr500', 'VALTEC CR 500', 'Cipla', 'Sodium Valproate + Valproic Acid 500mg (Divalproex)', 'CNS (Anticonvulsant)', 'high-verified'),
   ('valz20', 'VALZ 20', 'Torrent', 'Vilazodone', 'Antidepressant', 'high-verified'),
   ('valz40', 'VALZ 40', 'Torrent', 'Vilazodone', 'Antidepressant', 'high-verified'),
   ('vanlid250', 'VANLID 250', 'Cipla', 'Vancomycin 250mg', 'Antibiotic (Glycopeptide)', 'high'),
