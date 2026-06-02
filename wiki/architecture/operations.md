@@ -46,25 +46,39 @@ Covers tickets **SALT-134** (reliability), **SALT-136** (security), **SALT-137**
 
 Supabase has **no in-place region change**, so residency means migrating to a **new project** in Mumbai and cutting over. This is a planned **maintenance-window** cutover over **real data** — auth users, the `whatsapp-send` edge function, and OAuth config, not just the DB. Run it when counters are idle; keep the old project **paused, not deleted** for a rollback window.
 
-**0 · Confirm + prep.** Verify the source region (Project Settings → Infrastructure). Record both projects' ref / URL / anon + service-role keys / DB password (handle securely; never commit). Inventory what moves: the DB **including the `auth` and `storage` schemas**, Storage buckets (Salt: likely none — verify), Edge Functions (`whatsapp-send`), and Auth config (Google OAuth redirect URLs, email templates, JWT settings — these are project config, *not* in a DB dump).
+**0 · Prep.** Verify the source region (Project Settings → Infrastructure). Record both projects' ref / URL / anon + service-role keys / DB password (handle securely; never commit). Install a `pg_dump`/`psql` **≥ the server's major version** — Salt's server is **Postgres 17**, so Homebrew `postgresql@17` (a v16 client aborts with "server version mismatch").
 
 **Path A — Supabase-assisted (recommended on Pro+).** Open a Supabase support request for a region migration / physical restore into a new `ap-south-1` project. This preserves `auth` / `storage` cleanly — the part the DIY path most often breaks — and is the safest route when PITR is on.
 
 **Path B — DIY dump & restore.**
 1. **Create** the new project in `ap-south-1`; enable the same extensions the migrations use (e.g. `pgcrypto`).
 2. **Freeze writes:** put the app in maintenance / pause counters so no bill lands mid-dump.
-3. **Dump the source including `auth` + `storage`** (not just `public`) — `auth.users` must come across or every login breaks. CLI: `supabase db dump --db-url "$SOURCE" -f schema.sql` then `--data-only -f data.sql` (check `supabase db dump --help`; or `pg_dump --schema=public --schema=auth --schema=storage`).
-4. **Restore** into the new project (`psql "$TARGET" -f schema.sql` then `data.sql`). Verify sequences (`invoice_series` / serials) carried so invoice numbers don't reset or collide.
-5. **Storage:** recreate buckets + copy objects, if any.
-6. **Edge Functions:** `supabase functions deploy whatsapp-send` against the new ref; `supabase secrets set …` for its secrets.
-7. **Auth config:** re-set providers and **update the Google OAuth redirect/callback URLs** to the new project URL; re-apply email templates / JWT settings.
-8. **Repoint the app:** set Vercel env `VITE_SUPABASE_URL` + the publishable/anon key to the new project and redeploy; re-link the CLI (`supabase link --project-ref <new>`); rebuild/reconfigure the Go migrator if it embeds the URL/key.
+3. **Dump only the tables you need — NOT whole schemas.** Dumping all of `auth`/`storage` aborts on platform-owned internal tables the `postgres` role can't write (`storage.buckets_vectors`, `auth.schema_migrations`). Dump `public` + just the auth user tables; migrate Storage separately (step 5):
+   ```
+   pg_dump "$SRC" -f schema.sql    --schema=public --no-owner
+   pg_dump "$SRC" -f data_pub.sql  --schema=public --data-only --no-owner
+   pg_dump "$SRC" -f data_auth.sql --data-only --no-owner -t auth.users -t auth.identities   # + auth.mfa_factors if MFA
+   ```
+   (`supabase db dump` auto-excludes the internal tables but runs pg_dump in Docker.)
+4. **Restore** with FK/trigger checks off (handles the `chart_accounts` circular FK + cross-schema FKs):
+   ```
+   psql -d "$DST" -v ON_ERROR_STOP=1 --single-transaction -f schema.sql -c 'SET session_replication_role = replica' -f data_auth.sql -f data_pub.sql
+   ```
+   Verify sequences (`invoice_series` / serials) carried so invoice numbers don't reset or collide.
+5. **Storage migrates separately** (the files live in object storage, not Postgres — `pg_dump` only moves metadata rows). For the `invoice-scans` OCR bucket (migration `0049`): recreate the bucket + its `storage.objects` policies on the new project (re-run 0049's storage block in the SQL editor), then copy the files old→new via the Storage API (service-role on both — a `@supabase/supabase-js` list → download → upload script).
+
+**⚠️ Does NOT migrate with the DB — do these separately (the gap):**
+- **Edge Functions** (6: `extract-invoice`, `gemini-enrich`, `razorpay-link` / `-paylink` / `-webhook`, `whatsapp-send`) → `supabase functions deploy` against the new ref.
+- **Secrets** (9: `GEMINI_API_KEY`, `OCR_API_KEY`, `OCR_MODEL`, `ENRICH_MODEL`, `RAZORPAY_KEY_ID` / `_SECRET` / `_WEBHOOK_SECRET`, `WHATSAPP_TOKEN` / `_PHONE_NUMBER_ID`) → `supabase secrets set …`. **Write-only** — you cannot read them back from the old project; pull values from your `.env` / password-manager / the providers. (`SUPABASE_*` are auto-injected per project — don't set them.)
+- **Auth providers** → re-enable Google + paste the same Client ID/Secret on the new project; set Site + Redirect URLs to the app origin. Skipping it gives `"provider is not enabled"`. Email/password just works (hashes are in `auth.users`).
+- **External webhooks** → repoint to the new function URLs (Razorpay webhook → `https://<new-ref>.supabase.co/functions/v1/razorpay-webhook`).
+- **App env + CLI** → Vercel `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` → the new project, then **redeploy** (build-time vars); `supabase link --project-ref <new>`; rebuild the Go migrator if it embeds the URL/key.
 
 **Verify before reopening counters:** a known user logs in (auth migrated); a known org's trial balance nets to 0 and item/batch/bill counts match the source; RLS still denies cross-org; `create_sales_invoice` posts end-to-end; `whatsapp-send` responds; region reads `ap-south-1`.
 
 **Cutover & rollback:** keep the Sydney project **paused** for ~a week; if anything is wrong, repoint `VITE_SUPABASE_URL` back to it. Delete Sydney only after verification + the rollback window. Re-enable **PITR** on the new project (ties to SALT-134).
 
-**Gotchas:** the `auth` schema is the #1 omission → broken logins. A new project means new keys / URL / ref → repoint the app, CLI, edge-function secrets, and OAuth URLs. Both projects bill concurrently during the window.
+**Gotchas (the actual walls hit during the Sydney→Mumbai run):** ① `pg_dump` must be **≥ the server major version** (Salt = PG17; a v16 client aborts with "server version mismatch"). ② Whole-schema `auth`/`storage` dumps hit *permission denied* on internal tables (`buckets_vectors`, `schema_migrations`) → dump specific tables instead. ③ Storage **files** don't move via `pg_dump` — copy them through the Storage API. ④ Functions / secrets / auth-providers / external-webhooks are **project config, not DB** — redo each (and secrets are write-only). ⑤ Both projects bill concurrently during the window.
 
 **Inspector-ready audit trail.** The append-only audit log UI exists (**SALT-092**, done; viewable at `/settings/audit`, see [App.tsx](../architecture/screens-routing.md)) and a data-export path exists (**SALT-093**). The **DB-level capture triggers + append-only lockdown** that record who/what/when on sales / purchases / payments / ledgers are **SALT-171** (`database`, todo) — that is the database module's work, not infra; this page just records the dependency. Once triggers land, the `/settings/audit` viewer + export is the inspector surface.
 
