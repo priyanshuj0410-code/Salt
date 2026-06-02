@@ -1,6 +1,6 @@
 ---
 type: architecture
-updated: 2026-06-01
+updated: 2026-06-02
 tags: [inventory, stock, expiry, dead-stock, reorder, adjustments, itc]
 ---
 
@@ -13,8 +13,8 @@ near-expiry, dead stock, reorder, turnover — and writes corrections, counts, a
 expiry write-offs. Per [product-modules §4 + §11](../product/product-modules.md).
 
 Read views + their data layer are pure frontend (`lib/inventory.ts`, `components/inventory/`);
-the write paths add one migration (`0028`, two RPCs). Nav module `i` (`g i`), all nine
-sub-views built.
+the write paths add two migrations (`0028` + `0030`, three RPCs). Nav module `i` (`g i`), all
+ten sub-views built.
 
 ## The stock ledger (model)
 
@@ -143,6 +143,36 @@ The two remaining backlog items are owned by other modules, not inventory:
 - **SALT-045** Cold-chain flag + IoT temp-log hook → **catalogue** lane. `cold_chain` is an
   `items`-master attribute, edited on the `/catalogue` item screen; inventory can then surface
   a cold-chain badge/filter on the stock ledger. The IoT temperature log is a future hook.
+
+## Decisions & gotchas
+
+- **Periodic inventory, not perpetual.** Purchases are expensed at receipt (`receive_purchase`
+  posts Dr Purchase), so adjustments / counts / transfers post **no GL entry** — the
+  `stock_movements` row is the audit trail. The lone tax touchpoint is the expiry-destruction
+  **ITC reversal** (computed + printed; the structured GSTR-3B feed is GST's **SALT-170**).
+- **Expiry is month-precision, rounded to end-of-month.** `parseExpiry` treats `expiry_date`
+  (and parsed Marg free-text like `08/26`, `AUG-26`) as usable through the last day of that
+  month, so a `08/2026` strip is fresh until 31 Aug; the bucket/`daysToExpiry` follow.
+- **Movement window is bounded (`LOOKBACK_DAYS = 180`).** Velocity, last-sold, dead-stock and
+  turnover read only the last 180 days of sale movements — one bounded fetch, no server
+  aggregation. Dead-stock thresholds past 180d collapse to "no sale in window"; a server-side
+  rollup (view/RPC) is the upgrade path if movement volume grows.
+- **Live tables, missing RPCs.** The 0014–0016 stock *tables* were already applied, but the
+  *write* RPCs were never written — adjustments/counts needed `0028` (`adjust_stock`,
+  `finalize_physical_count`), transfers needed `0030` (`receive_transfer`). Probe RPCs
+  (`POST /rest/v1/rpc/<fn>` → 404 = absent), not just tables, before assuming "frontend-only".
+- **On-hand never goes negative.** Every mutation RPC locks the batch (`for update`) and
+  rejects an over-draw — the floor under the multi-counter no-oversell guarantee (the
+  sale-side half is billing's SALT-041/181).
+
+## Current state vs planned
+
+All **10 sub-views shipped** (read: ledger, near-expiry, dead/slow, reorder, out-of-stock,
+turnover; write: adjustments, physical count, expiry destruction, transfers) across PRs
+#67 / #85 / #95 + migrations `0028` / `0030`. Reassigned out of the lane (above): SALT-041 →
+billing (done), SALT-045 → catalogue (cold-chain flag, pending). Open downstream: the
+structured ITC-reversal feed into GSTR-3B (SALT-170), and a server-side movement rollup if
+velocity/turnover queries outgrow the 180-day client window.
 
 ## Related
 [product/product-modules §4](../product/product-modules.md) · [grn](grn.md) ·
