@@ -56,7 +56,9 @@ Return ONLY valid JSON (no prose, no markdown fence) of this exact shape:
       "expiry": string,      // MM/YYYY or YYYY-MM if present, else ""
       "qty": number,
       "free_qty": number,    // scheme free units, else 0
-      "ptr": number,         // price to retailer per unit (rupees, tax-exclusive)
+      "ptr": number,         // price to retailer per unit (rupees, tax-exclusive), else 0
+      "pts": number,         // price to stockist per unit (rupees, tax-exclusive), else 0 — fill BOTH if the bill prints both
+      "amount": number,      // the line net/taxable VALUE as printed (after scheme/discount, before GST), else 0
       "mrp": number,         // printed MRP per unit (rupees), else 0
       "gst_rate": number,    // % (0/5/12/18), use the line's IGST or CGST+SGST sum
       "discount_pct": number // trade discount %, else 0
@@ -65,6 +67,8 @@ Return ONLY valid JSON (no prose, no markdown fence) of this exact shape:
 }
 Rules: numbers are plain (no currency symbols/commas). If a field is absent use ""
 for strings and 0 for numbers. Do NOT invent lines; transcribe only what is printed.
+When the bill prints both PTR and PTS, capture BOTH, plus the line value/amount column
+as "amount" — the rate the line total was computed from is reconciled downstream.
 Money is per-unit in rupees, not paise.`;
 
 /**
@@ -146,15 +150,35 @@ async function callGemini(key: string, b64: string, mime: string): Promise<strin
   return text;
 }
 
-/** Pull the first JSON object out of the model's reply, tolerating stray fencing.
- *  With responseMimeType=application/json Gemini returns bare JSON, but we stay
- *  defensive in case a model/version wraps it. */
+/** Pull the FIRST complete JSON object out of the model's reply, tolerating stray
+ *  fencing AND trailing content. On large/complex bills Gemini sometimes appends a
+ *  second object or prose after the invoice; a naive first-{ to last-} slice then
+ *  fed two values to JSON.parse ("Unexpected non-whitespace character after JSON").
+ *  Brace-match from the first { (respecting strings + escapes) and parse exactly the
+ *  first balanced object — everything after it is discarded. */
 function parseModelJson(raw: string): unknown {
   const fence = raw.replace(/```json\s*|\s*```/g, "");
   const start = fence.indexOf("{");
-  const end = fence.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("model did not return JSON");
-  return JSON.parse(fence.slice(start, end + 1));
+  if (start === -1) throw new Error("model did not return JSON");
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < fence.length; i++) {
+    const ch = fence[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+    } else if (ch === '"') {
+      inStr = true;
+    } else if (ch === "{") {
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0) return JSON.parse(fence.slice(start, i + 1));
+    }
+  }
+  throw new Error("model returned incomplete JSON"); // never closed → truncated output
 }
 
 Deno.serve(async (req: Request) => {

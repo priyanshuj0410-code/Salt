@@ -82,6 +82,8 @@ export function ocrInvoiceToRows(json: OcrInvoiceJson): OcrMapResult {
     qty: str(l.qty),
     free_qty: str(l.free_qty),
     ptr: str(l.ptr),
+    pts: str(l.pts),
+    amount: str(l.amount),
     mrp: str(l.mrp),
     gst_rate: str(l.gst_rate),
     discount_pct: str(l.discount_pct),
