@@ -40,7 +40,31 @@ Covers tickets **SALT-134** (reliability), **SALT-136** (security), **SALT-137**
 
 ## Compliance — residency & audit trail (SALT-137)
 
-**Data residency (India).** Supabase pins data to the **region chosen at project creation** and the region **cannot be changed afterward** (moving regions = migrate to a new project). For Indian medical-retail compliance the project must live in an **India region (`ap-south-1`, Mumbai)**. This is an **account-owner action**: confirm the current project's region in the dashboard; if it is not in India, plan a project migration. (I cannot read the project region from here.)
+**Data residency (India).** Supabase pins data to the **region chosen at project creation** and the region **cannot be changed afterward** (moving regions = migrate to a new project). For Indian medical-retail compliance the project must live in an **India region (`ap-south-1`, Mumbai)**. This is an **account-owner action**: confirm the current project's region in the dashboard; if it is not in India, run the migration below. (Per the linked CLI project ref `fvjxngtqqmgjfevnoqlu`, Salt currently appears to be in **Sydney `ap-southeast-2`** — confirm in the dashboard; if so it is **not** an India region and needs the migration.)
+
+### Region-migration runbook (Sydney → `ap-south-1` Mumbai)
+
+Supabase has **no in-place region change**, so residency means migrating to a **new project** in Mumbai and cutting over. This is a planned **maintenance-window** cutover over **real data** — auth users, the `whatsapp-send` edge function, and OAuth config, not just the DB. Run it when counters are idle; keep the old project **paused, not deleted** for a rollback window.
+
+**0 · Confirm + prep.** Verify the source region (Project Settings → Infrastructure). Record both projects' ref / URL / anon + service-role keys / DB password (handle securely; never commit). Inventory what moves: the DB **including the `auth` and `storage` schemas**, Storage buckets (Salt: likely none — verify), Edge Functions (`whatsapp-send`), and Auth config (Google OAuth redirect URLs, email templates, JWT settings — these are project config, *not* in a DB dump).
+
+**Path A — Supabase-assisted (recommended on Pro+).** Open a Supabase support request for a region migration / physical restore into a new `ap-south-1` project. This preserves `auth` / `storage` cleanly — the part the DIY path most often breaks — and is the safest route when PITR is on.
+
+**Path B — DIY dump & restore.**
+1. **Create** the new project in `ap-south-1`; enable the same extensions the migrations use (e.g. `pgcrypto`).
+2. **Freeze writes:** put the app in maintenance / pause counters so no bill lands mid-dump.
+3. **Dump the source including `auth` + `storage`** (not just `public`) — `auth.users` must come across or every login breaks. CLI: `supabase db dump --db-url "$SOURCE" -f schema.sql` then `--data-only -f data.sql` (check `supabase db dump --help`; or `pg_dump --schema=public --schema=auth --schema=storage`).
+4. **Restore** into the new project (`psql "$TARGET" -f schema.sql` then `data.sql`). Verify sequences (`invoice_series` / serials) carried so invoice numbers don't reset or collide.
+5. **Storage:** recreate buckets + copy objects, if any.
+6. **Edge Functions:** `supabase functions deploy whatsapp-send` against the new ref; `supabase secrets set …` for its secrets.
+7. **Auth config:** re-set providers and **update the Google OAuth redirect/callback URLs** to the new project URL; re-apply email templates / JWT settings.
+8. **Repoint the app:** set Vercel env `VITE_SUPABASE_URL` + the publishable/anon key to the new project and redeploy; re-link the CLI (`supabase link --project-ref <new>`); rebuild/reconfigure the Go migrator if it embeds the URL/key.
+
+**Verify before reopening counters:** a known user logs in (auth migrated); a known org's trial balance nets to 0 and item/batch/bill counts match the source; RLS still denies cross-org; `create_sales_invoice` posts end-to-end; `whatsapp-send` responds; region reads `ap-south-1`.
+
+**Cutover & rollback:** keep the Sydney project **paused** for ~a week; if anything is wrong, repoint `VITE_SUPABASE_URL` back to it. Delete Sydney only after verification + the rollback window. Re-enable **PITR** on the new project (ties to SALT-134).
+
+**Gotchas:** the `auth` schema is the #1 omission → broken logins. A new project means new keys / URL / ref → repoint the app, CLI, edge-function secrets, and OAuth URLs. Both projects bill concurrently during the window.
 
 **Inspector-ready audit trail.** The append-only audit log UI exists (**SALT-092**, done; viewable at `/settings/audit`, see [App.tsx](../architecture/screens-routing.md)) and a data-export path exists (**SALT-093**). The **DB-level capture triggers + append-only lockdown** that record who/what/when on sales / purchases / payments / ledgers are **SALT-171** (`database`, todo) — that is the database module's work, not infra; this page just records the dependency. Once triggers land, the `/settings/audit` viewer + export is the inspector surface.
 
