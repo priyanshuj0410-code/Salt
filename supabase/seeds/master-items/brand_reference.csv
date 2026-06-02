@@ -2260,33 +2260,55 @@ fertisurefem,FERTISURE FEM,Sun Pharma,,Fertility/supplement,low
 fertisurem,FERTISURE M,Sun Pharma,Levocarnitine + Coenzyme Q10 + Zinc + Lycopene + Astaxanthin,Nutrition (Male fertility),high-verified
 fertomid25,FERTOMID 25,Cipla,Clomifene Citrate 25mg,Hormone (Ovulation induction / fertility),high
 fertomid50,FERTOMID 50,Cipla,Clomifene citrate,Fertility (ovulation),high
+fevago,FEVAGO,Cipla,Paracetamol,Analgesic/antipyretic,high
 fevagods,FEVAGO DS,Cipla,Paracetamol,Analgesic/antipyretic,high
+fexigra,FEXIGRA,Cipla,Fexofenadine,Antihistamine,high
+fexigra120,FEXIGRA 120,Cipla,Fexofenadine,Antihistamine,high
+fexigra180,FEXIGRA 180,Cipla,Fexofenadine,Antihistamine,high
+fexohindm,FEXOHIND-M,Global,Fexofenadine + Montelukast,Antihistamine/anti-asthmatic,high
+fexolan180,FEXOLAN 180,Global,Fexofenadine,Antihistamine,high
 fexuclue,FEXUCLUE,Sun Pharma,Fexuprazan 40mg,GI (P-CAB),high-verified
+fexy,FEXY,Lupin,Fexofenadine,Antihistamine,high
+fexy120,FEXY 120,Lupin,Fexofenadine,Antihistamine,high
+fexy180,FEXY 180,Lupin,Fexofenadine,Antihistamine,high
 fheal32,FHEAL 32,Lupin,Triticum Vulgare Extract (+ Phenoxyethanol),Dermatological/Gynae (Wound healing),high-verified
 fhealovules,FHEAL OVULES,Lupin,Triticum Vulgare Extract (vaginal),Gynae (Wound healing),high
 fiaspflexpen,FIASP FLEXPEN,Abbott,Insulin Aspart (fast-acting),Antidiabetic (Insulin),high
 fiasppenfill100u,FIASP PENFILL 100U,Abbott,Insulin Aspart (faster-acting),Antidiabetic (Insulin),high
 fibator,FIBATOR,Sun Pharma,Atorvastatin 10mg + Fenofibrate 160mg,Cardiovascular (Lipid-lowering),high
 fibator20,FIBATOR 20,Sun Pharma,Atorvastatin 20mg + Fenofibrate 160mg,Cardiovascular (Lipid-lowering),high
+fibator5,FIBATOR 5,Sun Pharma,Atorvastatin + Fenofibrate,Hypolipidemic,med
 fibatorez,FIBATOR EZ,Sun Pharma,Atorvastatin 10mg + Fenofibrate 160mg + Ezetimibe 10mg,Cardiovascular (Lipid-lowering),med
+fibatorls,FIBATOR LS,Sun Pharma,Atorvastatin + Fenofibrate,Hypolipidemic,med
+fiberlact,FIBERLACT,Sun Pharma,Ispaghula (psyllium husk),Laxative/fiber,med
+fiboresp200,FIBORESP 200,Glenmark,Pirfenidone,Antifibrotic,high-verified
 fibrodone,FIBRODONE,Lupin,Pirfenidone,"Respiratory (Anti-fibrotic, IPF)",high-verified
+fibrodone400,FIBRODONE 400,Lupin,Pirfenidone,Antifibrotic,high
 fibrodone801,FIBRODONE 801,Lupin,Pirfenidone 801mg,Anti-fibrotic (Pulmonary fibrosis),high
+fincef,FINCEF,Goapptive,Ceftriaxone,Antibiotic,med
+fincef1vail,FINCEF 1 VAIL,Abbott,Ceftriaxone,Antibiotic,med
 finpecia1,FINPECIA 1,Cipla,Finasteride 1mg,Dermatological (Hair),high
+fit,FIT,Cipla,,Ocular supplement,low
 fiteyeplus,FIT EYE PLUS,Cipla,Lutein + Zeaxanthin + antioxidants (eye supplement),Nutrition (Ophthalmic),med
 flagyl,FLAGYL,Abbott,Metronidazole,Antibiotic/Antiprotozoal,high
 flagyl200,FLAGYL 200,Abbott,Metronidazole 200mg,Antibiotic,high
 flagyl400,FLAGYL 400,Abbott,Metronidazole 400mg,Antibiotic,high
+flagyler600,FLAGYL ER 600,Abbott,Metronidazole,Antiprotozoal,high
 flatubust,FLATUBUST,Mankind,Simethicone 140mg,GI (Antiflatulent),high-verified
 flavocip200,FLAVOCIP 200,Cipla,Flavoxate 200mg,"Urology (Antispasmodic, bladder)",high
+flavojoint500,FLAVOJOINT 500,Sun Pharma,,Joint supplement,low
 flavospas,FLAVOSPAS,Torrent,Flavoxate,Urology (Antispasmodic),high
+flavospaso,FLAVOSPAS-O,Torrent,Flavoxate + Ofloxacin,Urology/antibiotic,med
 flexjak5,FLEXJAK 5,Abbott,Tofacitinib 5mg,Immunosuppressant (JAK inhibitor),high
 flexon,FLEXON,Aristo,Ibuprofen + Paracetamol (suspension),Analgesic/Antipyretic,high
 flexon,FLEXON,Aristo,Ibuprofen 400mg + Paracetamol 325mg,Analgesic / NSAID,high
 flexonmr,FLEXON MR,Aristo,Ibuprofen + Paracetamol + Chlorzoxazone,Analgesic / Muscle relaxant,high
+flexura400,FLEXURA 400,Sun Pharma,Metaxalone,Muscle relaxant,high-verified
 flexurad,FLEXURA D,Sun Pharma,Chlorzoxazone 250mg + Diclofenac 50mg + Paracetamol 325mg,Analgesic/Muscle relaxant,high
 flodart,FLODART,Aristo,Tamsulosin 0.4mg,Urology (BPH),med
 flodartplus,FLODART PLUS,Aristo,Tamsulosin 0.4mg + Dutasteride 0.5mg,Urology (BPH),high-verified
 flohale05,FLOHALE 0.5,Cipla,Fluticasone propionate 0.5mg,Respiratory,high
+flohale2,FLOHALE 2,Cipla,Fluticasone,Respiratory,high
 flokind04,FLOKIND 0.4,Mankind,Tamsulosin 0.4mg,Urology (BPH),high
 flokindd,FLOKIND-D,Mankind,Tamsulosin 0.4mg + Dutasteride 0.5mg,Urology (BPH),high
 flokindf,FLOKIND-F,Mankind,Tamsulosin 0.4mg + Finasteride 5mg,Urology (BPH),high-verified
@@ -2295,19 +2317,30 @@ flomistaz,FLOMIST AZ,Cipla,Fluticasone Propionate + Azelastine,Respiratory (Nasa
 flomistf,FLOMIST F,Cipla,Fluticasone Furoate,Respiratory (Nasal corticosteroid),high-verified
 florabc,FLORA BC,Mankind,Lactic Acid Bacillus + Folic Acid + Niacinamide + Vitamin B6 + Zinc,Probiotic + B-complex supplement,high-verified
 florabcnf,FLORA-BC NF,Mankind,Lactic Acid Bacillus + Folic Acid + Niacinamide + Vitamin B6 + Zinc,Probiotic + B-complex supplement,high
+florasb,FLORA SB,Mankind,Saccharomyces boulardii,Probiotic,high
 florazn,FLORA-ZN,Mankind,Probiotic (Lactobacillus) + Zinc,Probiotic,med
 florita,FLORITA,Sun Pharma,Multi-strain probiotic (Lactobacillus + Bifidobacterium + FOS),GI (Probiotic),high-verified
 floritall,FLORITA LL,Sun Pharma,Multi-strain probiotic + Lactoferrin,GI (Probiotic),high
 flotral10,FLOTRAL 10,Ranbaxy,Alfuzosin 10mg,Urology (BPH),high
 flotralt,FLOTRAL T,Ranbaxy,Alfuzosin + Tolterodine,Urology (BPH + overactive bladder),med
+flotripforte,FLOTRIP FORTE,Life Star,Flupentixol + Melitracen,Antidepressant/anxiolytic,med
+floxanal,FLOXANAL,Global,Ofloxacin,Antibiotic,med
 flozenaanf,FLOZEN AA NF,Mankind,Aceclofenac 100mg + Paracetamol 325mg + Serratiopeptidase 15mg,Analgesic / NSAID,high-verified
 flozenplus,FLOZEN PLUS,Mankind,Diclofenac 50mg + Paracetamol 325mg + Serratiopeptidase 15mg,Analgesic / Anti-inflammatory,high-verified
 flublock,FLUBLOCK,Glenmark,Fluticasone Furoate (nasal spray),Respiratory (Nasal corticosteroid),high
 flublockaz,FLUBLOCK-AZ,Glenmark,Fluticasone Propionate + Azelastine (nasal spray),Respiratory (Nasal),high
+flucort,FLUCORT,Gracewel,Fluocinolone,Topical corticosteroid,high
 flucort,FLUCORT,Glenmark,Fluocinolone Acetonide,Dermatological (topical corticosteroid),high
+flucortc,FLUCORT-C,Gracewel,Fluocinolone + Clotrimazole,Topical antifungal/steroid,med
 flucortcskincrem,FLUCORT C SKIN CREM,Glenmark,Fluocinolone Acetonide + Clioquinol (topical),Dermatological (Steroid+Antiseptic),med
+flucortforte,FLUCORT FORTE,Glenmark,Fluocinolone,Topical corticosteroid,high
+flucorth,FLUCORT H,Gracewel,Fluocinolone,Topical corticosteroid,med
 flucorth,FLUCORT H,Glenmark,Fluocinolone Acetonide 0.1%,Dermatological (topical corticosteroid),high-verified
+flucortnskincrem,FLUCORT N SKIN CREM,Glenmark,Fluocinolone + Neomycin,Topical corticosteroid,med
 flucortscin,FLUCORT SCIN,Glenmark,Fluocinolone Acetonide (topical),Dermatological (Corticosteroid),high
+fludac20,FLUDAC 20,Alembic,Fluoxetine,Antidepressant,high
+fluguard400,FLUGUARD 400,Sun Pharma,Favipiravir,Antiviral,high
+fluticone,FLUTICONE,Zydus,Fluticasone,Nasal corticosteroid,high
 fluticoneft,FLUTICONE FT,Zydus,Fluticasone Furoate (nasal spray),ENT (Nasal corticosteroid),high
 fluticonox,FLUTICON OX,Zydus,Fluticasone Furoate + Oxymetazoline (nasal spray),Respiratory (Nasal),high
 flutiflo,FLUTIFLO,Lupin,Fluticasone Furoate (nasal spray),Respiratory (Nasal corticosteroid),high
@@ -2315,21 +2348,41 @@ flutifloft,FLUTIFLO FT,Lupin,Fluticasone Furoate (nasal spray),Respiratory (Nasa
 flutifloox,FLUTIFLO OX,Lupin,Fluticasone Furoate + Oxymetazoline,Respiratory (Nasal),high
 flutiways,FLUTIWAYS,Mankind,Fluticasone Furoate (nasal spray),Respiratory (Nasal corticosteroid),high
 flutiwaysaz,FLUTIWAYS AZ,Mankind,Fluticasone + Azelastine (nasal spray),ENT (Nasal corticosteroid + antihistamine),high
+fluvoxin100,FLUVOXIN 100,Sun Pharma,Fluvoxamine,Antidepressant,high
 fluvoxin50,FLUVOXIN 50,Sun Pharma,Fluvoxamine 50mg,"CNS (Antidepressant / SSRI, OCD)",high
+fluvoxincr100,FLUVOXIN CR 100,Sun Pharma,Fluvoxamine,Antidepressant,high
+fluvoxincr50,FLUVOXIN CR 50,Sun Pharma,Fluvoxamine,Antidepressant,high
+folg2,FOL G2 +,Zydus,,Supplement (prenatal),low
+folinald,FOLINAL D,Megacare,Ferrous + Folic acid,Hematinic,low
 folinext,FOLINEXT,Aristo,Folic Acid + Methylcobalamin,Nutrition (Vitamin),high
+folinextd,FOLINEXT D,Aristo,Folic acid + DHA,Prenatal supplement,med
 folinextd100,FOLINEXT D 100,Aristo,Docosahexaenoic Acid (DHA) 100mg + Folic Acid 5mg + Methylcobalamin 750mcg,Nutrition (Prenatal),high-verified
 folinextgold,FOLINEXT GOLD,Aristo,DHA + Folic Acid + Methylcobalamin + Pyridoxine,Nutrition (Prenatal),high
+folinine,FOLININE,Cipla,,Hematinic,low
+folinol,FOLINOL,Alembic,,Hematinic,low
+folinolplus,FOLINOL PLUS,Alembic,,Hematinic,low
+folinolplus,FOLINOL PLUS,Megacare,,Hematinic,low
+foliripe25,FOLIRIPE 2.5,Alembic,Letrozole,Fertility (ovulation),high-verified
 follihair,FOLLIHAIR,Abbott,Biotin + Multivitamin + Amino acids + minerals,Nutritional supplement (Hair),high
 folvite,FOLVITE,Pfizer,Folic acid 5mg,Nutrition / Supplement,high
+folvitedha,FOLVITE DHA,Pfizer,Folic acid + DHA,Prenatal supplement,med
+folvitemb,FOLVITE MB,Pfizer,Folic acid + Methylcobalamin,Vitamin/supplement,med
 folxt,FOL XT,Zydus,Methylcobalamin 1500mcg + L-Methylfolate 1mg + Pyridoxine 30mg,Nutritional supplement (Homocysteine / prenatal),high-verified
 fomtide200rtcunit,FOMTIDE 200 RTC UNIT,Sun Pharma,Formoterol + Budesonide 200mcg,Respiratory,high
+fomtide400inh,FOMTIDE 400 INH,Sun Pharma,Formoterol + Budesonide,Respiratory,med
 fomtide400octacap,FOMTIDE 400 OCTACAP,Sun Pharma,Formoterol + Budesonide 400,Respiratory,high
+fondum,FONDUM,Aristo,Fondaparinux,Anticoagulant,high
+footcare,FOOT CARE,Himalaya,,Cosmetic,low
+foracartgciphelar,FORACART G CIPHELAR,Cipla,Formoterol + Budesonide + Glycopyrronium,Respiratory,med
+foracartginhelar,FORACART G INHELAR,Cipla,Formoterol + Budesonide + Glycopyrronium,Respiratory,med
 foracort05,FORACORT 0.5,Cipla,Formoterol + Budesonide,Respiratory,high
 foracort1,FORACORT 1,Cipla,Formoterol + Budesonide,Respiratory,high
 foracort100,FORACORT 100,Cipla,Formoterol + Budesonide 100mcg,Respiratory,high
 foracort100inh,FORACORT 100 INH,Cipla,Formoterol + Budesonide 100mcg,Respiratory,high
 foracort200,FORACORT 200,Cipla,Formoterol 6mcg + Budesonide 200mcg,Respiratory,high
 foracort200inh120md,FORACORT 200 INH 120MD,Cipla,Formoterol + Budesonide 200mcg,Respiratory,high
+foracort200synchrobreathe120md,FORACORT 200 SYNCHROBREATHE 120MD,Cipla,Formoterol + Budesonide,Respiratory,high
+foracort400,FORACORT 400,Cipla,Formoterol + Budesonide,Respiratory,high
 foracort400,FORACORT 400,Cipla,Formoterol + Budesonide 400mcg,Respiratory,high
 foracort400inh,FORACORT 400 INH,Cipla,Formoterol + Budesonide 400mcg,Respiratory,high
 foracort400synchrobreath,FORACORT 400 SYNCHROBREATH,Cipla,Formoterol + Budesonide 400mcg,Respiratory,high
@@ -2338,16 +2391,29 @@ foracortforteinh,FORACORT FORTE INH,Cipla,Formoterol + Budesonide (Forte),Respir
 foracortg,FORACORT-G,Cipla,Budesonide 200mcg + Glycopyrronium 12.5mcg + Formoterol 6mcg,Respiratory (COPD triple therapy),high-verified
 foracortg400rc,FORACORT G 400 R C,Cipla,Formoterol + Budesonide 400mcg + Glycopyrronium,Respiratory (Triple),high
 foracortgsyncobreathe,FORACORT G SYNCOBREATHE,Cipla,Formoterol + Budesonide + Glycopyrronium,Respiratory (Triple),high
+foratec,FORATEC,Cipla,Formoterol,Respiratory,high
 forcan150,FORCAN 150,Cipla,Fluconazole 150mg,Antifungal,high
 forcan200,FORCAN 200,Cipla,Fluconazole 200mg,Antifungal,high
+forcaniv,FORCAN IV,Cipla,Fluconazole,Antifungal,high
+forcef,FORCEF,Aristo,Cefuroxime,Antibiotic,high
+forcef250,FORCEF 250,Aristo,Cefuroxime,Antibiotic,high
 forcef500,FORCEF 500,Aristo,Cefuroxime 500mg,Antibiotic (Cephalosporin),high-verified
+forcef750,FORCEF 750,Aristo,Cefuroxime,Antibiotic,high
+forcefcv250,FORCEF CV 250,Aristo,Cefuroxime + Clavulanic acid,Antibiotic,med
+forcefcv500,FORCEF CV 500,Aristo,Cefuroxime + Clavulanic acid,Antibiotic,med
+forenza325,FORENZA 325,Zydus,Aceclofenac + Paracetamol,NSAID/analgesic,med
 forglyn,FORGLYN,Zydus,Formoterol 4.8mcg + Glycopyrronium 9mcg,Respiratory (LABA+LAMA),high-verified
 forglynforterespicaps,FORGLYN FORTE RESPICAPS,Zydus,Formoterol + Glycopyrronium,Respiratory (LABA+LAMA),high
 forglynplusinh,FORGLYN PLUS INH,Zydus,Formoterol 4.8mcg + Glycopyrronium 9mcg + Budesonide 160mcg,Respiratory (Triple),high-verified
 forglynplusrespicap,FORGLYN PLUS RESPICAP,Zydus,Formoterol + Glycopyrronium + Budesonide,Respiratory (Triple),high
 forglynrespicap,FORGLYN RESPICAP,Zydus,Formoterol + Glycopyrronium,Respiratory (LABA+LAMA),high
+formflog400,FORMFLO G 400,Lupin,Formoterol + Glycopyrronium + Budesonide,Respiratory,med
 forminpg1,FORMIN PG 1,Ulticare,Metformin + Pioglitazone + Glimepiride 1mg,Antidiabetic,high
+forminpg2,FORMIN PG 2,Ulticare,Metformin + Pioglitazone + Glimepiride,Antidiabetic,med
 forminpg2,FORMIN PG 2,Alkem,Metformin + Pioglitazone + Glimepiride 2mg,Antidiabetic,high
+forminplus1000,FORMIN PLUS 1000,Ulticare,Metformin + Glimepiride,Antidiabetic,med
+forminplus500,FORMIN PLUS 500,Ulticare,Metformin + Glimepiride,Antidiabetic,med
+forminsr1000,FORMIN SR1000,Ulticare,Metformin,Antidiabetic,high
 forminsr500,FORMIN-SR 500,Ulticare,Metformin 500mg (SR),Antidiabetic,high
 formoflo250,FORMOFLO 250,Lupin,Formoterol 6mcg + Fluticasone 250mcg,Respiratory,high
 formoflo250transcap,FORMOFLO 250 TRANSCAP,Lupin,Formoterol + Fluticasone 250mcg,Respiratory,high
@@ -2356,6 +2422,7 @@ formoflog250125cap,FORMOFLO G 250/12.5%CAP,Lupin,Fluticasone 250mcg + Formoterol
 formonide05resp,FORMONIDE 0.5 RESP,Zydus,Formoterol + Budesonide 0.5mg (respules),Respiratory,high
 formonide1resp,FORMONIDE 1 RESP,Zydus,Formoterol + Budesonide,Respiratory,high
 formonide200hfainh,FORMONIDE 200 HFA INH,Zydus,Formoterol + Budesonide 200mcg,Respiratory,high
+formonide200respicaps,FORMONIDE 200 RESPICAPS,Zydus,Formoterol + Budesonide,Respiratory,high
 formonide400inheler,FORMONIDE 400 INHELER,Zydus,Formoterol + Budesonide 400mcg,Respiratory,high
 formonide400respicaps,FORMONIDE 400 RESPICAPS,Zydus,Formoterol 6mcg + Budesonide 400mcg,Respiratory,high
 formonideforteinh,FORMONIDE FORTE INH,Zydus,Formoterol + Budesonide 400mcg,Respiratory,high
@@ -2369,23 +2436,35 @@ formost400respicaps,FORMOST 400 RESPICAPS,Zydus,Formoterol + Budesonide 400mcg,R
 fortius10,FORTIUS 10,Abbott,Rosuvastatin 10mg,Cardiovascular (Lipid-lowering),high-verified
 fortiusgold10,FORTIUS GOLD 10,Abbott,Rosuvastatin 10mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,high
 fortiusgold20,FORTIUS GOLD 20,Abbott,Rosuvastatin 20mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,high
+fosfocin,FOSFOCIN,Aristo,Fosfomycin,Antibiotic,high
 fosiral,FOSIRAL,Cipla,Fosfomycin Trometamol 3g,Antibiotic (Urinary),high
+freeair,FREEAIR,Alkem,Xylometazoline,Nasal decongestant,med
 freedase30,FREEDASE 30,Sun Pharma,Ethinylestradiol 0.03mg + Dienogest 2mg,Hormone (Oral contraceptive),high-verified
 freego,FREEGO,Alembic,Ispaghula (Psyllium) husk + Lactitol,Laxative,high-verified
 freegopeg,FREEGO PEG,Alembic,Polyethylene Glycol 3350 (+ electrolytes),GI (Osmotic laxative),high
 frego,FREGO,Alembic,,,low
+frisium10,FRISIUM 10,Cipla,Clobazam,Anti-epileptic/anxiolytic,high
 frisium20,FRISIUM 20,Cipla,Clobazam 20mg,CNS (Benzodiazepine / anticonvulsant),high
+frisium5,FRISIUM 5,Cipla,Clobazam,Anti-epileptic/anxiolytic,high
 fucibet,FUCIBET,Ranbaxy,Fusidic Acid + Betamethasone,Dermatological (Antibiotic+Steroid),high
 fucidin,FUCIDIN,Ranbaxy,Fusidic Acid,Dermatological (topical antibiotic),high
+fulflo,FULFLO,Alembic,Alfuzosin,Urology (BPH),med
 fullform200,FULLFORM 200,Cipla,Formoterol + Budesonide 200mcg,Respiratory,high
 fullform400,FULLFORM 400,Cipla,Formoterol 6mcg + Budesonide 400mcg,Respiratory,high
+fulnite2,FULNITE 2,Sun Pharma,Eszopiclone,Hypnotic,high-verified
+fumycin150,FUMYCIN 150,Pfizer,Fluconazole,Antifungal,high
 fungicide,FUNGICIDE,Torrent,Ketoconazole 200mg,Antifungal,high-verified
+fungikem100,FUNGIKEM 100,Alkem,Itraconazole,Antifungal,med
 furamist,FURAMIST,Cipla,Fluticasone Furoate (nasal spray),ENT (Nasal corticosteroid),high
 furamistaz,FURAMIST AZ,Cipla,Fluticasone Furoate + Azelastine,ENT (Nasal corticosteroid + antihistamine),high
+furobid500,FUROBID 500,Alembic,Nitrofurantoin,Antibiotic (UTI),med
+fynal250,FYNAL 250,Mankind,,,low
 fynal500,FYNAL 500,Mankind,Levofloxacin 500mg,Antibiotic (Fluoroquinolone),high-verified
 fynaloz,FYNAL OZ,Mankind,Ofloxacin + Ornidazole,Antibiotic (Antibacterial + antiprotozoal),high
+gabamax75,GABAMAX 75,Aristo,Pregabalin,Neuropathic pain,high
 gabamaxgold,GABAMAX GOLD,Aristo,Gabapentin + Methylcobalamin + Alpha Lipoic Acid,Neuropathic pain,high
 gabamaxnt,GABAMAX NT,Aristo,Gabapentin 400mg + Nortriptyline 10mg + Methylcobalamin,Neuropathic pain,high
+gabamaxnt50,GABAMAX NT 50,Aristo,Pregabalin + Nortriptyline,Neuropathic pain,med
 gabamaxsr75,GABAMAX SR 75,Aristo,Pregabalin 75mg + Methylcobalamin 1500mcg,CNS (Neuropathic pain),high-verified
 gabaneuron,GABANEURON,Aristo,Gabapentin (+ Diclofenac + Methyl Salicylate) topical gel,Analgesic (Topical),med
 gabaneuron,GABANEURON,Aristo,Gabapentin 300mg + Methylcobalamin 500mcg,Neuropathic pain,high
@@ -2400,13 +2479,22 @@ gabantin300,GABANTIN 300,Sun Pharma,Gabapentin 300mg,CNS (Neuropathic pain / ant
 gabantin400,GABANTIN 400,Sun Pharma,Gabapentin 400mg,CNS (Neuropathic pain / anticonvulsant),high
 gabantinforte,GABANTIN FORTE,Sun Pharma,Gabapentin 800mg,Anticonvulsant/Neuropathic,high
 gabantingrs300,GABANTIN GRS 300,Sun Pharma,Gabapentin 300mg (gastro-retentive),CNS (Neuropathic pain / anticonvulsant),high
+gabantingrs600,GABANTIN GRS 600,Sun Pharma,Gabapentin,Neuropathic pain,high
 gabantinnt,GABANTIN NT,Sun Pharma,Gabapentin 400mg + Nortriptyline 10mg,Neuropathic pain,high
 gabantinnt100,GABANTIN NT 100,Sun Pharma,Gabapentin 100mg + Nortriptyline 10mg,CNS (Neuropathic pain),high
+gabantinnt200,GABANTIN NT 200,Sun Pharma,Gabapentin + Nortriptyline,Neuropathic pain,med
 gabantinplus,GABANTIN PLUS,Sun Pharma,Gabapentin 400mg + Nortriptyline 10mg,Neuropathic pain,high
+gabantipat100,GABANTIP AT 100,Sun Pharma,Gabapentin + Amitriptyline,Neuropathic pain,med
+gabantipatsun,GABANTIP AT SUN,Sun Pharma,Gabapentin + Amitriptyline,Neuropathic pain,med
+gabanuronsr600,GABANURON SR 600,Aristo,Gabapentin,Neuropathic pain,med
+gabapinnt,GABAPIN NT,Alembic,Gabapentin + Nortriptyline,Neuropathic pain,high
+gabasafeplussr75,GABASAFE PLUS SR 75,Aristo,Pregabalin + Methylcobalamin,Neuropathic pain,med
+gaberantecgrs300,GABERANTEC GRS 300,Ranbaxy,Gabapentin,Neuropathic pain,med
 gaberntecgrs600,GABERNTEC GRS 600,Ranbaxy,Gabapentin 600mg (gastro-retentive),CNS (Neuropathic pain / anticonvulsant),high
 galamer4,GALAMER 4,Sun Pharma,Galantamine 4mg,CNS (Anti-dementia),high
 galamer8,GALAMER 8,Sun Pharma,Galantamine 8mg,CNS (Anti-dementia),high
 galvus50,GALVUS 50,Cipla,Vildagliptin 50mg,Antidiabetic,high
+galvusmet,GALVUS MET,Cipla,Vildagliptin + Metformin,Antidiabetic,high
 galvusmet50500,GALVUS MET 50/500,Cipla,Vildagliptin 50mg + Metformin 500mg,Antidiabetic,high
 galvusmet50850,GALVUS MET 50/850,Cipla,Vildagliptin 50mg + Metformin 850mg,Antidiabetic,high
 galvusod100,GALVUS OD 100,Cipla,Vildagliptin 100mg,Antidiabetic,high
@@ -2418,18 +2506,23 @@ gardenal30,GARDENAL 30,Entero,Phenobarbital 30mg,Anticonvulsant,high
 gardenal60,GARDENAL 60,Entero,Phenobarbital 60mg,Anticonvulsant,high
 gasex,GASEX,Himalaya,Ayurvedic digestive (Himalaya Gasex),Ayurvedic / Gastro,high
 gasex,GASEX,Himalaya,"Gasex (polyherbal, digestive / antiflatulent)",Ayurvedic (Digestive),high
+gasofast,GAS-O FAST,Mankind,Antacid (effervescent),Antacid,med
 gasofast,GAS-O-FAST,Mankind,Sodium bicarbonate + Citric acid (antacid),Gastro / Antacid,high
+gasofastplus,GAS-O-FAST PLUS,Mankind,Antacid (effervescent),Antacid,med
 gastica,GASTICA,Mankind,Dill Oil + Fennel Oil + Simethicone,Gastrointestinal (Anti-colic / Antiflatulent),high-verified
 gasticafiz,GASTICA FIZ,Mankind,Alpha Amylase + Papain + Simethicone,Gastrointestinal (Digestive enzyme),high-verified
 gatikind,GATIKIND,Mankind,Gatifloxacin,Ophthalmic (Antibiotic),high
+gatilox03edbl,GATILOX 0.3% E D BL,Sun Pharma,Gatifloxacin,Ophthalmic antibiotic,high
 gatiquin,GATIQUIN,Cipla,Gatifloxacin,Ophthalmic (Antibiotic),high
 gelusilmps,GELUSIL MPS,Pfizer,Magnesium hydroxide + Aluminium hydroxide + Simethicone,Gastro / Antacid,high
+gelusilraft,GELUSIL RAFT,Pfizer,Aluminium hydroxide + Magnesium hydroxide + Sodium alginate,Antacid,med
 gemcal,GEMCAL,Alkem,Calcium + Vitamin D3 (kit),Nutritional supplement (Calcium),high
 gemcal,GEMCAL,Alkem,Calcium + Vitamin D3 + minerals,Nutritional supplement (Calcium),high
 gemcal,GEMCAL,Alkem,Salmon Calcitonin (nasal spray),Bone (Calcitonin),high
 gemcal500,GEMCAL 500,Alkem,Calcium 500mg + Vitamin D3,Nutritional supplement (Calcium),high
 gemcald3,GEMCAL D3,Alkem,Calcium + Vitamin D3,Nutritional supplement (Calcium),high
 gemcalds,GEMCAL DS,Alkem,Calcium + Vitamin D3,Nutritional supplement (Calcium),high
+gemcalgro,GEMCAL GRO,Alkem,Calcium + Vitamin D3,Vitamin/supplement,med
 gemcalp,GEMCAL P,Alkem,Calcium + Vitamin D3 (paediatric),Nutrition (Calcium),high
 gemcalplussoft,GEMCAL PLUS SOFT,Alkem,Calcitriol 0.25mcg + Calcium Carbonate 250mg + Methylcobalamin + Vitamin K2-7 + Zinc + Magnesium + Boron,Nutrition (Calcium/Vitamin D),high-verified
 gemcalxt,GEMCAL-XT,Alkem,Calcium + Vitamin D3 + Methylcobalamin,Nutritional supplement (Calcium),high
@@ -2437,49 +2530,86 @@ gemer05,GEMER 0.5,Sun Pharma,Glimepiride 0.5mg + Metformin 500mg,Antidiabetic,hi
 gemer1,GEMER 1,Sun Pharma,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
 gemer2,GEMER 2,Sun Pharma,Glimepiride 2mg + Metformin 500mg,Antidiabetic,high
 gemer3,GEMER 3,Sun Pharma,Glimepiride 3mg + Metformin 500mg,Antidiabetic,high
+gemer4,GEMER 4,Sun Pharma,Glimepiride + Metformin,Antidiabetic,high
 gemerdapa52500,GEMER DAPA 5/2/500,Sun Pharma,Dapagliflozin 5mg + Glimepiride 2mg + Metformin 500mg,Antidiabetic,high
 gemerds1,GEMER DS 1,Sun Pharma,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
 gemerds2,GEMER DS 2,Sun Pharma,Glimepiride 2mg + Metformin 1000mg,Antidiabetic,high
+gemerds3,GEMER DS 3,Sun Pharma,Glimepiride + Metformin,Antidiabetic,high
+gemerds4,GEMER DS 4,Sun Pharma,Glimepiride + Metformin,Antidiabetic,high
 gemerforte1,GEMER FORTE 1,Sun Pharma,Glimepiride 1mg + Metformin 1000mg,Antidiabetic,high
+gemerfortetwo,GEMER FORTE TWO,Sun Pharma,Glimepiride + Metformin,Antidiabetic,high
+gemerp1,GEMER P 1,Sun Pharma,Glimepiride + Metformin + Pioglitazone,Antidiabetic,med
 gemerp2,GEMER P 2,Sun Pharma,Glimepiride 2mg + Metformin + Pioglitazone,Antidiabetic,high
+gemersita505001,GEMER SITA 50/500/1,Sun Pharma,Glimepiride + Metformin + Sitagliptin,Antidiabetic,med
 gemersitair5010001,GEMER SITA IR 50/1000/1,Sun Pharma,Sitagliptin 50mg + Metformin 1000mg + Glimepiride 1mg,Antidiabetic,high
 gemersitair5010002,GEMER SITA IR 50/1000/2,Sun Pharma,Sitagliptin 50mg + Metformin 1000mg + Glimepiride 2mg,Antidiabetic,high
 gemersitair505001,GEMER SITA IR 50/500/1,Sun Pharma,Sitagliptin 50mg + Metformin 500mg + Glimepiride 1mg,Antidiabetic,high
 gemersitair505002,GEMER SITA IR 50/500/2,Sun Pharma,Sitagliptin 50mg + Metformin 500mg + Glimepiride 2mg,Antidiabetic,high
 gemerv1,GEMER V1,Sun Pharma,Glimepiride 1mg + Metformin + Voglibose,Antidiabetic,high
+gemerv1forte1,GEMER V1 FORTE 1,Sun Pharma,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 gemerv2,GEMER V2,Sun Pharma,Glimepiride 2mg + Metformin + Voglibose,Antidiabetic,high
+gemerv2forte2,GEMER V2 FORTE 2,Sun Pharma,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 gemfos,GEMFOS,Alkem,Risedronate 35mg,Bone (Bisphosphonate),high-verified
+gemidro,GEMIDRO,Alkem,Ibandronic acid,Osteoporosis (bisphosphonate),high-verified
 gemitrol,GEMITROL,Torrent,Calcitriol 0.25mcg + Calcium Carbonate 500mg + Zinc 7.5mg,Nutrition (Calcium/Vitamin D),high-verified
+gemitrolns,GEMITROL NS,Torrent,,Nasal spray,low
+gentaleneplus,GENTALENE PLUS,Stancare,Gentamicin + Betamethasone + Clotrimazole,Topical,med
 genticyn20,GENTICYN 20,Goapptive,Gentamicin 20mg,Antibiotic,high
 genticyn80,GENTICYN 80,Goapptive,Gentamicin 80mg,Antibiotic (Aminoglycoside),high
+gentle,GENTLE,Himalaya,,Baby care (cosmetic),low
+gentlebabywipes,GENTLE BABY WIPES,Himalaya,,Baby care (cosmetic),low
+gerdia15junier,GERDIA 15 JUNIER,Miles,,PPI/anti-ulcer,low
 geriflo,GERIFLO,Alembic,Multivitamin + Antioxidant (geriatric),Nutrition (Multivitamin),med
 geriflowd,GERIFLOW D,Alembic,,,low
 geriforte,GERIFORTE,Himalaya,Geriforte (polyherbal adaptogen tonic),Ayurvedic (Tonic / adaptogen),high
+geripod4,GERIPOD 4,Alembic,,,low
 geripod8,GERIPOD 8,Alembic,Silodosin 8mg,Urology (BPH),high
 geripodd,GERIPOD D,Alembic,Silodosin 8mg + Dutasteride 0.5mg,Urology (BPH),high-verified
 geripodm25,GERIPOD M 25,Alembic,Silodosin 8mg + Mirabegron 25mg,Urology (BPH),high
 geripodm50,GERIPOD M 50,Alembic,Silodosin 8mg + Mirabegron 50mg,Urology (BPH),high-verified
 geristart,GERISTART,Alembic,Multivitamin + Minerals (geriatric),Nutrition (Multivitamin),med
+gestofit100,GESTOFIT 100,Alembic,Hydroxyprogesterone caproate,Hormone (progestin),med
 gestofit100,GESTOFIT 100,Alembic,Progesterone 100mg,Hormone (Progestogen),high
+gestofit200,GESTOFIT 200,Alembic,Hydroxyprogesterone caproate,Hormone (progestin),med
 gestofitsr200,GESTOFIT SR 200,Alembic,Progesterone 200mg (SR),Hormone (Progestogen),high
 gestofitsr300,GESTOFIT SR 300,Alembic,Progesterone 300mg SR,Hormone (Progestogen),high
 gestofitsr400,GESTOFIT SR 400,Alembic,Progesterone 400mg SR,Hormone (Progestogen),high
 gestofitsr50,GESTOFIT SR 50,Alembic,Progesterone (natural micronized) 25mg/ml,Hormone (Progestogen),high-verified
+getlite,GETLITE,Glenmark,,Dermatological-cosmetic,low
+gifaxim,GIFAXIM,Aristo,Rifaximin,Antibiotic,high
+gifaxin200,GIFAXIN 200,Aristo,Rifaximin,Antibiotic,high
 gifaxin400,GIFAXIN 400,Aristo,Rifaximin 400mg,Antibiotic (Gut),high
+gifaxin550,GIFAXIN 550,Aristo,Rifaximin,Antibiotic,high
 gincocer,GINCOCER,Eris,Ginkgo Biloba + Piracetam + Vinpocetine,Cognitive enhancer,high
 gincocerforte,GINCOCER FORTE,Eris,Ginkgo Biloba 120mg + Piracetam 800mg + Vinpocetine 5mg,Cognitive enhancer,high-verified
+gincocerm,GINCOCER M,Eris,Ginkgo biloba + Methylcobalamin,Nootropic/supplement,med
 gincocerplus,GINCOCER PLUS,Eris,Ginkgo Biloba + Piracetam + Vinpocetine,Cognitive enhancer,high
 ginette35,GINETTE 35,Cipla,Cyproterone Acetate 2mg + Ethinylestradiol 0.035mg,Hormone (Anti-androgen/OCP),high
+ginkocerm,GINKOCER M,Eris,Ginkgo biloba + Methylcobalamin,Nootropic/supplement,med
+glemonta,GLEMONT A,Glenmark,Montelukast + Levocetirizine,Antihistamine/anti-asthmatic,med
+glemontf,GLEMONT-F,Glenmark,Montelukast + Fexofenadine,Antihistamine/anti-asthmatic,med
 glempa10,GLEMPA 10,Glenmark,Empagliflozin 10mg,Antidiabetic,high
 glempal255,GLEMPA L 25/5,Glenmark,Empagliflozin 25mg + Linagliptin 5mg,Antidiabetic,high-verified
 glempalm1051000,GLEMPA LM 10/5/1000,Glenmark,Empagliflozin 10mg + Linagliptin 5mg + Metformin 1000mg,Antidiabetic,high-verified
 glempalm2551000,GLEMPA LM 25/5/1000,Glenmark,Empagliflozin 25mg + Linagliptin 5mg + Metformin 1000mg,Antidiabetic,high-verified
 glempam125500,GLEMPA M 12.5/500,Glenmark,Empagliflozin 12.5mg + Metformin 500mg,Antidiabetic,high-verified
 glencet5,GLENCET 5,Glenmark,Levocetirizine 5mg,Antihistamine,high
+glenmarkairz,GLENMARK AIRZ,Glenmark,,Respiratory,low
+glenmarkbilazap,GLENMARK BILAZAP,Glenmark,Bilastine,Antihistamine,high
+glenmarkdabigza11010s,GLENMARK DABIGZA 110 10 S,Glenmark,Dabigatran,Anticoagulant,high
+glenmarklzcan,GLENMARK LZ-CAN,Glenmark,Luliconazole,Antifungal,med
+glenmarkolfit,GLENMARK OLFIT,Glenmark,,Antioxidant/fertility supplement,low
+glevo500,GLEVO 500,Glenmark,Levofloxacin,Antibiotic,high
+glez,GLEZ,Aristo,Glipizide,Antidiabetic,high-verified
+glicad,GLICAD,Eris,Gliclazide,Antidiabetic,high
+glimcip1,GLIMCIP 1,Cipla,Glimepiride,Antidiabetic,high
+glimcip2,GLIMCIP 2,Cipla,Glimepiride,Antidiabetic,high
 glimestar1,GLIMESTAR 1,Mankind,Glimepiride 1mg,Antidiabetic,high
 glimestar2,GLIMESTAR 2,Mankind,Glimepiride 2mg,Antidiabetic,high
 glimestar3,GLIMESTAR 3,Mankind,Glimepiride 3mg,Antidiabetic,high
+glimestardm1,GLIMESTAR-DM 1,Mankind,Glimepiride + Metformin,Antidiabetic,high
 glimestardm1forte,GLIMESTAR-DM 1 FORTE,Mankind,Dapagliflozin 10mg + Glimepiride 1mg + Metformin 1000mg,Antidiabetic,high
+glimestardm2,GLIMESTAR-DM 2,Mankind,Glimepiride + Metformin,Antidiabetic,high
 glimestardm2forte,GLIMESTAR-DM 2 FORTE,Mankind,Dapagliflozin 10mg + Glimepiride 2mg + Metformin 1000mg,Antidiabetic,high
 glimestarm05,GLIMESTAR M 0.5,Mankind,Glimepiride 0.5mg + Metformin 500mg,Antidiabetic,high
 glimestarm1,GLIMESTAR M1,Mankind,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
@@ -2490,9 +2620,12 @@ glimestarm3,GLIMESTAR M3,Mankind,Glimepiride 3mg + Metformin 500mg,Antidiabetic,
 glimestarm4,GLIMESTAR M4,Mankind,Glimepiride 4mg + Metformin 500mg,Antidiabetic,high
 glimestarm4forte,GLIMESTAR M4 FORTE,Mankind,Glimepiride 4mg + Metformin 1000mg,Antidiabetic,high
 glimestarmv1,GLIMESTAR-MV1,Mankind,Glimepiride 1mg + Metformin 500mg + Voglibose 0.2mg,Antidiabetic,high
+glimestarmv2,GLIMESTAR-MV2,Mankind,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 glimestarpm1,GLIMESTAR PM1,Mankind,Glimepiride 1mg + Pioglitazone 15mg + Metformin,Antidiabetic,high
 glimestarpm2,GLIMESTAR PM 2,Mankind,Glimepiride 2mg + Pioglitazone 15mg + Metformin 500mg,Antidiabetic,high
 glimiprex,GLIMIPREX,Aristo,Glimepiride 2mg,Antidiabetic,high
+glimiprex1,GLIMIPREX 1,Aristo,Glimepiride,Antidiabetic,high
+glimiprex3,GLIMIPREX 3,Aristo,Glimepiride,Antidiabetic,high
 glimiprexmf1500,GLIMIPREX MF 1/500,Aristo,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
 glimiprexmf2500,GLIMIPREX MF 2/500,Aristo,Glimepiride 2mg + Metformin 500mg,Antidiabetic,high
 glimiprexmfforte1,GLIMIPREX MF FORTE 1,Aristo,Glimepiride 1mg + Metformin 1000mg,Antidiabetic,high
@@ -2503,7 +2636,12 @@ glimiprexsmforte1,GLIMIPREX SM FORTE 1,Aristo,Sitagliptin 50mg + Glimepiride 1mg
 glimiprexsmforte2,GLIMIPREX SM FORTE 2,Aristo,Sitagliptin 100mg + Glimepiride 2mg + Metformin 1000mg,Antidiabetic,med
 glimisave1,GLIMISAVE 1,Eris,Glimepiride 1mg,Antidiabetic,high
 glimisave2,GLIMISAVE 2,Eris,Glimepiride 2mg,Antidiabetic,high
+glimisave23,GLIMISAVE 2.3,Eris,Glimepiride + Voglibose,Antidiabetic,med
 glimisave4,GLIMISAVE 4,Eris,Glimepiride 4mg,Antidiabetic,high
+glimisavedm11000,GLIMISAVE DM 1/1000,Eris,Glimepiride + Metformin,Antidiabetic,high
+glimisavedm1500,GLIMISAVE DM 1/500,Eris,Glimepiride + Metformin,Antidiabetic,high
+glimisavedm21000,GLIMISAVE DM 2/1000,Eris,Glimepiride + Metformin,Antidiabetic,high
+glimisavedm2500,GLIMISAVE DM 2/500,Eris,Glimepiride + Metformin,Antidiabetic,high
 glimisavem05,GLIMISAVE M 0.5,Eris,Glimepiride 0.5mg + Metformin,Antidiabetic,high
 glimisavem05x,GLIMISAVE M 0.5X,Eris,Glimepiride 0.5mg + Metformin,Antidiabetic,high
 glimisavem1,GLIMISAVE M1,Eris,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
@@ -2519,21 +2657,46 @@ glimisavem3750,GLIMISAVE M3 750,Eris,Glimepiride 3mg + Metformin 750mg,Antidiabe
 glimisavem3850,GLIMISAVE M3 850,Eris,Glimepiride 3mg + Metformin 850mg,Antidiabetic,high
 glimisavem3forte,GLIMISAVE M3 FORTE,Eris,Glimepiride 3mg + Metformin 1000mg,Antidiabetic,high
 glimisavem4forte,GLIMISAVE M4 FORTE,Eris,Glimepiride 4mg + Metformin 1000mg,Antidiabetic,high
+glimisavemax1,GLIMISAVE MAX 1,Eris,Glimepiride + Metformin,Antidiabetic,med
+glimisavemax2,GLIMISAVE MAX 2,Eris,Glimepiride + Metformin,Antidiabetic,med
+glimisavemax3,GLIMISAVE MAX 3,Eris,Glimepiride + Metformin,Antidiabetic,med
+glimisavemaxforte1,GLIMISAVE MAX FORTE 1,Eris,Glimepiride + Metformin,Antidiabetic,med
 glimisavemaxforte2,GLIMISAVE MAX FORTE 2,Eris,Glimepiride 2mg + Metformin 1000mg + Voglibose 0.3mg,Antidiabetic,med
+glimisavemaxforte3,GLIMISAVE MAX FORTE 3,Eris,Glimepiride + Metformin,Antidiabetic,med
 glimisavemv1,GLIMISAVE MV1,Eris,Glimepiride 1mg + Metformin 500mg + Voglibose 0.2mg,Antidiabetic,high
 glimisavemv13,GLIMISAVE MV 1.3,Eris,Glimepiride 1mg + Metformin + Voglibose 0.3mg,Antidiabetic,med
+glimisavemv13f,GLIMISAVE MV 1.3F,Eris,Glimepiride + Metformin + Voglibose,Antidiabetic,med
+glimisavemv1f,GLIMISAVE MV 1F,Eris,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 glimisavemv2,GLIMISAVE MV 2,Eris,Glimepiride 2mg + Metformin 500mg + Voglibose 0.2mg,Antidiabetic,high-verified
+glimisavemv22f,GLIMISAVE MV 2.2 F,Eris,Glimepiride + Metformin + Voglibose,Antidiabetic,med
+glimisavemv23,GLIMISAVE MV 2.3,Eris,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 glimisavemv33,GLIMISAVE MV 3.3,Eris,Glimepiride 2mg + Metformin 1000mg + Voglibose 0.3mg,Antidiabetic,med
+glimisavemv33f,GLIMISAVE MV 3.3 F,Eris,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 glimisavenexa11000,GLIMISAVE NEXA 1/1000,Eris,Glimepiride 1mg + Metformin 1000mg,Antidiabetic,high-verified
+glimisavenexa21000,GLIMISAVE NEXA 2/1000,Eris,Glimepiride + Metformin,Antidiabetic,med
 glimser1,GLIMSER 1,Alembic,Glimepiride 1mg,Antidiabetic,high
 glimser2,GLIMSER 2,Alembic,Glimepiride 2mg,Antidiabetic,high
+glimserforte1,GLIMSER FORTE 1,Alembic,Glimepiride + Metformin,Antidiabetic,med
+glimulin05mf,GLIMULIN 0.5MF,Glenmark,Glimepiride + Metformin,Antidiabetic,high
+glimulin1,GLIMULIN 1,Glenmark,Glimepiride,Antidiabetic,high
 glimulin2,GLIMULIN 2,Glenmark,Glimepiride 2mg,Antidiabetic,high
+glimulin2mf,GLIMULIN 2MF,Glenmark,Glimepiride + Metformin,Antidiabetic,high
+glimulin3,GLIMULIN 3,Glenmark,Glimepiride,Antidiabetic,high
+glimulin4,GLIMULIN 4,Glenmark,Glimepiride,Antidiabetic,high
 glimulinmf,GLIMULIN MF,Glenmark,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
+glimulinmv1,GLIMULIN MV1,Glenmark,Glimepiride + Metformin + Voglibose,Antidiabetic,med
+glimulinmv103,GLIMULIN MV 1/0.3,Glenmark,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 glimulinmv2,GLIMULIN MV2,Glenmark,Glimepiride 2mg + Metformin 500mg + Voglibose 0.2mg,Antidiabetic,high
+glimulinmv203,GLIMULIN MV 2/0.3,Glenmark,Glimepiride + Metformin + Voglibose,Antidiabetic,med
+glimulinmv2forte,GLIMULIN MV 2 FORTE,Glenmark,Glimepiride + Metformin + Voglibose,Antidiabetic,med
+glinate120,GLINATE 120,Glenmark,Nateglinide,Antidiabetic,high
+glinate60,GLINATE 60,Glenmark,Nateglinide,Antidiabetic,high
+gliotem100,GLIOTEM 100,Sun Pharma,Temozolomide,Anticancer,high-verified
 glipiq,GLIPIQ,Glenmark,Semaglutide (injection),Antidiabetic (GLP-1),high-verified
 glipiq2,GLIPIQ 2,Glenmark,Semaglutide (injection),Antidiabetic (GLP-1),high-verified
 glipon20,GLIPON 20,Aristo,Teneligliptin 20mg,Antidiabetic,high-verified
 gliponmf20500,GLIPON MF 20+500,Aristo,Teneligliptin 20mg + Metformin 500mg,Antidiabetic,high-verified
+gliponmfforte,GLIPON MF FORTE,Aristo,Glimepiride + Metformin,Antidiabetic,med
 gliptagreat50,GLIPTAGREAT 50,Mankind,Vildagliptin 50mg,Antidiabetic,high-verified
 gliptagreatd10,GLIPTAGREAT D 10,Mankind,Vildagliptin 100mg + Dapagliflozin 10mg,Antidiabetic,high
 gliptagreatd5,GLIPTAGREAT D 5,Mankind,Vildagliptin 50mg + Dapagliflozin 5mg,Antidiabetic,high-verified
@@ -2541,15 +2704,30 @@ gliptagreatdm1000,GLIPTAGREAT DM 1000,Mankind,Dapagliflozin 10mg + Vildagliptin 
 gliptagreatdm500,GLIPTAGREAT DM 500,Mankind,Dapagliflozin 10mg + Vildagliptin 100mg + Metformin 500mg,Antidiabetic,high-verified
 gliptagreatm1000,GLIPTAGREAT-M 1000,Mankind,Vildagliptin 50mg + Metformin 1000mg,Antidiabetic,high
 gliptagreatm1000od,GLIPTAGREAT M 1000 OD,Mankind,Teneligliptin 20mg + Metformin 1000mg,Antidiabetic,high
+gliptagreatm500,GLIPTAGREAT-M 500,Mankind,Teneligliptin + Metformin,Antidiabetic,med
 gliptagreatm500od,GLIPTAGREAT M 500 OD,Mankind,Vildagliptin 100mg + Metformin 500mg,Antidiabetic,high
+glisen1,GLISEN 1,Alembic,Glimepiride,Antidiabetic,med
 glisenmf1,GLISEN MF 1,Alembic,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
 glisenmf2,GLISEN MF 2,Alembic,Glimepiride 2mg + Metformin 500mg,Antidiabetic,high
+glisenmfforte1,GLISEN MF FORTE 1,Alembic,Glimepiride + Metformin,Antidiabetic,med
+glisenmfforte2,GLISEN MF FORTE 2,Alembic,Glimepiride + Metformin,Antidiabetic,med
+glisenpm1,GLISEN PM 1,Alembic,Glimepiride + Pioglitazone + Metformin,Antidiabetic,med
+glisenpm2,GLISEN PM 2,Alembic,Glimepiride + Pioglitazone + Metformin,Antidiabetic,med
+glisenvm1,GLISEN VM 1,Alembic,Glimepiride + Voglibose + Metformin,Antidiabetic,med
 glisenvm2,GLISEN VM 2,Alembic,Glimepiride 2mg + Metformin 500mg + Voglibose 0.2mg,Antidiabetic,high
+glitaris1510s,GLITARIS 15 10 S,Eris,Pioglitazone,Antidiabetic,high
+glitarism15,GLITARIS M 15,Eris,Pioglitazone + Metformin,Antidiabetic,med
+globacz,GLOBAC-Z,Zydus,Lactic acid bacillus (probiotic) + Zinc,Probiotic,med
+gloeye,GLOEYE,Sun Pharma,,Ocular supplement,low
 gloeyeplus,GLOEYE PLUS,Sun Pharma,Lutein + Zeaxanthin + Astaxanthin + Bilberry + Ginkgo + vitamins/minerals,Nutritional supplement (Eye health),high-verified
+glucar25,GLUCAR 25,Glenmark,Acarbose,Antidiabetic,high
+glucar50,GLUCAR 50,Glenmark,Acarbose,Antidiabetic,high
 glucobay25,GLUCOBAY 25,Bayer,Acarbose 25mg,Antidiabetic,high
 glucobay50,GLUCOBAY 50,Bayer,Acarbose 50mg,Antidiabetic,high
 glucobaym25,GLUCOBAY M25,Bayer,Acarbose 25mg + Metformin 500mg,Antidiabetic,high
 glucobaym50,GLUCOBAY M 50,Bayer,Acarbose 50mg + Metformin 500mg,Antidiabetic,high
+glucomustpm,GLUCOMUST-PM,Mankind,Metformin + Pioglitazone,Antidiabetic,med
+gluconormg05forte,GLUCONORM G 0.5 FORTE,Lupin,Glimepiride + Metformin,Antidiabetic,high
 gluconormg1,GLUCONORM G1,Lupin,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
 gluconormg1forte,GLUCONORM G1 FORTE,Lupin,Glimepiride 1mg + Metformin 1000mg,Antidiabetic,high
 gluconormg2,GLUCONORM G 2,Lupin,Glimepiride 2mg + Metformin 500mg,Antidiabetic,high
@@ -2570,27 +2748,48 @@ gluconormsr500,GLUCONORM SR 500,Lupin,Metformin SR 500mg,Antidiabetic,high
 gluconormvg1,GLUCONORM VG 1,Lupin,Glimepiride 1mg + Metformin 500mg + Voglibose 0.2mg,Antidiabetic,med
 gluconormvg2,GLUCONORM VG 2,Lupin,Glimepiride 2mg + Metformin 500mg + Voglibose 0.2mg,Antidiabetic,med
 gluconormvg2plus,GLUCONORM VG 2 PLUS,Lupin,Voglibose 0.2mg + Glimepiride 2mg + Metformin,Antidiabetic,high
+glucored,GLUCORED,Sun Pharma,Glibenclamide + Metformin,Antidiabetic,high
 glucoredforte,GLUCORED FORTE,Sun Pharma,Glibenclamide 5mg + Metformin 500mg,Antidiabetic,high
+glucorilm2,GLUCORIL M2,Ulticare,Glimepiride + Metformin,Antidiabetic,high
+glucoryl,GLUCORYL,Ulticare,Glimepiride,Antidiabetic,high
+glucorylm1,GLUCORYL M1,Ulticare,Glimepiride + Metformin,Antidiabetic,high
 glucorylm1,GLUCORYL M1,Ulticare,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
 glucorylm1forte,GLUCORYL M1 FORTE,Ulticare,Glimepiride 1mg + Metformin 1000mg,Antidiabetic,high
 glucorylm2,GLUCORYL M2,Ulticare,Glimepiride 2mg + Metformin 500mg,Antidiabetic,high
 glucorylm2forte,GLUCORYL M2 FORTE,Ulticare,Glimepiride 2mg + Metformin 1000mg,Antidiabetic,high
 glucorylm3forte,GLUCORYL M3 FORTE,Ulticare,Glimepiride 3mg + Metformin 1000mg,Antidiabetic,high
+glucorylmd1,GLUCORYL MD 1,Ulticare,Glimepiride + Metformin,Antidiabetic,high
+glucorylmd1forte,GLUCORYL-MD 1 FORTE,Ulticare,Glimepiride + Metformin,Antidiabetic,med
+glucorylmd2,GLUCORYL MD 2,Ulticare,Glimepiride + Metformin,Antidiabetic,high
+glucorylmd2forte,GLUCORYL-MD 2 FORTE,Ulticare,Glimepiride + Metformin,Antidiabetic,med
 glucorylmp1,GLUCORYL MP 1,Ulticare,Glimepiride 1mg + Metformin 500mg + Pioglitazone 15mg,Antidiabetic,high
 glucorylmp2,GLUCORYL MP 2,Ulticare,Glimepiride 2mg + Metformin 500mg + Pioglitazone 15mg,Antidiabetic,high
 glucorylms1forte,GLUCORYL MS 1 FORTE,Ulticare,Glimepiride 1mg + Metformin 1000mg,Antidiabetic,high-verified
 glucorylms2forte,GLUCORYL MS 2 FORTE,Ulticare,Glimepiride 2mg + Metformin 1000mg,Antidiabetic,high
 glucorylmv1,GLUCORYL MV 1,Ulticare,Glimepiride 1mg + Metformin 500mg + Voglibose 0.2mg,Antidiabetic,high
 glucorylmv103tab,GLUCORYL MV1/0.3TAB,Ulticare,Glimepiride 1mg + Metformin 500mg + Voglibose 0.3mg,Antidiabetic,high
+glucorylmv2,GLUCORYL MV 2,Ulticare,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 glucorylmv2,GLUCORYL MV2,Ulticare,Glimepiride 2mg + Metformin 500mg + Voglibose 0.3mg,Antidiabetic,high-verified
+glucorylmv203,GLUCORYL MV 2/0.3,Ulticare,Glimepiride + Metformin + Voglibose,Antidiabetic,med
+glucorylmvforte1,GLUCORYL MV FORTE 1,Ulticare,Glimepiride + Metformin + Voglibose,Antidiabetic,med
+glucorylmvforte2,GLUCORYL MV FORTE 2,Ulticare,Glimepiride + Metformin + Voglibose,Antidiabetic,med
 glucreta10,GLUCRETA 10,Torrent,Dapagliflozin 10mg,Antidiabetic,high-verified
 glucretal510,GLUCRETA L 5/10,Torrent,Dapagliflozin 10mg + Linagliptin 5mg,Antidiabetic,high-verified
 glucretal55,GLUCRETA L 5/5,Torrent,Dapagliflozin 5mg + Linagliptin 5mg,Antidiabetic,high-verified
+glucretam5500,GLUCRETA M 5/500,Torrent,Dapagliflozin + Metformin,Antidiabetic,high-verified
 gluflozin10,GLUFLOZIN 10,Aristo,Dapagliflozin 10mg,Antidiabetic,high
 gluflozin5,GLUFLOZIN 5,Aristo,Dapagliflozin 5mg,Antidiabetic,high
 gluflozinmf10500,GLUFLOZIN MF 10/500,Aristo,Dapagliflozin 10mg + Metformin 500mg,Antidiabetic,high
+gluflozinmfforte101000,GLUFLOZIN MF FORTE 10/1000,Aristo,Dapagliflozin + Metformin,Antidiabetic,high-verified
 gluformin500,GLUFORMIN 500,Abbott,Metformin 500mg,Antidiabetic,high
+gluforming1,GLUFORMIN G1,Abbott,Metformin + Glimepiride,Antidiabetic,high
+gluforming2,GLUFORMIN G2,Abbott,Metformin + Glimepiride,Antidiabetic,high
+gluforminxl1000,GLUFORMIN XL 1000,Abbott,Metformin,Antidiabetic,high
 gluforminxl500,GLUFORMIN XL 500,Abbott,Metformin 500mg XL,Antidiabetic,high
+gluject10,GLUJECT 10,Abbott,Dapagliflozin,Antidiabetic (SGLT2),high-verified
+gluject5,GLUJECT 5,Abbott,Dapagliflozin,Antidiabetic (SGLT2),high-verified
+glujecttrio101001000,GLUJECT TRIO 10+100+1000,Abbott,Dapagliflozin + Sitagliptin + Metformin,Antidiabetic,med
+glujecttrio10100500,GLUJECT TRIO 10+100+500,Abbott,Dapagliflozin + Sitagliptin + Metformin,Antidiabetic,med
 glura100,GLURA 100,Eris,Sitagliptin 100mg,Antidiabetic,high
 glura50,GLURA 50,Eris,Sitagliptin 50mg,Antidiabetic,high
 glurae10,GLURA E 10,Eris,Sitagliptin 100mg + Empagliflozin 10mg,Antidiabetic,high
@@ -2599,38 +2798,62 @@ gluram1000,GLURA M 1000,Eris,Sitagliptin 50mg + Metformin 1000mg,Antidiabetic,hi
 gluram500,GLURA M 500,Eris,Sitagliptin + Metformin 500mg,Antidiabetic,high
 gluramp1000,GLURA MP 1000,Eris,Sitagliptin 100mg + Metformin 1000mg + Pioglitazone 15mg,Antidiabetic,high-verified
 gluramp500,GLURA MP 500,Eris,Sitagliptin 100mg + Metformin 500mg + Pioglitazone 15mg,Antidiabetic,high-verified
+gluramxr1000,GLURA M XR 1000,Eris,Glimepiride + Metformin,Antidiabetic,med
 gluramxr100500,GLURA M XR 100/500,Eris,Sitagliptin 100mg + Metformin 500mg ER,Antidiabetic,high
 gluramxr500,GLURA M XR 500,Eris,Sitagliptin 100mg + Metformin 500mg ER,Antidiabetic,high
+gluramxrforte,GLURA M XR FORTE,Eris,Glimepiride + Metformin,Antidiabetic,med
 gluratrio101000,GLURA TRIO 10/1000,Eris,Empagliflozin 10mg + Sitagliptin 100mg + Metformin 1000mg,Antidiabetic,high-verified
 gluratrio251000,GLURA TRIO 25/1000,Eris,Empagliflozin 25mg + Sitagliptin 100mg + Metformin 1000mg,Antidiabetic,med
+gluvilda50,GLUVILDA 50,Ulticare,Vildagliptin,Antidiabetic,high
 gluvildad10,GLUVILDA D10,Ulticare,Vildagliptin 50mg + Dapagliflozin 10mg,Antidiabetic,high
+gluvildad5,GLUVILDA D5,Ulticare,Vildagliptin + Dapagliflozin,Antidiabetic,med
+gluvildadm101000,GLUVILDA DM 10/1000,Ulticare,Vildagliptin + Dapagliflozin + Metformin,Antidiabetic,med
+gluvildadm10500,GLUVILDA DM 10/500,Ulticare,Vildagliptin + Dapagliflozin + Metformin,Antidiabetic,med
+gluvildadm5500,GLUVILDA DM 5/500,Ulticare,Vildagliptin + Dapagliflozin + Metformin,Antidiabetic,med
+gluvildam1000,GLUVILDA M+1000,Ulticare,Vildagliptin + Metformin,Antidiabetic,high
 gluvildam500,GLUVILDA M+500,Ulticare,Vildagliptin 50mg + Metformin 500mg,Antidiabetic,high
 gluvildaod,GLUVILDA OD,Ulticare,Vildagliptin 100mg OD,Antidiabetic,high
+gluvildaodm1000,GLUVILDA OD M+ 1000,Ulticare,Vildagliptin + Metformin,Antidiabetic,high
+gluvildaodm500,GLUVILDA OD M+ 500,Ulticare,Vildagliptin + Metformin,Antidiabetic,high
 gluxit10,GLUXIT 10,Eris,Dapagliflozin 10mg,Antidiabetic,high
 gluxit5,GLUXIT 5,Eris,Dapagliflozin 5mg,Antidiabetic,high
 gluxitm10,GLUXIT M 10,Eris,Dapagliflozin 10mg + Metformin,Antidiabetic,high
 gluxitm10forte,GLUXIT M 10 FORTE,Eris,Dapagliflozin 10mg + Metformin 1000mg,Antidiabetic,high
 gluxitm5,GLUXIT M 5,Eris,Dapagliflozin 5mg + Metformin,Antidiabetic,high
+gluxitm5forte,GLUXIT M 5 FORTE,Eris,Dapagliflozin + Metformin,Antidiabetic,med
 gluxitpro,GLUXIT PRO,Eris,Dapagliflozin 10mg + Pioglitazone 15mg,Antidiabetic,high-verified
 gluxits10100,GLUXIT S 10/100,Eris,Dapagliflozin 10mg + Sitagliptin 100mg,Antidiabetic,high
 gluxits1050,GLUXIT S 10/50,Eris,Dapagliflozin 10mg + Sitagliptin 50mg,Antidiabetic,high
 gluxits550,GLUXIT S 5/50,Eris,Dapagliflozin 5mg + Sitagliptin 50mg,Antidiabetic,high
 gluxittrio101001000,GLUXIT TRIO 10/100/1000,Eris,Dapagliflozin 10mg + Sitagliptin 100mg + Metformin 1000mg,Antidiabetic,high
 gluxittrio10100500,GLUXIT TRIO 10/100/500,Eris,Dapagliflozin 10mg + Sitagliptin 100mg + Metformin 500mg,Antidiabetic,high
+gluxittrio5501000,GLUXIT TRIO 5/50/1000,Eris,Dapagliflozin + Vildagliptin + Metformin,Antidiabetic,med
 gluxittrio550500,GLUXIT TRIO 5/50/500,Eris,Dapagliflozin 5mg + Sitagliptin 50mg + Metformin 500mg,Antidiabetic,high-verified
+glyahakoj,GLYAHA KOJ,Invida,,Dermatological-cosmetic,low
 glycigon80,GLYCIGON 80,Aristo,Gliclazide 80mg,Antidiabetic,high
 glycigonm,GLYCIGON M,Aristo,Gliclazide 80mg + Metformin 500mg,Antidiabetic,high
 glycigonmsr,GLYCIGON M-SR,Aristo,Gliclazide 80mg + Metformin 500mg,Antidiabetic,high-verified
 glycobreeznebresp,GLYCOBREEZ NEB RESP,Mankind,Glycopyrronium bromide,Respiratory,med
+glycodincough,GLYCODIN COUGH,Alembic,Dextromethorphan,Cough,med
+glycofloresp,GLYCOFLO RESP,Lupin,Glycopyrronium,Respiratory,med
+glycohale,GLYCOHALE,Cipla,Glycopyrronium,Respiratory,high
 glycohalef,GLYCOHALE F,Cipla,Glycopyrronium + Formoterol,Respiratory (LAMA+LABA),med
 glycohalefb4002512,GLYCOHALE FB 400/25/12,Cipla,Formoterol 12mcg + Budesonide 400mcg + Glycopyrrolate 25mcg,"Respiratory (Triple, COPD)",high
 glycohalerespule,GLYCOHALE RESPULE,Cipla,Glycopyrronium bromide,Respiratory,high
 glykind60xr,GLYKIND 60XR,Mankind,Gliclazide 60mg (XR),Antidiabetic,high
 glykindm,GLYKIND M,Mankind,Gliclazide 80mg + Metformin 500mg,Antidiabetic,high-verified
+glypride1,GLYPRIDE 1,Sun Pharma,Glimepiride,Antidiabetic,high
+glypride2,GLYPRIDE 2,Sun Pharma,Glimepiride,Antidiabetic,high
+glz8010,GLZ 80 10,Alembic,Gliclazide,Antidiabetic,high
 glzmex,GLZ MEX,Alembic,Gliclazide 60mg + Metformin 500mg,Antidiabetic,high-verified
 glzplus,GLZ PLUS,Alembic,Gliclazide 80mg + Metformin 500mg,Antidiabetic,high
 glztotal,GLZ TOTAL,Alembic,Gliclazide 60mg + Metformin 500mg + Pioglitazone 15mg,Antidiabetic,high-verified
+glztrio,GLZ TRIO,Alembic,Gliclazide + Metformin + Pioglitazone,Antidiabetic,med
 glzxr,GLZ XR,Alembic,Gliclazide 60mg XR,Antidiabetic,high
+gmhhp751vial,GMH HP 75 1'VIAL,Sun Pharma,Menotropins (HMG),Fertility hormone,med
+gokshura,GOKSHURA,Himalaya,Tribulus terrestris,Ayurvedic,high
+gramogyl,GRAMOGYL,Stancare,Norfloxacin + Metronidazole,Antidiarrheal/antibiotic,med
+gramoneg,GRAMONEG,Ranbaxy,Nalidixic acid,Antibiotic,high
 grandem,GRANDEM,Aristo,Granisetron,Anti-emetic,high
 grandem,GRANDEM,Aristo,Granisetron 1mg/ml,Anti-emetic,high-verified
 grandem1,GRANDEM 1,Aristo,Granisetron 1mg,Antiemetic,high-verified
@@ -2639,21 +2862,35 @@ graniforcemd,GRANIFORCE MD,Mankind,Granisetron,Anti-emetic,high
 graniforcesy,GRANIFORCE SY,Mankind,Granisetron,Anti-emetic,high
 gravitor,GRAVITOR,Sun Pharma,Pyridostigmine 60mg,Neuromuscular (Myasthenia gravis),high-verified
 gravitorsr,GRAVITOR SR,Sun Pharma,Pyridostigmine 180mg,Neuromuscular (Myasthenia gravis),high-verified
+grdbixbiscuit,GRD BIX BISCUIT,Zydus,,Nutrition (protein),low
+grdchoco,GRD CHOCO,Zydus,,Nutrition (protein),low
+grdlite,GRD LITE,Zydus,,Nutrition (protein),low
+grdsmartchoco,GRD SMART CHOCO,Zydus,,Nutrition (protein),low
 gtnsorbitrate26,GTN SORBITRATE 2.6,Abbott,Nitroglycerin (Glyceryl Trinitrate) 2.6mg SR,Cardiovascular (Anti-anginal),high
 gtnsorbitratecr64,GTN SORBITRATE CR 6.4,Abbott,Nitroglycerin (Glyceryl Trinitrate) 6.4mg (CR),Cardiovascular (Anti-anginal),high
 gudcef,GUDCEF,Mankind,Cefixime,Antibiotic (Cephalosporin),high
 gudcef100,GUDCEF 100,Mankind,Cefixime 100mg,Antibiotic (Cephalosporin),high
 gudcef100dry,GUDCEF 100 DRY,Life Star,Cefixime 100mg,Antibiotic (Cephalosporin),high
 gudcef200,GUDCEF 200,Mankind,Cefpodoxime 200mg,Antibiotic (Cephalosporin),high
+gudcef50,GUDCEF 50,Mankind,Cefixime,Antibiotic,high
+gudcefaz,GUDCEF AZ,Life Star,Cefixime + Azithromycin,Antibiotic,high
+gudcefcv100,GUDCEF CV100,Mankind,Cefixime + Clavulanic acid,Antibiotic,high
 gudcefcv100dry,GUDCEF-CV 100 DRY,Mankind,Cefpodoxime 100mg + Clavulanic Acid,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
 gudcefcv200,GUDCEF CV 200,Mankind,Cefpodoxime 200mg + Clavulanic Acid,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
 gudcefcvdry,GUDCEF CV DRY,Mankind,Cefpodoxime + Clavulanic Acid,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
 gudcefdry,GUDCEF DRY,Mankind,Cefixime (syrup),Antibiotic (Cephalosporin),high
 gudcefds,GUDCEF DS,Life Star,Cefpodoxime,Antibiotic (Cephalosporin),high
+gudcefl,GUDCEF-L,Mankind,Cefixime + Lactobacillus (probiotic),Antibiotic,med
 gudcefplus,GUDCEF PLUS,Life Star,Cefpodoxime Proxetil 200mg + Ofloxacin 200mg,Antibiotic,high-verified
 gudcefxl200,GUDCEF XL 200,Life Star,Cefpodoxime 200mg,Antibiotic (Cephalosporin),high
 gudgesicaa,GUDGESIC AA,Mankind,Aceclofenac 100mg + Paracetamol 325mg + Serratiopeptidase 15mg,Analgesic/Anti-inflammatory,high-verified
+gudgesicaq,GUDGESIC AQ,Mankind,Diclofenac,NSAID,med
 gudgesicliniment,GUDGESIC LINIMENT,Mankind,Diclofenac (+ Methyl Salicylate + Menthol) liniment,Analgesic (Topical),med
+gudgesicplus,GUDGESIC PLUS,Mankind,Diclofenac + Paracetamol,NSAID/analgesic,med
+gudgesicth410s,GUDGESIC TH4 10 S,Mankind,Aceclofenac + Thiocolchicoside,NSAID/muscle relaxant,med
+gudgesicth810s,GUDGESIC TH8 10 S,Mankind,Aceclofenac + Thiocolchicoside,NSAID/muscle relaxant,med
+gudlaxnf,GUDLAX NF,Mankind,Ispaghula (psyllium husk),Laxative,med
+gudlaxplus,GUDLAX PLUS,Mankind,Lactulose + Sodium picosulfate,Laxative,med
 gudlaxplus,GUDLAX PLUS,Mankind,Liquid Paraffin + Milk of Magnesia + Sodium Picosulfate,GI (Laxative),high-verified
 gudpresam25,GUDPRES-AM 25,Mankind,Metoprolol Succinate 25mg + Amlodipine 5mg,Cardiovascular (Antihypertensive),med
 gudpresam50,GUDPRES-AM 50,Mankind,Metoprolol Succinate 50mg + Amlodipine 5mg,Cardiovascular (Antihypertensive),med
@@ -2661,17 +2898,45 @@ gudpresxl25,GUDPRES-XL 25,Mankind,Metoprolol Succinate ER 25mg,Cardiovascular (B
 gudpresxl50,GUDPRES-XL 50,Mankind,Metoprolol Succinate ER 50mg,Cardiovascular (Beta-blocker),high
 guduchi,GUDUCHI,Himalaya,Tinospora cordifolia (Guduchi),Ayurvedic (Immunomodulator),high
 gumloc,GUMLOC,Abbott,Cetrimide 0.1% + Tannic Acid 2% + Zinc Chloride 1% (gum gel),Dental/Oral (Topical),high-verified
+gutgain,GUTGAIN,Alkem,,Probiotic/supplement,low
 gutokdry,GUT OK DRY,Mankind,Probiotic (Bacillus + Lactobacillus + Streptococcus),Probiotic supplement,high
 gutoknf,GUT OK NF,Mankind,Probiotic blend (Bacillus mesentericus + Clostridium butyricum + Lactobacillus + Streptococcus thermophilus),Probiotic supplement,high-verified
+gutpro,GUTPRO,J.B. Chemicals,Lactic acid bacillus (probiotic),Probiotic,med
+gutspert,GUTSPERT,Glenmark,Bacillus clausii (probiotic),Probiotic,med
+gynaset,GYNASET,Mankind,,Gynecology,low
 gynazol100,GYNAZOL 100,Sun Pharma,Danazol 100mg,Hormone (Androgen / endometriosis),high-verified
+gynazol200,GYNAZOL 200,Sun Pharma,Itraconazole,Antifungal,med
 gynazol50,GYNAZOL 50,Sun Pharma,Danazol 50mg,Hormone (Endometriosis),high-verified
 hadjod,HADJOD,Himalaya,Cissus quadrangularis (Hadjod),Ayurvedic (Bone / joint health),high
 haemaccel,HAEMACCEL,Goapptive,Polygeline (plasma volume expander),Plasma expander (IV fluid),high
+hair4u,HAIR 4U,Gracewel,,Hair care,low
+hair4u,HAIR 4U,Gracewel,Minoxidil,Hair (alopecia),med
+hair4u10,HAIR 4U 10%,Gracewel,Minoxidil,Hair (alopecia),high
+hair4u2,HAIR 4U 2%,Gracewel,Minoxidil,Hair (alopecia),high
+hair4u5,HAIR 4U 5%,Gracewel,Minoxidil,Hair (alopecia),high
+hair4uf,HAIR 4U F,Gracewel,Minoxidil + Finasteride,Hair (alopecia),med
+hairbless,HAIRBLESS,Mankind,,Hair supplement,low
+hairjoy,HAIRJOY,Torrent,Minoxidil,Hair (alopecia),med
+hairjoym2,HAIRJOY M 2%,Torrent,Minoxidil,Hair (alopecia),high
 hairzone,HAIR ZONE,Himalaya,"Palasha + Palashabheda (Butea, herbal hair solution)",Ayurvedic (Hair care),high-verified
+hairzoy5,HAIRZOY 5%,Torrent,Minoxidil,Hair (alopecia),high
+halonova,HALONOVA,Torrent,Halobetasol propionate,Topical corticosteroid,med
+halonovas,HALONOVA S,Torrent,Halobetasol + Salicylic acid,Topical corticosteroid,med
+halovate,HALOVATE,Gracewel,Halobetasol propionate,Topical corticosteroid,high
+halovatef,HALOVATE F,Glenmark,Halobetasol + Fusidic acid,Topical corticosteroid,med
+halovates,HALOVATE S,Gracewel,Halobetasol + Salicylic acid,Topical corticosteroid,med
 hansepran100,HANSEPRAN 100,Abbott,Clofazimine 100mg,Anti-leprosy,high
+hansepran50,HANSEPRAN 50,Abbott,Clofazimine,Anti-leprosy,med
 happid,HAPPI D,Zydus,Rabeprazole 20mg + Domperidone 30mg,Gastrointestinal (PPI + prokinetic),high-verified
 harmoni,HARMONI,Alembic,Cyproterone Acetate 2mg + Ethinylestradiol 0.035mg + Folic Acid,Hormone (PCOS / contraceptive),high-verified
+harmonif,HARMONI F,Alembic,Drospirenone + Ethinylestradiol,Contraceptive (OC),med
+hatric,HATRIC,Aristo,Levocetirizine,Antihistamine,high
+hatric2,HATRIC 2,Aristo,Levocetirizine,Antihistamine,high
 hatric3,HATRIC 3,Aristo,Paracetamol 125mg + Pseudoephedrine 15mg + Chlorpheniramine 1mg,Cold & flu (paediatric),high-verified
+hatric5,HATRIC 5,Aristo,Levocetirizine,Antihistamine,high
+headon,HEADON,Sun Pharma,Sumatriptan,Antimigraine,med
+healokindnanofine,HEALOKIND NANOFINE,Mankind,,Wound care,low
+healthok,HEALTH OK,Mankind,,Nutrition (multivitamin),low
 healthok,HEALTH OK,Mankind,Multivitamin + Minerals (syrup),Nutrition (Multivitamin),high
 healthok,HEALTH OK,Mankind,Multivitamin + Multimineral + Ginseng,Nutritional supplement,high
 healthok,HEALTH OK,Mankind,Multivitamin drops,Nutritional supplement,high
@@ -2684,38 +2949,71 @@ hepakind150,HEPAKIND 150,Mankind,Ursodeoxycholic Acid 150mg,Hepatobiliary (Bile 
 hepakind300,HEPAKIND 300,Mankind,Ursodeoxycholic Acid 300mg,Hepatobiliary (Bile acid),high
 hepaneed,HEPANEED,Life Star,L-Carnitine + L-Glutathione + N-Acetylcysteine + Silymarin,Hepatoprotective (Liver supplement),high-verified
 hepaneed,HEPANEED,Life Star,"Polyherbal liver tonic (Kutki, Punarnava, Guduchi, Kalmegh)",Hepatoprotective (Ayurvedic),high-verified
+hepexa150,HEPEXA 150,Eris,Ursodeoxycholic acid,Hepatobiliary,high-verified
+hepexa300,HEPEXA 300,Eris,Ursodeoxycholic acid,Hepatobiliary,high-verified
+heptagon,HEPTAGON,Sun Pharma,Cyproheptadine + Tricholine citrate,Appetite stimulant,med
 heptral,HEPTRAL,Abbott,S-Adenosylmethionine (Ademetionine) 400mg,Hepatoprotective,high
+heptulacfiber,HEPTULAC FIBER,Cipla,Lactulose,Laxative,med
 herbolax,HERBOLAX,Himalaya,Ayurvedic laxative (Himalaya),Ayurvedic,high
 herbolax,HERBOLAX,Himalaya,Polyherbal laxative (Ayurvedic),GI (Laxative),high
+hergrace,HERGRACE,Mankind,,Women's supplement,low
+hermin,HERMIN,Alembic,Iron,Hematinic,low
+herminforte,HERMIN FORTE,Alembic,Ferrous ascorbate + Folic acid,Hematinic,med
+herpax5,HERPAX 5%,Torrent,Aciclovir,Antiviral (topical),high
+herpax800dt,HERPAX 800 DT,Torrent,Aciclovir,Antiviral,high
 herpikind,HERPIKIND,Mankind,Acyclovir,Antiviral (Topical),high
+herpikind200,HERPIKIND 200,Mankind,Aciclovir,Antiviral,high
 herpikind400,HERPIKIND 400,Mankind,Acyclovir 400mg,Antiviral,high
 herpikind800,HERPIKIND 800,Mankind,Acyclovir 800mg,Antiviral,high
+hetrazan100,HETRAZAN 100,Wyeth,Diethylcarbamazine,Antifilarial,high
 hetrazan100,HETRAZAN 100,Pfizer,Diethylcarbamazine 100mg,Anthelmintic,high
+hexilaksilicon,HEXILAK SILICON,Invida,,Scar (silicone gel),low
 hicope,HICOPE,Mankind,Hydroxyzine (drops),Antihistamine,high-verified
 hicope,HICOPE,Mankind,Hydroxyzine 10mg/5ml,Antihistamine,high-verified
 hicope10,HICOPE 10,Mankind,Hydroxyzine 10mg,Anti-allergic (Antihistamine),high-verified
 hicope25,HICOPE 25,Mankind,Hydroxyzine 25mg,Anti-allergic (Antihistamine),high
 himcocid,HIMCOCID,Himalaya,Polyherbal antacid,"GI (Antacid, Ayurvedic)",high
 himcolin,HIMCOLIN,Himalaya,Himcolin (polyherbal topical),Ayurvedic (Men's health),high
+himcospazsoft,HIMCOSPAZ SOFT,Himalaya,Polyherbal (Ayurvedic),Ayurvedic (antispasmodic),med
 himplasia,HIMPLASIA,Himalaya,"Himplasia (polyherbal, BPH)",Ayurvedic (BPH / prostate),high
 hioraga,HIORA-GA,Himalaya,Herbal gum astringent gel (dental),Dental (Ayurvedic),high
+hiorakmouth,HIORA K MOUTH,Himalaya,,Oral/dental (herbal),low
 hioraktooth,HIORA K TOOTH,Himalaya,Potassium Nitrate + herbal (desensitising toothpaste),Dental (Ayurvedic),high
 hioraktoothpaste,HIORA-K TOOTHPASTE,Himalaya,Potassium Nitrate + herbal (desensitising toothpaste),Dental,high
+hioramouth,HIORA MOUTH,Himalaya,,Oral/dental (herbal),low
 hiorasg,HIORA-SG,Himalaya,"Herbal gum gel (dental, anti-gingivitis)",Dental (Ayurvedic),high
+hioratoothpaste,HIORA TOOTHPASTE,Himalaya,,Oral care,low
+hiownachoco,HIOWNA CHOCO,Himalaya,,Nutrition (protein),low
+hiownakidzchocolate,HIOWNA KIDZ CHOCOLATE,Himalaya,,Nutrition (protein),low
+hiownamomz,HIOWNA MOMZ,Himalaya,,Nutrition (protein),low
 hisaka2,HISAKA 2,Eris,Polmacoxib 2mg,Analgesic (NSAID/COX-2),high-verified
+histac150,HISTAC 150,Ranbaxy,Ranitidine,Anti-ulcer (H2 blocker),high
+histac300,HISTAC 300,Ranbaxy,Ranitidine,Anti-ulcer (H2 blocker),high
 histafree,HISTAFREE,Mankind,Fexofenadine,Anti-allergic,high
+histafree,HISTAFREE,Mankind,Olopatadine,Ophthalmic antihistamine,med
 histafree120,HISTAFREE 120,Mankind,Fexofenadine 120mg,Antihistamine,high
 histafree180,HISTAFREE 180,Mankind,Fexofenadine 180mg,Antihistamine,high
 histafreem,HISTAFREE-M,Mankind,Fexofenadine + Montelukast (paediatric),Anti-allergic,high
 histakind,HISTAKIND,Mankind,Cetirizine 5mg/5ml,Anti-allergic,high
+histakind120,HISTAKIND 120,Mankind,Fexofenadine,Antihistamine,high
+histakind180,HISTAKIND 180,Mankind,Fexofenadine,Antihistamine,high
+histakindm,HISTAKIND M,Mankind,Levocetirizine + Montelukast,Antihistamine/anti-asthmatic,med
+histecrd,HISTEC RD,Ranbaxy,Cetirizine,Antihistamine,med
 homocheck,HOMOCHECK,Alkem,Folic Acid + Methylcobalamin + Pyridoxine,Nutritional supplement (Homocysteine),high
+homocheck,HOMOCHECK,Ulticare,Folic acid + Methylcobalamin + Pyridoxine,Supplement,med
+hopecardh5125,HOPECARD H 5/12.5,Aristo,Ramipril + Hydrochlorothiazide,Antihypertensive,high-verified
 hp,HP,Sun Pharma,Amoxicillin + Clarithromycin + Pantoprazole (H. pylori kit),Gastrointestinal (H. pylori eradication),high
+hpcough,HP COUGH,Global,,Cough,low
 hqtor,HQTOR,Torrent,Hydroxychloroquine,DMARD / Antimalarial,high
+hqtor300,HQTOR 300,Torrent,Hydroxychloroquine,Antimalarial/DMARD,high
+hufpuf,HUF PUF,Cipla,,Respiratory,low
 humalog,HUMALOG,Cipla,Insulin Lispro,Antidiabetic (Insulin),high
 humalogjuniorkwikpen,HUMALOG JUNIOR KWIKPEN,Cipla,Insulin Lispro,Antidiabetic (Insulin),high
 humalogkwikpen100ml1x,HUMALOG KWIKPEN 100 ML 1 X,Cipla,Insulin Lispro,Antidiabetic (Insulin),high
+humalogkwikpen200u,HUMALOG KWIKPEN 200U,Cipla,Insulin lispro,Antidiabetic (insulin),high
 humalogmix25,HUMALOG MIX 25,Cipla,Insulin Lispro 25% + Insulin Lispro Protamine 75% (biphasic),Antidiabetic (Insulin),high
 humalogmix25kwikpen100,HUMALOG MIX 25 KWIKPEN 100,Cipla,Insulin Lispro 25% + Insulin Lispro Protamine 75% (biphasic),Antidiabetic (Insulin),high
+humalogmix50,HUMALOG┬ MIX 50,Cipla,Insulin lispro (premix),Antidiabetic (insulin),high
 humalogmix50kwikpen,HUMALOG┬ MIX 50 KWIKPEN,Cipla,Insulin Lispro 50% + Insulin Lispro Protamine 50% (biphasic),Antidiabetic (Insulin),high
 humanactrapid40,HUMAN ACTRAPID 40,Abbott,Regular Human Insulin (soluble),Antidiabetic (Insulin),high
 humaninsulatard40,HUMAN INSULATARD 40,Abbott,Isophane Insulin (NPH),Antidiabetic (Insulin),high
@@ -2727,26 +3025,68 @@ huminsulin3070,HUMINSULIN 30/70,Lupin,Biphasic Isophane Insulin (30/70),Antidiab
 huminsulin3070,HUMINSULIN 30/70,Lupin,Human insulin 30/70 (premix),Antidiabetic (insulin),high
 huminsulin3070100,HUMINSULIN 30/70 100,Lupin,Biphasic Isophane Insulin (30/70),Antidiabetic (Insulin),high
 huminsulin5050cart,HUMINSULIN 50/50 CART,Lupin,Biphasic Isophane Insulin (50/50),Antidiabetic (Insulin),high
+huminsulinn,HUMINSULIN-N,Lupin,Insulin (NPH/isophane),Antidiabetic (insulin),high
 huminsulinnph40,HUMINSULIN-NPH 40,Lupin,Isophane Insulin (NPH),Antidiabetic (Insulin),high
+huminsulinnphcart,HUMINSULIN NPH CART,Lupin,Insulin (NPH/isophane),Antidiabetic (insulin),high
+huminsulinregular40,HUMINSULIN REGULAR 40,Lupin,Insulin (regular),Antidiabetic (insulin),high
 huminsulinregularcart,HUMINSULIN REGULAR CART,Lupin,Human Insulin (Regular/Soluble),Antidiabetic (Insulin),high
 hydentk,HYDENT K,Abbott,Potassium Nitrate + Sodium Monofluorophosphate (desensitising),Dental,high
 hydentprotoothpaste,HYDENT PRO TOOTHPASTE,Abbott,Potassium Nitrate + Sodium Fluoride (desensitising toothpaste),Dental,high
+hydrohealsoft,HYDROHEAL SOFT,Eris,,Wound care,low
+hydroquin,HYDROQUIN,Stancare,Hydroxychloroquine,Antimalarial/DMARD,high
 hyperneb3,HYPERNEB 3%,Cipla,Sodium chloride 3% (hypertonic saline),Respiratory,high
+hyperneb7,HYPERNEB 7%,Cipla,Sodium chloride (hypertonic),Respiratory (nebulizer),med
 hytrin1,HYTRIN 1,Abbott,Terazosin 1mg,Cardiovascular (Alpha-blocker),high
+hytrin2,HYTRIN 2,Abbott,Terazosin,Alpha-blocker (BPH/HTN),high
+ibaxitsr40,IBAXIT SR 40,Alembic,Febuxostat,Anti-gout,high-verified
+ibaxitsr80,IBAXIT SR 80,Alembic,Febuxostat,Anti-gout,high-verified
+ibscim,IBSCIM,Torrent,,Gastrointestinal (IBS),low
+ibugesicasp,IBUGESIC ASP,Cipla,Ibuprofen,NSAID,med
 ibugesicplus,IBUGESIC PLUS,Cipla,Ibuprofen + Paracetamol,Analgesic / NSAID,high
+ican,I-CAN,Piramal,,Pregnancy test kit (device),low
 idipilt,IDIPIL T,Eris,Telmisartan 40mg + Indapamide 1.5mg,Cardiovascular (Antihypertensive),high-verified
+idrofos,IDROFOS,Ranbaxy,Ibandronic acid,Osteoporosis (bisphosphonate),med
+idrofos150,IDROFOS 150,Ranbaxy,Ibandronic acid,Osteoporosis (bisphosphonate),high
+if2,IF2,Cipla,,Ophthalmic,low
+ifin,IFIN,Glenmark,Terbinafine,Antifungal (topical),high
+ifin250,IFIN 250,Glenmark,Terbinafine,Antifungal,high
+ifin500,IFIN 500,Glenmark,Terbinafine,Antifungal,high
 iknow,IKNOW,Piramal,Pregnancy test kit (diagnostic),Diagnostic,high
+imaxforte,IMAX FORTE,Aristo,Ferrous ascorbate + Folic acid,Hematinic,med
+imaxs,IMAX S,Aristo,Iron sucrose,Hematinic (IV iron),med
+imaxxt,IMAX XT,Aristo,Ferrous ascorbate + Folic acid,Hematinic,high-verified
+imeclass,IMECLASS,Centaur,Imeglimin,Antidiabetic,high
+imeclass1000,IMECLASS 1000,Centaur,Imeglimin,Antidiabetic,high-verified
 imextor1000,IMEXTOR 1000,Torrent,Imeglimin 1000mg,Antidiabetic,high-verified
 imextor500,IMEXTOR 500,Torrent,Imeglimin 500mg,Antidiabetic,high-verified
+imferoniv,IMFERON IV,Alembic,Iron dextran,Hematinic (IV iron),med
+imiquad,IMIQUAD,Gracewel,Imiquimod,Topical immunomodulator,high
+immucplus,IMMUC PLUS,Mankind,,Immunity supplement,low
+immugard200,IMMUGARD 200,Aristo,,Immunity supplement,low
+immugardc,IMMUGARD C,Aristo,,Immunity supplement,low
+immunoboosters46yrs,IMMUNO BOOSTERS 4 6 YRS,Cipla,,Immunity supplement,low
+immunoboosters7yrs,IMMUNO BOOSTERS 7+YRS,Cipla,,Immunity supplement,low
+immupride,IMMUPRIDE,Miles,,Immunity supplement,low
+immusante,IMMUSANTE,Himalaya,Polyherbal (Ayurvedic),Ayurvedic (immunity),med
+imubless,IMUBLESS,Mankind,,Immunity supplement,low
 inapure5,INAPURE 5,Sun Pharma,Ivabradine 5mg,Cardiovascular (Anti-anginal),high
+inapureer10,INAPURE ER 10,Sun Pharma,Ivabradine,Cardiac (anti-anginal),high
+incid,INCID,Bayer,Cetirizine,Antihistamine,high-verified
+incidmd,INCID MD,Bayer,Levocetirizine,Antihistamine,high-verified
+incidultra,INCID ULTRA,Bayer,Levocetirizine + Montelukast,Antihistamine/anti-asthmatic,med
 indactiv,INDACTIV,Glenmark,Indacaterol + Glycopyrronium,Respiratory (LABA+LAMA),high
 indactiv160dpi,INDACTIV 160 DPI,Glenmark,Indacaterol 160mcg,"Respiratory (LABA, COPD)",high
+indactiv320dpi,INDACTIV 320 DPI,Glenmark,Indacaterol + Mometasone,Respiratory,med
+indamet,INDAMET,Glenmark,Indacaterol + Glycopyrronium + Mometasone,Respiratory,med
+indamet160dpi,INDAMET 160 DPI,Glenmark,Indacaterol + Mometasone,Respiratory,med
 indamet320dpi,INDAMET 320 DPI,Glenmark,Indacaterol 150mcg + Mometasone Furoate 320mcg,Respiratory (LABA+ICS),high-verified
 inderal10,INDERAL 10,Abbott,Propranolol 10mg,Cardiovascular (Beta-blocker),high
 inderal20,INDERAL 20,Abbott,Propranolol 20mg,Cardiovascular (Beta-blocker),high
 inderal40,INDERAL 40,Abbott,Propranolol 40mg,Cardiovascular (Beta-blocker),high
 inderalf10,INDERAL F 10,Abbott,Propranolol 10mg,Cardiovascular (Beta-blocker),med
+inderalf5,INDERAL F 5,Abbott,Propranolol + Flunarizine,Antimigraine,med
 inderalla20,INDERAL LA 20,Abbott,Propranolol 20mg LA,Cardiovascular (Beta-blocker),high
+inderalla40,INDERAL LA 40,Abbott,Propranolol,Beta-blocker,high
 indipil15,INDIPIL 1.5,Eris,Indapamide 1.5mg,Cardiovascular (Diuretic),high
 indipil25,INDIPIL 2.5,Eris,Indapamide 2.5mg,Cardiovascular (Diuretic),high
 indipilam10,INDIPIL AM 10,Eris,Amlodipine + Indapamide 1.5mg,Cardiovascular (Antihypertensive),high-verified
@@ -2755,77 +3095,157 @@ indipilam5,INDIPIL AM 5,Eris,Amlodipine 5mg + Indapamide 1.5mg,Cardiovascular (A
 indipilt,INDIPIL T,Eris,Telmisartan 40mg + Indapamide 1.5mg,Cardiovascular (Antihypertensive),high-verified
 inditel20,INDITEL 20,Zydus,Telmisartan 20mg,Cardiovascular (ARB),high
 inditel40,INDITEL 40,Zydus,Telmisartan 40mg,Cardiovascular (ARB),high
+inditel40ch,INDITEL 40CH,Zydus,Telmisartan + Chlorthalidone,Antihypertensive,med
 inditelam,INDITEL AM,Zydus,Telmisartan 40mg + Amlodipine 5mg,Cardiovascular (Antihypertensive),high
+inditeld,INDITEL-D,Zydus,Telmisartan + Cilnidipine,Antihypertensive,med
+indoivimg,INDO IV IMG,Sun Pharma,Indomethacin,NSAID (neonatal PDA),med
+infinair510,INFINAIR 5+10,Pfizer,Montelukast + Levocetirizine,Antihistamine/anti-asthmatic,high
 instahaler,INSTAHALER,Glenmark,Inhaler device,Respiratory (Device),high
 instahalerp15,INSTAHALER P 15,Glenmark,Menthol + Camphor + Eucalyptus (nasal inhaler),ENT (Nasal decongestant inhaler),med
 instaraft,INSTARAFT,Sun Pharma,Sodium Alginate + Sodium Bicarbonate + Calcium Carbonate (antacid raft),GI (Antacid),high
+instaspacerdevice,INSTASPACER DEVICE,Glenmark,,Respiratory device,low
+insulatardflexpen,INSULATARD FLEXPEN,Abbott,Insulin (NPH/isophane),Antidiabetic (insulin),high
+insultardhmpenfill,INSULTARD HM PENFILL,Abbott,Insulin (NPH/isophane),Antidiabetic (insulin),high
+insuminforte,INSUMIN FORTE,Ulticare,Methylcobalamin + Alpha Lipoic Acid + Chromium + Selenium,Neurotropic/antioxidant,high-verified
+insuminplus,INSUMIN PLUS,Ulticare,Methylcobalamin + Alpha Lipoic Acid + Chromium + Selenium,Neurotropic/antioxidant,med
 intimacyplus2,INTIMACY PLUS 2,Aristo,Desogestrel 0.15mg + Ethinylestradiol 0.02mg,Hormone (Oral contraceptive),high-verified
 intimacyplus3,INTIMACY PLUS 3,Aristo,Desogestrel 0.15mg + Ethinylestradiol 0.03mg,Hormone (Oral contraceptive),high
+intiwash,INTIWASH,Mankind,,Intimate wash,low
 inzit4,INZIT 4,Eris,Benidipine 4mg,Cardiovascular (Antihypertensive / CCB),high-verified
 inzit8,INZIT 8,Eris,Benidipine 8mg,Cardiovascular (CCB / antihypertensive),high
+inzittl40,INZIT TL 40,Eris,Telmisartan,Antihypertensive,med
+inzittl80,INZIT TL 80,Eris,Telmisartan,Antihypertensive,med
 inzofresh10,INZOFRESH 10,Mankind,Zolpidem 10mg,CNS (Hypnotic / insomnia),high-verified
+inzofresh5,INZOFRESH 5,Mankind,Zolpidem,Hypnotic,high-verified
 ipill,IPILL,Piramal,Levonorgestrel 1.5mg,Hormone (Emergency contraceptive),high
+ipilldaily,I-PILL DAILY,Piramal,Levonorgestrel + Ethinylestradiol,Contraceptive (OC),med
+ipravent,IPRAVENT,Cipla,Ipratropium,Respiratory,high
 ipraventresp,IPRAVENT RESP,Cipla,Ipratropium (respules),Respiratory (Bronchodilator),high
 irban5,IRBAN 5,Glenmark,Ivabradine 5mg,Cardiovascular (Anti-anginal),high
+irban75,IRBAN 7.5,Glenmark,Ivabradine,Cardiac (anti-anginal),high-verified
 irbanod10,IRBAN OD 10,Glenmark,Ivabradine 10mg,Cardiovascular (Anti-anginal),high-verified
 irovap,IROVAP,Neovae,,Hematinic,low
+irovel150,IROVEL 150,Sun Pharma,Irbesartan,Antihypertensive,high
+irovel300,IROVEL 300,Sun Pharma,Irbesartan,Antihypertensive,high
+isiteaf,I SITE-AF,Sun Pharma,,Ocular supplement,low
+isiteplus,I SITE PLUS,Sun Pharma,,Ocular supplement,low
+isofer,ISOFER,Lupin,Iron sucrose,Hematinic (IV iron),med
 isofit,ISOFIT,Megacare,Dydrogesterone 10mg,Hormone (Progestogen),high-verified
 isofitsr20,ISOFIT SR 20,Megacare,Dydrogesterone 20mg,Hormone (Progestogen),high-verified
+isofitsr30,ISOFIT SR 30,Megacare,Isosorbide mononitrate,Anti-anginal,med
+isokin300,ISOKIN 300,Pfizer,Isoniazid,Anti-TB,high
 isomil,ISOMIL,Abbott,Soy protein infant formula (lactose-free),Nutrition (Infant),high
 isotroin10,ISOTROIN 10,Cipla,Isotretinoin 10mg,Dermatological (Acne),high
 isotroin20,ISOTROIN 20,Cipla,Isotretinoin 20mg,"Dermatological (Acne, retinoid)",high
 istamet501000,ISTAMET 50/1000,Sun Pharma,Sitagliptin 50mg + Metformin 1000mg,Antidiabetic,high
 istamet50500,ISTAMET 50/500,Sun Pharma,Sitagliptin 50mg + Metformin 500mg,Antidiabetic,high
+istametdir550500tab,ISTAMET D IR 5/50/500TAB,Sun Pharma,Sitagliptin + Metformin + Dapagliflozin,Antidiabetic,med
 istametdxr100010,ISTAMET D XR 1000 10,Sun Pharma,Sitagliptin 100mg + Dapagliflozin 10mg + Metformin 1000mg,Antidiabetic,high
 istametdxr500,ISTAMET D-XR 500,Sun Pharma,Sitagliptin 100mg + Dapagliflozin 10mg + Metformin 500mg ER,Antidiabetic,high
 istametempa101001000,ISTAMET EMPA 10/100/1000,Sun Pharma,Empagliflozin 10mg + Sitagliptin 100mg + Metformin 1000mg,Antidiabetic,high
 istametempa251001000,ISTAMET EMPA 25/100/1000,Sun Pharma,Empagliflozin 25mg + Sitagliptin 100mg + Metformin 1000mg,Antidiabetic,high
 istametgir505001,ISTAMET G-IR 50/500/1,Sun Pharma,Sitagliptin 50mg + Metformin 500mg + Glimepiride 1mg,Antidiabetic,high
+istametxr1000,ISTAMET XR 1000,Sun Pharma,Sitagliptin + Metformin,Antidiabetic,high
+istametxr500,ISTAMET XR 500,Sun Pharma,Sitagliptin + Metformin,Antidiabetic,high
 istavel100,ISTAVEL 100,Sun Pharma,Sitagliptin 100mg,Antidiabetic,high
 istavel50,ISTAVEL 50,Sun Pharma,Sitagliptin 50mg,Antidiabetic,high
 istaveld10100,ISTAVEL-D 10/100,Sun Pharma,Sitagliptin 100mg + Dapagliflozin 10mg,Antidiabetic,high
+istaveld1050,ISTAVEL-D 10/50,Sun Pharma,Sitagliptin + Dapagliflozin,Antidiabetic,med
 istaveld5100,ISTAVEL-D 5/100,Sun Pharma,Sitagliptin 100mg + Dapagliflozin 5mg,Antidiabetic,high
+istaveld550,ISTAVEL-D 5/50,Sun Pharma,Sitagliptin + Dapagliflozin,Antidiabetic,med
+itolizac,ITOLIZAC,Sun Pharma,Itolizumab,Immunosuppressant (biologic),med
+itraclar100,ITRACLAR 100,Torrent,Itraconazole,Antifungal,high
+itraclar200,ITRACLAR 200,Torrent,Itraconazole,Antifungal,high
+itraconal100,ITRACONAL 100,Global,Itraconazole,Antifungal,high
+itraconal200,ITRACONAL 200,Global,Itraconazole,Antifungal,high
+itrafix100,ITRAFIX 100,Aristo,Itraconazole,Antifungal,high
+itrafix200,ITRAFIX 200,Aristo,Itraconazole,Antifungal,high
+itragreat100,ITRAGREAT 100,Life Star,Itraconazole,Antifungal,high
+itranox,ITRANOX,Cipla,Itraconazole,Antifungal,high
+itratuf,ITRATUF,Alkem,Itraconazole,Antifungal,high
+itratuf100,ITRATUF 100,Alkem,Itraconazole,Antifungal,high
+itratuf200,ITRATUF 200,Alkem,Itraconazole,Antifungal,high
 ityza200,I TYZA 200,Abbott,Itraconazole 200mg,Antifungal,high
+ivabid,IVABID,Abbott,Ivabradine,Cardiac (anti-anginal),high
+ivepred1000,IVEPRED 1000,Sun Pharma,Methylprednisolone,Corticosteroid,high
+ivepred125,IVEPRED 125,Sun Pharma,Methylprednisolone,Corticosteroid,high
 ivepred16,IVEPRED 16,Sun Pharma,Methylprednisolone 16mg,Corticosteroid,high
 ivepred4,IVEPRED 4,Sun Pharma,Methylprednisolone 4mg,Corticosteroid,high
+ivepred40,IVEPRED 40,Sun Pharma,Methylprednisolone,Corticosteroid,high
+ivepred500,IVEPRED 500,Sun Pharma,Methylprednisolone,Corticosteroid,high
+ivepred8,IVEPRED 8,Sun Pharma,Methylprednisolone,Corticosteroid,high
 iverkind12,IVERKIND 12,Life Star,Ivermectin 12mg,Antiparasitic,high
+iverkind6,IVERKIND 6,Life Star,Ivermectin,Antiparasitic,high
+ivermectol12,IVERMECTOL 12,Stancare,Ivermectin,Antiparasitic,high
+ivit12,I VIT 12,Torrent,Methylcobalamin,Vitamin (B12),med
+ivitpro,I-VIT PRO,Torrent,,Ocular supplement,low
+izra,IZRA,Torrent,Rabeprazole + Levosulpiride,PPI/prokinetic,med
 izra40,IZRA 40,Torrent,Esomeprazole 40mg,GI (PPI),high-verified
 izrad40,IZRA D 40,Torrent,Esomeprazole 40mg + Domperidone 30mg,GI (PPI + prokinetic),high
+jankey50,JANKEY 50,Cadila Pharmaceuticals,Sitagliptin,Antidiabetic,high-verified
+jankeyd10010,JANKEY D 100/10,Cadila Pharmaceuticals,Sitagliptin + Dapagliflozin,Antidiabetic,med
 janumet501000,JANUMET 50/1000,Abbott,Sitagliptin 50mg + Metformin 1000mg,Antidiabetic,high
 janumet50500,JANUMET 50/500,Abbott,Sitagliptin 50mg + Metformin 500mg,Antidiabetic,high
 janumetxrcp,JANUMET XRCP,Abbott,Sitagliptin + Metformin (XR),Antidiabetic,high
 januvia100,JANUVIA 100,Abbott,Sitagliptin 100mg,Antidiabetic,high
 januvia50,JANUVIA 50,Abbott,Sitagliptin 50mg,Antidiabetic,high
+jbros10,JBROS 10,J.B. Chemicals,Rosuvastatin,Hypolipidemic,high
+jbros20,JBROS 20,J.B. Chemicals,Rosuvastatin,Hypolipidemic,high
+jbtor,JBTOR,J.B. Chemicals,Torsemide,Diuretic,high-verified
 jbtor20,JB TOR 20,J.B. Chemicals,Atorvastatin 20mg,Cardiovascular (Statin),high
+jbtor40,JB TOR 40,J.B. Chemicals,Torsemide,Diuretic,high-verified
+jointbond,JOINTBOND,Zydus,Glucosamine,Joint supplement,med
+joykemodt100,JOYKEM ODT 100,Alkem,Amisulpride,Antipsychotic,high-verified
 joykemodt50,JOYKEM ODT 50,Alkem,Amisulpride 50mg,CNS (Antipsychotic),high-verified
+juniorcipeg1211,JUNIOR CIPEG 121.1,Cipla,Polyethylene glycol 3350,Laxative,med
 juniorlanzol15,JUNIOR LANZOL 15,Cipla,Lansoprazole 15mg,Gastrointestinal (PPI),high
 juniorlanzol30,JUNIOR LANZOL 30,Cipla,Lansoprazole 30mg,GI (PPI),high
+juniorraniciz,JUNIOR RANICIZ,Cipla,Ranitidine,Anti-ulcer (H2 blocker),med
 jupiros10,JUPIROS 10,Alkem,Rosuvastatin 10mg,Cardiovascular (Statin),high
 jupiros20,JUPIROS 20,Alkem,Rosuvastatin 20mg,Cardiovascular (Lipid-lowering),high
 jupiros40,JUPIROS 40,Alkem,Rosuvastatin 40mg,Cardiovascular (Statin),high
 jupiros5,JUPIROS 5,Alkem,Rosuvastatin 5mg,Cardiovascular (Lipid-lowering),high
 jupirosa,JUPIROS-A,Alkem,Rosuvastatin + Aspirin,Cardiovascular,high
+jupirosa150,JUPIROS A 150,Alkem,Rosuvastatin + Aspirin,Cardiac/hypolipidemic,high
+jupirosa20150,JUPIROS A 20/150,Alkem,Rosuvastatin + Aspirin,Cardiac/hypolipidemic,high
 jupiroscv10,JUPIROS CV 10,Alkem,Rosuvastatin 10mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,high
 jupiroscv20,JUPIROS CV 20,Alkem,Rosuvastatin 20mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,high
 jupirosf,JUPIROS F,Alkem,Rosuvastatin + Fenofibrate,Cardiovascular (Lipid-lowering),high
 jupirosgold10,JUPIROS GOLD 10,Alkem,Rosuvastatin 10mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,med
 jupirosgold20,JUPIROS GOLD 20,Alkem,Rosuvastatin 20mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,med
+juvetra,JUVETRA,Eris,,Tonic,low
 kabvie10,KABVIE 10,Torrent,Vonoprazan 10mg,Gastrointestinal (Potassium-competitive acid blocker),high-verified
 kabvie20,KABVIE 20,Torrent,Vonoprazan 20mg,GI (P-CAB),high
 kainase,KAINASE,Miles,,,low
+karb3125,KAR-B 3.125,J.B. Chemicals,Carvedilol,Beta-blocker,high
+karb625,KAR-B 6.25,J.B. Chemicals,Carvedilol,Beta-blocker,high
+karela,KARELA,Himalaya,Momordica charantia (Karela),Ayurvedic (antidiabetic),high
+karimed,KARIMED,Global,,,low
+keflor,KEFLOR,Ranbaxy,Cefaclor,Antibiotic,high
+keflorpaed,KEFLOR PAED,Ranbaxy,Cefaclor,Antibiotic,high
+kefpod,KEFPOD,Glenmark,Cefpodoxime,Antibiotic,high
+kefpod100dt,KEFPOD 100 DT,Glenmark,Cefpodoxime,Antibiotic,high
+kefpod100orange,KEFPOD 100 ORANGE,Glenmark,Cefpodoxime,Antibiotic,high
 kefpod200,KEFPOD 200,Glenmark,Cefpodoxime Proxetil 200mg,Antibiotic (Cephalosporin),high
 kefpodcv200,KEFPOD CV 200,Glenmark,Cefpodoxime 200mg + Clavulanic Acid,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
 kefpodo,KEFPOD O,Glenmark,Cefpodoxime Proxetil,Antibiotic (Cephalosporin),high
 kefpodorange,KEFPOD ORANGE,Glenmark,Cefpodoxime,Antibiotic (Cephalosporin),high
 kenacort01,KENACORT 0.1 %,Abbott,Triamcinolone acetonide 0.1%,Corticosteroid,high
 kenacort10,KENACORT 10,Abbott,Triamcinolone Acetonide 10mg/ml,Corticosteroid,high
+kenacort4,KENACORT 4,Abbott,Triamcinolone,Corticosteroid,high
 kenacort40,KENACORT 40,Abbott,Triamcinolone Acetonide 40mg/ml,Corticosteroid,high
 kerendia10,KERENDIA 10,Bayer,Finerenone 10mg,Cardio-renal (MRA),high
 kerendia20,KERENDIA 20,Bayer,Finerenone 20mg,Cardio-renal (MRA),high
+ketanov,KETANOV,Ranbaxy,Ketorolac,NSAID,high
+ketasma,KETASMA,Sun Pharma,Ketotifen,Antihistamine,high
 ketoadd,KETOADD,Sun Pharma,Ketoanalogues + Essential Amino Acids,Nephrology (CKD),high
+ketoaddds,KETOADD DS,Sun Pharma,Ketoanalogues + essential amino acids,Renal (CKD),med
+ketofdt,KETOF DT,Abbott,Ketotifen,Antihistamine,high
+ketoraldt,KETORAL DT,Abbott,Ketotifen,Antihistamine,med
 ketostar,KETOSTAR,Mankind,Ketoconazole,Antifungal (Topical),high
 ketostarantidandruff,KETOSTAR ANTI DANDRUFF,Mankind,Ketoconazole,Dermatological (Antifungal / anti-dandruff),high
 ketostarmedicated,KETOSTAR MEDICATED,Mankind,Ketoconazole (medicated soap),Dermatological (Antifungal),high
+ketosteril,KETOSTERIL,Alembic,Ketoanalogues + essential amino acids,Renal (CKD),med
 kgem,K-GEM,Blue Cross,Gliclazide 80mg + Metformin 500mg,Antidiabetic,high-verified
 kglim1,K-GLIM 1,Blue Cross,Glimepiride 1mg,Antidiabetic,high
 kglimm1,KGLIM M1,Blue Cross,Glimepiride 1mg + Metformin 500mg,Antidiabetic,high
@@ -2833,18 +3253,35 @@ kglimm2,KGLIM M2,Blue Cross,Glimepiride 2mg + Metformin,Antidiabetic,high
 kglimtrio1,KGLIM TRIO 1,Blue Cross,Glimepiride 1mg + Metformin + Pioglitazone,Antidiabetic,high
 kglimtrio2,KGLIM TRIO 2,Blue Cross,Glimepiride 2mg + Metformin 500mg + Pioglitazone 15mg,Antidiabetic,high
 kidpred,KIDPRED,Abbott,Prednisolone,Corticosteroid,high
+kidtro,KIDTRO,Sun Pharma,,Ophthalmic,low
+kinetoneadv,KINETONE ADV,Abbott,,Tonic,low
+klotfree,KLOTFREE,Zydus,Clopidogrel,Antiplatelet,med
+klotfreea75,KLOTFREE A 75,Zydus,Aspirin + Clopidogrel,Antiplatelet,med
+kofarest,KOFAREST,Centaur,Chlorpheniramine + Dextromethorphan + Phenylephrine,Cough/cold,med
 kofarestpd,KOFAREST PD,Centaur,Chlorpheniramine + Phenylephrine (paediatric),Cold & cough,med
+kofarestpd,KOFAREST PD,Centaur,Chlorpheniramine + Phenylephrine + Paracetamol,Cough/cold,med
+kofkindimu,KOFKIND-IMU,Life Star,,Cough (herbal),low
 koflet,KOFLET,Himalaya,Koflet (polyherbal cough formula),Ayurvedic (Cough),high
 kofletex,KOFLET EX,Himalaya,Polyherbal cough syrup (Ayurvedic),Cough (Ayurvedic),high
 koflethlozenges,KOFLET-H LOZENGES,Himalaya,Polyherbal cough lozenge (Ayurvedic),Cough (Ayurvedic),high
+kofletlozenge,KOFLET LOZENGE,Himalaya,Polyherbal (Ayurvedic),Ayurvedic (cough),high
 kofletlozenge,KOFLET LOZENGE,Himalaya,Polyherbal cough lozenge (Ayurvedic),Cough (Ayurvedic),high
+kofletsflint,KOFLET SF LINT,Himalaya,Polyherbal (Ayurvedic),Ayurvedic (cough),high
+kofletsyp6kofletlozfree,KOFLET SYP+6 KOFLET LOZ FREE,Himalaya,Polyherbal (Ayurvedic),Ayurvedic (cough),high
+kojiglo,KOJIGLO,Alkem,Kojic acid,Dermatological (depigmenting),med
+kojigloforte,KOJIGLO FORTE,Alkem,Kojic acid,Dermatological (depigmenting),med
+kojiglogold,KOJIGLO GOLD,Alkem,Kojic acid,Dermatological (depigmenting),med
 korandil10,KORANDIL 10,Sun Pharma,Nicorandil 10mg,Cardiovascular,high
 korandil5,KORANDIL 5,Sun Pharma,Nicorandil 5mg,Cardiovascular,high-verified
+kpiogm1,K-PIO-GM 1,Blue Cross,Pioglitazone + Glimepiride + Metformin,Antidiabetic,med
 kpiogm2,K-PIO-GM2,Blue Cross,Pioglitazone 15mg + Glimepiride 2mg + Metformin 500mg,Antidiabetic,high
+kpiom,K-PIO M,Blue Cross,Pioglitazone + Metformin,Antidiabetic,med
 krimson35,KRIMSON 35,Sun Pharma,Cyproterone Acetate 2mg + Ethinylestradiol 0.035mg,Hormone (Oral contraceptive / anti-androgen),high
 kyglipm50,KYGLIP-M 50,Blue Cross,Sitagliptin 50mg + Metformin,Antidiabetic,med
+labebet,LABEBET,Sun Pharma,Labetalol,Beta-blocker (antihypertensive),high
 labebet100,LABEBET 100,Sun Pharma,Labetalol 100mg,Cardiovascular (Alpha + beta blocker),high
 labebet200,LABEBET 200,Sun Pharma,Labetalol 200mg,Cardiovascular (Beta-blocker),high
+labebetinj22,LABEBET-INJ 2 2,Sun Pharma,Labetalol,Beta-blocker (antihypertensive),high
 lacopsy100,LACOPSY 100,Cipla,Lacosamide 100mg,Anticonvulsant,high
 lacopsy200,LACOPSY 200,Cipla,Lacosamide 200mg,CNS (Anticonvulsant),high
 lacopsy50,LACOPSY 50,Cipla,Lacosamide 50mg,CNS (Anticonvulsant),high
@@ -2853,34 +3290,55 @@ lacosam200,LACOSAM 200,Torrent,Lacosamide 200mg,CNS (Anticonvulsant),high
 lacosam50,LACOSAM 50,Torrent,Lacosamide 50mg,CNS (Anticonvulsant),high
 lacoset100,LACOSET 100,Sun Pharma,Lacosamide 100mg,CNS / Anticonvulsant,high
 lacoset150,LACOSET 150,Sun Pharma,Lacosamide 150mg,Anticonvulsant,high
+lacoset20,LACOSET 20,Sun Pharma,Lacosamide,Anti-epileptic,high
 lacoset200,LACOSET 200,Sun Pharma,Lacosamide 200mg,CNS (Anticonvulsant),high
 lacoset50,LACOSET 50,Sun Pharma,Lacosamide 50mg,CNS (Anticonvulsant),high
+lacsyp,LACSYP,Cipla,Lactulose,Laxative,high
 lactifiber,LACTIFIBER,Sun Pharma,Ispaghula (Psyllium) husk + Lactic Acid Bacillus,Laxative / Fibre supplement,high
+lactifiber,LACTIFIBER,Alembic,Ispaghula (psyllium husk),Laxative/fiber,med
 lactifiber,LACTIFIBER,Sun Pharma,Psyllium husk + probiotic (dietary fibre),GI (Fibre/Probiotic),med
 lactifiber210210,LACTIFIBER 210 210,Sun Pharma,Ispaghula (Psyllium) husk + Lactic Acid Bacillus,Laxative / Fibre supplement,high
 lactihepplus,LACTIHEP PLUS,Sun Pharma,Liquid Paraffin + Milk of Magnesia + Sodium Picosulphate,Laxative,med
 lactihepsup,LACTIHEP SUP,Sun Pharma,Lactulose,GI (Laxative),high
+lactocalamineocaloe,LACTO CALAMINE OC ALOE,Piramal,Calamine,Dermatological,med
 lactogutkidz,LACTOGUT KIDZ,Eris,"Probiotic (Lactobacillus + Bifidobacterium, paediatric)",Probiotic supplement,high
+lactonic,LACTONIC,Megacare,Lactic acid bacillus (probiotic),Probiotic,med
 lactonic,LACTONIC,Megacare,Lactobacillus (probiotic),GI (Probiotic),high
 lactovitdry,LACTOVIT DRY,Eris,Lactobacillus (probiotic),GI (Probiotic),high
+lactovitdsdry,LACTOVIT DS DRY,Medispan,Lactic acid bacillus (probiotic),Probiotic,med
+laglo,LAGLO,Zydus,,Dermatological-cosmetic,low
 lametec100dt,LAMETEC 100 DT,Cipla,Lamotrigine 100mg,Anticonvulsant,high
 lametec25dt,LAMETEC 25 DT,Cipla,Lamotrigine 25mg,CNS (Anticonvulsant),high
 lametec50dt,LAMETEC 50 DT,Cipla,Lamotrigine 50mg,Anticonvulsant,high
+lamino,LAMINO,Alembic,,Supplement,low
+lamitordt100,LAMITOR DT 100,Torrent,Lamotrigine,Anti-epileptic,high
+lamitordt25,LAMITOR DT 25,Torrent,Lamotrigine,Anti-epileptic,high
+lamitordt50,LAMITOR DT 50,Torrent,Lamotrigine,Anti-epileptic,high
 lamitorod100,LAMITOR OD 100,Torrent,Lamotrigine 100mg,Anticonvulsant,high
+lamitorod200,LAMITOR OD 200,Torrent,Lamotrigine,Anti-epileptic,high
+lamitorod50,LAMITOR OD 50,Torrent,Lamotrigine,Anti-epileptic,high
 lamivirhbv,LAMIVIR HBV,Cipla,Lamivudine 100mg,Antiviral (Hepatitis B),high
 lamosyn100,LAMOSYN 100,Sun Pharma,Lamotrigine 100mg,Anticonvulsant,high
 lamosyn25,LAMOSYN 25,Sun Pharma,Lamotrigine 25mg,CNS (Anticonvulsant),high
 lamosyn50,LAMOSYN 50,Sun Pharma,Lamotrigine 50mg,Anticonvulsant,high
 lashieldfisicomattesunscree,LASHIELD FISICO MATTE SUNSCREE,Glenmark,Sunscreen (cosmetic),Personal care,high
 lashieldsunscreen,LASHIELD SUNSCREEN,Glenmark,Sunscreen (cosmetic),Personal care,high
+lasuna,LASUNA,Himalaya,Allium sativum (Garlic),Ayurvedic (hypolipidemic),high
+latoprost,LATOPROST,Sun Pharma,Latanoprost,Ophthalmic anti-glaucoma,high
+latoprostrt,LATOPROST RT,Sun Pharma,Latanoprost,Ophthalmic anti-glaucoma,high
+lavera750,LAVERA 750,Alembic,Levetiracetam,Anti-epileptic,high
+laveta10,LAVETA 10,Alembic,Levocetirizine,Antihistamine,med
 laveta5,LAVETA 5,Alembic,Levocetirizine 5mg,Antihistamine,high
 lavetaa,LAVETA A,Alembic,Levocetirizine 5mg + Ambroxol 75mg,Respiratory/Anti-allergic,high-verified
+lavetam,LAVETA M,Alembic,Levocetirizine + Montelukast,Antihistamine/anti-asthmatic,med
 lavetam10,LAVETA M 10,Alembic,Levocetirizine + Montelukast,Anti-allergic / Respiratory,high
 laxolite,LAXOLITE,J.B. Chemicals,Lactitol (or PEG) — osmotic laxative,GI (Laxative),high-verified
 lc,LC,Piramal,Calamine + Kaolin + Light Liquid Paraffin (oil-control lotion),Dermatological (Cosmetic),med
 lc,LC,Piramal,Face lotion (cosmetic),Personal care,high
 lc,LC,Piramal,Oil-control face wash (cosmetic),Personal care,high
+lcf,LCF,Lupin,Levocloperastine + Guaifenesin,Cough/expectorant,med
 lcfkid,LCF KID,Lupin,Ambroxol + Guaifenesin + Terbutaline + Menthol,Cough / Respiratory (Expectorant),high-verified
+lcfls,LCF LS,Lupin,Levocloperastine + Levosalbutamol,Cough,med
 lcin250,L-CIN 250,Lupin,Levofloxacin 250mg,Antibiotic (Fluoroquinolone),high
 lcin500,L-CIN 500,Lupin,Levofloxacin 500mg,Antibiotic (Fluoroquinolone),high
 lcin750,L-CIN 750,Lupin,Levofloxacin 750mg,Antibiotic (Fluoroquinolone),high
@@ -2888,16 +3346,28 @@ lcinoz,L-CIN OZ,Lupin,Levofloxacin + Ornidazole,Antibiotic,high
 lecope,LECOPE,Mankind,Levocetirizine,Anti-allergic,high
 lecopead,LECOPE-AD,Mankind,Ambroxol 60mg + Phenylephrine 5mg + Levocetirizine 5mg,Cough / Cold,high-verified
 lecopem,LECOPE-M,Mankind,Levocetirizine + Montelukast,Anti-allergic / Respiratory,high
+lecopemkid,LECOPE-M KID,Mankind,Levocetirizine + Montelukast,Antihistamine/anti-asthmatic,high
 lecopesy,LECOPE SY,Mankind,Levocetirizine,Anti-allergic,high
 lefra10,LEFRA 10,Torrent,Leflunomide 10mg,DMARD (Anti-rheumatic),high
 lefra20,LEFRA 20,Torrent,Leflunomide 20mg,DMARD (Anti-rheumatic),high
+lefumide20,LEFUMIDE 20,Cipla,Leflunomide,DMARD,high
+lenteclinlb,LENTECLIN LB,Aristo,,Antibiotic,low
 lesuride,LESURIDE,Sun Pharma,Amisulpride,CNS (Antipsychotic),high
+lesuride,LESURIDE,Sun Pharma,Levosulpiride,Prokinetic/antipsychotic,high
+lesuridemps,LESURIDE MPS,Sun Pharma,Levosulpiride,Prokinetic/antipsychotic,med
 lesurideod75,LESURIDE OD 75,Sun Pharma,Levosulpiride 75mg OD,GI (Prokinetic),high
+letoval25,LETOVAL 2.5,Sun Pharma,Letrozole,Fertility (ovulation),high
 letpro25,LETPRO 2.5,Aristo,Letrozole 2.5mg,Hormone (Aromatase inhibitor),high
+letrohope25,LETROHOPE 2.5,Mankind,Letrozole,Fertility (ovulation),high
+letroz25,LETROZ 2.5,Sun Pharma,Letrozole,Fertility (ovulation),high
 letroz25,LETROZ 2.5,Sun Pharma,Letrozole 2.5mg,Aromatase inhibitor (Anti-cancer / fertility),high
+levazeo25,LEVAZEO 25,Torrent,Levosulpiride,Prokinetic/antipsychotic,high-verified
+levazeo50,LEVAZEO 50,Torrent,Levosulpiride,Prokinetic/antipsychotic,high-verified
+levemirflexpens,LEVEMIR FLEXPENS,Abbott,Insulin detemir,Antidiabetic (insulin),high
 levenue,LEVENUE,Alkem,Levetiracetam (syrup),Anticonvulsant,high
 levenue250,LEVENUE 250,Alkem,Levetiracetam 250mg,Anticonvulsant,high
 levenue500,LEVENUE 500,Alkem,Levetiracetam 500mg,Anticonvulsant,high-verified
+levenue750,LEVENUE 750,Alembic,Levetiracetam,Anti-epileptic,high
 levenue750,LEVENUE 750,Alkem,Levetiracetam 750mg,Anticonvulsant,high
 levepsy250,LEVEPSY 250,Cipla,Levetiracetam 250mg,CNS (Anticonvulsant),high
 levepsy500,LEVEPSY 500,Cipla,Levetiracetam 500mg,Anticonvulsant,high
@@ -2910,30 +3380,48 @@ levipil,LEVIPIL,Sun Pharma,Levetiracetam,CNS (Anticonvulsant),high
 levipil,LEVIPIL,Sun Pharma,Levetiracetam 1000mg,Anticonvulsant,high
 levipil250,LEVIPIL 250,Sun Pharma,Levetiracetam 250mg,CNS (Anticonvulsant),high
 levipil500,LEVIPIL 500,Sun Pharma,Levetiracetam 500mg,CNS / Anticonvulsant,high
+levipil750,LEVIPIL 750,Sun Pharma,Levetiracetam,Anti-epileptic,high
+levipilrtu1000vail,LEVIPIL RTU 1000 VAIL,Sun Pharma,Levetiracetam,Anti-epileptic,high
+levipilrtu500vail,LEVIPIL RTU 500 VAIL,Sun Pharma,Levetiracetam,Anti-epileptic,high
+levipilxr,LEVIPIL XR,Sun Pharma,Levetiracetam,Anti-epileptic,high
+levipilxr500,LEVIPIL XR 500,Sun Pharma,Levetiracetam,Anti-epileptic,high
+levipilxr750,LEVIPIL XR 750,Sun Pharma,Levetiracetam,Anti-epileptic,high
+levoday500,LEVODAY 500,Zydus,Levofloxacin,Antibiotic,high
 levoflox250,LEVOFLOX 250,Cipla,Levofloxacin 250mg,Antibiotic (Fluoroquinolone),high
 levoflox500,LEVOFLOX 500,Cipla,Levofloxacin 500mg,Antibiotic (Fluoroquinolone),high
 levoflox750,LEVOFLOX 750,Cipla,Levofloxacin 750mg,Antibiotic (Fluoroquinolone),high
 levofloxiv,LEVOFLOX I V,Cipla,Levofloxacin,Antibiotic (Fluoroquinolone),high
 levogastrol25,LEVOGASTROL 25,Alembic,Levosulpiride 25mg,GI (Prokinetic),high
+levogastrolod,LEVOGASTROL-OD,Alembic,Levosulpiride,Prokinetic,med
 levokast,LEVOKAST,Mankind,Levocetirizine 5mg + Montelukast 10mg,Anti-allergic,high
 levokastax,LEVOKAST AX,Mankind,Ambroxol 75mg + Levocetirizine 5mg + Montelukast 10mg,Respiratory/Anti-allergic,high-verified
 levokastkid,LEVOKAST KID,Mankind,Levocetirizine 2.5mg + Montelukast 4mg,Anti-allergic (Paediatric),high
 levolin,LEVOLIN,Cipla,Levosalbutamol (Levalbuterol),Respiratory (Bronchodilator),high
 levolin031,LEVOLIN 0.31,Cipla,Levosalbutamol 0.31mg,Respiratory,high
 levolin063,LEVOLIN 0.63,Cipla,Levosalbutamol 0.63mg,Respiratory,high
+levolin1,LEVOLIN 1,Cipla,Levosalbutamol,Bronchodilator,high
 levolin125,LEVOLIN 1.25,Cipla,Levosalbutamol 1.25mg,Respiratory,high
+levolin2,LEVOLIN 2,Cipla,Levosalbutamol,Bronchodilator,high
 levolininh200md,LEVOLIN INH 200MD,Cipla,Levosalbutamol,Respiratory (Bronchodilator),high
 levolinplus,LEVOLIN PLUS,Cipla,Levosalbutamol + Ambroxol + Guaifenesin,Cough/Respiratory,high
 levolinsynchrobreatheinheach,LEVOLIN SYNCHROBREATHE INH EACH,Cipla,Levosalbutamol,Respiratory (Bronchodilator),high
+levoridd,LEVORID D,Cipla,Levocetirizine + Phenylephrine + Paracetamol,Cough/cold,med
+levroxa500,LEVROXA 500,Eris,Levofloxacin,Antibiotic,high
+lezyncet5,LEZYNCET 5,Torrent,Levocetirizine,Antihistamine,high
 librax,LIBRAX,Abbott,Chlordiazepoxide 5mg + Clidinium Bromide 2.5mg,GI (Antispasmodic/Anxiolytic),high
 librium10,LIBRIUM 10,Abbott,Chlordiazepoxide 10mg,CNS (Benzodiazepine),high
 librium25,LIBRIUM 25,Abbott,Chlordiazepoxide 25mg,CNS (Benzodiazepine),high
 licab,LICAB,Torrent,Lithium Carbonate,CNS (Mood stabiliser),high
 licabxl,LICAB XL,Torrent,Lithium Carbonate ER,CNS (Mood stabiliser),high
+lidonair12,LIDONAIR 12,Cipla,Lidocaine,Local anesthetic,high
+lifepill4,LIFEPILL 4,Zydus,,,low
+lilituf,LILITUF,Alkem,Luliconazole,Antifungal,med
 limceechewable,LIMCEE CHEWABLE,Abbott,Ascorbic acid (Vitamin C) 500mg,Nutrition / Supplement,high
+limceezinc,LIMCEE ZINC,Abbott,Ascorbic acid (Vitamin C) + Zinc,Vitamin/supplement,med
 linapil,LINAPIL,Alkem,Linagliptin,Antidiabetic,high
 linapildm1000,LINAPIL DM 1000,Alkem,Linagliptin 5mg + Dapagliflozin 10mg + Metformin 1000mg,Antidiabetic,high
 linapildm500,LINAPIL-DM 500,Alkem,Linagliptin 5mg + Dapagliflozin 10mg + Metformin 500mg,Antidiabetic,high
+linapilm251000,LINAPIL M 2.5/1000,Alkem,Linagliptin + Metformin,Antidiabetic,high
 linapilmxr1000,LINAPIL MXR 1000,Alkem,Linagliptin + Metformin 1000mg (XR),Antidiabetic,high
 linapilmxr500,LINAPIL-MXR 500,Alkem,Linagliptin + Metformin 500mg (XR),Antidiabetic,high
 linares5,LINARES 5,Eris,Linagliptin 5mg,Antidiabetic,high-verified
@@ -2951,19 +3439,31 @@ linaxae25,LINAXA E 25,Torrent,Empagliflozin 25mg + Linagliptin 5mg,Antidiabetic,
 linaxaem1051000,LINAXA EM 10/5/1000,Torrent,Empagliflozin 10mg + Linagliptin 5mg + Metformin 1000mg,Antidiabetic,high
 linaxaem2551000,LINAXA EM 25/5/1000,Torrent,Empagliflozin 25mg + Linagliptin 5mg + Metformin 1000mg,Antidiabetic,high
 linaxam25500,LINAXA M 2.5/500,Torrent,Linagliptin 2.5mg + Metformin 500mg,Antidiabetic,high
+linaxam5500,LINAXA M 5/500,Torrent,Linagliptin + Metformin,Antidiabetic,high
+linaxamxr51000,LINAXA M XR 5/1000,Torrent,Linagliptin + Metformin,Antidiabetic,high
+linid,LINID,Cadila Pharmaceuticals,Linagliptin,Antidiabetic,high
+linidxt,LINID XT,Cadila Pharmaceuticals,Linagliptin + Metformin,Antidiabetic,med
+linoplus,LINOPLUS,Abbott,,Supplement,low
+linospan100iv,LINOSPAN 100 IV,Cipla,Linezolid,Antibiotic,high
+linox600,LINOX 600,Torrent,Linezolid,Antibiotic,high
+linoxiv,LINOX IV,Torrent,Linezolid,Antibiotic,high
+liofen,LIOFEN,Sun Pharma,Baclofen,Muscle relaxant,high
 liofen10,LIOFEN 10,Sun Pharma,Baclofen 10mg,Muscle relaxant,high
 liofen25,LIOFEN 25,Sun Pharma,Baclofen 25mg,Muscle relaxant,high
 liofen5,LIOFEN 5,Sun Pharma,Baclofen 5mg,Muscle relaxant,high
 liofenxl10,LIOFEN XL 10,Sun Pharma,Baclofen 10mg XL,Muscle relaxant,high
 liofenxl20,LIOFEN XL 20,Sun Pharma,Baclofen 20mg,Muscle relaxant,high
 liofenxl30,LIOFEN XL 30,Sun Pharma,Baclofen 30mg XL,Muscle relaxant,high
+liofenxl40,LIOFEN XL 40,Sun Pharma,Baclofen,Muscle relaxant,high
 lipaglin4,LIPAGLIN 4,Zydus,Saroglitazar 4mg,Antidiabetic / Lipid-lowering (dual PPAR agonist),high-verified
 lipikind10,LIPIKIND 10,Mankind,Atorvastatin 10mg,Cardiovascular (Lipid-lowering),high
 lipikind20,LIPIKIND 20,Mankind,Atorvastatin 20mg,Cardiovascular (Lipid-lowering),high
 lipikind40,LIPIKIND 40,Mankind,Atorvastatin 40mg,Cardiovascular (Lipid-lowering),high
 lipikindas,LIPIKIND-AS,Mankind,Atorvastatin + Aspirin,Cardiovascular,high
+lipikindcv10,LIPIKIND CV 10,Mankind,Atorvastatin + Clopidogrel + Aspirin,Cardiac,med
 lipikindcv20,LIPIKIND CV 20,Mankind,Atorvastatin 20mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,high
 lipikindf,LIPIKIND-F,Mankind,Atorvastatin + Fenofibrate,Cardiovascular (Lipid-lowering),high
+lipikindplus,LIPIKIND PLUS,Mankind,Atorvastatin + Fenofibrate,Hypolipidemic,med
 lipirose,LIPIROSE,Mankind,Rosuvastatin 5mg,Cardiovascular (Statin),high
 lipirose10,LIPIROSE 10,Mankind,Rosuvastatin 10mg,Cardiovascular (Lipid-lowering),high
 lipirose20,LIPIROSE 20,Mankind,Rosuvastatin 20mg,Cardiovascular (Lipid-lowering),high
@@ -2975,7 +3475,14 @@ lipirosef10,LIPIROSE-F 10,Mankind,Rosuvastatin 10mg + Fenofibrate 160mg,Cardiova
 lipirosef5,LIPIROSE-F 5,Mankind,Rosuvastatin 5mg + Fenofibrate 160mg,Cardiovascular (Lipid-lowering),high
 lipirosegold10,LIPIROSE GOLD 10,Mankind,Rosuvastatin 10mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,high
 lipirosegold20,LIPIROSE GOLD 20,Mankind,Rosuvastatin 20mg + Clopidogrel 75mg + Aspirin 75mg,Cardiovascular,high
+lipodox,LIPODOX,Sun Pharma,Doxorubicin (liposomal),Anticancer,med
+lipodox50,LIPODOX 50,Sun Pharma,Doxorubicin (liposomal),Anticancer,med
+liquid3,LIQUI-D3,Troikaa,Cholecalciferol,Vitamin/supplement,high
 lirafit,LIRAFIT,Glenmark,Liraglutide (injection),Antidiabetic (GLP-1),high
+listril10,LISTRIL 10,Torrent,Lisinopril,Antihypertensive,high
+listril25,LISTRIL 2.5,Torrent,Lisinopril,Antihypertensive,high
+listril5,LISTRIL 5,Torrent,Lisinopril,Antihypertensive,high
+listrilplus,LISTRIL PLUS,Torrent,Lisinopril + Hydrochlorothiazide,Antihypertensive,high
 lithosun300,LITHOSUN 300,Sun Pharma,Lithium Carbonate 300mg,CNS (Mood stabiliser),high
 lithosunsr400,LITHOSUN SR 400,Sun Pharma,Lithium Carbonate 400mg (SR),CNS (Mood stabiliser),high
 liv52,LIV 52,Himalaya,Himsra + Kasani (Ayurvedic),Ayurvedic / Hepatoprotective,high
@@ -2985,11 +3492,14 @@ liv52ds,LIV 52DS,Himalaya,Himsra + Kasani (Ayurvedic),Ayurvedic / Hepatoprotecti
 liv52ds,LIV 52 DS,Himalaya,Himsra + Kasani + Mandur bhasma (Ayurvedic),Ayurvedic / Hepatoprotective,high
 liv52ds,LIV 52 DS,Himalaya,Liv.52 (Himsra + Kasani + Mandur bhasma + polyherbal),Ayurvedic (Hepatoprotective),high
 liv52hb,LIV 52 HB,Himalaya,Liv.52 HB (polyherbal hepatoprotective),Ayurvedic (Hepatoprotective),high
+livaf1ncp,LIVAF1N CP,Zydus,,Dermatological,low
 livafin,LIVAFIN,Zydus,Amorolfine,Antifungal (Topical),high-verified
 livafin,LIVAFIN,Zydus,Amorolfine 0.25%,Antifungal (topical),high-verified
 livafincp,LIVAFIN CP,Zydus,Amorolfine 0.25%,Antifungal (Topical),high-verified
+livosilb,LIVOSIL B,Centaur,Silymarin + B-complex,Hepatoprotective,med
 lizoforce600,LIZOFORCE 600,Mankind,Linezolid 600mg,Antibiotic (Oxazolidinone),high
 lizoforcedry,LIZOFORCE DRY,Mankind,Linezolid,Antibiotic (Oxazolidinone),high
+lizoforceiv,LIZOFORCE I V,Mankind,Linezolid,Antibiotic,high
 lizolid,LIZOLID,Glenmark,Linezolid 600mg,Antibiotic (Oxazolidinone),high
 lizolidiv,LIZOLID I V,Glenmark,Linezolid (IV),Antibiotic (Oxazolidinone),high
 lnbeta25,LNBETA 2.5,Eris,Nebivolol 2.5mg + Cilnidipine 10mg,Cardiovascular (Antihypertensive),high-verified
@@ -2997,27 +3507,61 @@ lnbeta5,LNBETA 5,Eris,Cilnidipine 10mg + Nebivolol 5mg,Cardiovascular (Antihyper
 lnbloc10,LNBLOC 10,Eris,Cilnidipine 10mg,Cardiovascular (CCB / antihypertensive),high-verified
 lnbloc20,LNBLOC 20,Eris,Cilnidipine 20mg,Cardiovascular (CCB),high
 lnbloc5,LNBLOC 5,Eris,Cilnidipine 5mg,Cardiovascular (CCB / antihypertensive),high-verified
+lnmet25,LNMET 25,Eris,Cilnidipine + Metoprolol,Antihypertensive,high-verified
+lnmet50,LNMET 50,Eris,Cilnidipine + Metoprolol,Antihypertensive,high-verified
 lntrio10,LN TRIO 10,Eris,Telmisartan 40mg + Cilnidipine 10mg + Chlorthalidone 12.5mg,Cardiovascular (Antihypertensive),high-verified
+lntrio20,LN TRIO 20,Eris,Telmisartan + Cilnidipine + Chlorthalidone,Antihypertensive,high-verified
+lntrio625,LN TRIO 6.25,Eris,Telmisartan + Cilnidipine + Chlorthalidone,Antihypertensive,high-verified
+lntriols10,LN TRIO LS 10,Eris,Telmisartan + Cilnidipine + Chlorthalidone,Antihypertensive,high-verified
 lobategmneo,LOBATE GM NEO,Goapptive,Clobetasol + Gentamicin + Miconazole + Iodochlorhydroxyquinoline (topical),Dermatological (Steroid+Antibiotic+Antifungal),high
 lobategmneo,LOBATE GM NEO,Goapptive,Clobetasol + Gentamicin + Miconazole + Neomycin,Dermatological (topical),med
+lobategn,LOBATE GN,Abbott,Clobetasol + Gentamicin + Miconazole,Topical antifungal/steroid,med
 lobazam10,LOBAZAM 10,Sun Pharma,Clobazam 10mg,CNS (Benzodiazepine/Anticonvulsant),high
+lobazam20,LOBAZAM 20,Sun Pharma,Clobazam,Anti-epileptic,high
+lobazam25,LOBAZAM 2.5,Sun Pharma,Clobazam,Anti-epileptic,high
 lobazam5,LOBAZAM 5,Sun Pharma,Clobazam 5mg,CNS (Benzodiazepine/Anticonvulsant),high
+lobazam75,LOBAZAM 7.5,Sun Pharma,Clobazam,Anti-epileptic,high
 lobazammd10,LOBAZAM MD 10,Sun Pharma,Clobazam 10mg,CNS (Benzodiazepine),high
 lobazammd5,LOBAZAM MD 5,Sun Pharma,Clobazam 5mg,CNS (Benzodiazepine),high
+lobek,LOBEK,,,,low
 lobg05,LOBG 0.5,Glenmark,Lobeglitazone 0.5mg,Antidiabetic,high-verified
+lobgg1,LOBG-G1,Glenmark,Lobeglitazone + Glimepiride,Antidiabetic,high-verified
 lobunforte,LOBUN FORTE,J.B. Chemicals,Streptococcus thermophilus + Bifidobacterium longum + Lactobacillus acidophilus + Bacillus coagulans,Probiotic supplement (renal / gut),high-verified
+loc200,LOC 200,Global,Ofloxacin,Antibiotic,low
+loette,LOETTE,Wyeth,Ethinylestradiol + Levonorgestrel,Contraceptive (OC),high
+lofecam8,LOFECAM 8,Sun Pharma,Lornoxicam,NSAID,high
 loftair,LOFTAIR,Lupin,Indacaterol 110mcg + Glycopyrrolate 50mcg,Respiratory (LABA+LAMA),high-verified
+loftair,LOFTAIR,Lupin,Montelukast + Levocetirizine,Antihistamine/anti-asthmatic,med
 lomofen2,LOMOFEN + 2,RPG Life Sciences,Diphenoxylate 2.5mg + Atropine 0.025mg + Furazolidone 50mg,GI (Antidiarrhoeal),high-verified
+lomofenlb,LOMOFEN LB,RPG Life Sciences,Loperamide + Furazolidone,Antidiarrheal,med
 lomotil,LOMOTIL,RPG Life Sciences,Diphenoxylate 2.5mg + Atropine 0.025mg,Antidiarrheal,high
+lonazep025,LONAZEP 0.25,Sun Pharma,Clonazepam,Anxiolytic/anti-epileptic,high
 lonazep05,LONAZEP 0.5,Sun Pharma,Clonazepam 0.5mg,CNS (Benzodiazepine/Anticonvulsant),high
+lonazep1,LONAZEP 1,Sun Pharma,Clonazepam,Anxiolytic/anti-epileptic,high
+lonazep2,LONAZEP 2,Sun Pharma,Clonazepam,Anxiolytic/anti-epileptic,high
+lonazepmd025,LONAZEP MD 0.25,Sun Pharma,Clonazepam,Anxiolytic/anti-epileptic,high
+lonazepmd05,LONAZEP MD 0.5,Sun Pharma,Clonazepam,Anxiolytic/anti-epileptic,high
+lonazepmd1,LONAZEP-MD 1,Sun Pharma,Clonazepam,Anxiolytic/anti-epileptic,high
+longifene,LONGIFENE,Mankind,Buclizine,Appetite stimulant/antihistamine,med
 longifenea,LONGIFENE-A,Mankind,Buclizine (+ multivitamin),Appetite stimulant,med
 longifeneds,LONGIFENE-DS,Mankind,Buclizine,Appetite stimulant,high
 longifenesy,LONGIFENE SY,Mankind,Buclizine,Appetite stimulant,high
+lookbrite,LOOK BRITE,Torrent,,Dermatological-cosmetic,low
 lopamide,LOPAMIDE,Torrent,Loperamide,GI (Antidiarrhoeal),high
+loprin75,LOPRIN 75,Torrent,Aspirin,Antiplatelet,high
+loprinds,LOPRIN DS,Torrent,Aspirin,Antiplatelet,high
+loram25,LORAM 2.5,Torrent,Lorazepam,Anxiolytic,med
+lornicam8,LORNICAM 8,Aristo,Lornoxicam,NSAID,high
+lornicamplus8,LORNICAM PLUS 8,Aristo,Lornoxicam + Paracetamol,NSAID/analgesic,med
 lorsaidp325,LORSAID P 325,Goapptive,Lornoxicam 8mg + Paracetamol 325mg,Analgesic,high
 lorsaidp8325atb,LORSAID P8 325 ATB,Goapptive,Lornoxicam 8mg + Paracetamol 325mg,Analgesic,high
 lorsaidsd8,LORSAID SD 8,Goapptive,Lornoxicam 8mg,Analgesic (NSAID),high
+lorvas,LORVAS,Torrent,Indapamide,Diuretic,high
 lorvassr,LORVAS SR,Torrent,Indapamide (SR),Diuretic,high
+losacar25,LOSACAR 25,Zydus,Losartan,Antihypertensive,high
+losacar50,LOSACAR 50,Zydus,Losartan,Antihypertensive,high
+losacara,LOSACAR A,Zydus,Losartan + Amlodipine,Antihypertensive,high
+losacarh,LOSACAR H,Zydus,Losartan + Hydrochlorothiazide,Antihypertensive,high
 losakind25,LOSAKIND 25,Mankind,Losartan 25mg,Cardiovascular (ARB),high
 losakind50,LOSAKIND 50,Mankind,Losartan 50mg,Cardiovascular (ARB),high
 losakindh,LOSAKIND-H,Mankind,Losartan + Hydrochlorothiazide,Cardiovascular (Antihypertensive),high
@@ -3025,12 +3569,37 @@ losar25,LOSAR 25,Torrent,Losartan 25mg,Cardiovascular (ARB),high
 losar50,LOSAR 50,Torrent,Losartan 50mg,Cardiovascular (ARB),high
 losara,LOSAR A,Torrent,Losartan + Amlodipine,Cardiovascular (Antihypertensive),high
 losarh,LOSAR H,Torrent,Losartan + Hydrochlorothiazide,Cardiovascular (Antihypertensive),high
+losium25,LOSIUM 25,Cadila Pharmaceuticals,Losartan,Antihypertensive,high
+losium50,LOSIUM 50,Cadila Pharmaceuticals,Losartan,Antihypertensive,high
+losiumh,LOSIUM H,Cadila Pharmaceuticals,Losartan + Hydrochlorothiazide,Antihypertensive,high
+lostat50,LOSTAT 50,Blue Cross,Losartan,Antihypertensive,high
+lostath,LOSTAT-H,Blue Cross,Losartan + Hydrochlorothiazide,Antihypertensive,high
 lotensyl10,LOTENSYL 10,Sun Pharma,Lercanidipine 10mg,Cardiovascular (CCB),high-verified
+lotensyl20,LOTENSYL 20,Sun Pharma,Lercanidipine,Antihypertensive (CCB),high-verified
 lotepred,LOTEPRED,Sun Pharma,Loteprednol Etabonate (ophthalmic),Ophthalmic (Corticosteroid),high
+lotepredls,LOTEPRED LS,Sun Pharma,Loteprednol,Ophthalmic corticosteroid,med
+loxof250,LOXOF 250,Stancare,Levofloxacin,Antibiotic,high
+loxof500,LOXOF 500,Stancare,Levofloxacin,Antibiotic,high
+loxofoz,LOXOF OZ,Stancare,Levofloxacin + Ornidazole,Antibiotic,high
+lubistar01,LUBISTAR 0.1%,Mankind,Sodium hyaluronate,Ophthalmic lubricant,med
+lubistar05,LUBISTAR 0.5%,Mankind,Sodium hyaluronate,Ophthalmic lubricant,med
+lubowel24,LUBOWEL 24,Sun Pharma,Lubiprostone,Laxative,med
+lucazole,LUCAZOLE,Ranbaxy,Luliconazole,Antifungal,med
+luciara,LUCIARA,Bayer,,Dermatological-cosmetic,low
 lukol,LUKOL,Himalaya,"Lukol (polyherbal, gynaecological)",Ayurvedic (Gynaecology),high
 lukol,LUKOL,Himalaya,"Polyherbal (uterine tonic, Ayurvedic)",Ayurvedic (Gynaecology),high
+lulican,LULICAN,Gracewel,Luliconazole,Antifungal,high
 luliderm,LULIDERM,Aristo,Luliconazole,Antifungal (Topical),high
+luligee,LULIGEE,Glenmark,Luliconazole,Antifungal,high
+luligeeb,LULIGEE B,Glenmark,Luliconazole + Beclomethasone,Topical antifungal/steroid,med
+lumenac,LUMENAC,Lupin,Aceclofenac,NSAID,med
+lumenacc,LUMENAC-C,Lupin,Aceclofenac + Paracetamol,NSAID/analgesic,med
+lumet80,LUMET 80,Cipla,Artemether + Lumefantrine,Antimalarial,med
+lumia2k,LUMIA 2K,Sun Pharma,Cholecalciferol,Vitamin/supplement,high-verified
 lumia60k,LUMIA 60K,Sun Pharma,Cholecalciferol (Vitamin D3) 60000 IU,Nutritional supplement (Vitamin D),high
+lumiack,LUMIA CK,Sun Pharma,Calcium + Vitamin D3 + Vitamin K2-7,Bone health/supplement,med
+lumivoid,LUMIVOID,Torrent,,Dermatological-cosmetic,low
+lupifsh75,LUPI-FSH 75,Lupin,Follicle stimulating hormone (FSH),Fertility hormone,med
 lupigestsr200,LUPIGEST SR 200,Lupin,Progesterone 200mg (SR),Hormone (Progestogen),high
 lupigestsr300,LUPIGEST SR 300,Lupin,Progesterone 300mg (SR),Hormone (Progestogen),high
 lupihaler,LUPIHALER,Lupin,,,low
@@ -3040,51 +3609,95 @@ lupihcg5000,LUPI-HCG 5000,Lupin,Human Chorionic Gonadotropin (HCG) 5000 IU,Hormo
 lupihem,LUPIHEM,Lupin,Heme Iron Polypeptide 12mg,Nutrition (Haematinic),high-verified
 lupihmg75,LUPI-HMG 75,Lupin,Human Menopausal Gonadotropin (Menotropins) 75 IU,Hormone (Fertility),high
 lupihope,LUPIHOPE,Lupin,Dydrogesterone 10mg,Hormone (Progestogen),high-verified
+lupinglycoflof,LUPIN GLYCOFLO F,Lupin,Glycopyrronium,Hyperhidrosis/respiratory,med
 lupituss,LUPITUSS,Lupin,Levocloperastine,Cough (Antitussive),high-verified
 lupivestin500,LUPIVESTIN 500,Lupin,Univestin (Scutellaria baicalensis + Acacia catechu extract),Nutraceutical (Joint pain),high-verified
+lupridedepot1125,LUPRIDE DEPOT 11.25,Sun Pharma,Leuprolide acetate,Hormone (GnRH analogue),high
+lupridedepot2250,LUPRIDE DEPOT 22.50,Sun Pharma,Leuprolide acetate,Hormone (GnRH analogue),high
+lupridedepot375,LUPRIDE DEPOT 3.75,Sun Pharma,Leuprolide acetate,Hormone (GnRH analogue),high
+lupridedepot45,LUPRIDE DEPOT 45,Sun Pharma,Leuprolide acetate,Hormone (GnRH analogue),high
+lurakem40,LURAKEM 40,Ulticare,Lurasidone,Antipsychotic,high
+luramax40,LURAMAX 40,Sun Pharma,Lurasidone,Antipsychotic,high
 luramax80s10,LURAMAX 80 S10,Sun Pharma,Lurasidone 80mg,CNS (Antipsychotic),high-verified
 lycostar,LYCOSTAR,Mankind,Lycopene + Multivitamin + Antioxidants,Nutrition,med
+lycostar,LYCOSTAR,Mankind,Lycopene + multivitamin,Antioxidant supplement,med
 lycostarnewrf,LYCOSTAR NEW RF,Mankind,Lycopene + Multivitamin + Multimineral + antioxidants,Nutritional supplement,high
+lynx,LYNX,Alembic,,Injectable,low
 lyrica,LYRICA,Mylan,Pregabalin 150mg,Neuropathic pain,high
 lyrica,LYRICA,Mylan,Pregabalin 75mg,Neuropathic pain,high
 lyvelsa10,LYVELSA 10,Sun Pharma,Finerenone 10mg,"Cardiovascular / Renal (Nonsteroidal MRA, diabetic CKD)",high-verified
 lyvelsa20,LYVELSA 20,Sun Pharma,Finerenone 20mg,Cardio-renal (MRA),high-verified
+mabvinra,MABVINRA,Alkem,Adalimumab,Immunosuppressant (biologic),high-verified
+maclar,MACLAR,Glenmark,Clarithromycin,Antibiotic,high
+maclar250,MACLAR 250,Glenmark,Clarithromycin,Antibiotic,high
+maclar500,MACLAR 500,Glenmark,Clarithromycin,Antibiotic,high
 macoratecr200,MACORATE CR 200,Sun Pharma,Magnesium Valproate 200mg CR,Anticonvulsant,high-verified
+macoratecr300,MACORATE-CR 300,Sun Pharma,Divalproex,Anti-epileptic,med
 macoratecr400,MACORATE CR 400,Sun Pharma,Magnesium Valproate 400mg CR,Anticonvulsant,high-verified
 macoratecr500,MACORATE CR 500,Sun Pharma,Magnesium Valproate 500mg CR,Anticonvulsant,high-verified
 macrabonik,MACRABONIK,Eris,Rabeprazole 20mg,Gastrointestinal (PPI),high-verified
 macrabonikdsr,MACRABONIK DSR,Eris,Rabeprazole 40mg + Domperidone 30mg,Gastrointestinal (PPI + prokinetic),high-verified
 macrabonikplus,MACRABONIK PLUS,Eris,Rabeprazole 40mg + Levosulpiride 75mg,Gastrointestinal (PPI + prokinetic),high-verified
+magnamycin,MAGNAMYCIN,Pfizer,Cefoperazone,Antibiotic,high-verified
+magnamycin250,MAGNAMYCIN 250,Pfizer,Cefoperazone,Antibiotic,high-verified
 magnatussa,MAGNATUSS A,Mankind,Loratadine 5mg + Guaifenesin 50mg + Ambroxol 30mg,Cough / Anti-allergic,high-verified
+magnatusscough,MAGNATUSS COUGH,Mankind,Dextromethorphan + Chlorpheniramine,Cough/cold,med
 magnatussdxcough,MAGNATUSS DX COUGH,Mankind,Dextromethorphan + Chlorpheniramine (cough),Cough,med
+magnatusstcough,MAGNATUSS-T COUGH,Mankind,Terbutaline + Bromhexine + Guaifenesin,Cough/expectorant,med
+magnex1,MAGNEX 1,Pfizer,Cefoperazone + Sulbactam,Antibiotic,high
+magnexforte,MAGNEX FORTE,Pfizer,Cefoperazone + Sulbactam,Antibiotic,high
 mahacef,MAHACEF,Mankind,Cefixime,Antibiotic (Cephalosporin),high
+mahacef,MAHACEF,Mankind,Ceftriaxone,Antibiotic,med
 mahacef100,MAHACEF 100,Mankind,Cefixime 100mg,Antibiotic (Cephalosporin),high
 mahacef100dry,MAHACEF 100 DRY,Mankind,Cefixime 100mg,Antibiotic (Cephalosporin),high
 mahacef200,MAHACEF 200,Mankind,Cefixime 200mg,Antibiotic (Cephalosporin),high
 mahacefcv,MAHACEF CV,Mankind,Cefixime 200mg + Clavulanic Acid 125mg,Antibiotic,high
+mahacefcv100,MAHACEF CV 100,Mankind,Cefixime + Clavulanic acid,Antibiotic,high
+mahacefdry,MAHACEF DRY,Mankind,Cefixime,Antibiotic,high
 mahacefoz,MAHACEF OZ,Mankind,Cefixime 200mg + Ornidazole 500mg,Antibiotic,high-verified
 mahacefplus,MAHACEF PLUS,Mankind,Cefixime 200mg + Ofloxacin 200mg,Antibiotic,high-verified
 mahacefplus100,MAHACEF PLUS 100,Mankind,Cefixime 100mg + Ofloxacin,Antibiotic,high
 mahacefxl200,MAHACEF XL 200,Mankind,Cefixime 200mg (+ Ofloxacin),Antibiotic,med
 mahacortdz,MAHACORT-DZ,Mankind,Deflazacort,Corticosteroid,high
 mahacortdz6,MAHACORT DZ 6,Mankind,Deflazacort 6mg,Corticosteroid,high
+mahaflox,MAHAFLOX,Mankind,Moxifloxacin,Ophthalmic antibiotic,high
 mahaflox400,MAHAFLOX 400,Mankind,Ofloxacin 400mg,Antibiotic (Fluoroquinolone),high
+mahafloxd,MAHAFLOX-D,Mankind,Moxifloxacin + Dexamethasone,Ophthalmic,med
+mahafloxkt,MAHAFLOX KT,Mankind,Moxifloxacin + Ketorolac,Ophthalmic,med
+mahafloxlp,MAHAFLOX LP,Mankind,Moxifloxacin + Loteprednol,Ophthalmic,med
+mahagabad,MAHAGABA-D,Mankind,Pregabalin + Methylcobalamin,Neuropathic pain,med
 mahagabam75,MAHAGABA M 75,Mankind,Pregabalin 75mg + Methylcobalamin,CNS (Neuropathic pain),high
+mahagabamod,MAHAGABA-M OD,Mankind,Pregabalin + Methylcobalamin,Neuropathic pain,med
+mahagabant,MAHAGABA NT,Mankind,Gabapentin + Nortriptyline,Neuropathic pain,med
 mahagabant75,MAHAGABA NT 75,Mankind,Pregabalin 75mg + Nortriptyline 10mg,Neuropathic pain,high
+malidens650,MALIDENS 650,Abbott,Paracetamol,Analgesic/antipyretic,high
+malidensds,MALIDENS DS,Abbott,Paracetamol,Analgesic/antipyretic,high
 manforce100,MANFORCE 100,Mankind,Sildenafil 100mg,Erectile dysfunction,high
 manforce50,MANFORCE 50,Mankind,Sildenafil 50mg,Erectile dysfunction,high
+manforcecondchochaze,MANFORCE COND CHOC+HAZE,Mankind,,Contraceptive (condom),low
 manforcecondomchoclate,MANFORCE CONDOM CHOCLATE,Mankind,Condom (device),Contraceptive (device),high
 manforcecondomcombopack,MANFORCE CONDOM COMBOPACK,Mankind,Condom (contraceptive device),Contraceptive (Device),high
+manforcecondomlitchi,MANFORCE CONDOM LITCHI,Mankind,,Contraceptive (condom),low
+manforcecondomsgreenapple3pcs,MANFORCE CONDOMS GREENAPPLE 3PCS,Mankind,,Contraceptive (condom),low
+manforcecondomshazelnut3pcs,MANFORCE CONDOMS HAZELNUT 3PCS,Mankind,,Contraceptive (condom),low
+manforcecondomsjar1pc,MANFORCE CONDOMS JAR 1PC,Mankind,,Contraceptive (condom),low
+manforcecondomsjasmine3pcs,MANFORCE CONDOMS JASMINE 3PCS,Mankind,,Contraceptive (condom),low
+manforcecondomsmfcalendar,MANFORCE CONDOMS MF CALENDAR,Mankind,,Contraceptive (condom),low
 manforcecondomstrawberryvan3pcs,MANFORCE CONDOM STRAWBERRY+VAN 3PCS,Mankind,Condom — device,Contraceptive (device),high
 manforcecondomsunnyedition3pcs,MANFORCE CONDOM SUNNY EDITION 3PCS,Mankind,Condom (barrier contraceptive),Contraceptive (device),high
+manforcecondstrawvan,MANFORCE COND STRAW+VAN,Mankind,,Contraceptive (condom),low
 manforcemorecondomscalendar,MANFORCE MORE CONDOMS CALENDAR,Mankind,Condom (contraceptive device),Contraceptive (Device),high
 manforcestaylong,MANFORCE STAYLONG,Mankind,Lidocaine (topical),Men's health (topical anaesthetic),high
 manforcestaylong,MANFORCE STAYLONG,Mankind,Sildenafil 50mg + Dapoxetine 30mg,Men's health (ED / PE),high-verified
+manforcestylong,MANFORCE STYLONG,Mankind,Lidocaine,Topical (premature ejaculation),med
+manforcewildcondblackgrape3pcs,MANFORCE WILD COND BLACK GRAPE 3PCS,Mankind,,Contraceptive (condom),low
+manforcewildcondchocolate3pcs,MANFORCE WILD COND CHOCOLATE 3PCS,Mankind,,Contraceptive (condom),low
 manforcewildcondomchoclate10pcs,MANFORCE WILD CONDOM CHOCLATE 10PCS,Mankind,Condom (device),Contraceptive (device),high
 manforcewildcondstrawberry10pcs,MANFORCE WILD COND STRAWBERRY 10PCS,Mankind,Condom (barrier contraceptive),Contraceptive (device),high
 manforcewildcondstrawberry3pcs,MANFORCE WILD COND STRAWBERRY 3PCS,Mankind,Condom (barrier contraceptive),Contraceptive (device),high
 manforcexoticcondom20pc,MANFORCE XOTIC CONDOM 20PC,Mankind,Condom (barrier contraceptive),Contraceptive (device),high
 mankindairspace,MANKIND AIR SPACE,Mankind,Inhaler spacer device,Respiratory (Device),high
+mankindhealthok,MANKIND HEALTH OK,Mankind,,Nutrition (multivitamin),low
 mankindshealthokdvan,MANKINDS HEALTH OK D VAN,Mankind,Diabetic nutritional supplement powder,Nutrition (Diabetic),high
 mankindshealthokprovan,MANKINDS HEALTH OK PRO+VAN,Mankind,Protein + Vitamin/Mineral nutrition supplement,Nutrition,high
 mankindshealthokwomen,MANKINDS HEALTH OK WOMEN,Mankind,Multivitamin + Multimineral + Ginseng,Nutritional supplement,high
@@ -3093,101 +3706,191 @@ mankindshelthokprovan,MANKINDS HELTH OK PRO VAN,Mankind,Protein + Vitamin/Minera
 mankindsibreathdpidevice,MANKINDS I BREATH DPI DEVICE,Mankind,DPI inhaler (device),Device,high
 mankindsplacida,MANKIND'S PLACIDA,Mankind,Flupentixol 0.5mg + Melitracen 10mg,CNS (Antidepressant / antipsychotic),high-verified
 mankindsplacidaplus,MANKINDS PLACIDA PLUS,Mankind,Etizolam 0.5mg + Escitalopram 10mg,CNS (Antidepressant + Anxiolytic),high-verified
+mankindsringoutcream,MANKINDS RING OUT +CREAM,,Clotrimazole + Beclomethasone,Antifungal,low
 marzon,MARZON,Eris,Sultamicillin 375mg (Ampicillin + Sulbactam),Antibiotic,high-verified
+match,MATCH,Mankind,Arteether (alpha-beta),Antimalarial,high-verified
+matchplus4x,MATCH PLUS 4X,Mankind,Artemether + Lumefantrine,Antimalarial,high-verified
+matchplusdry,MATCH PLUS DRY,Mankind,Artemether + Lumefantrine,Antimalarial,med
 maxdulin5020,MAXDULIN 50/20,Sun Pharma,Pregabalin 50mg + Duloxetine 20mg,Neuropathic pain,high
 maxdulin7520,MAXDULIN 75/20,Sun Pharma,Pregabalin 75mg + Duloxetine 20mg,CNS (Neuropathic pain),high
 maxdulin7530,MAXDULIN 75/30,Sun Pharma,Pregabalin 75mg + Duloxetine 30mg,Neuropathic pain,high
 maxdulinls,MAXDULIN-LS,Sun Pharma,Pregabalin + Duloxetine,CNS (Neuropathic pain),high
+maxformin1000,MAXFORMIN 1000,Eris,Metformin,Antidiabetic,high
+maxformin750,MAXFORMIN 750,Eris,Metformin,Antidiabetic,high
 maxgalin150,MAXGALIN 150,Sun Pharma,Pregabalin 150mg,CNS (Neuropathic pain),high
 maxgalin50,MAXGALIN 50,Sun Pharma,Pregabalin 50mg,Neuropathic pain,high
 maxgalin75,MAXGALIN 75,Sun Pharma,Pregabalin 75mg,CNS (Neuropathic pain),high
 maxgaliner100,MAXGALIN ER 100,Sun Pharma,Pregabalin 100mg ER,Neuropathic pain,high
 maxgaliner150,MAXGALIN ER 150,Sun Pharma,Pregabalin 150mg ER,Neuropathic pain,high
 maxgaliner75,MAXGALIN ER 75,Sun Pharma,Pregabalin 75mg (ER),CNS (Neuropathic pain),high
+maxgalinm150,MAXGALIN M 150,Sun Pharma,Pregabalin + Methylcobalamin,Neuropathic pain,high
 maxgalinm50,MAXGALIN M 50,Sun Pharma,Pregabalin 50mg + Methylcobalamin,CNS (Neuropathic pain),high
 maxgalinm75,MAXGALIN M 75,Sun Pharma,Pregabalin 75mg + Methylcobalamin,CNS (Neuropathic pain),high
 maxgalinmer75,MAXGALIN M ER 75,Sun Pharma,Pregabalin 75mg (ER) + Methylcobalamin,CNS (Neuropathic pain),high
 maxgalinnt,MAXGALIN-NT,Sun Pharma,Pregabalin 75mg + Nortriptyline 10mg,CNS (Neuropathic pain),high
 maxgalinnt50,MAXGALIN NT 50,Sun Pharma,Pregabalin + Nortriptyline 10mg,CNS (Neuropathic pain),high
+maxgalipat,MAXGALIP AT,Sun Pharma,Pregabalin + Amitriptyline,Neuropathic pain,med
+maxical500,MAXICAL 500,Life Star,Calcium + Vitamin D3,Vitamin/supplement,med
+maxicalactive,MAXICAL ACTIVE,Life Star 1,Calcium + Vitamin D3,Vitamin/supplement,med
+maxicalhigh,MAXICAL HIGH,Mankind,Calcium + Vitamin D3,Vitamin/supplement,med
 maxicalplus,MAXICAL PLUS,Mankind,Calcium + Vitamin D3 + minerals,Nutritional supplement (Calcium),high
+maxicef500,MAXICEF 500,Aristo,Cefepime,Antibiotic,med
 maxicefo100ds,MAXICEF O 100DS,Aristo,Cefixime 100mg/5ml,Antibiotic (Cephalosporin),high
+maxicefo100dt,MAXICEF O 100 DT,Aristo,Cefixime,Antibiotic,med
 maxicefo200,MAXICEF O 200,Aristo,Cefixime 200mg,Antibiotic (Cephalosporin),high
+maxicefo400,MAXICEF O 400,Aristo,Cefixime,Antibiotic,med
 maxicefo50ds,MAXICEF O 50 DS,Aristo,Cefixime,Antibiotic (Cephalosporin),high
+maxiflo100,MAXIFLO 100,Cipla,Fluticasone + Salmeterol,Respiratory,high
 maxiflo250,MAXIFLO 250,Cipla,Salmeterol 25mcg + Fluticasone 250mcg,Respiratory,high
+maxiflo250inh120md,MAXIFLO 250INH 120MD,Cipla,Fluticasone + Salmeterol,Respiratory,high
 maxiflo250synchrobreathe,MAXIFLO 250 SYNCHROBREATHE,Cipla,Salmeterol 25mcg + Fluticasone 250mcg,Respiratory,high
 maxifloforte,MAXIFLO FORTE,Cipla,Salmeterol 50mcg + Fluticasone 500mcg,Respiratory,high
+maximinforte,MAXIMIN FORTE,Lupin,,Nutrition (multivitamin),low
+maxirichmultivitamin,MAXIRICH MULTIVITAMIN,Cipla,,Nutrition (multivitamin),low
 maxmala50,MAXMALA 50,Sun Pharma,Pregabalin 50mg + Methylcobalamin 750mcg + Alpha Lipoic Acid 100mg,Neuropathic pain,high-verified
 maxmalaforte,MAXMALA FORTE,Sun Pharma,Pregabalin 75mg + Methylcobalamin 750mcg + Alpha Lipoic Acid 100mg,Neuropathic pain,high
 maxmalant,MAXMALA NT,Sun Pharma,Pregabalin 75mg + Nortriptyline 10mg,Neuropathic pain,high
+maxozalsachets55,MAXOZA L SACHETS 5 5,Sun Pharma,L-Carnitine,Fertility/supplement,med
+maxozaneosoftgel,MAXOZA NEO SOFTGEL,Sun Pharma,L-Carnitine + antioxidants,Fertility/supplement,med
+maxozanutra,MAXOZA NUTRA,Sun Pharma,L-Carnitine + antioxidants,Fertility/supplement,med
+maxozasachets55,MAXOZA SACHETS 5 5,Sun Pharma,L-Carnitine,Fertility/supplement,med
+maxrich,MAXRICH,Glenmark,,Emollient/moisturizer,low
 maxum,MAXUM,Eris,Multivitamin + Multimineral,Nutrition (Multivitamin),high-verified
+maxumnew10s,MAXUM NEW 10 S,Eris,,Nutrition (multivitamin),low
+maxumwomen,MAXUM WOMEN,Eris,,Nutrition (multivitamin),low
 mddxr100,MDD-XR 100,Abbott,Desvenlafaxine 100mg,CNS (Antidepressant SNRI),high
 mddxr25,MDD-XR 25,Abbott,Desvenlafaxine 25mg,CNS (Antidepressant / SNRI),high-verified
 mddxr50,MDD XR 50,Abbott,Desvenlafaxine 50mg ER,CNS (Antidepressant SNRI),high-verified
+mebex,MEBEX,Cipla,Mebendazole,Anthelmintic,high
+mebizsr200,MEBIZ SR 200,Sun Pharma,Mebeverine,Antispasmodic (IBS),high
+medicip,MEDICIP,Cipla,Xylometazoline,Nasal decongestant,low
+medorise10,MEDORISE 10,Torrent,Medroxyprogesterone acetate,Hormone (progestin),low
 medrol16,MEDROL 16,Pfizer,Methylprednisolone 16mg,Corticosteroid,high
 medrol4,MEDROL 4,Pfizer,Methylprednisolone 4mg,Corticosteroid,high
 medrol8,MEDROL 8,Pfizer,Methylprednisolone 8mg,Corticosteroid,high
+mefkindds,MEFKIND-DS,Mankind,Mefenamic acid,NSAID,high
 mefkindforte,MEFKIND FORTE,Mankind,Mefenamic Acid + Paracetamol,Analgesic / Antipyretic,high
+mefkindp,MEFKIND P,Life Star 1,Mefenamic acid + Paracetamol,NSAID/analgesic,high
+mefkindspas,MEFKIND SPAS,Mankind,Mefenamic acid + Dicyclomine,NSAID/antispasmodic,med
+mefloc,MEFLOC,Aristo,Mefloquine,Antimalarial,high
 meftagesicds,MEFTAGESIC DS,Blue Cross,Mefenamic acid + Paracetamol,Analgesic / Antipyretic,high
+meftagesicp,MEFTAGESIC P,Blue Cross,Mefenamic acid + Paracetamol,NSAID/analgesic,high
+meftagesicpdt,MEFTAGESIC P DT,Blue Cross,Mefenamic acid + Paracetamol,NSAID/analgesic,high
 meftal500,MEFTAL 500,Blue Cross,Mefenamic Acid 500mg,Analgesic (NSAID),high
 meftalforte,MEFTAL FORTE,Blue Cross,Diclofenac (+ Methyl Salicylate + Menthol) topical,Analgesic (Topical),med
 meftalforte,MEFTAL FORTE,Blue Cross,Mefenamic Acid + Paracetamol,Analgesic / Antipyretic,high
 meftalfortejunior,MEFTAL-FORTE JUNIOR,Blue Cross,Mefenamic Acid + Paracetamol,Analgesic / Antipyretic,high
+meftalp,MEFTAL P,Blue Cross,Mefenamic acid + Paracetamol,NSAID/analgesic,high
 meftalp,MEFTAL P,Blue Cross,Paracetamol 250mg/5ml,Analgesic / Antipyretic,high
 meftalspas,MEFTAL SPAS,Blue Cross,Mefenamic acid + Dicyclomine,Analgesic / Antispasmodic,high
 meftalspasds,MEFTAL SPAS DS,Blue Cross,Mefenamic Acid 250mg + Dicyclomine 10mg,Antispasmodic/Analgesic,high
+megabrom,MEGABROM,Sun Pharma,Bromfenac,Ophthalmic NSAID,high
 megacholinplus,MEGACHOLIN PLUS,Aristo,Citicoline 500mg + Piracetam 800mg,Neuro (Nootropic),high-verified
 megacholinrf,MEGACHOLIN RF,Aristo,Citicoline 500mg,Neuro (Nootropic),high-verified
+megaclavdry,MEGACLAV DRY,Alembic,Amoxicillin + Clavulanic acid,Antibiotic,high
+megaclavdsdry,MEGACLAV DS DRY,Alembic,Amoxicillin + Clavulanic acid,Antibiotic,high
 megacv,MEGA CV,Aristo,Amoxicillin + Clavulanic Acid,Antibiotic (Penicillin + beta-lactamase inhibitor),high
 megacv,MEGA CV,Aristo,Amoxicillin 1000mg + Clavulanic Acid 200mg,Antibiotic (Penicillin + beta-lactamase inhibitor),high
 megacv150,MEGA CV 150,Aristo,Amoxicillin + Clavulanic Acid,Antibiotic (Penicillin + beta-lactamase inhibitor),high
+megacv300,MEGA CV 300,Aristo,Amoxicillin + Clavulanic acid,Antibiotic,high
+megacv375,MEGA CV 375,Aristo,Amoxicillin + Clavulanic acid,Antibiotic,high
 megacv600,MEGA CV 600,Aristo,Amoxicillin 500mg + Clavulanic Acid 100mg (IV),Antibiotic,high-verified
+megacv625,MEGA CV 625,Aristo,Amoxicillin + Clavulanic acid,Antibiotic,high
 megacvdry,MEGA CV DRY,Aristo,Amoxicillin + Clavulanic Acid,Antibiotic (Penicillin + beta-lactamase inhibitor),high
+megacvdt2285,MEGA CV DT 228.5,Aristo,Amoxicillin + Clavulanic acid,Antibiotic,high
+megacvduoigm,MEGA CV DUO IGM,Aristo,Amoxicillin + Clavulanic acid,Antibiotic,med
+megacves6429,MEGA CV ES 642.9,Aristo,Amoxicillin + Clavulanic acid,Antibiotic,high
 megacvforte,MEGA CV FORTE,Aristo,Amoxicillin + Clavulanic Acid,Antibiotic (Penicillin + beta-lactamase inhibitor),high
 megaflexon,MEGAFLEXON,Aristo,Tramadol 37.5mg + Paracetamol 325mg,Analgesic (Opioid),high-verified
 megagliptin,MEGAGLIPTIN,Aristo,Teneligliptin 20mg,Antidiabetic,high
 megagliptinmf,MEGAGLIPTIN MF,Aristo,Teneligliptin 20mg + Metformin 500mg,Antidiabetic,high-verified
+megagliptinmfforte,MEGAGLIPTIN MF FORTE,Aristo,Teneligliptin + Metformin,Antidiabetic,med
+megaheal,MEGAHEAL,Aristo,,Wound care,low
 megaheal,MEGAHEAL,Aristo,Colloidal Silver (wound spray),Dermatological (Wound antiseptic),high-verified
+meganeuron,MEGANEURON,Aristo,Methylcobalamin + B-complex,Neurotropic/vitamin,med
 meganeuron,MEGANEURON,Aristo,Methylcobalamin + Vitamin B complex + Folic Acid,Neuro / Nutritional supplement,high
 meganeuronforte,MEGANEURON FORTE,Aristo,Methylcobalamin + Vitamin B complex (injection),Neuro / Nutritional supplement,high
 meganeuronnt50,MEGANEURON NT 50,Aristo,Pregabalin 75mg + Nortriptyline 10mg + Methylcobalamin,Neuropathic pain,med
+meganeuronnt75,MEGANEURON NT 75,Aristo,Pregabalin + Nortriptyline + Methylcobalamin,Neuropathic pain,med
 meganeuronodplus,MEGANEURON OD PLUS,Aristo,Methylcobalamin + Alpha Lipoic Acid + B-vitamins + Folic Acid,Neuro / Nutritional supplement,high
+meganeuronpg,MEGANEURON PG,Aristo,Pregabalin + Methylcobalamin,Neuropathic pain,med
+meganor,MEGANOR,Alkem,Ofloxacin + Ornidazole,Antibiotic,high-verified
 megapen,MEGAPEN,Aristo,Ampicillin + Cloxacillin,Antibiotic (Penicillin),high
 megapen250kid,MEGAPEN 250 KID,Aristo,Ampicillin + Cloxacillin,Antibiotic (Penicillin),high
+megapen500,MEGAPEN 500,Aristo,Ampicillin + Cloxacillin,Antibiotic,high
+megaposeplus,MEGAPOSE PLUS,Mankind,,,low
+megashelcal,MEGA SHELCAL,Torrent,Calcium + Vitamin D3,Vitamin/supplement,high
 megavog02,MEGAVOG 0.2,Aristo,Voglibose 0.2mg,Antidiabetic,high
+megavog03,MEGAVOG 0.3,Aristo,Voglibose,Antidiabetic,high
+megavogmf02500,MEGAVOG MF 0.2/500,Aristo,Voglibose + Metformin,Antidiabetic,high
+megavogmf03500,MEGAVOG MF 0.3/500,Aristo,Voglibose + Metformin,Antidiabetic,high
+megazolid100dry,MEGAZOLID 100 DRY,Aristo,Linezolid,Antibiotic,high
 megazolid600,MEGAZOLID 600,Aristo,Linezolid 600mg,Antibiotic (Oxazolidinone),high
+megazolidiv,MEGAZOLID I V,Aristo,Linezolid,Antibiotic,high
+megazolidplus,MEGAZOLID PLUS,Aristo,Linezolid,Antibiotic,med
+megoxl,MEGO-XL,Blue Cross,Methylcobalamin + Alpha Lipoic Acid + Pyridoxine + Folic acid,Neurotropic/supplement,high-verified
 melabest,MELABEST,Mankind,Hydroquinone 2% + Mometasone 0.1% + Tretinoin 0.025%,Dermatological (Melasma),high-verified
+meladate,MELADATE,Mankind,Melatonin,Sleep aid,med
+melalite,MELALITE,Abbott,Hydroquinone,Dermatological (depigmenting),med
 melalitexl,MELALITE XL,Abbott,Hydroquinone (depigmenting),Dermatological,med
+melbild,MELBILD,Alkem,,Dermatological,low
+melbildxl,MELBILD XL,Alkem,,Dermatological,low
 melora,MELORA,Torrent,Lactium 150mg + Melatonin 5mg,Sleep aid / Sedative,high-verified
 meloset3,MELOSET 3,Aristo,Melatonin 3mg,Sleep aid,high
+meltolan10rd,MELTOLAN 10 RD,Ulticare,Olanzapine,Antipsychotic,high-verified
 meltor10,MELTOR 10,Centaur,Torsemide 10mg,Diuretic,high
+meltor20,MELTOR 20,Centaur,,,low
 meltor5,MELTOR 5,Centaur,Torsemide 5mg,Diuretic,high-verified
 melzep025md,MELZEP 0.25MD,Ulticare,Clonazepam 0.25mg,CNS (Benzodiazepine),high-verified
+melzep050md,MELZEP 0.50MD,Ulticare,Clonazepam,Anxiolytic,med
+menarif550,MENARIF 550,Invida,Naproxen,NSAID,med
+mendure,MENDURE,Global,,Supplement,low
+menoctyl,MENOCTYL,Invida,Allylestrenol,Hormone (progestin),med
 menohelp,MENOHELP,Mankind,Polyherbal (Ashoka + Lodhra + Dhataki + Symplocos),Ayurvedic (Gynaecology / menopause),high-verified
 menohelpplus,MENOHELP PLUS,Mankind,Polyherbal (menopause/PCOS support),Ayurvedic (Gynaecology),high
+menosan,MENOSAN,Himalaya,Polyherbal (Ayurvedic),Ayurvedic (menopause),high
 mentat,MENTAT,Himalaya,Mentat (Brahmi + Mandukaparni + polyherbal),Ayurvedic (Nootropic),high
 mentatds,MENTAT DS,Himalaya,Mentat (polyherbal nootropic),Ayurvedic (Nootropic),high
 mero1,MERO 1,Aristo,Meropenem 1g,Antibiotic,high
 mero125,MERO 125,Aristo,Meropenem 125mg,Antibiotic,high
 mero250,MERO 250,Aristo,Meropenem 250mg,Antibiotic (Carbapenem),high
 mero500,MERO 500,Aristo,Meropenem 500mg,Antibiotic,high
+meroo,MERO O,Aristo,Cefixime + Ofloxacin,Antibiotic,low
 meroo200,MERO O 200,Aristo,Faropenem 200mg,Antibiotic (Penem),high-verified
 merooer300,MERO O ER 300,Aristo,Faropenem 300mg ER,Antibiotic (Penem),high
 merosb,MERO SB,Aristo,Meropenem 1000mg + Sulbactam 500mg,Antibiotic (Carbapenem + beta-lactamase inhibitor),high
+merosure1,MEROSURE 1,Alkem,Meropenem,Antibiotic,high
+merosure125,MEROSURE 125,Alkem,Meropenem,Antibiotic,high
+merosure250,MEROSURE 250,Alkem,Meropenem,Antibiotic,high
+merosureo,MEROSURE O,Alkem,Cefixime + Ofloxacin,Antibiotic,low
 merosureo,MEROSURE O,Alkem,Faropenem 100mg/5ml,Antibiotic (Penem),high-verified
 merosureo,MEROSURE O,Alkem,Faropenem 200mg,Antibiotic (Penem),high
 mesacol,MESACOL,Sun Pharma,Mesalazine (5-ASA),GI (IBD/Aminosalicylate),high
 mesacol1,MESACOL 1,Sun Pharma,Mesalazine 1g (suppository),GI (IBD/Aminosalicylate),high
+mesacol800,MESACOL 800,Sun Pharma,Mesalazine,Anti-inflammatory (IBD),high
+mesacolcr,MESACOL CR,Sun Pharma,Mesalazine,Anti-inflammatory (IBD),high
 mesacolcr,MESACOL CR,Sun Pharma,Mesalazine (Mesalamine) 1g,Gastrointestinal (Aminosalicylate / IBD),high
+mesacolcr500,MESACOL CR 500,Sun Pharma,Mesalazine,Anti-inflammatory (IBD),high
+mesacolenema1btl,MESACOL-ENEMA 1BTL,Sun Pharma,Mesalazine,Anti-inflammatory (IBD),high
 mesacolod,MESACOL OD,Sun Pharma,"Mesalazine (Mesalamine, OD)",Gastrointestinal (Aminosalicylate / IBD),high
+mesalo,MESALO,Cipla,Mesalazine,Anti-inflammatory (IBD),high
+metadozeipr500,METADOZE IPR 500,Eris,Metformin,Antidiabetic,high
+metadozeipr850,METADOZE IPR 850,Eris,Metformin,Antidiabetic,high
 metafort115s,METAFORT 1 15 S,Eris,Metformin 1000mg,Antidiabetic,high
 metafort50015s,METAFORT 500 15 S,Eris,Metformin 500mg,Antidiabetic,high
+metaglezforte,METAGLEZ FORTE,Aristo,Glipizide + Metformin,Antidiabetic,high-verified
 metaspray,METASPRAY,Cipla,Mometasone Furoate (nasal spray),Respiratory (Nasal corticosteroid),high
 metatime500,METATIME 500,Mankind,Metformin 500mg,Antidiabetic,high
 metatop,METATOP,Zydus,Mometasone Furoate (nasal spray),Respiratory (Nasal corticosteroid),med
+methimercazole10,METHIMERCAZOLE 10,Abbott,Methimazole,Antithyroid,high
+methimercazole5,METHIMERCAZOLE 5,Abbott,Methimazole,Antithyroid,high
+methimez10,METHIMEZ 10,Sun Pharma,Methimazole,Antithyroid,high
 methimez5,METHIMEZ 5,Sun Pharma,Methimazole 5mg,Antithyroid,high
 metital,METITAL,Eris,Metformin 500mg + Myo-Inositol 600mg,Antidiabetic / PCOS,high-verified
+metital250,METITAL 250,Eris,Metformin + Myo-Inositol,Antidiabetic (PCOS),high-verified
 metocardam,METOCARD AM,Torrent,Metoprolol Succinate 50mg + Amlodipine 5mg,Cardiovascular (Antihypertensive),high
 metocardamt50,METOCARD AMT 50,Torrent,Metoprolol Succinate 50mg + Amlodipine 5mg + Telmisartan 40mg,Cardiovascular (Antihypertensive),high-verified
+metocardh50,METOCARD H 50,Torrent,Metoprolol + Hydrochlorothiazide,Antihypertensive,high
 metocardxl,METOCARD XL,Torrent,Metoprolol Succinate ER 100mg,Cardiovascular (Beta-blocker),high
 metocardxl125,METOCARD XL 12.5,Torrent,Metoprolol Succinate ER 12.5mg,Cardiovascular (Beta-blocker),high
 metocardxl25,METOCARD XL 25,Torrent,Metoprolol Succinate ER 25mg,Cardiovascular (Beta-blocker),high
@@ -3200,12 +3903,16 @@ metolaram25,METOLAR AM 25,Cipla,Metoprolol 25mg + Amlodipine,Cardiovascular (Ant
 metolaram50,METOLAR AM 50,Cipla,Metoprolol 50mg + Amlodipine,Cardiovascular (Antihypertensive),high
 metolartl25,METOLAR TL 25,Cipla,Metoprolol Succinate 25mg + Telmisartan,Cardiovascular (Antihypertensive),high
 metolartl50,METOLAR TL 50,Cipla,Metoprolol Succinate 50mg + Telmisartan 40mg,Cardiovascular (Antihypertensive),high
+metolarxr100,METOLAR XR 100,Cipla,Metoprolol succinate,Beta-blocker,high
 metolarxr125,METOLAR XR 12.5,Cipla,Metoprolol Succinate ER 12.5mg,Cardiovascular (Beta-blocker),high
+metolarxr125,METOLAR XR 12.5,Cipla,Metoprolol succinate,Beta-blocker,high
 metolarxr25,METOLAR XR 25,Cipla,Metoprolol Succinate ER 25mg,Cardiovascular (Beta-blocker),high
 metolarxr50,METOLAR XR 50,Cipla,Metoprolol Succinate ER 50mg,Cardiovascular (Beta-blocker),high
 metosartan25,METOSARTAN 25,Sun Pharma,Metoprolol Succinate ER 25mg + Telmisartan 40mg,Cardiovascular (Antihypertensive),high-verified
 metosartan50,METOSARTAN 50,Sun Pharma,Metoprolol Succinate ER 50mg + Telmisartan 40mg,Cardiovascular (Antihypertensive),high
+metosartanch25,METOSARTAN-CH 25,Sun Pharma,Metoprolol + Telmisartan + Chlorthalidone,Antihypertensive,med
 metosartanch50,METOSARTAN-CH 50,Sun Pharma,Metoprolol 50mg + Telmisartan 40mg + Chlorthalidone 12.5mg,Cardiovascular (Antihypertensive),high
+metosartanch50625,METOSARTAN-CH 50/6.25,Sun Pharma,Metoprolol + Telmisartan + Chlorthalidone,Antihypertensive,med
 metosartanln25,METOSARTAN-LN 25,Sun Pharma,Cilnidipine 10mg + Metoprolol 25mg + Telmisartan 40mg,Cardiovascular (Antihypertensive),high
 metosartanln50,METOSARTAN-LN 50,Sun Pharma,Cilnidipine 10mg + Metoprolol 50mg + Telmisartan 40mg,Cardiovascular (Antihypertensive),high-verified
 metoz25,METOZ 2.5,Centaur,Metolazone 2.5mg,Diuretic,high-verified
@@ -3213,51 +3920,122 @@ metoz5,METOZ 5,Centaur,Metolazone 5mg,Diuretic,high-verified
 metrogyl,METROGYL,J.B. Chemicals,Metronidazole,Antibiotic (Antiprotozoal),high
 metrogyl,METROGYL,J.B. Chemicals,Metronidazole 2% (topical gel),Dermatological (Antibacterial),high
 metrogyl200,METROGYL 200,J.B. Chemicals,Metronidazole 200mg,Antibiotic,high
+metrogyl400,METROGYL 400,J.B. Chemicals,Metronidazole,Antiprotozoal,high
+metrogylcompplus,METROGYL COMP PLUS,J.B. Chemicals,Metronidazole + Norfloxacin,Antidiarrheal/antibiotic,med
 metrogyldg,METROGYL DG,J.B. Chemicals,Metronidazole + Chlorhexidine (dental gel),Dental/Oral (Topical),high
 metrogyler,METROGYL ER,J.B. Chemicals,Metronidazole ER,Antibiotic/Antiprotozoal,high
+metrogylf,METROGYL F,J.B. Chemicals,Metronidazole + Furazolidone,Antidiarrheal,high
+metrogylgel,METROGYL GEL+,J.B. Chemicals,Metronidazole,Topical (acne/rosacea),high
+metrogyliv,METROGYL I V,J.B. Chemicals,Metronidazole,Antiprotozoal,high
+metrogylm,METROGYL M,J.B. Chemicals,Metronidazole + Miconazole,Topical,med
 metrogylo,METROGYL O,J.B. Chemicals,Metronidazole + Ofloxacin,Antibiotic/Antiprotozoal,high
+metrogylp,METROGYL P+,J.B. Chemicals,Metronidazole + Povidone iodine,Topical antiseptic,med
+metxl25,MET XL 25,Alembic,Metoprolol succinate,Beta-blocker,high
+metxl50,MET XL 50,Alembic,Metoprolol succinate,Beta-blocker,high
 mexate75,MEXATE 7.5,Zydus,Methotrexate 7.5mg,Immunosuppressant (DMARD) / Anti-cancer,high
+midacip125nasal16md,MIDACIP 1.25 NASAL 16MD,Cipla,Midazolam,Sedative/anticonvulsant,med
+midgeo25,MIDGEO 2.5,Centaur,Midodrine,Antihypotensive,high-verified
+midgeo5,MIDGEO 5,Centaur,Midodrine,Antihypotensive,high-verified
 midodrive25,MIDODRIVE 2.5,Ranbaxy,Midodrine 2.5mg,Cardiovascular (Vasopressor),high
 midorise10,MIDORISE 10,Torrent,Midodrine 10mg,Cardiovascular (Antihypotensive),high
 midorise5,MIDORISE 5,Torrent,Midodrine 5mg,Cardiovascular (Antihypotensive),high
+mienta,MIENTA,Eris,Aflapin (Boswellia serrata),Anti-osteoarthritic (herbal),high-verified
+mifegest,MIFEGEST,Glenmark,Mifepristone + Misoprostol,MTP kit,high
 mifenti1,MIFENTI 1,Alembic,Fenticonazole 600mg (vaginal),Antifungal (gynaecological),high-verified
+mifty,MIFTY,Aristo,Mifepristone + Misoprostol,MTP kit,high
+migarid10,MIGARID 10,Cipla,Flunarizine,Antimigraine,high
+migarid5,MIGARID 5,Cipla,Flunarizine,Antimigraine,high
 migrabetaplus,MIGRABETA PLUS,Ulticare,Propranolol 40mg + Flunarizine 10mg,CNS (Migraine prophylaxis),high-verified
 migrabetatr20,MIGRABETA TR 20,Ulticare,Propranolol 20mg TR,CNS (Migraine prophylaxis),high
 migrabetatr40,MIGRABETA TR40,Ulticare,Propranolol 40mg (TR),Cardiovascular (Migraine prophylaxis),high
+migrabetatr60,MIGRABETA TR 60,Ulticare,Propranolol,Antimigraine,med
 mikacin100,MIKACIN 100,Aristo,Amikacin 100mg,Antibiotic,high
 mikacin250,MIKACIN 250,Aristo,Amikacin 250mg,Antibiotic (Aminoglycoside),high
 mikacin500,MIKACIN 500,Aristo,Amikacin 500mg,Antibiotic,high
+milflodex,MILFLODEX,Sun Pharma,Moxifloxacin + Dexamethasone,Ophthalmic,med
+milfloxdfbl1pcs,MILFLOX DF BL1 PCS,Sun Pharma,Moxifloxacin,Ophthalmic antibiotic,high
+milfloxed,MILFLOX E D,Sun Pharma,Moxifloxacin,Ophthalmic antibiotic,high
 milibact15,MILIBACT 1.5,Glenmark,Ceftriaxone 1g + Sulbactam 500mg,Antibiotic,high-verified
+milibact375,MILIBACT 375,Glenmark,Amoxicillin + Clavulanic acid,Antibiotic,low
+milibact750,MILIBACT 750,Glenmark,Amoxicillin + Clavulanic acid,Antibiotic,low
+milicalod3,MILICAL O D3,Glenmark,Calcium + Calcitriol + Vitamin D3,Vitamin/supplement,med
+miliclav2285dry,MILICLAV 228.5 DRY,Glenmark,Amoxicillin + Clavulanic acid,Antibiotic,high
 milixim,MILIXIM,Glenmark,Cefixime,Antibiotic,high
 milixim100,MILIXIM 100,Glenmark,Cefixime 100mg,Antibiotic,high
 milixim100,MILIXIM 100,Glenmark,Cefixime 100mg/5ml,Antibiotic,high
 milixim200,MILIXIM 200,Glenmark,Cefixime 200mg,Antibiotic,high
+milixim400,MILIXIM 400,Glenmark,Cefixime,Antibiotic,high
+milixim50dt,MILIXIM 50DT,Glenmark,Cefixime,Antibiotic,high
+miliximcv200,MILIXIM CV 200,Glenmark,Cefixime + Clavulanic acid,Antibiotic,high
+miliximcv50,MILIXIM CV 50,Glenmark,Cefixime + Clavulanic acid,Antibiotic,high
+miliximm,MILIXIM-M,Glenmark,Cefixime,Antibiotic,med
+miliximo,MILIXIM O,Glenmark,Cefixime + Ofloxacin,Antibiotic,med
 miliximo100dt,MILIXIM O 100DT,Glenmark,Cefixime 100mg + Ofloxacin,Antibiotic (Cephalosporin + fluoroquinolone),high
+miliximoz,MILIXIM OZ,Glenmark,Cefixime + Ornidazole,Antibiotic,med
+milixio400sr,MILIXI-O 400SR,Glenmark,Ofloxacin,Antibiotic,low
 minilactone,MINILACTONE,RPG Life Sciences,Spironolactone,Diuretic,high
 minipressxl25,MINIPRESS XL 2.5,Pfizer,Prazosin 2.5mg (XL),Cardiovascular / Urology (alpha-blocker),high
 minipressxl5,MINIPRESS XL 5,Pfizer,Prazosin 5mg XL,Cardiovascular (Alpha-blocker),high
 minizerostatspacer1unit,MINI ZEROSTAT SPACER 1UNIT,Cipla,Inhaler spacer device,Respiratory (Device),high
 minlenth,MINLENTH,Cipla,Minoxidil 2.5mg,Cardiovascular (Vasodilator / hair loss),high-verified
 minminpb,MINMIN PB,RPG Life Sciences,Multivitamin + Minerals (paediatric),Nutrition (Multivitamin),med
+minmintonic,MINMIN TONIC,RPG Life Sciences,,Tonic,low
+minokem,MINOKEM,Alkem,Minoxidil,Hair (alopecia),high
+minokemf5,MINOKEM F 5%,Alkem,Minoxidil + Finasteride,Hair (alopecia),med
+minokemn2,MINOKEM-N 2%,Alkem,Minoxidil,Hair (alopecia),med
+minokemn5,MINOKEM-N 5%,Alkem,Minoxidil,Hair (alopecia),med
+minosta,MINOSTA,Aristo,Calcitriol + Calcium carbonate + Vitamin K2-7,Vitamin/supplement,high-verified
+minostad3,MINOSTA D3,Aristo,Calcitriol + Calcium carbonate + Vitamin K2-7 + Vitamin D3,Vitamin/supplement,high-verified
+miofee4,MIOFEE 4,Lupin,Thiocolchicoside,Muscle relaxant,med
+miofree8,MIOFREE 8,Lupin,Thiocolchicoside,Muscle relaxant,med
 mirago25,MIRAGO 25,Ranbaxy,Mirabegron 25mg,Urology (Overactive bladder),high
 mirago50,MIRAGO 50,Ranbaxy,Mirabegron 50mg,Urology (Overactive bladder),high
 miragos25,MIRAGO-S 25,Ranbaxy,Mirabegron 25mg + Solifenacin 5mg,Urology (Overactive bladder),high
 miragos50,MIRAGO-S 50,Ranbaxy,Mirabegron 50mg + Solifenacin 5mg,Urology (Overactive bladder),high
+mirator0125,MIRATOR 0.125,Torrent,Pramipexole,Anti-Parkinson,high-verified
+mirator025,MIRATOR 0.25,Torrent,Pramipexole,Anti-Parkinson,high-verified
+mirator05,MIRATOR 0.5,Torrent,Pramipexole,Anti-Parkinson,high-verified
 mirtaz15,MIRTAZ 15,Sun Pharma,Mirtazapine 15mg,CNS (Antidepressant),high
 mirtaz30,MIRTAZ 30,Sun Pharma,Mirtazapine 30mg,CNS (Antidepressant),high
+mirtaz75,MIRTAZ 7.5,Sun Pharma,Mirtazapine,Antidepressant,high
+mirumigest,MIRUMIGEST,Alembic,Progesterone,Hormone (progestin),low
 misoprost200,MISOPROST 200,Cipla,Misoprostol 200mcg,Hormone (Prostaglandin),high
+misoprost25,MISOPROST 25,Cipla,Misoprostol,Uterotonic/prostaglandin,high
+misoprost600,MISOPROST 600,Cipla,Misoprostol,Uterotonic/prostaglandin,high
+mixtard30flexpen,MIXTARD 30 FLEXPEN,Abbott,Insulin (biphasic isophane),Antidiabetic (insulin),high
+mixtard30hmpenfill,MIXTARD 30 HM PENFILL,Abbott,Insulin (biphasic isophane),Antidiabetic (insulin),high
+mixtard50hmpenfill,MIXTARD 50HM PENFILL,Abbott,Insulin (biphasic isophane),Antidiabetic (insulin),high
+mizitolgiv,MIZITOL-G I V,Miles,,Injectable,low
 mobizox,MOBIZOX,Ranbaxy,Chlorzoxazone 250mg + Diclofenac 50mg + Paracetamol 325mg,Analgesic / Muscle relaxant,high
 mobizoxld,MOBIZOX LD,Ranbaxy,Paracetamol 500mg + Chlorzoxazone 250mg,Analgesic / Muscle relaxant,high-verified
+modalert100,MODALERT 100,Sun Pharma,Modafinil,CNS stimulant (wakefulness),high
+modalert200,MODALERT 200,Sun Pharma,Modafinil,CNS stimulant (wakefulness),high
+modem200,MODEM 200,Miles,Cefpodoxime,Antibiotic,med
+modem50,MODEM 50,Miles,Cefpodoxime,Antibiotic,med
+modemcv,MODEM CV,Miles,Cefpodoxime + Clavulanic acid,Antibiotic,med
 modemcv100,MODEM-CV 100,Miles,Cefpodoxime + Clavulanic Acid,Antibiotic (Cephalosporin),med
+modemcv50ds,MODEM-CV 50 D S,Miles,Cefpodoxime + Clavulanic acid,Antibiotic,med
+modlip10,MODLIP 10,Torrent,Atorvastatin,Hypolipidemic,high
+modlip20,MODLIP 20,Torrent,Atorvastatin,Hypolipidemic,high
+modlip40,MODLIP 40,Torrent,Atorvastatin,Hypolipidemic,high
 modlipasg75,MODLIP ASG 75,Torrent,Atorvastatin 10mg + Aspirin 75mg + Clopidogrel 75mg,Cardiovascular,med
 modula,MODULA,Ranbaxy,Tadalafil 10mg,Urology (ED),high
+moisturex,MOISTUREX,Stancare,,Emollient/moisturizer,low
+molunamax200,MOLUNAMAX 200,J.B. Chemicals,Molnupiravir,Antiviral,high
+molxvir200,MOLXVIR 200,Sun Pharma,Molnupiravir,Antiviral,high
+momate,MOMATE,Gracewel,Mometasone,Topical corticosteroid,high
 momate,MOMATE,Gracewel,Mometasone Furoate,Dermatological (Corticosteroid),high
 momatef,MOMATE F,Gracewel,Mometasone + Fusidic Acid,Dermatological (topical),high
+momates,MOMATE S,Gracewel,Mometasone + Salicylic acid,Topical corticosteroid,med
 momatexl40,MOMATE XL 40,Gracewel,Mometasone Furoate,Dermatological (Corticosteroid),med
 momeflo10,MOMEFLO 10,Lupin,Mometasone Furoate (nasal spray),Respiratory (Nasal corticosteroid),high
+momefloaz,MOMEFLO AZ,Lupin,Mometasone + Azelastine,Nasal (allergic rhinitis),med
+mometuneht,MOMETUNE HT,Global,Mometasone,Topical corticosteroid,med
+momstar,MOMSTAR,Mankind,Mometasone,Topical corticosteroid,med
 mondeslor,MONDESLOR,Sun Pharma,Desloratadine + Montelukast,Anti-allergic / Respiratory,high
 monocef,MONOCEF,Aristo,Ceftriaxone 1g,Antibiotic,high
 monocef,MONOCEF,Aristo,Ceftriaxone 2g,Antibiotic,high
+monocef125,MONOCEF 125,Aristo,Ceftriaxone,Antibiotic,high
 monocef250,MONOCEF 250,Aristo,Ceftriaxone 250mg,Antibiotic,high
 monocef500,MONOCEF 500,Aristo,Ceftriaxone 500mg,Antibiotic (Cephalosporin),high
 monocefo,MONOCEF O,Aristo,Cefixime,Antibiotic (Cephalosporin),high
@@ -3269,11 +4047,19 @@ monocefo50dry,MONOCEF O 50 DRY,Aristo,Cefixime,Antibiotic (Cephalosporin),high
 monocefocv100ds,MONOCEF O CV 100 DS,Aristo,Cefixime 100mg + Clavulanic Acid,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
 monocefocv200,MONOCEF O CV 200,Aristo,Cefixime 200mg + Clavulanic Acid,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
 monocefocvdry,MONOCEF O CV DRY,Aristo,Cefixime + Clavulanic Acid,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
+monocefocvdt,MONOCEF O CV DT,Aristo,Cefpodoxime + Clavulanic acid,Antibiotic,high
+monocefokid50,MONOCEF O KID50,Aristo,Cefpodoxime,Antibiotic,high
 monocefsb,MONOCEF SB,Aristo,Ceftriaxone 1000mg + Sulbactam 500mg,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
 monocefsb375,MONOCEF SB 375,Aristo,Ceftriaxone + Sulbactam,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
 monocefsb750,MONOCEF SB 750,Aristo,Ceftriaxone 500mg + Sulbactam 250mg,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high
+monosprin30,MONOSPRIN 30,Sun Pharma,Isosorbide mononitrate,Anti-anginal,med
+monosprin60,MONOSPRIN 60,Sun Pharma,Isosorbide mononitrate,Anti-anginal,med
 monotrate10,MONOTRATE 10,Sun Pharma,Isosorbide Mononitrate 10mg,Cardiovascular (Anti-anginal),high
 monotrate20,MONOTRATE 20,Sun Pharma,Isosorbide Mononitrate 20mg,Cardiovascular (Anti-anginal),high
+monotrate30sr,MONOTRATE 30 SR,Sun Pharma,Isosorbide mononitrate,Anti-anginal,high
+monotrate40,MONOTRATE 40,Sun Pharma,Isosorbide mononitrate,Anti-anginal,high
+monotrate60sr,MONOTRATE 60 SR,Sun Pharma,Isosorbide mononitrate,Anti-anginal,high
+monotrateod,MONOTRATE OD,Sun Pharma,Isosorbide mononitrate,Anti-anginal,high
 monovono10,MONOVONO 10,Alembic,Vonoprazan 10mg,GI (P-CAB),high
 monovono20,MONOVONO 20,Alembic,Vonoprazan 20mg,GI (P-CAB),high
 montair10,MONTAIR 10,Cipla,Montelukast 10mg,Anti-allergic / Respiratory,high
@@ -3283,13 +4069,19 @@ montairab,MONTAIR AB,Cipla,Montelukast 10mg + Acebrophylline 200mg,Respiratory/A
 montairfx,MONTAIR FX,Cipla,Montelukast + Fexofenadine,Anti-allergic / Respiratory,high
 montairlc,MONTAIR LC,Cipla,Montelukast + Levocetirizine,Anti-allergic / Respiratory,high
 montairlckid,MONTAIR LC KID,Cipla,Montelukast + Levocetirizine,Anti-allergic / Respiratory,high
+montairplus,MONTAIR PLUS,Cipla,Montelukast + Levocetirizine,Antihistamine/anti-asthmatic,high
 montaz,MONTAZ,Aristo,Ceftriaxone 1g + Tazobactam 125mg,Antibiotic,high-verified
 montaz250,MONTAZ 250,Aristo,Ceftriaxone 250mg + Tazobactam,Antibiotic (Cephalosporin),high
 montaz500,MONTAZ 500,Aristo,Ceftriaxone 500mg + Tazobactam 62.5mg,Antibiotic (Cephalosporin + beta-lactamase inhibitor),high-verified
+montecope,MONTECOPE,Mankind,Montelukast + Levocetirizine,Antihistamine/anti-asthmatic,med
+montek10,MONTEK 10,Sun Pharma,Montelukast,Anti-asthmatic,high
 montekab,MONTEK AB,Sun Pharma,Montelukast + Acebrophylline,Respiratory,high
+montekbl,MONTEK BL,Sun Pharma,Montelukast + Levocetirizine,Antihistamine/anti-asthmatic,high
+montekfx,MONTEK FX,Ranbaxy,Montelukast + Fexofenadine,Antihistamine/anti-asthmatic,high
 montekfx,MONTEK FX,Ranbaxy,Montelukast 10mg + Fexofenadine 120mg,Anti-allergic,high
 monteklc,MONTEK LC,Sun Pharma,Montelukast 10mg + Levocetirizine 5mg,Anti-allergic,high
 monteklckid,MONTEK LC KID,Sun Pharma,Montelukast + Levocetirizine,Anti-allergic / Respiratory,high
+montelan,MONTELAN,Global,Montelukast,Anti-asthmatic,med
 monticope,MONTICOPE,Mankind,Montelukast + Levocetirizine,Anti-allergic / Respiratory,high
 monticope,MONTICOPE,Mankind,Montelukast 4mg + Levocetirizine 2.5mg /5ml,Anti-allergic,high
 monticopea,MONTICOPE A,Mankind,Ambroxol + Levocetirizine + Montelukast,Anti-allergic / Respiratory,high-verified
@@ -3297,102 +4089,192 @@ monticopekid,MONTICOPE KID,Mankind,Montelukast 4mg + Levocetirizine 2.5mg (paedi
 montina,MONTINA,Aristo,Montelukast + Levocetirizine,Anti-allergic / Respiratory,high
 montinabl2010,MONTINA BL 20/10,Aristo,Bilastine 20mg + Montelukast 10mg,Anti-allergic / Respiratory,high-verified
 montinafx,MONTINA FX,Aristo,Montelukast 10mg + Fexofenadine 120mg,Anti-allergic,high
+motiza,MOTIZA,J.B. Chemicals,Itopride,Prokinetic,high-verified
+movacep,MOVACE P,Alkem,Aceclofenac + Paracetamol,NSAID/analgesic,med
+moviz3d,MOVIZ 3D,J.B. Chemicals,,NSAID/analgesic,low
+mox125,MOX 125,Ranbaxy,Amoxicillin,Antibiotic,high
 mox250,MOX 250,Ranbaxy,Amoxicillin 250mg,Antibiotic (Penicillin),high
+mox250redimix,MOX 250 REDIMIX,Ranbaxy,Amoxicillin,Antibiotic,high
 mox500,MOX 500,Ranbaxy,Amoxicillin 500mg,Antibiotic (Penicillin),high
+moxam,MOXAM,Alkem,Moxifloxacin,Antibiotic,high-verified
+moxclav,MOXCLAV,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxclav12,MOXCLAV 1.2,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxclav156,MOXCLAV 156,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
 moxclav375,MOXCLAV 375,Stancare,Amoxicillin 250mg + Clavulanic Acid 125mg,Antibiotic (Penicillin + beta-lactamase inhibitor),high
+moxclav625,MOXCLAV 625,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxclavbd2285,MOXCLAV BD 228.5,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxclavbddtb2285,MOXCLAV BD DTB228.5,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxclavds,MOXCLAV DS,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxclavdscp457,MOXCLAV DS CP 457,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxclavdsdis,MOXCLAV DS DIS,Stancare,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxcv2285,MOX CV 228.5,Ranbaxy,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxcv375,MOX CV 375,Ranbaxy,Amoxicillin + Clavulanic acid,Antibiotic,high
 moxcv625,MOX CV 625,Ranbaxy,Amoxicillin 500mg + Clavulanic Acid 125mg,Antibiotic (Penicillin + beta-lactamase inhibitor),high
+moxcvbd,MOX CV BD,Ranbaxy,Amoxicillin + Clavulanic acid,Antibiotic,high
+moxcvds,MOX CV DS,Ranbaxy,Amoxicillin + Clavulanic acid,Antibiotic,high
 moxicip,MOXICIP,Cipla,Moxifloxacin (ophthalmic),Ophthalmic (Antibiotic),high
 moxicip400,MOXICIP 400,Cipla,Moxifloxacin 400mg,Antibiotic (Fluoroquinolone),high
 moxicipd,MOXICIP D,Cipla,Moxifloxacin + Dexamethasone (eye drops),Ophthalmic,high
 moxicipiv,MOXICIP IV,Cipla,Moxifloxacin (IV),Antibiotic (Fluoroquinolone),high
 moxicipkted,MOXICIP KT E D,Cipla,Moxifloxacin + Ketorolac (eye drops),Ophthalmic,high
+moxif400,MOXIF 400,Torrent,Moxifloxacin,Antibiotic,high
 moxiflox,MOXIFLOX,Cipla,Moxifloxacin 400mg,Antibiotic (Fluoroquinolone),high
+moxifloxiv,MOXIFLOX IV,Cipla,Moxifloxacin,Antibiotic,high
+moxiforcecv375,MOXIFORCE-CV 375,Mankind,Amoxicillin + Clavulanic acid,Antibiotic,high
 moxiforcecv625,MOXIFORCE CV 625,Mankind,Amoxicillin 500mg + Clavulanic Acid 125mg,Antibiotic,high
 moxiforcecvdry,MOXIFORCE-CV DRY,Mankind,Amoxicillin + Clavulanic Acid,Antibiotic (Penicillin + beta-lactamase inhibitor),high
+moxiforcecvkid,MOXIFORCE CV KID,Mankind,Amoxicillin + Clavulanic acid,Antibiotic,high
 moxikindcv,MOXIKIND CV,Mankind,Amoxicillin + Clavulanic Acid,Antibiotic (Penicillin + beta-lactamase inhibitor),high
 moxikindcv,MOXIKIND-CV,Mankind,Amoxicillin 875mg + Clavulanic Acid 125mg,Antibiotic,high
+moxikindcv1000,MOXIKIND CV 1000,Mankind,Amoxicillin + Clavulanic acid,Antibiotic,high
 moxikindcv375,MOXIKIND-CV 375,Mankind,Amoxicillin 250mg + Clavulanic Acid 125mg,Antibiotic,high
 moxikindcv625,MOXIKIND-CV 625,Mankind,Amoxicillin 500mg + Clavulanic Acid 125mg,Antibiotic (Penicillin + beta-lactamase inhibitor),high
 moxikindcvdrysy,MOXIKIND CV DRY SY,Mankind,Amoxicillin + Clavulanic acid,Antibiotic,high
 moxikindcves,MOXIKIND CV ES,Mankind,Amoxicillin + Clavulanic Acid (ES),Antibiotic (Penicillin + beta-lactamase inhibitor),high
 moxikindcvfortedry,MOXIKIND-CV FORTE DRY,Mankind,Amoxicillin 400mg + Clavulanic Acid 57mg (per 5ml),Antibiotic,high
 moxikindcvkid,MOXIKIND-CV-KID,Mankind,Amoxicillin + Clavulanic Acid (paediatric),Antibiotic,high
+moxinow,MOXINOW,Lupin,Moxifloxacin,Antibiotic,high
+moxkid125,MOX KID 125,Ranbaxy,Amoxicillin,Antibiotic,high
 moxkid250,MOX KID 250,Ranbaxy,Amoxicillin 250mg,Antibiotic,high
+moxocard02,MOXOCARD 0.2,Lupin,Moxonidine,Antihypertensive,med
 moxocard03,MOXOCARD 0.3,Lupin,Moxonidine 0.3mg,Cardiovascular (Antihypertensive),high
+moxredimix125,MOX REDIMIX 125,Ranbaxy,Amoxicillin,Antibiotic,high
+moxredimix250,MOX REDIMIX 250,Ranbaxy,Amoxicillin,Antibiotic,high
+mtnl,MTNL,Centaur,,,low
+mucain,MUCAIN,Pfizer,Oxethazaine + Aluminium hydroxide + Magnesium hydroxide,Antacid,med
 mucaine,MUCAINE,Pfizer,Oxethazaine + Aluminium hydroxide + Magnesium hydroxide,Gastro / Antacid,high
 mucarylab,MUCARYL AB,Glenmark,Acebrophylline 100mg + Acetylcysteine 600mg,Respiratory (Mucolytic),high-verified
+mucarylls,MUCARYL LS,Glenmark,Ambroxol + Levosalbutamol + Guaifenesin,Cough/expectorant,med
 muciflo,MUCIFLO,Aristo,Acebrophylline 100mg + Acetylcysteine 600mg,Respiratory (Mucolytic),high-verified
 mucinac200,MUCINAC 200,Cipla,Acetylcysteine 200mg,Respiratory (Mucolytic),high
 mucinac600,MUCINAC 600,Cipla,Acetylcysteine (N-Acetylcysteine) 600mg,Respiratory (Mucolytic),high
 mucinacab,MUCINAC AB,Cipla,Acebrophylline + Acetylcysteine,Respiratory (Mucolytic),high
+mucovisc,MUCOVISC,Torrent,Acetylcysteine,Mucolytic,med
+mumfermax,MUMFER MAX,Glenmark,Ferrous ascorbate + Folic acid,Hematinic,med
+mumferxt,MUMFER XT,Glenmark,Ferrous ascorbate + Folic acid,Hematinic,med
+mupiways,MUPIWAYS,Life Star,Mupirocin,Topical antibacterial,med
+musclejointrub,MUSCLE & JOINT RUB,Himalaya,Polyherbal (Ayurvedic),Topical analgesic,med
+muvera15,MUVERA 15,Sun Pharma,Meloxicam,NSAID,high
+muzica,MUZICA,Alkem,,,low
 mvmax,MV-MAX,Neovae,Multivitamin + Multimineral,Nutritional supplement,med
+mycarry,MY CARRY,Miles,,Gynecology,low
+mycospor,MYCOSPOR,Bayer,Bifonazole,Antifungal,med
+myfos1,MYFOS 1,Abbott,Fosfomycin,Antibiotic (UTI),high-verified
+myonitinsta,MYONIT INSTA,Troikaa,Glyceryl trinitrate (Nitroglycerin),Anti-anginal,med
 myonitsr,MYONIT SR,Troikaa,Nitroglycerin (Glyceryl Trinitrate) 2.6mg SR,Cardiovascular (Anti-anginal),high
 myonitsr,MYONIT SR,Troikaa,Nitroglycerin 6.4mg SR,Cardiovascular (Anti-anginal),high
+myoprolxl,MYOPROL XL,Aristo,Metoprolol succinate,Beta-blocker,med
 myoprolxl50,MYOPROL XL 50,Aristo,Metoprolol Succinate ER 50mg,Cardiovascular (Beta-blocker),high
 myotan40,MYOTAN 40,J.B. Chemicals,Azilsartan Medoxomil 40mg,Cardiovascular (ARB),high
+myotan80,MYOTAN 80,J.B. Chemicals,Telmisartan,Antihypertensive,med
 myotancn,MYOTAN CN,J.B. Chemicals,Azilsartan Medoxomil 40mg + Cilnidipine 10mg,Cardiovascular (Antihypertensive),high
 myotanct40125,MYOTAN CT 40/12.5,J.B. Chemicals,Azilsartan Medoxomil 40mg + Chlorthalidone 12.5mg,Cardiovascular (Antihypertensive),high-verified
+myotanct40625,MYOTAN CT 40/6.25,J.B. Chemicals,Telmisartan + Chlorthalidone,Antihypertensive,med
 mysoline250,MYSOLINE 250,Abbott,Primidone 250mg,Anticonvulsant,high
 nadibact,NADIBACT,Cipla,Nadifloxacin,Dermatological (Antibiotic),high
 nadibactplus,NADIBACT PLUS,Cipla,Nadifloxacin 1% + Mometasone 0.1% + Miconazole 2% (topical),Dermatological (Antibiotic+Steroid+Antifungal),high-verified
 naftifast,NAFTIFAST,Zydus,Naftifine,Antifungal (Topical),high
 naphree,NAPHREE,Miles,,,low
 naphreekc,NAPHREE KC,Miles,,,low
+napilex,NAPILEX,Mankind,,,low
+naprosyn250,NAPROSYN 250,RPG Life Sciences,Naproxen,NSAID,high
 naprosyn250,NAPROSYN 250+,RPG Life Sciences,Naproxen 250mg,Analgesic (NSAID),high
+naprosyn500,NAPROSYN 500,RPG Life Sciences,Naproxen,NSAID,high
 naprosyn500,NAPROSYN 500+,RPG Life Sciences,Naproxen 550mg,Analgesic (NSAID),high-verified
 naprosynd250,NAPROSYN D 250,RPG Life Sciences,Naproxen 250mg + Domperidone,Analgesic (Migraine),high
 naprosynd500,NAPROSYN D 500,RPG Life Sciences,Naproxen 500mg + Domperidone 10mg,Analgesic (Migraine),high
 naprosynsr,NAPROSYN SR,RPG Life Sciences,Naproxen (SR),Analgesic (NSAID),high
 nasob12,NASO B12,Troikaa,Methylcobalamin (Vitamin B12) nasal spray,Neuro/Nutritional,high
+nasoclearcoughgo2d1ncombi,NASOCLEAR COUGHGO 2D+1N COMBI,Zydus,,Cough/cold,low
+nasonex,NASONEX,Invida,Mometasone furoate,Nasal corticosteroid,high
 nasowash,NASOWASH,Cipla,Sodium Chloride + Sodium Bicarbonate (saline nasal wash),ENT (Nasal saline),high
+nasowashns,NASOWASH NS,Cipla,Sodium chloride (saline),Nasal wash,med
 nasowashstarter,NASOWASH STARTER,Cipla,Sodium Chloride (saline nasal wash),ENT (Nasal wash),high
+natamet,NATAMET,Sun Pharma,Natamycin,Ophthalmic antifungal,high
 natribeta1050,NATRIBETA 10/50,Eris,Dapagliflozin 10mg + Metoprolol Succinate 50mg,Cardiovascular / Antidiabetic,high-verified
 natrise15,NATRISE 15,Sun Pharma,Tolvaptan 15mg,Vasopressin V2 antagonist (Hyponatremia),high-verified
+natrise30,NATRISE 30,Sun Pharma,Tolvaptan,Vasopressin antagonist (hyponatremia),high-verified
+naturolax,NATUROLAX,Piramal,Ispaghula (psyllium husk),Laxative,med
 naturolaxa,NATUROLAX A,Piramal,Ispaghula (Psyllium husk),GI (Bulk laxative),high
 naturolaxa,NATUROLAX A,Piramal,Ispaghula (Psyllium) husk + Senna,Laxative,high
+naxdom250,NAXDOM 250 ##,Sun Pharma,Naproxen + Domperidone,Analgesic (migraine),high
 naxdom250,NAXDOM 250,Sun Pharma,Naproxen 250mg + Domperidone 10mg,Analgesic (Migraine),high
+naxdom500,NAXDOM 500 ##,Sun Pharma,Naproxen + Domperidone,Analgesic (migraine),high
 naxdom500,NAXDOM 500,Sun Pharma,Naproxen 500mg + Domperidone 10mg,Analgesic / NSAID,high
+nazobic,NAZOBIC,Alembic,,Nasal,low
+nebasulf,NEBASULF,Goapptive,Neomycin + Bacitracin + Sulfacetamide,Topical antibacterial,med
 nebi25,NEBI 2.5,Aristo,Nebivolol 2.5mg,Cardiovascular (Beta-blocker),high
 nebi5,NEBI 5,Aristo,Nebivolol 5mg,Cardiovascular (Beta-blocker),high
 nebiam,NEBI AM,Aristo,Nebivolol 5mg + Amlodipine 5mg,Cardiovascular (Antihypertensive),high
+nebicard10,NEBICARD 10,Torrent,Nebivolol,Beta-blocker,high
 nebicard25,NEBICARD 2.5,Torrent,Nebivolol 2.5mg,Cardiovascular (Beta-blocker),high
 nebicard5,NEBICARD 5,Torrent,Nebivolol 5mg,Cardiovascular (Beta-blocker),high
 nebicardh,NEBICARD H,Torrent,Nebivolol + Hydrochlorothiazide,Cardiovascular (Antihypertensive),high
 nebicardsm,NEBICARD SM,Torrent,Nebivolol 5mg + S-Amlodipine 2.5mg,Cardiovascular (Antihypertensive),high
 nebicardt,NEBICARD T,Torrent,Nebivolol + Telmisartan,Cardiovascular (Antihypertensive),high
+nebicip5,NEBICIP 5,Cipla,Nebivolol,Beta-blocker,high
 nebih,NEBI H,Aristo,Nebivolol 5mg + Hydrochlorothiazide 12.5mg,Cardiovascular (Antihypertensive),high
+nebipil25,NEBIPIL 2.5,Ulticare,Nebivolol,Beta-blocker,high
+nebipil5,NEBIPIL 5,Ulticare,Nebivolol,Beta-blocker,high
+nebipilh,NEBIPIL H,Ulticare,Nebivolol + Hydrochlorothiazide,Antihypertensive,med
+nebipilsa,NEBIPIL-SA,Ulticare,Nebivolol + S-Amlodipine,Antihypertensive,med
 nebit,NEBI T,Aristo,Nebivolol + Telmisartan,Cardiovascular (Antihypertensive),high
+nebula5,NEBULA 5,Zydus,Nebivolol,Beta-blocker,high
 nebulad,NEBULA D,Zydus,Nebivolol 5mg + Indapamide 1.5mg,Cardiovascular (Antihypertensive),high-verified
 nebzmart,NEBZMART,Glenmark,Glycopyrronium (nebuliser solution),Respiratory (LAMA),high
 nebzmartb05,NEBZMART B 0.5,Glenmark,Budesonide 0.5mg (respules),Respiratory,high
 nebzmartbl,NEBZMART BL,Glenmark,Budesonide + Levosalbutamol,Respiratory,high
 nebzmartfb05,NEBZMART FB 0.5,Glenmark,Formoterol + Budesonide 0.5mg (respules),Respiratory,high
 nebzmartfb1,NEBZMART FB 1,Glenmark,Formoterol + Budesonide 1mg (respules),Respiratory,high
+nebzmartgf,NEBZMART GF,Glenmark,,Respiratory device,low
 nebzmartgfb,NEBZMART GFB,Glenmark,Glycopyrronium 25mcg + Formoterol 20mcg + Budesonide 0.5mg,Respiratory (COPD triple therapy),high-verified
 nebzmartil,NEBZMART IL,Glenmark,Ipratropium + Levosalbutamol (respules),Respiratory (Bronchodilator),high
 nebzmartl031,NEBZMART L0.31,Glenmark,Levosalbutamol 0.31mg (respules),Respiratory (Bronchodilator),high
 nebzmartl063,NEBZMART L 0.63,Glenmark,Levosalbutamol 0.63mg (respules),Respiratory (Bronchodilator),high
+nebzmartnebulization,NEBZMART NEBULIZATION,Glenmark,,Respiratory device,low
+neem,NEEM,Himalaya,Azadirachta indica (Neem),Ayurvedic,high
+neerikft,NEERI KFT,Alembic,Polyherbal (Ayurvedic),Ayurvedic (urology),high
+neetam,NEETAM,Mankind,Levetiracetam,Anti-epileptic,med
+nefacool,NEFACOOL,Mankind,Naphazoline,Ophthalmic (decongestant),med
+nefcm,NEFCM,Eris,Ferric carboxymaltose,Hematinic (IV iron),med
+nefrogard,NEFROGARD,Centaur,,Renal supplement,low
+nefrogardds,NEFROGARD DS,Centaur,,Renal supplement,low
 nefrozon,NEFROZON,Mankind,Taurine 500mg + Acetylcysteine 150mg,Nephroprotective (Diabetic kidney),high-verified
 nekobouquetcake,NEKO BOUQUET CAKE,Piramal,Bathing soap (cosmetic),Personal care,high
+neksium20,NEKSIUM 20,Cipla,Esomeprazole,PPI/anti-ulcer,high
 neksium40,NEKSIUM 40,Cipla,Esomeprazole 40mg,Gastrointestinal (PPI),high
+neksiumd40,NEKSIUM D 40,Cipla,Esomeprazole + Domperidone,PPI/prokinetic,high
 neoalfaq,NEOALFA Q,Neovae,Alpha Ketoanalogues + essential amino acids,Renal (CKD nutrition),high-verified
+neomecazole10,NEO MECAZOLE 10,Abbott,Carbimazole,Antithyroid,high
 neomercazole20,NEO MERCAZOLE 20,Abbott,Carbimazole 20mg,Antithyroid,high
 neomercazole5,NEO MERCAZOLE 5,Abbott,Carbimazole 5mg,Antithyroid,high
 neosmile,NEOSMILE,Mankind,Lactase enzyme,Gastrointestinal (Lactose intolerance),high-verified
+nepastar,NEPASTAR,Mankind,Nepafenac,Ophthalmic NSAID,med
 nephroace,NEPHROACE,Neovae,N-Acetylcysteine 150mg + Taurine 500mg,Renal (Antioxidant / nephroprotective),high-verified
 nephrocaps,NEPHROCAPS,Torrent,Vitamin B complex + Folic Acid + Biotin + Vitamin C,Nutritional supplement (Renal / dialysis),high-verified
+neprohpvanilla,NEPRO HP VANILLA,Abbott,,Nutrition (renal),low
+neprolpvanilla,NEPRO LP VANILLA,Abbott,,Nutrition (renal),low
+neptaz100,NEPTAZ 100,Mankind,Sacubitril + Valsartan,Cardiac (heart failure),high-verified
 neptaz200,NEPTAZ 200,Mankind,Sacubitril 97mg + Valsartan 103mg,Cardiovascular (Heart failure),high
 neptaz50,NEPTAZ 50,Mankind,Sacubitril 24mg + Valsartan 26mg,Cardiovascular (Heart failure),high
 neptazd50,NEPTAZ D 50,Mankind,Sacubitril 24mg + Valsartan 26mg,Cardiovascular (Heart failure),high-verified
+nervepen,NERVEPEN,Rexcel,,Topical analgesic,low
 nervmax75,NERVMAX 75,Alkem,Pregabalin 75mg + Methylcobalamin 750mcg,Neuropathic pain,high-verified
 nervmaxd5020,NERVMAX D 50/20,Alkem,Pregabalin 50mg + Duloxetine 20mg,Neuropathic pain,high
 nervmaxd7520,NERVMAX D 75/20,Alkem,Pregabalin 75mg + Duloxetine 20mg,Neuropathic pain,high
 nervmaxnt,NERVMAX NT,Alkem,Pregabalin 75mg + Nortriptyline 10mg + Methylcobalamin,CNS (Neuropathic pain),high
 nervmaxsr75,NERVMAX SR 75,Alkem,Pregabalin 75mg + Methylcobalamin 1500mcg,CNS (Neuropathic pain),high-verified
 nervupod,NERVUP OD,Abbott,Methylcobalamin + Alpha Lipoic Acid + Vitamin D3 + Folic Acid + B-complex,Neuro/Nutritional,high
+netspan,NETSPAN,Cipla,,Ophthalmic,low
+neugaba150,NEUGABA 150,Sun Pharma,Pregabalin,Neuropathic pain,high
 neugaba75,NEUGABA 75,Sun Pharma,Pregabalin 75mg,Neuropathic pain,high
+neugabaer75,NEUGABA E R 75,Sun Pharma,Pregabalin,Neuropathic pain,high
 neugabam75,NEUGABA M 75,Sun Pharma,Pregabalin 75mg + Methylcobalamin,CNS (Neuropathic pain),high
 neugabamn,NEUGABA MN,Sun Pharma,Pregabalin 75mg + Methylcobalamin 1500mcg + Nortriptyline 10mg,Neuropathic pain,high
+neurocetam,NEUROCETAM,Alembic,Piracetam,Nootropic,med
+neurod360k,NEURO D3 60K,Sun Pharma,Cholecalciferol,Vitamin/supplement,high
+neurogardian,NEURO GARDIAN,Cipla,,Neuro supplement,low
+neurokemd5020,NEUROKEM D 50/20,Ulticare,Duloxetine + Methylcobalamin,Neuropathic pain,low
 neurokemd7520,NEUROKEM D 75/20,Ulticare,Pregabalin 75mg + Duloxetine 20mg,Neuropathic pain,high
 neurokemd7530,NEUROKEM D 75/30,Ulticare,Pregabalin 75mg + Duloxetine 30mg,CNS (Neuropathic pain),high
 neurokemm,NEUROKEM-M,Ulticare,Pregabalin 75mg + Methylcobalamin 1500mcg,Neuropathic pain,high
@@ -3401,34 +4283,73 @@ neurokemnt,NEUROKEM-NT,Ulticare,Pregabalin 75mg + Nortriptyline 10mg + Methylcob
 neurokemnt50,NEUROKEM NT 50,Ulticare,Pregabalin 50mg + Nortriptyline 10mg + Methylcobalamin,Neuropathic pain,high
 neurokemplus,NEUROKEM PLUS,Ulticare,Pregabalin 75mg + Methylcobalamin 750mcg + Alpha Lipoic Acid 100mg,Neuropathic pain,high
 neurotratlm,NEUROTRAT LM,Cadila Pharmaceuticals,Methylcobalamin + Alpha Lipoic Acid + Pyridoxine + Folic Acid,Neuro/Nutritional,med
+neurotratnp,NEUROTRAT NP,Cadila Pharmaceuticals,Pregabalin + Nortriptyline + Methylcobalamin,Neuropathic pain,med
+newasthalin,NEW ASTHALIN,Cipla,Salbutamol + Guaifenesin,Cough/expectorant,med
+newaxcer90,NEW AXCER 90,Sun Pharma,Ticagrelor,Antiplatelet,high
 newbabymask1unit,NEW BABY MASK 1UNIT,Cipla,Paediatric inhaler mask (device),Respiratory (Device),high
+newcelin500,NEW CELIN 500,Pfizer,Ascorbic acid (Vitamin C),Vitamin/supplement,high
 newcita15,NEWCITA 15,Ulticare,Escitalopram 15mg,CNS (Antidepressant SSRI),high-verified
 newcitalite,NEWCITA LITE,Ulticare,Escitalopram 5mg,CNS (Antidepressant SSRI),high
 newcitaplus,NEWCITA PLUS,Ulticare,Clonazepam 0.5mg + Escitalopram 10mg,CNS (Anxiety / depression),high-verified
+newdewsoft,NEW DEWSOFT,Torrent,,Emollient/moisturizer,low
+newdewsoftkid,NEW DEWSOFT KID,Torrent,,Emollient/moisturizer,low
 newdicalis,NEW DICALIS,Sun Pharma,Calcium 400mg + Vitamin D2 + Folic Acid + Glycine,Nutritional supplement (Calcium),high-verified
+newgemcalmom,NEW GEMCAL MOM,Alkem,Calcium + Vitamin D3,Vitamin/supplement,med
+newgramogyl,NEW GRAMOGYL,Stancare,Norfloxacin + Metronidazole,Antidiarrheal/antibiotic,med
+newgtn26,NEW GTN 2.6,Eris,Glyceryl trinitrate (Nitroglycerin),Anti-anginal,med
+newgtn64,NEW GTN 6.4,Eris,Glyceryl trinitrate (Nitroglycerin),Anti-anginal,med
+newhemfer,NEW HEMFER,Alkem,Ferrous (iron) + Folic acid,Hematinic,med
+newhemferkid,NEW HEMFER KID,Alkem,Ferrous (iron) + Folic acid,Hematinic,med
+newimaxforte,NEW IMAX FORTE,Aristo,Ferrous ascorbate + Folic acid,Hematinic,med
 newisiteplus,NEW I-SITE PLUS,Sun Pharma,Lutein + Zeaxanthin + Antioxidants (eye supplement),Nutrition (Ophthalmic),med
 newlivfit,NEW LIVFIT,Alembic,Ayurvedic hepatoprotective (Alembic),Ayurvedic,med
 newlivfit,NEW LIVFIT,Alembic,Polyherbal hepatoprotective (Eclipta + Phyllanthus + Andrographis),Ayurvedic (Hepatoprotective),high-verified
 newlivfit,NEW LIVFIT,Alembic,Polyherbal liver tonic,Hepatoprotective (Ayurvedic),med
 newnutrolinb,NEW NUTROLIN B,Cipla,Lactic Acid Bacillus + B-complex vitamins,Probiotic supplement,high
+newnutrolinbped,NEW NUTROLIN B PED,Cipla,Lactic acid bacillus (probiotic) + B-complex,Probiotic,med
 newrevolizer1unit,NEW REVOLIZER 1UNIT,Cipla,Inhaler device (Revolizer),Respiratory (Device),high
 newsocril,NEW SOCRIL,Ranbaxy,Ferric pyrophosphate + Folic acid + Glycine,Hematinic / Supplement,high-verified
+newsorbacid,NEW SORBACID,Alkem,Aluminium hydroxide + Magnesium hydroxide + Simethicone,Antacid,med
 newsupraplus,NEW SUPRA PLUS,Abbott,Multivitamin + Multimineral + Lycopene + antioxidants,Nutritional supplement,high-verified
+newtheoasthalin,NEW THEO ASTHALIN,Cipla,Theophylline + Salbutamol,Respiratory,med
 newtixylix,NEW TIXYLIX,Abbott,,Cough,low
+newtotelderm,NEW TOTELDERM,Alkem,,Topical (derm combo),low
 newtranspacer,NEW TRANSPACER,Lupin,Inhaler spacer device,Respiratory (Device),high
+newtriclazone40,NEW TRICLAZONE 40,Sun Pharma,Gliclazide,Antidiabetic,high
+newtriclazone80,NEW TRICLAZONE 80,Sun Pharma,Gliclazide,Antidiabetic,high
+newtriglucoredforte,NEW TRIGLUCORED FORTE,Sun Pharma,Glibenclamide + Metformin + Pioglitazone,Antidiabetic,med
 newvehycal,NEW VEHYCAL,Megacare,Calcium Aspartate + Vitamin D3 + L-Lysine,Nutritional supplement (Calcium),high-verified
+newvenod100,NEWVEN OD 100,Torrent,Desvenlafaxine,Antidepressant,med
+newvenod50,NEWVEN OD 50,Torrent,Desvenlafaxine,Antidepressant,med
+newzeetexpectorant,NEW ZEET EXPECTORANT,Alembic,Terbutaline + Bromhexine + Guaifenesin,Cough/expectorant,med
+nexipride25,NEXIPRIDE 25,Sun Pharma,Amisulpride,Antipsychotic,high
+nexipride50,NEXIPRIDE 50,Sun Pharma,Amisulpride,Antipsychotic,high
+nexironlp,NEXIRON LP,Alembic,Ferrous ascorbate + Folic acid,Hematinic,med
+nexito10,NEXITO 10 ##,Sun Pharma,Escitalopram,Antidepressant,high
 nexito10,NEXITO 10,Sun Pharma,Escitalopram 10mg,CNS (Antidepressant / SSRI),high
+nexito15,NEXITO 15,Sun Pharma,Escitalopram,Antidepressant,high
 nexito20,NEXITO 20,Sun Pharma,Escitalopram 20mg,CNS (Antidepressant / SSRI),high
 nexito5,NEXITO 5,Sun Pharma,Escitalopram 5mg,CNS (Antidepressant / SSRI),high
 nexitoforte,NEXITO FORTE,Sun Pharma,Escitalopram 20mg,CNS (Antidepressant SSRI),high
+nexitoforte20,NEXITO FORTE 20,Sun Pharma,Escitalopram,Antidepressant,high
+nexitols,NEXITO LS,Sun Pharma,Escitalopram + Clonazepam,Anxiolytic/antidepressant,high
+nexitoplus,NEXITO PLUS,Sun Pharma,Escitalopram + Clonazepam,Anxiolytic/antidepressant,high
 nexpro,NEXPRO,Torrent,Esomeprazole + Levosulpiride,Gastrointestinal (PPI + prokinetic),high
 nexpro20,NEXPRO 20,Torrent,Esomeprazole 20mg,Gastrointestinal (PPI),high
 nexpro40,NEXPRO 40,Torrent,Esomeprazole 40mg,Gastrointestinal (PPI),high
+nexprofast20,NEXPRO FAST 20,Torrent,Esomeprazole,PPI/anti-ulcer,high
 nexprofast40,NEXPRO FAST 40,Torrent,Esomeprazole 40mg + Sodium Bicarbonate,Gastrointestinal (PPI),high
 nexprohp,NEXPRO HP,Torrent,Esomeprazole + Amoxicillin + Clarithromycin (H. pylori kit),Gastrointestinal (H. pylori eradication),high
 nexproit,NEXPRO IT,Torrent,Esomeprazole + Itopride,Gastrointestinal (PPI + prokinetic),high
+nexprojunior,NEXPRO JUNIOR,Torrent,Esomeprazole,PPI/anti-ulcer,med
 nexprord20,NEXPRO RD 20,Torrent,Esomeprazole 20mg + Domperidone 30mg,GI (PPI + prokinetic),high
 nexprord40,NEXPRO RD 40,Torrent,Esomeprazole 40mg + Domperidone 30mg,Gastrointestinal (PPI + prokinetic),high
+nextop25,NEXTOP 25,Torrent,Topiramate,Anti-epileptic/antimigraine,high-verified
+nextop50,NEXTOP 50,Torrent,Topiramate,Anti-epileptic/antimigraine,high-verified
+nextril50,NEXTRIL 50,Torrent,Tofisopam,Anxiolytic,high-verified
+nezact800n,NEZACT 800 N,Sun Pharma,,Nasal,low
+nezaflo,NEZAFLO,Sun Pharma,Fluticasone,Nasal corticosteroid,med
+nezalast,NEZALAST,Sun Pharma,Azelastine,Nasal antihistamine,med
 nicardiacdretard30,NICARDIA CD RETARD 30,J.B. Chemicals,Nifedipine 30mg (CD retard),Cardiovascular (CCB),high
 nicardiaretard10,NICARDIA RETARD 10,J.B. Chemicals,Nifedipine 10mg (retard),Cardiovascular (CCB),high
 nicardiaretard20,NICARDIA RETARD 20,J.B. Chemicals,Nifedipine 20mg (retard),Cardiovascular (CCB),high
@@ -3447,21 +4368,43 @@ nicotexmint4,NICOTEX MINT 4,Cipla,Nicotine 4mg (gum),Smoking cessation,high
 nicotexmint4bigtin,NICOTEX MINT 4 BIG TIN,Cipla,Nicotine 4mg (gum),Smoking cessation,high
 nicotexpaan4,NICOTEX PAAN 4,Cipla,Nicotine 4mg (gum),Smoking cessation,high
 niftran100,NIFTRAN 100,Ranbaxy,Nitrofurantoin 100mg,Antibiotic (Urinary),high
+niftrancp100,NIFTRAN CP 100,Ranbaxy,Nitrofurantoin,Antibiotic (UTI),high
+nikomoxcvdry,NIKOMOX CV DRY,Eris,Amoxicillin + Clavulanic acid,Antibiotic,high
+nikomoxdsdry,NIKOMOX DS DRY,Eris,Amoxicillin,Antibiotic,high
 nikoran10,NIKORAN 10,Torrent,Nicorandil 10mg,Cardiovascular (Anti-anginal),high
 nikoran5,NIKORAN 5,Torrent,Nicorandil 5mg,Cardiovascular (Anti-anginal),high
 nikoranod10,NIKORAN OD 10,Torrent,Nicorandil 10mg (OD),Cardiovascular (Anti-anginal),high
+nikotriol,NIKOTRIOL,Eris,Calcitriol + Calcium carbonate,Vitamin/supplement,med
+nimegesic,NIMEGESIC,Alembic,Nimesulide,NSAID,high
+nimegesicir,NIMEGESIC IR,Alembic,Nimesulide,NSAID,high
+nimodol100,NIMODOL 100,Aristo,Nimesulide,NSAID,high
+nimulid,NIMULID,Mankind,Nimesulide,NSAID (topical),high
+nimulidap,NIMULID-AP,Mankind,Nimesulide + Paracetamol,NSAID/analgesic,med
+nimulidath4,NIMULID-ATH 4,Mankind,Nimesulide + Thiocolchicoside,NSAID/muscle relaxant,med
 nimulidath8,NIMULID-ATH 8,Mankind,Aceclofenac 100mg + Thiocolchicoside 8mg,Analgesic/Muscle relaxant,high-verified
+nimulidhf,NIMULID HF,Mankind,Nimesulide,NSAID,med
+nimulidmd,NIMULID MD,Mankind,Nimesulide,NSAID,high
 nindanib100,NINDANIB 100,Glenmark,Nintedanib 100mg,Anti-fibrotic/Oncology,high
 nindanib150,NINDANIB 150,Glenmark,Nintedanib 150mg,Anti-fibrotic/Oncology,high
 nintena100,NINTENA 100,Sun Pharma,Nintedanib 100mg,Anti-fibrotic/Oncology,high
 nintena150,NINTENA 150,Sun Pharma,Nintedanib 150mg,Anti-fibrotic/Oncology,high
 nintib100,NINTIB 100,Cipla,Nintedanib 100mg,Anti-fibrotic/Oncology,high
 nintib150,NINTIB 150,Cipla,Nintedanib 150mg,Anti-fibrotic/Oncology,high
+nistamiecopack,NISTAMI ECOPACK,Cipla,,,low
+nitewell,NITEWELL,Global,,Supplement,low
+nitewellxp,NITEWELL XP,Global,,Supplement,low
+nitrest10,NITREST 10,Sun Pharma,Zolpidem,Hypnotic,high
+nitrest5,NITREST 5,Sun Pharma,Zolpidem,Hypnotic,high
+nitrobact100,NITROBACT 100,Mankind,Nitrofurantoin,Antibiotic (UTI),high
+nitrogesic,NITROGESIC,Troikaa,Glyceryl trinitrate (Nitroglycerin),Anal fissure (topical),high
 nitrohart,NITROHART,Mankind,Isosorbide Dinitrate 20mg + Hydralazine 37.5mg,Cardiovascular (Heart failure),high-verified
 nitrolong26,NITROLONG 2.6,Mankind,Nitroglycerin (Glyceryl trinitrate) 2.6mg SR,Cardiovascular (Anti-anginal),high
 nitrolong64,NITROLONG 6.4,Mankind,Nitroglycerin (Glyceryl Trinitrate) 6.4mg SR,Cardiovascular (Anti-anginal),high
 nitrosun5,NITROSUN 5,Sun Pharma,Nitrazepam 5mg,CNS (Hypnotic/Benzodiazepine),high
+niveoliinh,NIVEOLI INH,Cipla,,Respiratory,low
+nobel,NOBEL,Mankind,Nimesulide,NSAID,med
 nobel100,NOBEL 100,Mankind,Aceclofenac 100mg,Analgesic (NSAID),high
+nobel200,NOBEL 200,Mankind,Nimesulide,NSAID,high-verified
 nobelcoldrub,NOBEL COLD RUB,Mankind,Camphor + Menthol + Eucalyptus Oil (cold rub),Cold (Topical),high
 nobelds,NOBEL-DS,Mankind,Diclofenac + Methyl Salicylate + Menthol + Linseed Oil (topical),Analgesic (Topical),med
 nobelmr,NOBEL MR,Mankind,Nimesulide 100mg + Paracetamol 325mg + Tizanidine 2mg,Analgesic / Muscle relaxant,high-verified
@@ -3470,56 +4413,108 @@ nobelplus,NOBEL PLUS,Mankind,Mefenamic acid 50mg + Paracetamol 125mg /5ml,Analge
 nobelplusds,NOBEL-PLUS DS,Mankind,Aceclofenac + Paracetamol,Analgesic / Antipyretic,high
 nobelspas,NOBEL SPAS,Mankind,,Antispasmodic,low
 nobelspas,NOBEL SPAS,Mankind,Dicyclomine 10mg/ml + Diclofenac 25mg/ml,Antispasmodic + NSAID,high-verified
+noblok,NOBLOK,Life Star,,Cough/cold,low
 noblok,NOBLOK,Life Star,Paracetamol + Phenylephrine + Chlorpheniramine,Cold & flu (paediatric),high-verified
+noblokaf,NOBLOK AF,Life Star,,Cough/cold,low
 noblokaf,NOBLOK AF,Life Star,Chlorpheniramine Maleate + Phenylephrine,Cold & cough (Paediatric),high
+noblokrf,NOBLOK RF,Life Star,,,low
 nobloksaline,NOBLOK SALINE,Life Star,Sodium Chloride (saline),ENT (Nasal saline),high
+noculi,NOCULI,Ranbaxy,,Urinary alkalizer,low
+noculib6,NOCULI B6,Ranbaxy,,Urinary alkalizer,low
+nodict50,NODICT 50,Sun Pharma,Naltrexone,De-addiction,high
+nodimoxplus250dt,NODIMOX PLUS 250DT,Alkem,Amoxicillin + Dicloxacillin,Antibiotic,med
+nodimoxplus500,NODIMOX PLUS 500,Alkem,Amoxicillin + Dicloxacillin,Antibiotic,med
+noragylo,NORAGYL O,Mankind,Ofloxacin + Ornidazole,Antibiotic,med
 norflox,NORFLOX,Cipla,Norfloxacin,Ophthalmic/Otic (Antibiotic),high
 norflox200,NORFLOX 200,Cipla,Norfloxacin 200mg,Antibiotic (Fluoroquinolone),high
 norflox400,NORFLOX 400,Cipla,Norfloxacin 400mg,Antibiotic,high
 norfloxtz,NORFLOX TZ,Cipla,Norfloxacin 400mg + Tinidazole 600mg,Antibiotic,high
+normabrain,NORMABRAIN,Torrent,Piracetam,Nootropic,high
+normabrain800,NORMABRAIN 800,Torrent,Piracetam,Nootropic,high
+normatonerf,NORMATONE RF,Mankind,,Tonic (hematinic),low
+normetrogyl,NOR METROGYL,J.B. Chemicals,Norfloxacin + Metronidazole,Antidiarrheal/antibiotic,high
 normetrogylo,NOR METROGYL O,J.B. Chemicals,Ofloxacin + Metronidazole,Antibiotic/Antiprotozoal,med
+normetrogylplus,NOR METROGYL PLUS,J.B. Chemicals,Norfloxacin + Metronidazole,Antidiarrheal/antibiotic,high
+normotears,NORMO TEARS,Sun Pharma,Carboxymethylcellulose,Ophthalmic lubricant,med
 normoz,NORMOZ,Sun Pharma,Myo-Inositol 550mg + D-Chiro-Inositol 13.8mg + Chromium + Vitamin D2,Nutritional (PCOS),high-verified
 normozds,NORMOZ DS,Sun Pharma,Myo-Inositol + D-Chiro-Inositol + Vitamin D3,Nutritional supplement (PCOS),high-verified
+normozds,NORMOZ DS,Sun Pharma,Polyethylene glycol,Laxative,med
 normozmet,NORMOZ MET,Sun Pharma,Myo-Inositol + D-Chiro-Inositol + Metformin,Antidiabetic / PCOS,med
+normozpluspow,NORMOZ PLUS POW,Sun Pharma,Polyethylene glycol + electrolytes,Laxative (bowel prep),med
+norpregalin,NORPREGALIN,Torrent,Pregabalin + Nortriptyline,Neuropathic pain,med
+noscotuss,NOSCOTUSS,Mankind,Noscapine + Chlorpheniramine,Cough/cold,med
+nosikind01,NOSIKIND 01%,Mankind,Xylometazoline,Nasal decongestant,med
 nosikind01,NOSIKIND 0.1%,Mankind,Xylometazoline 0.1%,ENT (Nasal decongestant),high
+nosikindp,NOSIKIND P,Mankind,Xylometazoline,Nasal decongestant,med
 nosikindp,NOSIKIND P,Mankind,Xylometazoline 0.05% + Sorbitol,Nasal decongestant (Paediatric),high-verified
 nova75,NOVA 75,Cipla,Pregabalin 75mg,Neuropathic pain,high-verified
+novacef500,NOVACEF 500,Cipla,Cefuroxime,Antibiotic,med
+novam75,NOVA M 75,Cipla,Pregabalin + Methylcobalamin,Neuropathic pain,high-verified
 novamox,NOVAMOX,Cipla,Amoxicillin,Antibiotic (Penicillin),high
 novamox,NOVAMOX,Cipla,Amoxicillin 500mg,Antibiotic (Penicillin),high
 novamox125dt,NOVAMOX 125 DT,Cipla,Amoxicillin 125mg,Antibiotic (Penicillin),high
+novamox250,NOVAMOX 250,Cipla,Amoxicillin,Antibiotic,high
 novamox250dt,NOVAMOX 250 DT,Cipla,Amoxicillin 250mg,Antibiotic,high
+novamoxcv,NOVAMOX CV,Cipla,Amoxicillin + Clavulanic acid,Antibiotic,high
+novamoxcv375,NOVAMOX CV 375,Cipla,Amoxicillin + Clavulanic acid,Antibiotic,high
 novamoxcv625,NOVAMOX CV 625,Cipla,Amoxicillin 500mg + Clavulanic Acid 125mg,Antibiotic (Penicillin + beta-lactamase inhibitor),high
 novamoxcvdry,NOVAMOX CV DRY,Cipla,Amoxicillin + Clavulanic Acid,Antibiotic (Penicillin + beta-lactamase inhibitor),high
+novamoxcves,NOVAMOX CV ES,Cipla,Amoxicillin + Clavulanic acid,Antibiotic,high
+novaplus75,NOVA PLUS 75,Cipla,Pregabalin + Methylcobalamin,Neuropathic pain,med
+novefos,NOVEFOS,Sun Pharma,Fosfomycin,Antibiotic (UTI),med
 novelon,NOVELON,Abbott,Desogestrel 0.15mg + Ethinylestradiol 0.03mg,Hormone (Oral contraceptive),high
+noviruz,NOVIRUZ,Eris,,Antiseptic gargle,low
 novofine31,NOVOFINE 31,Abbott,Insulin pen needle (device),Device,high
+novofine324mm,NOVOFINE 32 4MM,Abbott,,Insulin pen needle (device),low
+novogermina,NOVOGERMINA,Alkem,Bacillus clausii (probiotic),Probiotic,med
+novomix30flexpens,NOVOMIX 30 FLEXPENS,Abbott,Insulin aspart (biphasic),Antidiabetic (insulin),high
 novomix30penfill,NOVOMIX 30 PENFILL,Abbott,Insulin Aspart 30/70 (biphasic),Antidiabetic (Insulin),high
+novomix50flexpen,NOVOMIX 50 FLEXPEN,Abbott,Insulin aspart (biphasic),Antidiabetic (insulin),high
+novomix50penfill,NOVOMIX 50 PENFILL,Abbott,Insulin aspart (biphasic),Antidiabetic (insulin),high
+novonorm05,NOVONORM 0.5,Abbott,Repaglinide,Antidiabetic,high
 novonorm1,NOVONORM 1,Abbott,Repaglinide 1mg,Antidiabetic,high
+novonorm2,NOVONORM 2,Abbott,Repaglinide,Antidiabetic,high
 novopen4,NOVOPEN 4,Abbott,Insulin pen device (Novopen),Antidiabetic (Device),high
 novorapid100,NOVORAPID 100,Abbott,Insulin Aspart,Antidiabetic (Insulin),high
 novorapidflexpens,NOVORAPID FLEXPENS,Abbott,Insulin Aspart,Antidiabetic (Insulin),high
 novorapidpenfills,NOVORAPID PENFILLS,Abbott,Insulin Aspart,Antidiabetic (Insulin),high
 noworm,NOWORM,Alkem,Albendazole 200mg/5ml,Anthelmintic,high
 noworm400,NOWORM 400,Alkem,Albendazole 400mg,Anthelmintic,high
+nozuka,NOZUKA,Alkem,,Nasal,low
+nozukaaf,NOZUKA AF,Alkem,,Cough/cold,low
 nubeta25,NUBETA 2.5,Entero,Nebivolol 2.5mg,Cardiovascular (Beta-blocker),high
 nubeta5,NUBETA 5,Entero,Nebivolol 5mg,Cardiovascular (Beta-blocker),high
 nucortm16,NUCORT M 16,Mankind,Methylprednisolone 16mg,Corticosteroid,high
+nucortm4,NUCORT-M4,Mankind,Methylprednisolone,Corticosteroid,med
 nucortm4dc,NUCORT M4 DC,Mankind,Methylprednisolone 4mg,Corticosteroid,high-verified
 nucortm8dc,NUCORT M8 DC,Mankind,Methylprednisolone 8mg,Corticosteroid,high
 nucoxia120,NUCOXIA 120,Cadila Pharmaceuticals,Etoricoxib 120mg,Analgesic (COX-2 NSAID),high
 nucoxia60,NUCOXIA 60,Cadila Pharmaceuticals,Etoricoxib 60mg,Analgesic (COX-2),high
 nucoxia90,NUCOXIA 90,Cadila Pharmaceuticals,Etoricoxib 90mg,Analgesic (COX-2 NSAID),high
+nucoxiad3,NUCOXIA D3,Cadila Pharmaceuticals,Etoricoxib + Vitamin D3,NSAID,med
 nucoxiamr,NUCOXIA MR,Cadila Pharmaceuticals,Etoricoxib 60mg + Thiocolchicoside 4mg,Analgesic/Muscle relaxant,high
 nucoxiap,NUCOXIA P,Cadila Pharmaceuticals,Etoricoxib 60mg + Paracetamol 325mg,Analgesic,high
+nucoxiarelax,NUCOXIA RELAX,Cadila Pharmaceuticals,Etoricoxib + Thiocolchicoside,NSAID/muscle relaxant,med
+nucoxiasp,NUCOXIA SP,Cadila Pharmaceuticals,Etoricoxib + Serratiopeptidase,NSAID,med
+nucoxiaxp,NUCOXIA XP,Cadila Pharmaceuticals,Etoricoxib + Paracetamol,NSAID/analgesic,med
 nuforce,NUFORCE,Mankind,Medicated soap (antifungal),Dermatological (Topical),med
 nuforce150,NUFORCE 150,Mankind,Fluconazole 150mg,Antifungal,high-verified
 nuforce200,NUFORCE 200,Mankind,Fluconazole 200mg,Antifungal,high
 nuforce400,NUFORCE 400,Mankind,Fluconazole 400mg,Antifungal,high
 nuforce50,NUFORCE 50,Mankind,Fluconazole 50mg,Antifungal,high-verified
 nuforceantidandruff,NUFORCE ANTI DANDRUFF,Life Star,Ketoconazole (anti-dandruff),Dermatological (Antifungal),med
+nuforcecd3vag,NUFORCE CD3 VAG,Life Star,Clindamycin + Clotrimazole,Vaginal (antifungal/antibacterial),med
+nuforcecd3vaginal3suppo,NUFORCE-CD 3 VAGINAL 3SUPPO,Mankind,Clindamycin + Clotrimazole,Vaginal (antifungal/antibacterial),med
 nuforcedusting,NUFORCE DUSTING,Mankind,Clotrimazole (antifungal dusting powder),Antifungal (Topical),med
 nuforcegmont,NUFORCE-GM ONT,Mankind,Beclomethasone 0.025% + Clotrimazole 1% + Neomycin 0.5%,Dermatological,high-verified
 nuforcemouthpaint,NUFORCE MOUTH PAINT,Mankind,Clotrimazole 1%,Antifungal (oral / topical),high-verified
+nuforceplus,NUFORCE PLUS,Mankind,,Gynecology,low
+nugliptin50,NUGLIPTIN 50,RPG Life Sciences,Vildagliptin,Antidiabetic,high-verified
+nugliptinm1000,NUGLIPTIN M 1000,RPG Life Sciences,Vildagliptin + Metformin,Antidiabetic,high
 nugliptinm500,NUGLIPTIN M 500,RPG Life Sciences,Teneligliptin 20mg + Metformin 500mg,Antidiabetic,high
+nulocd,NULOC D,Alkem,Rabeprazole + Domperidone,PPI/prokinetic,high-verified
+nulocmps,NULOC MPS,Alkem,Oxethazaine + Aluminium hydroxide + Magnesium hydroxide,Antacid,med
+nuriteactive,NURITE ACTIVE,Centaur,,Nutrition (multivitamin),low
 nurokind,NUROKIND,Mankind,Gabapentin 300mg + Methylcobalamin 500mcg,CNS (Neuropathic pain),high-verified
 nurokind,NUROKIND,Mankind,Methylcobalamin,Neuro / Nutritional supplement,high
 nurokind,NUROKIND,Mankind,Methylcobalamin (+ B-complex) syrup,Neuro/Nutritional,high
@@ -3527,18 +4522,33 @@ nurokind,NUROKIND,Mankind,Methylcobalamin 1000mcg,Neuro / Supplement,high
 nurokind500,NUROKIND 500,Mankind,Methylcobalamin 500mcg,Neuro / Nutritional supplement,high
 nurokindd3,NUROKIND-D3,Mankind,Methylcobalamin + Cholecalciferol (Vitamin D3),Neuro/Nutritional,high
 nurokindfaststrip1stirp,NUROKIND FAST STRIP 1STIRP,Mankind,Methylcobalamin,Neuro/Nutritional,high
+nurokindforte,NUROKIND FORTE,Mankind,Methylcobalamin + B-complex,Neurotropic/vitamin,med
 nurokindfortez,NUROKIND FORTE Z,Mankind,Methylcobalamin + Folic Acid + Niacinamide + Pyridoxine + Zinc + Chromium,Neuro / Nutritional supplement,high-verified
 nurokindgold,NUROKIND GOLD,Mankind,Methylcobalamin + Alpha Lipoic Acid + Pyridoxine + Folic Acid,Neuro/Nutritional,high
 nurokindgold,NUROKIND GOLD,Mankind,Methylcobalamin + Pyridoxine + Nicotinamide + D-Panthenol,Neuro / Nutritional supplement,med
 nurokindgoldrf,NUROKIND GOLD RF,Mankind,Methylcobalamin + Alpha Lipoic Acid + Pyridoxine + Folic Acid,Neuro / Nutritional supplement,med
 nurokindlc,NUROKIND-LC,Mankind,Methylcobalamin + Alpha Lipoic Acid + B-vitamins (Nurokind-LC),Neuro / Nutritional supplement,med
+nurokindmorerf,NUROKIND MORE RF,Mankind,Methylcobalamin + Alpha Lipoic Acid,Neurotropic/supplement,med
+nurokindnext,NUROKIND NEXT,Mankind,Methylcobalamin + Alpha Lipoic Acid + Pyridoxine + Folic acid,Neurotropic/supplement,med
+nurokindod,NUROKIND OD,Mankind,Methylcobalamin,Vitamin (B12),high
 nurokindod,NUROKIND-OD,Mankind,Methylcobalamin 1500mcg,Neuro / Nutritional supplement,high
 nurokindplusrf,NUROKIND PLUS RF,Mankind,Methylcobalamin + B-vitamins (Nurokind Plus),Neuro / Nutritional supplement,med
 nurokindzmore,NUROKIND-Z MORE,Mankind,Methylcobalamin + Alpha Lipoic Acid + Zinc + B-complex,Neuro/Nutritional,med
+nurostar,NUROSTAR,Life Star,,Neuro supplement,low
 nurostarc1,NUROSTAR C1,Mankind,Methylcobalamin 1500mcg + Folic Acid 0.7mg + Niacinamide 12mg,Neuro / Nutritional supplement,high-verified
+nurotroysr,NUROTROY SR,Troikaa,,Neuro supplement,low
 nusam200,NUSAM 200,Sun Pharma,S-Adenosylmethionine (Ademetionine) 200mg,Hepatoprotective,high-verified
 nusam400,NUSAM 400,Sun Pharma,S-Adenosylmethionine (Ademetionine) 400mg,Hepatoprotective,high
+nutramide,NUTRAMIDE,Cipla,,Appetite/nutrition,low
+nutrikitcv,NUTRIKIT CV,RPG Life Sciences,,Prenatal kit,low
 nutrolinbplus,NUTROLIN B PLUS,Cipla,Lactobacillus + Vitamin B-Complex,Probiotic / Supplement,high
+o2,O 2,Abbott,Ofloxacin + Ornidazole,Antibiotic,high
+o2,O2,Alembic,Ofloxacin + Ornidazole,Antibiotic,high
+o2derm,O2 DERM,Abbott,,Topical (derm),low
+o2sus,O 2 SUS,Abbott,Ofloxacin + Ornidazole,Antibiotic,high
+obimetgx,OBIMET GX,Abbott,Metformin + Glimepiride,Antidiabetic,high
+obimetgx1,OBIMET GX 1,Abbott,Metformin + Glimepiride,Antidiabetic,high
+obimetgx2,OBIMET GX 2,Abbott,Metformin + Glimepiride,Antidiabetic,high
 ocabile5,OCABILE 5,Torrent,Obeticholic Acid 5mg,Hepatobiliary (PBC),high-verified
 ocidd,OCID-D,Cadila Pharmaceuticals,Omeprazole + Domperidone,Gastrointestinal (PPI + prokinetic),high
 ociddsr,OCID DSR,Cadila Pharmaceuticals,Omeprazole + Domperidone (SR),Gastrointestinal (PPI + prokinetic),high
