@@ -167,12 +167,17 @@ export async function signedScanUrl(storagePath: string, expiresSec = 300): Prom
   return data?.signedUrl ?? null;
 }
 
-/** Remove a scan from the audit trail: delete its stored file, then its row. Does
- *  NOT unwind a posted GRN — only the scan record + uploaded file are cleared (RLS
- *  delete policies, migration 0049). File removal is best-effort (a missing object
- *  is not fatal); the row delete is what the caller cares about. */
-export async function deleteScan(id: string, storagePath: string): Promise<{ error?: string }> {
+/** Remove a scan from the audit trail: delete its stored file, then its row. When the
+ *  scan was posted as a GRN (`purchaseId`), first fully reverse + delete that GRN
+ *  (`delete_purchase`, 0058) — stock, vendor payable and ITC are undone, with on-hand
+ *  allowed to go negative as a "purchase invoice missing" flag. File removal is
+ *  best-effort; the row delete is what the caller cares about (RLS policies, 0049). */
+export async function deleteScan(id: string, storagePath: string, purchaseId?: string | null): Promise<{ error?: string }> {
   if (!supabase) return { error: "Not connected." };
+  if (purchaseId) {
+    const { error: e } = await supabase.rpc("delete_purchase", { p_purchase_id: purchaseId });
+    if (e) return { error: `Could not delete the GRN: ${e.message}` };
+  }
   await supabase.storage.from(INVOICE_SCANS_BUCKET).remove([storagePath]);
   const { error } = await supabase.from("invoice_scans").delete().eq("id", id);
   return error ? { error: error.message } : {};
