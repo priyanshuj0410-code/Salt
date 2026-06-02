@@ -1,9 +1,13 @@
 ---
 type: architecture
-updated: 2026-06-01
+updated: 2026-06-02
 ---
 
 # Billing screen
+
+> Screen-level detail (layout, keyboard map, per-component roles). For the module hub — the
+> `create_sales_invoice` write-path contract, client architecture, and the feature map — see
+> **[billing](billing.md)**.
 
 The counter billing screen (`apps/web/src/components/billing/`) is the core revenue surface of Salt. It is the only screen reachable by cashiers (the default `/` route). See [screens-routing](screens-routing.md) for access rules.
 
@@ -98,8 +102,8 @@ payment: { method: "cash" | "credit"; creditDays: number }
 party: OrderParty | null   // the customer; null = walk-in
 rx: RxDetails | null        // captured Schedule H1/X prescription; cleared by clear()
 billDiscount: BillDiscount  // whole-bill discount (pct|flat), on top of line discounts
-parked: ParkedBill[]        // bills held aside on this counter, newest first
 ```
+(Parked/held bills are **not** in `useBill` — they moved to the server-synced `useHeldBills` store; see [Parked / held bills](#parked--held-bills).)
 
 **Actions:**
 - `addItem(item, batchNo?)` — selects FEFO batch if `batchNo` is omitted; merges qty into an existing line for the same key; no-op if no stock remains
@@ -107,7 +111,7 @@ parked: ParkedBill[]        // bills held aside on this counter, newest first
 - `setBatch(key, item, batch)` — re-keys the line to `itemId:newBatchNo`; if that key already exists, merges qty (capped by stock) and drops the old line
 - `setDiscount(key, type, value)` — line discount: `"pct"` (0–100) or `"flat"` (paise, capped at line gross)
 - `setBillDiscount(d)` — whole-bill discount — see [Bill-level discount](#bill-level-discount)
-- `parkBill()` / `resumeBill(id)` / `discardPark(id)` — see [Parked / held bills](#parked--held-bills)
+- Parked / held bills live in a separate **server-synced** store (`useHeldBills`), not `useBill` — see [Parked / held bills](#parked--held-bills)
 - `removeLine(key)`, `setPaymentMethod()`, `setCreditDays()`, `clear()`
 
 **Line key:** `itemId:batchNo` — stable across qty changes, changes only when the batch is swapped.
@@ -131,9 +135,9 @@ A **non-blocking** amber notice (`CreditNotice`) at checkout when a **credit** s
 
 ## Parked / held bills
 
-A counter often needs to set a bill aside (the customer forgot something, or is fetching cash) and serve the next person. `parkBill()` (the desktop **Hold · F4** button, the mobile **Hold**, or `F4`) snapshots `{lines, payment, party, rx}` into `useBill.parked` and resets the counter to a fresh bill; it is a no-op on an empty bill. The **`ParkedBills`** strip under the header shows one chip per held bill (label = customer or "Walk-in", with item count + total); tapping a chip `resumeBill(id)` loads it back — and **holds the in-progress bill in its place** so a bill is never lost — while the × `discardPark(id)` drops it. Held bills survive saves and route changes (`clear()` leaves `parked` untouched) but are **in-memory** for now.
+A counter often needs to set a bill aside (the customer forgot something, or is fetching cash) and serve the next person. **Hold** (the desktop **Hold · F4** button, the mobile **Hold**, or `F4`) snapshots `{lines, payment, party, rx, billDiscount}` and resets the counter to a fresh bill; it is a no-op on an empty bill. The **`ParkedBills`** strip under the header shows one chip per held bill (label = customer or "Walk-in", with item count + total); tapping a chip resumes it — and **holds the in-progress bill in its place** so a bill is never lost — while the × discards it.
 
-Out of billing's scope (filed as follow-ups): **cross-counter handoff** (resume a hold from another till) and **refresh-persistence** both need the hold to live server-side, not in the Zustand store.
+Held bills are **server-synced**, not in-memory (SALT-008 / 180): the `useHeldBills` store ([`store/heldBills.ts`](../../apps/web/src/store/heldBills.ts)) is backed by the `held_bills` table + the `hold_bill` / `resume_bill` (atomic claim) / `discard_held_bill` RPCs (migration 0040) and a realtime channel, so a bill set aside on one counter can be **resumed on any counter or device** and survives a refresh. The atomic `resume_bill` claim means two counters can never resume the same hold.
 
 `billTotals(lines)` is a pure function (not stored in Zustand):
 ```
@@ -189,4 +193,4 @@ lineMaxQty = item.stock − sumItemQty(lines, itemId, [thisLineKey])
 Stock is capped **per item** across all its batches combined. Adding a second batch for the same item reduces available qty for both lines.
 
 ## Related
-[screens-routing](screens-routing.md) · [domain/medical-retail](../domain/medical-retail.md) · [decisions/0003-money-as-paise](../decisions/0003-money-as-paise.md)
+[billing (module hub)](billing.md) · [screens-routing](screens-routing.md) · [domain/medical-retail](../domain/medical-retail.md) · [decisions/0003-money-as-paise](../decisions/0003-money-as-paise.md)
