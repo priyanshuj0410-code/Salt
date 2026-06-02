@@ -105,12 +105,12 @@ export function InvoiceScansPage() {
     }
   }
 
-  // Remove the scan + its file. Never touches a posted GRN — only the audit record.
+  // Remove the scan + its file; for a posted scan, also reverse + delete its GRN.
   async function doDelete(r: InvoiceScanRow) {
     setDeleting(r.id);
     setDelErr(null);
     try {
-      const { error } = await deleteScan(r.id, r.storage_path);
+      const { error } = await deleteScan(r.id, r.storage_path, r.purchase_id);
       if (error) {
         setDelErr(`Could not delete ${r.original_filename ?? "scan"}: ${error}`);
         return;
@@ -197,7 +197,7 @@ export function InvoiceScansPage() {
                     disabled={deleting === r.id}
                     className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
                   >
-                    {deleting === r.id ? "Deleting…" : "Confirm delete"}
+                    {deleting === r.id ? "Deleting…" : r.purchase_id ? "Delete GRN + scan?" : "Confirm delete"}
                   </button>
                 ) : (
                   <button
