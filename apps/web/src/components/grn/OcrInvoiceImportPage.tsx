@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { FileUp, ScanLine, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   type ParsedPurchaseInvoice,
   type PurchaseImportResult,
 } from "@/lib/importPurchaseInvoice";
-import { createScan, invokeExtract, kickoffProcessScans, updateScan, vendorGuess } from "@/lib/invoiceScans";
+import { createScan, getScanJson, invokeExtract, kickoffProcessScans, updateScan, vendorGuess } from "@/lib/invoiceScans";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { findExistingInvoice } from "@/lib/purchaseDedup";
@@ -59,6 +59,7 @@ export function OcrInvoiceImportPage() {
   const orgId = membership?.orgId;
   const loadCatalog = useCatalog((s) => s.load);
   const blockers = useShopBlockers();
+  const [sp] = useSearchParams();
 
   const [fileName, setFileName] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
@@ -183,6 +184,27 @@ export function OcrInvoiceImportPage() {
       active = false;
     };
   }, [orgId, result]);
+
+  // Review + post a background-extracted scan opened from history (?scan=<id>): load
+  // its stored JSON into the same review/post flow — no re-extraction. doImport links
+  // the scan + marks it posted via scanId.
+  useEffect(() => {
+    const scanParam = sp.get("scan");
+    if (!scanParam || !orgId) return;
+    let active = true;
+    (async () => {
+      const json = await getScanJson(orgId, scanParam);
+      if (!active || !json) return;
+      setScanId(scanParam);
+      setFileName("(from scan history)");
+      const mapped = ocrInvoiceToRows(json);
+      setOcrIssues(mapped.issues);
+      setResult(parsePurchaseInvoices(mapped.rows));
+    })();
+    return () => {
+      active = false;
+    };
+  }, [orgId, sp]);
 
   async function doImport() {
     if (!supabase || !orgId || !result) return;

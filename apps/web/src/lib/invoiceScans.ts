@@ -197,3 +197,12 @@ export async function deleteScan(id: string, storagePath: string, purchaseId?: s
   const { error } = await supabase.from("invoice_scans").delete().eq("id", id);
   return error ? { error: error.message } : {};
 }
+
+/** A scan's stored extraction — lets the scan page review + post a background-extracted
+ *  scan from history (`?scan=<id>`) without re-running OCR. */
+export async function getScanJson(orgId: string, scanId: string): Promise<OcrInvoiceJson | null> {
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("invoice_scans").select("extracted_json").eq("id", scanId).eq("org_id", orgId).maybeSingle();
+  return (data as { extracted_json?: OcrInvoiceJson } | null)?.extracted_json ?? null;
+}
