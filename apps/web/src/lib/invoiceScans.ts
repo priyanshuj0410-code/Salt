@@ -166,3 +166,14 @@ export async function signedScanUrl(storagePath: string, expiresSec = 300): Prom
   const { data } = await supabase.storage.from(INVOICE_SCANS_BUCKET).createSignedUrl(storagePath, expiresSec);
   return data?.signedUrl ?? null;
 }
+
+/** Remove a scan from the audit trail: delete its stored file, then its row. Does
+ *  NOT unwind a posted GRN — only the scan record + uploaded file are cleared (RLS
+ *  delete policies, migration 0049). File removal is best-effort (a missing object
+ *  is not fatal); the row delete is what the caller cares about. */
+export async function deleteScan(id: string, storagePath: string): Promise<{ error?: string }> {
+  if (!supabase) return { error: "Not connected." };
+  await supabase.storage.from(INVOICE_SCANS_BUCKET).remove([storagePath]);
+  const { error } = await supabase.from("invoice_scans").delete().eq("id", id);
+  return error ? { error: error.message } : {};
+}

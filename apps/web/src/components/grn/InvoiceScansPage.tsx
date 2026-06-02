@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { FileText, RotateCcw, ScanLine } from "lucide-react";
+import { FileText, RotateCcw, ScanLine, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
@@ -17,6 +17,7 @@ import {
   updateScan,
   vendorGuess,
   signedScanUrl,
+  deleteScan,
   scanStatusLabel,
   scanStatusVariant,
   type InvoiceScanRow,
@@ -38,6 +39,10 @@ export function InvoiceScansPage() {
   const [unavailable, setUnavailable] = useState(false);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  // Delete needs a deliberate second click (no native confirm in the design system).
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [delErr, setDelErr] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -100,6 +105,23 @@ export function InvoiceScansPage() {
     }
   }
 
+  // Remove the scan + its file. Never touches a posted GRN — only the audit record.
+  async function doDelete(r: InvoiceScanRow) {
+    setDeleting(r.id);
+    setDelErr(null);
+    try {
+      const { error } = await deleteScan(r.id, r.storage_path);
+      if (error) {
+        setDelErr(`Could not delete ${r.original_filename ?? "scan"}: ${error}`);
+        return;
+      }
+      setRows((rs) => rs.filter((x) => x.id !== r.id));
+    } finally {
+      setDeleting(null);
+      setConfirmId(null);
+    }
+  }
+
   if (unavailable) {
     return (
       <Page width="lg">
@@ -158,16 +180,37 @@ export function InvoiceScansPage() {
           {
             key: "action",
             header: "",
-            cell: (r) =>
-              r.status === "failed" ? (
-                <Button size="sm" variant="outline" disabled={retrying === r.id} onClick={() => retry(r)}>
-                  <RotateCcw /> {retrying === r.id ? "Retrying…" : "Retry"}
-                </Button>
-              ) : r.purchase_id ? (
-                <Link to={`/purchases/${r.purchase_id}`} className="text-sm text-primary hover:underline">
-                  View GRN →
-                </Link>
-              ) : null,
+            cell: (r) => (
+              <div className="flex items-center justify-end gap-3">
+                {r.status === "failed" ? (
+                  <Button size="sm" variant="outline" disabled={retrying === r.id} onClick={() => retry(r)}>
+                    <RotateCcw /> {retrying === r.id ? "Retrying…" : "Retry"}
+                  </Button>
+                ) : r.purchase_id ? (
+                  <Link to={`/purchases/${r.purchase_id}`} className="text-sm text-primary hover:underline">
+                    View GRN →
+                  </Link>
+                ) : null}
+                {confirmId === r.id ? (
+                  <button
+                    onClick={() => doDelete(r)}
+                    disabled={deleting === r.id}
+                    className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
+                  >
+                    {deleting === r.id ? "Deleting…" : "Confirm delete"}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setConfirmId(r.id)}
+                    className="text-text-tertiary hover:text-destructive"
+                    aria-label="Delete scan"
+                    title="Delete scan + file"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                )}
+              </div>
+            ),
           },
         ]}
       />
@@ -184,6 +227,8 @@ export function InvoiceScansPage() {
             ))}
         </div>
       )}
+
+      {delErr && <p className="mt-3 text-sm text-destructive">{delErr}</p>}
     </Page>
   );
 }
