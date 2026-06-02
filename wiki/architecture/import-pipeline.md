@@ -1,6 +1,6 @@
 ---
 type: architecture
-updated: 2026-05-29
+updated: 2026-06-02
 ---
 
 # Import pipeline
@@ -9,7 +9,7 @@ Onboarding from Marg/Tally/Saral is the leverage point for the whole business (P
 
 1. **CSV catalogue importer** — simple template-based import of items.
 2. **Go migrator** (`migrator/`) — reads Marg DBF files locally, uploads via `redeem_migration_token`. User downloads the cross-compiled binary from the site.
-3. **Smart Importer** (`apps/web/src/components/import/smart`) — the main path. A four-step cascade stepper: **ledgers → party details → items → batches & stock**.
+3. **Smart Importer** (`apps/web/src/components/import/smart`) — the main path. Originally a four-step cascade (**ledgers → party details → items → batches & stock**), now a **full multi-step cascade + drop-all auto-detect router** covering masters, opening balances, transaction history, compliance and GSTR-2B. The original four-file core is described below; the complete as-built module is [smart-import](smart-import.md).
 
 ## The four files map to two "spine + enrichment" clusters
 
@@ -50,7 +50,7 @@ The trial balance legitimately repeats names (one party as both debtor and credi
 
 ## Beyond the four files
 
-Today's cascade fills **masters + opening balances** only. The full model (0014–0024) is now live, so the next step is extending Smart Import to ingest Marg's transaction history, accounting and compliance exports too. The complete Marg-export → Salt-table scope — every file, its target table(s), join keys, and the decisions it forces — is mapped in [marg-import-map](marg-import-map.md). The **engineering design + phased build** for that extension is [smart-import-extension](smart-import-extension.md); operators export each file per [../domain/marg-export-guide](../domain/marg-export-guide.md).
+The four-file core (above) is just the start. The extension to the **whole live model** has since **fully shipped** — the cascade now also ingests transaction history (purchases, sales, returns, payments), opening stock movements, compliance (H1, drug licences, GST returns, invoice series) and GSTR-2B reconciliation, plus a drop-all auto-detect router and multi-branch targeting. The as-built module reference is [smart-import](smart-import.md); the complete Marg-export → Salt-table scope is [marg-import-map](marg-import-map.md); the engineering design + phase history is [smart-import-extension](smart-import-extension.md); operators export each file per [../domain/marg-export-guide](../domain/marg-export-guide.md).
 
 ## Related
 [marg-import-map](marg-import-map.md) · [trial-balance](../domain/trial-balance.md) · [parties](../domain/parties.md) · [data-model](data-model.md)
