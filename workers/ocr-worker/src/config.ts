@@ -29,6 +29,9 @@ export const config = {
   lanes: opt("OCR_LANES", "queue").split(",").map((s) => s.trim()).filter(Boolean),
   leaseSeconds: num("LEASE_SECONDS", 300),
   pollIntervalMs: num("POLL_INTERVAL_MS", 5000),
+  // Ollama can take minutes to cold-load a large model + run vision on a laptop;
+  // node:http has no undici 300s cap, so give it a generous idle ceiling.
+  ollamaTimeoutMs: num("OLLAMA_TIMEOUT_MS", 600000),
   concurrency: num("CONCURRENCY", 1),
   bucket: opt("OCR_BUCKET", "invoice-scans"),
   maxImagePx: num("MAX_IMAGE_PX", 1500),

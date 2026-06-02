@@ -52,15 +52,28 @@ that prompt ever changes, update both.
 
 ### Pull a Gemma vision model
 
-Size the model to the machine (final tag confirmed by the §14.1 eval):
+The model **must report the `vision` capability** — check with `ollama show <tag>`.
+Size it to the machine (final tag confirmed by the §14.1 eval):
 
-| Machine | Role | Suggested tag |
-|---|---|---|
-| M4, 24 GB | burst worker | `ollama pull gemma3:12b` |
-| Intel, 16 GB | always-on baseline | `ollama pull gemma3:4b` |
+| Machine | Role | Tag | Notes |
+|---|---|---|---|
+| M4, 24 GB | burst worker | `gemma4:26b-a4b-it-q4_K_M` | ✅ verified vision; ~19 GB loaded, ~43s warm/invoice |
+| Intel, 16 GB | always-on baseline | `gemma3:4b` | the 19 GB gemma4 won't fit 16 GB |
+
+```bash
+ollama pull gemma4:26b-a4b-it-q4_K_M     # then set OCR_MODEL to it
+ollama show  gemma4:26b-a4b-it-q4_K_M     # confirm "Capabilities: vision"
+```
 
 Ollama serves at `http://localhost:11434`. Because the worker runs on the **same
 laptop**, there is no tunnel and nothing is exposed to the internet.
+
+> **Verified end-to-end (M4, 24 GB):** a synthetic distributor invoice through
+> `gemma4:26b-a4b-it-q4_K_M` returned the exact `OcrInvoiceJson` contract —
+> invoice no, date, 15-char GSTIN and most line fields correct. It *did* misread a
+> vendor name and one row's qty, so this is a plumbing proof, **not** a pass on the
+> §14.1 accuracy gate — run that on real bills before flipping the default lane.
+> A cold model load can take minutes; `OLLAMA_TIMEOUT_MS` (default 10 min) covers it.
 
 ---
 
@@ -120,6 +133,7 @@ pnpm reclaim          # one-shot; e.g. wire to cron/launchd every 15 min
 | `CONCURRENCY` | `1` | parallel drain lanes (a laptop vision model is usually the bottleneck) |
 | `OCR_BUCKET` | `invoice-scans` | private Storage bucket |
 | `MAX_IMAGE_PX` | `1500` | PDF rasterize downscale (longest side) |
+| `OLLAMA_TIMEOUT_MS` | `600000` | idle ceiling for the Ollama call (cold loads run minutes) |
 
 ---
 
