@@ -150,15 +150,35 @@ async function callGemini(key: string, b64: string, mime: string): Promise<strin
   return text;
 }
 
-/** Pull the first JSON object out of the model's reply, tolerating stray fencing.
- *  With responseMimeType=application/json Gemini returns bare JSON, but we stay
- *  defensive in case a model/version wraps it. */
+/** Pull the FIRST complete JSON object out of the model's reply, tolerating stray
+ *  fencing AND trailing content. On large/complex bills Gemini sometimes appends a
+ *  second object or prose after the invoice; a naive first-{ to last-} slice then
+ *  fed two values to JSON.parse ("Unexpected non-whitespace character after JSON").
+ *  Brace-match from the first { (respecting strings + escapes) and parse exactly the
+ *  first balanced object — everything after it is discarded. */
 function parseModelJson(raw: string): unknown {
   const fence = raw.replace(/```json\s*|\s*```/g, "");
   const start = fence.indexOf("{");
-  const end = fence.lastIndexOf("}");
-  if (start === -1 || end === -1) throw new Error("model did not return JSON");
-  return JSON.parse(fence.slice(start, end + 1));
+  if (start === -1) throw new Error("model did not return JSON");
+  let depth = 0;
+  let inStr = false;
+  let esc = false;
+  for (let i = start; i < fence.length; i++) {
+    const ch = fence[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (ch === "\\") esc = true;
+      else if (ch === '"') inStr = false;
+    } else if (ch === '"') {
+      inStr = true;
+    } else if (ch === "{") {
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0) return JSON.parse(fence.slice(start, i + 1));
+    }
+  }
+  throw new Error("model returned incomplete JSON"); // never closed → truncated output
 }
 
 Deno.serve(async (req: Request) => {
