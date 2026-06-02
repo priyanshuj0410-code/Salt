@@ -21,7 +21,14 @@ export interface ParsedPurchaseLine {
   expiry: string; // YYYY-MM or ""
   qty: number;
   freeQty: number;
+  /** The billed/landed cost per unit (what computeGrnLine uses). */
   ptrPaise: number;
+  /** Printed PTR in paise (storage); equals the cost unless billed on PTS. */
+  printedPtrPaise: number;
+  /** Printed PTS in paise, or null when not printed. */
+  ptsPaise: number | null;
+  /** Which printed column the cost uses. */
+  costBasis: "ptr" | "pts";
   mrpPaise: number;
   gstRate: number;
   discountType: DiscountType | null;
@@ -130,8 +137,14 @@ export function parseInvoiceDate(raw: string): string | null {
 export type PriceSource = "ptr" | "pts" | "amount";
 
 export interface ResolvedRate {
-  /** Chosen per-unit purchase rate, in paise. */
+  /** Chosen per-unit purchase rate — the billed/landed COST, in paise. */
   ratePaise: number;
+  /** Printed PTR in paise (or the cost when no PTR was printed) — stored for the record. */
+  printedPtrPaise: number;
+  /** Printed PTS in paise, or null when not printed — stored for the record. */
+  ptsPaise: number | null;
+  /** Which printed column the landed cost uses ('amount'-derived ⇒ 'ptr'). */
+  costBasis: "ptr" | "pts";
   source: PriceSource;
   /** True when both PTR & PTS were printed but no amount could disambiguate (defaulted to PTR). */
   ambiguous: boolean;
@@ -156,30 +169,39 @@ export function resolvePurchaseRate(args: {
   const { qty, ptr, pts, amount } = args;
   const factor = 1 - (args.discountPct > 0 ? args.discountPct : 0) / 100; // discount off the gross
   const toPaise = (r: number) => Math.round(r * 100);
-  const candidates: { rate: number; source: PriceSource }[] = [];
-  if (ptr > 0) candidates.push({ rate: ptr, source: "ptr" });
-  if (pts > 0) candidates.push({ rate: pts, source: "pts" });
 
-  if (amount > 0 && qty > 0 && factor > 0) {
-    let best: { rate: number; source: PriceSource } | null = null;
-    let bestErr = Infinity;
-    for (const c of candidates) {
-      const err = Math.abs(c.rate * qty * factor - amount) / amount;
-      if (err < bestErr) {
-        bestErr = err;
-        best = c;
+  // 1. Resolve the billed COST + which column it came from.
+  const core: { ratePaise: number; source: PriceSource; ambiguous: boolean } = (() => {
+    const candidates: { rate: number; source: PriceSource }[] = [];
+    if (ptr > 0) candidates.push({ rate: ptr, source: "ptr" });
+    if (pts > 0) candidates.push({ rate: pts, source: "pts" });
+    if (amount > 0 && qty > 0 && factor > 0) {
+      let best: { rate: number; source: PriceSource } | null = null;
+      let bestErr = Infinity;
+      for (const c of candidates) {
+        const err = Math.abs(c.rate * qty * factor - amount) / amount;
+        if (err < bestErr) {
+          bestErr = err;
+          best = c;
+        }
       }
+      if (best && bestErr <= 0.05) return { ratePaise: toPaise(best.rate), source: best.source, ambiguous: false };
+      // Neither labelled rate matches the printed amount → trust the bill: derive from it.
+      return { ratePaise: toPaise(amount / (qty * factor)), source: "amount", ambiguous: false };
     }
-    if (best && bestErr <= 0.05) return { ratePaise: toPaise(best.rate), source: best.source, ambiguous: false };
-    // Neither labelled rate matches the printed amount → trust the bill: derive from it.
-    return { ratePaise: toPaise(amount / (qty * factor)), source: "amount", ambiguous: false };
-  }
+    if (ptr > 0) return { ratePaise: toPaise(ptr), source: "ptr", ambiguous: pts > 0 };
+    if (pts > 0) return { ratePaise: toPaise(pts), source: "pts", ambiguous: false };
+    if (amount > 0 && qty > 0 && factor > 0) return { ratePaise: toPaise(amount / (qty * factor)), source: "amount", ambiguous: false };
+    return { ratePaise: 0, source: "ptr", ambiguous: false };
+  })();
 
-  // No amount to reconcile against.
-  if (ptr > 0) return { ratePaise: toPaise(ptr), source: "ptr", ambiguous: pts > 0 };
-  if (pts > 0) return { ratePaise: toPaise(pts), source: "pts", ambiguous: false };
-  if (amount > 0 && qty > 0 && factor > 0) return { ratePaise: toPaise(amount / (qty * factor)), source: "amount", ambiguous: false };
-  return { ratePaise: 0, source: "ptr", ambiguous: false };
+  // 2. Keep both printed rates. Invariant for the server: the recovered cost
+  //    (costBasis === 'pts' ? ptsPaise : printedPtrPaise) equals ratePaise — so on a
+  //    'ptr'/'amount' basis, printedPtrPaise IS the cost.
+  const costBasis: "ptr" | "pts" = core.source === "pts" ? "pts" : "ptr";
+  const ptsPaise = pts > 0 ? toPaise(pts) : costBasis === "pts" ? core.ratePaise : null;
+  const printedPtrPaise = costBasis === "ptr" ? core.ratePaise : ptr > 0 ? toPaise(ptr) : core.ratePaise;
+  return { ratePaise: core.ratePaise, printedPtrPaise, ptsPaise, costBasis, source: core.source, ambiguous: core.ambiguous };
 }
 
 export function parsePurchaseInvoices(rows: PurchaseRawRow[]): PurchaseImportResult {
@@ -276,6 +298,9 @@ export function parsePurchaseInvoices(rows: PurchaseRawRow[]): PurchaseImportRes
       qty,
       freeQty: free < 0 ? 0 : free,
       ptrPaise: resolved.ratePaise,
+      printedPtrPaise: resolved.printedPtrPaise,
+      ptsPaise: resolved.ptsPaise,
+      costBasis: resolved.costBasis,
       mrpPaise: Math.round(mrp * 100),
       gstRate,
       discountType: discountValue > 0 ? "pct" : null,

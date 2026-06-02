@@ -187,7 +187,13 @@ export interface PurchaseLine {
   qty: number;
   /** Scheme free goods (e.g. the "1" in 10+1): enter stock, carry zero ITC. */
   freeQty: number;
-  ptrPaise: number; // cost per unit, tax-exclusive — what we pay the vendor
+  ptrPaise: number; // billed/landed cost per unit, tax-exclusive — what we pay the vendor
+  /** Printed PTR in paise (storage); the cost above may be PTR or PTS per costBasis. */
+  printedPtrPaise?: number;
+  /** Printed PTS in paise, or null/absent when not printed. */
+  ptsPaise?: number | null;
+  /** Which printed column the cost uses ('ptr' default — e.g. manual entry). */
+  costBasis?: "ptr" | "pts";
   mrpPaise: number; // sale price for the received batch
   gstRate: number;
   /** Trade discount on the line: "pct" of gross, or "flat" paise off. */
@@ -206,6 +212,9 @@ export interface PurchaseLinePayload {
   qty: number;
   free_qty: number;
   ptr_paise: number;
+  /** Printed PTS in paise (or null) + which printed column the cost uses — both rates kept. */
+  pts_paise: number | null;
+  cost_basis: "ptr" | "pts";
   mrp_paise: number;
   gst_rate: number;
   /** Tax-exclusive taxable value (gross − trade discount). The RPC trusts this
@@ -267,7 +276,9 @@ export function buildReceivePurchasePayload(
       expiry: l.expiry,
       qty: l.qty,
       free_qty: l.freeQty || 0,
-      ptr_paise: l.ptrPaise,
+      ptr_paise: l.printedPtrPaise ?? l.ptrPaise,
+      pts_paise: l.ptsPaise ?? null,
+      cost_basis: l.costBasis ?? "ptr",
       mrp_paise: l.mrpPaise,
       gst_rate: l.gstRate,
       taxable_paise: computeGrnLine(l, interstate).taxablePaise,

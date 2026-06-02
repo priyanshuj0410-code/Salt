@@ -239,7 +239,7 @@ export function OcrInvoiceImportPage() {
           if (!itemId) { unresolved = true; break; }
           plines.push({
             itemId, name: l.name, batchNo: l.batchNo, expiry: l.expiry, qty: l.qty, freeQty: l.freeQty,
-            ptrPaise: l.ptrPaise, mrpPaise: l.mrpPaise, gstRate: l.gstRate,
+            ptrPaise: l.ptrPaise, printedPtrPaise: l.printedPtrPaise, ptsPaise: l.ptsPaise, costBasis: l.costBasis, mrpPaise: l.mrpPaise, gstRate: l.gstRate,
             discountType: l.discountType ?? undefined, discountValue: l.discountValue, schemeText: l.schemeText,
           });
         }
