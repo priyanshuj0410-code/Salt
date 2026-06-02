@@ -23,6 +23,8 @@ import {
 } from "@/lib/importPurchaseInvoice";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
+import { invokeExtract } from "@/lib/invoiceScans";
+import { ocrInvoiceToRows } from "@/lib/ocrInvoice";
 
 interface VendorRow { id: string; name: string; gstin: string | null }
 interface ItemRow { id: string; name: string; item_code: string | null; barcode: string | null }
@@ -102,6 +104,10 @@ export function PurchaseInvoiceImportPage() {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
+  // CSV fallback (deterministic-first): when the fixed columns yield nothing, Gemini
+  // normalises the layout. aiBusy gates the file picker; aiNote flags the result.
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiNote, setAiNote] = useState<string | null>(null);
 
   // Load the masters once so the dry-run preview can mark each vendor/item as
   // existing vs "will create". setState only in the async .then (lint rule).
@@ -121,18 +127,47 @@ export function PurchaseInvoiceImportPage() {
   const vendorMap = useMemo(() => buildVendorMap(vendors), [vendors]);
   const itemMap = useMemo(() => buildItemMap(items), [items]);
 
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setFileName(file.name);
     setReport(null);
     setError(null);
-    Papa.parse<PurchaseRawRow>(file, {
+    setAiNote(null);
+    // 1. Deterministic first — instant + free for well-formed CSVs.
+    const text = await file.text();
+    const parsed = Papa.parse<PurchaseRawRow>(text, {
       header: true,
       skipEmptyLines: true,
       transformHeader: canonicalPurchaseHeader,
-      complete: (res) => setResult(parsePurchaseInvoices(res.data)),
     });
+    const det = parsePurchaseInvoices(parsed.data);
+    if (det.invoices.some((i) => i.valid)) {
+      setResult(det);
+      return;
+    }
+    // 2. No valid invoice from the fixed columns → let AI normalise the layout.
+    setAiBusy(true);
+    try {
+      const bytes = new TextEncoder().encode(text);
+      let bin = "";
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      const out = await invokeExtract(btoa(bin), "text/csv");
+      if (out.notConfigured) {
+        setError("These columns weren't recognised, and AI normalisation isn't configured. Use the template below, or set up OCR.");
+        setResult(det);
+        return;
+      }
+      if (out.error || !out.json) {
+        setError(`Could not normalise this CSV: ${out.error ?? "no data"}`);
+        setResult(det);
+        return;
+      }
+      setAiNote("Columns weren't recognised — normalised with AI. Double-check the figures before posting.");
+      setResult(parsePurchaseInvoices(ocrInvoiceToRows(out.json).rows));
+    } finally {
+      setAiBusy(false);
+    }
   }
 
   async function doImport() {
@@ -304,12 +339,16 @@ export function PurchaseInvoiceImportPage() {
           <Download />
           Download template
         </Button>
-        <label htmlFor="purchase-file" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer")}>
+        <label htmlFor="purchase-file" className={cn(buttonVariants({ variant: "outline" }), "cursor-pointer", aiBusy && "pointer-events-none opacity-60")}>
           <FileUp />
-          {fileName ?? "Choose CSV file"}
+          {aiBusy ? "Normalising with AI…" : (fileName ?? "Choose CSV file")}
         </label>
-        <input id="purchase-file" type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} />
+        <input id="purchase-file" type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} disabled={aiBusy} />
       </div>
+
+      {aiNote && (
+        <p className="mt-3 rounded-md border border-warning-border bg-warning-bg px-3 py-2 text-xs text-warning">{aiNote}</p>
+      )}
 
       {report && (
         <div className="mt-6 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm">

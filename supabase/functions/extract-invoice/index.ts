@@ -106,8 +106,15 @@ async function fetchModel(model: string, key: string, payload: string): Promise<
 }
 
 async function callGemini(key: string, b64: string, mime: string): Promise<string> {
+  // A CSV / text export is sent as a TEXT part (not inline_data vision) so the model
+  // normalises an arbitrary column layout into the schema; PDFs/images keep the
+  // inline_data path. base64 is decoded as UTF-8 to preserve ₹, names, etc.
+  const isText = mime.startsWith("text/") || mime === "application/csv";
+  const filePart = isText
+    ? { text: `CSV / tabular export to map into the schema below:\n\n${new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)))}` }
+    : { inline_data: { mime_type: mime, data: b64 } };
   const payload = JSON.stringify({
-    contents: [{ parts: [{ inline_data: { mime_type: mime, data: b64 } }, { text: PROMPT }] }],
+    contents: [{ parts: [filePart, { text: PROMPT }] }],
     generationConfig: { responseMimeType: "application/json", temperature: 0 },
   });
   // Walk the model chain: each model gets its own backoff retry; on a transient
