@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Salt — User Personas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  /* Salt design tokens — faithful to apps/web/src/index.css (design.md §2). Light, quiet, zinc. Colour = state only. */
+  :root {
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-hover:#27272a; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring:rgba(24,24,27,.15); --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+    --shadow-lg:0 16px 40px rgba(24,24,27,.16);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;}
+  .tabular-nums{font-variant-numeric:tabular-nums;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1280px; margin:0 auto; padding:26px 28px 90px;}
+  .mono{font-family:var(--font-mono);}
+
+  header.top{display:flex; align-items:flex-end; justify-content:space-between; gap:28px; flex-wrap:wrap; margin-bottom:20px;}
+  .brand{display:flex; align-items:center; gap:15px;}
+  .logo{width:46px; height:46px; border-radius:var(--radius-lg); flex:none; background:var(--action-primary); color:var(--action-primary-text); display:grid; place-items:center; font-family:var(--font-display); font-weight:600; font-size:26px; box-shadow:var(--shadow-sm);}
+  .brand h1{margin:0; font-size:21px; font-weight:600; letter-spacing:-.01em;}
+  .brand h1 .wordmark{font-family:var(--font-display); font-weight:600;}
+  .brand p{margin:3px 0 0; color:var(--text-secondary); font-size:var(--text-sm);}
+  .context-pills{display:flex; gap:7px; flex-wrap:wrap;}
+  .cpill{background:var(--background); border:1px solid var(--border); border-radius:20px; padding:6px 13px; font-size:var(--text-xs); color:var(--text-secondary); box-shadow:var(--shadow-sm);}
+  .cpill b{color:var(--text-primary); font-weight:600;}
+
+  nav.tabs{display:flex; gap:2px; border-bottom:1px solid var(--border); margin:10px 0 22px; flex-wrap:wrap;}
+  nav.tabs button{background:none; border:none; color:var(--text-secondary); cursor:pointer; padding:11px 15px; font-family:var(--font-sans); font-size:var(--text-sm); font-weight:500; border-bottom:2px solid transparent; margin-bottom:-1px; display:inline-flex; align-items:center; gap:8px;}
+  nav.tabs button:hover{color:var(--text-primary);}
+  nav.tabs button.active{color:var(--text-primary); border-bottom-color:var(--action-primary); font-weight:600;}
+  nav.tabs button .ini{width:18px; height:18px; border-radius:var(--radius-sm); background:var(--surface-2); border:1px solid var(--border); font-family:var(--font-display); font-size:11px; display:grid; place-items:center; color:var(--text-secondary);}
+  nav.tabs button.active .ini{background:var(--action-primary); color:var(--action-primary-text); border-color:var(--action-primary);}
+
+  .view{display:none;} .view.active{display:block;}
+  .intro{color:var(--text-secondary); font-size:var(--text-sm); max-width:920px; margin-bottom:22px; line-height:1.6;}
+
+  /* cards / grid */
+  .grid{display:grid; gap:14px;}
+  .g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:880px){.g2,.g3{grid-template-columns:1fr;}}
+  .card{background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:16px 18px; box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 12px; font-size:var(--text-sm); font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text-tertiary); display:flex; align-items:center; gap:8px;}
+  .card h3 .ic{font-size:14px;}
+  .card p{margin:0 0 10px; color:var(--text-secondary); font-size:var(--text-sm); line-height:1.6;}
+  .card ul{margin:0; padding:0; list-style:none;}
+  .card li{position:relative; padding:5px 0 5px 18px; color:var(--text-secondary); font-size:var(--text-sm); line-height:1.55; border-bottom:1px solid var(--divider);}
+  .card li:last-child{border-bottom:none;}
+  .card li::before{content:""; position:absolute; left:2px; top:13px; width:5px; height:5px; border-radius:50%; background:var(--border-strong);}
+  .card li b, .card p b{color:var(--text-primary); font-weight:600;}
+  em.hi{font-style:normal; background:var(--surface-2); border-bottom:1px solid var(--border-strong); padding:0 3px; border-radius:3px; color:var(--text-primary);}
+  .lesson{display:block; margin-top:3px; color:var(--text-tertiary); font-size:var(--text-xs); line-height:1.5;}
+  .lesson::before{content:"↳ teaches us:  "; color:var(--info); font-weight:600;}
+  .aspiration{background:var(--info-bg); border:1px solid var(--info-border); border-radius:var(--radius-md); padding:10px 13px; margin-bottom:13px; font-size:var(--text-sm); color:var(--text-primary); line-height:1.55;}
+  .aspiration b{color:var(--info); text-transform:uppercase; font-size:10px; letter-spacing:.5px; display:block; margin-bottom:3px;}
+
+  /* primitives */
+  .kbd{display:inline-grid; place-items:center; min-width:22px; height:22px; padding:0 6px; font-family:var(--font-mono); font-size:11px; font-weight:500; color:var(--text-secondary); background:var(--surface-2); border:1px solid var(--border); border-bottom:2px solid var(--border-strong); border-radius:var(--radius-sm); line-height:1; vertical-align:middle;}
+  .badge{font-size:10px; font-weight:600; padding:2px 8px; border-radius:var(--radius-sm); text-transform:uppercase; letter-spacing:.4px; border:1px solid; white-space:nowrap; display:inline-block;}
+  .badge.neutral{color:var(--text-secondary); background:var(--surface-2); border-color:var(--border);}
+  .chip{font-size:var(--text-xs); padding:3px 9px; border-radius:var(--radius-md); background:var(--surface-2); border:1px solid var(--border); color:var(--text-secondary);}
+
+  /* persona hero */
+  .phero{display:flex; gap:18px; align-items:flex-start; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:20px 22px; box-shadow:var(--shadow-sm); margin-bottom:14px;}
+  .pavatar{width:62px; height:62px; border-radius:var(--radius-lg); flex:none; background:var(--action-primary); color:var(--action-primary-text); display:grid; place-items:center; font-family:var(--font-display); font-weight:600; font-size:32px; box-shadow:var(--shadow-sm);}
+  .phero .pmeta{flex:1; min-width:0;}
+  .phero .pname{font-size:var(--text-2xl); font-weight:600; letter-spacing:-.01em; line-height:1.1;}
+  .phero .prole{display:flex; align-items:center; gap:9px; margin:5px 0 10px; flex-wrap:wrap;}
+  .phero .ptag{color:var(--text-secondary); font-size:var(--text-base); font-style:italic;}
+  .quote{border-left:3px solid var(--action-primary); padding:9px 0 9px 15px; margin:0; color:var(--text-primary); font-size:var(--text-base); line-height:1.6; font-family:var(--font-display); font-weight:500;}
+  .quote .who{display:block; font-family:var(--font-sans); font-style:normal; font-size:var(--text-xs); color:var(--text-tertiary); margin-top:6px; font-weight:400;}
+
+  /* fact strip */
+  .facts{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:14px;}
+  .fact{background:var(--background); padding:10px 13px;}
+  .fact .fl{font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-tertiary); font-weight:600;}
+  .fact .fv{font-size:var(--text-sm); color:var(--text-primary); margin-top:2px;}
+
+  /* works-in chips */
+  .worksin{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+  .worksin .lbl{font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-tertiary); font-weight:600;}
+
+  /* timeline */
+  .tl{margin:0; padding:0; list-style:none;}
+  .tl li{display:flex; gap:12px; padding:6px 0; border-bottom:1px solid var(--divider); font-size:var(--text-sm);}
+  .tl li:last-child{border-bottom:none;}
+  .tl .t{font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-tertiary); white-space:nowrap; min-width:96px; padding-top:1px;}
+  .tl .w{color:var(--text-secondary); line-height:1.5;}
+  .tl .w b{color:var(--text-primary);}
+
+  /* marg keys */
+  .keys{display:flex; flex-direction:column; gap:7px;}
+  .keys .kr{display:flex; align-items:center; gap:10px; font-size:var(--text-sm); color:var(--text-secondary);}
+  .keys .kr .kbd{flex:none;}
+
+  /* do / dont / fear */
+  .ddf{border-radius:var(--radius-lg); padding:14px 16px; border:1px solid;}
+  .ddf h3{margin:0 0 10px;}
+  .ddf.do{background:var(--success-bg); border-color:var(--success-border);} .ddf.do h3{color:var(--success);}
+  .ddf.dont{background:var(--danger-bg); border-color:var(--danger-border);} .ddf.dont h3{color:var(--danger);}
+  .ddf.fear{background:var(--warning-bg); border-color:var(--warning-border);} .ddf.fear h3{color:var(--warning);}
+  .ddf li{border-bottom-color:rgba(0,0,0,.05);} .ddf li::before{background:currentColor; opacity:.5;}
+  .ddf.do li b,.ddf.dont li b,.ddf.fear li b{color:var(--text-primary);}
+
+  /* compare matrix */
+  .matrix-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm);}
+  table.matrix{width:100%; border-collapse:separate; border-spacing:0; background:var(--background); min-width:1150px;}
+  table.matrix th, table.matrix td{padding:11px 13px; text-align:left; border-bottom:1px solid var(--divider); border-right:1px solid var(--divider); font-size:var(--text-xs); vertical-align:top; line-height:1.5;}
+  table.matrix thead th{background:var(--surface); position:sticky; top:0; font-weight:600; color:var(--text-primary); font-size:var(--text-sm);}
+  table.matrix thead th .sub{display:block; font-weight:400; font-size:10px; color:var(--text-tertiary); margin-top:1px;}
+  table.matrix td.dim{background:var(--surface); font-weight:600; color:var(--text-primary); white-space:nowrap; position:sticky; left:0; font-size:var(--text-xs);}
+  table.matrix th:last-child, table.matrix td:last-child{border-right:none;}
+  table.matrix tr:last-child td{border-bottom:none;}
+  table.matrix td .ini{display:inline-grid; place-items:center; width:16px; height:16px; border-radius:3px; background:var(--action-primary); color:#fff; font-family:var(--font-display); font-size:10px; margin-right:6px; vertical-align:middle;}
+  table.matrix td .v{color:var(--text-secondary);}
+
+  .section-label{font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.6px; color:var(--text-tertiary); font-weight:600; margin:24px 0 12px;}
+  footer.foot{margin-top:30px; color:var(--text-tertiary); font-size:var(--text-xs); text-align:center; border-top:1px solid var(--border); padding-top:18px; line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important; transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <h1><span class="wordmark">Salt</span> — User Personas</h1>
+        <p>7 people in the loop · tier-2 / tier-3 India · English is not their first language · Marg keyboard power-users (the field salesman is the exception)</p>
+      </div>
+    </div>
+    <div class="context-pills">
+      <span class="cpill"><b>Hindi / regional</b> mother tongue</span>
+      <span class="cpill"><b>Marg</b> muscle memory</span>
+      <span class="cpill"><b>Internet</b> drops 2–5×/day</span>
+      <span class="cpill"><b>WhatsApp</b> + phone first</span>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+
+  <!-- SHARED CONTEXT -->
+  <section class="view active" id="view-shared">
+    <p class="intro">Seven people keep the shop running — the five app roles plus <b>two kinds of salespeople</b>: the <b>shop salesman</b> at the counter and the <b>field salesman</b> who books orders and delivers on a beat. They share a Marg habit and a language reality, but behave very differently when the screen changes, the internet drops, or they get stuck — and the <b>field salesman isn't on Marg or a counter at all</b>. This tab is the <b>shared ground</b> and a <b>cross-persona comparison matrix</b> so no behaviour gets missed; the other tabs go deep on each.</p>
+
+    <div class="section-label">The ground they all stand on</div>
+    <div class="grid g3">
+      <div class="card">
+        <h3><span class="ic">🏪</span> The setting</h3>
+        <p>A 600–1,500 sq ft shop in a district-HQ town (3–15 lakh people), often in the <em class="hi">dawa bazaar</em> near the hospital. 2–5 billing counters, floor-to-ceiling racks, a godown behind. Loud, fast, physical — 5–15 customers present at peak.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">⌨️</span> Marg is the muscle</h3>
+        <p>Everyone learned the trade <b>on Marg ERP 9+</b>. The real skill that transfers between staff is the <b>keystroke sequence</b>, not the screen. A new hire is "trained on Marg" in 2–3 days. Any change to that sequence costs days of re-learning.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ic">📶</span> Unreliable everything</h3>
+        <p>Jio/Airtel broadband drops <b>2–5× a day</b>, worse in monsoon; phone-hotspot is the backup. The <b>phone</b> is the trusted device; <b>WhatsApp</b> is how orders, bills, statements and reminders actually move.</p>
+      </div>
+    </div>
+
+    <div class="section-label">Language &amp; literacy — how "English is not first language" shows up</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3><span class="ic">🔤</span> How they read &amp; type</h3>
+        <ul>
+          <li>They type in <b>roman-script Hinglish</b> — <em class="hi">paracetamol</em>, <em class="hi">ramesh medical</em>, <em class="hi">baaki kitna hai</em> — never Devanagari at the counter.</li>
+          <li>They <b>scan numbers and positions, not sentences</b>. A screen of English prose is wallpaper; the eye hunts for the digit.</li>
+          <li>They read <b>drug names fluently</b> (learned as shapes/tokens) but <b>UI English is opaque</b> — "reconcile", "allocate", "void", "post" don't land.</li>
+          <li>Numbers must be <b>Indian format</b> — <code>₹1,00,000</code>, lakh / crore. Western grouping <code>100,000</code> reads as foreign and wrong.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="ic">🧭</span> What this means at the screen</h3>
+        <ul>
+          <li>An <b>English error dialog is a dead end</b> — they don't read it; they react to "something is wrong" and call someone senior.</li>
+          <li>They learn by <b>demonstration</b> (<em class="hi">aise karo</em>) and rote, not by reading help text or tooltips.</li>
+          <li><b>Icons + position + colour-as-state</b> carry the meaning; the English label is secondary.</li>
+          <li>Trust is built by <b>matching the screen to something physical</b> — cash in hand, the strip, the bank SMS, their own register.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-label">The apps they all already know — patterns Salt inherits for free</div>
+    <div class="card" style="margin-bottom:4px">
+      <ul>
+        <li><b>WhatsApp</b> — chat, voice notes, forward a PDF, Status broadcast, blue-tick read receipts. <span class="lesson">Sharing = "send on WhatsApp" (never email); a tick = confirmation; voice note &gt; typing.</span></li>
+        <li><b>UPI — Google Pay / PhonePe / Paytm</b> — scan-to-pay, instant green check + sound, recent payees, pay-by-contact. <span class="lesson">A money action is one tap with instant, audible + visual confirmation. This is the bar for "saved".</span></li>
+        <li><b>Paytm / PhonePe soundbox</b> — calls out "payment received" aloud at the counter. <span class="lesson">Important events should be heard, not just seen — hands and eyes are busy.</span></li>
+        <li><b>YouTube</b> — they learn anything by watching a Hindi video; search the problem, watch, copy. <span class="lesson">Help is a short video, not a manual or a tooltip.</span></li>
+        <li><b>Truecaller</b> — a name on an unknown number. <span class="lesson">Recognition beats recall; trust comes from identity on a contact, not a code.</span></li>
+      </ul>
+    </div>
+
+    <div class="section-label">Cross-persona comparison — the "don't miss a behaviour" matrix</div>
+    <div class="matrix-wrap"><table class="matrix" id="matrix"></table></div>
+    <p class="intro" style="margin-top:14px">Read each row across: the same situation produces seven different behaviours. The design has to serve the <b>weakest reader (cashier)</b> without slowing the <b>broadest user (manager)</b> or losing the <b>auditor's trust (accountant)</b> — and remember the <b>field salesman isn't at a keyboard at all</b>: he's on a bike with no signal, so he likely needs a <b>separate mobile surface</b>, not an ERP screen.</p>
+  </section>
+
+  <!-- persona views injected here -->
+  <div id="persona-views"></div>
+
+  <footer class="foot">
+    Composite personas grounded in <code>wiki/domain/persona-wholesale-owner.md</code>, <code>product/market-research.md</code>, <code>lib/permissions.ts</code> and field-realistic tier-2/3 behaviour.<br/>
+    Styled with the Salt design system (<code>design.md</code> · <code>apps/web/src/index.css</code>). Pairs with the IA systems map. A design reference, not a spec.
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   PERSONA DATA — 5 roles, deep behavioural detail
+   ============================================================ */
+const PERSONAS = [
+  {
+    id:"owner", ini:"S", name:"Santosh Agarwal", role:"Owner / Proprietor",
+    cap:"Full access — incl. settings & users", modules:["Everything (all 13 modules)"],
+    tag:"Watches everything, types little, trusts numbers and his gut.",
+    quote:"Software theek hai. Par billing rukni nahi chahiye — aur mera paisa kahaan phasa hai woh ek second mein dikhe.",
+    who:"The proprietor and final decision-maker. In wholesale he is the middle link (company → C&F → him → 80–300 chemists); in retail he owns 2–4 counters. He no longer bills full-time but <b>supervises constantly</b> — circulating between counters, resolving out-of-stock, deciding who gets credit. The business is in his head: he knows his top 30 customers' payment habits by memory. He chose the software and pays for it; he will also be the one who rips it out.",
+    facts:[
+      ["Age","38–52"],["Education","≤ 12th / B.Com, self-taught business"],
+      ["Language","Hindi/regional; functional spoken English, low written"],
+      ["Primary device","Phone (+ walks to counter terminals)"],
+      ["Marg","10–15 yrs; sometimes Tally for final accounts"],
+      ["Reads","Totals & outstanding — not prose"],
+    ],
+    day:[
+      {t:"6:30–8:00 AM",w:"Stock vehicles arrive; checks challan vs boxes (batch, expiry, qty). A short-supply found later is an argument."},
+      {t:"8:00–9:00 AM",w:"Checks who paid (<b>bank SMS on phone</b>), flags 45+ day accounts, places vendor orders on <b>WhatsApp</b> as a typed list."},
+      {t:"9 AM–1 PM",w:"Peak. Circulates, resolves OOS with substitutes, takes chemist calls on stock/price, watches the counters."},
+      {t:"3:00–5:00 PM",w:"Accountant arrives; day's entries reconciled; he reviews outstandings and follows up on collections."},
+      {t:"7:30–9:00 PM",w:"Reviews what didn't move and what's expiring; WhatsApps scheme reminders; checks tomorrow's bank balance."},
+    ],
+    jtbd:[
+      "Bill fast without stopping — a correct GST invoice in < 5 min, right batch/price/scheme, <b>even when the internet is down</b>.",
+      "Know who owes me money <b>right now</b> — before I give a new order on credit.",
+      "Know what I have and what's about to expire — 60 days ahead, not after it's a write-off.",
+      "File GST without the accountant losing a week to it.",
+      "Survive the drug inspector — produce clean records in 30 minutes.",
+    ],
+    marg:[
+      {k:"F8",a:"Day book — the day's total at a glance"},
+      {k:"Alt+L",a:"Party ledger / outstanding"},
+      {k:"F5",a:"Stock query — is this item / batch here?"},
+      {k:"Ctrl+P",a:"Print"},
+    ],
+    language:[
+      "Reads a <b>total or an outstanding figure instantly</b>; English labels around it are ignored.",
+      "Types Hinglish slowly, two fingers; prefers to <b>tell staff to find it</b> than navigate himself.",
+      "Verifies the software against <b>bank SMS + physical cash + his memory</b> of who owes what.",
+      "Will not read an English explanation — wants the <b>number</b>, and wants it to match reality.",
+    ],
+    quirks:[
+      "<b>Trusts his own memory over the screen</b> until the screen has earned it — a wrong balance once and he doubts the whole tool.",
+      "Evaluates new software in <b>60 seconds</b>: types a drug name, presses Enter. If billing isn't instantly familiar, the demo is over.",
+      "His mental model of the business is the <em class='hi'>khaata</em> (ledger) — money owed and owing, per party.",
+      "The <b>bank SMS feed on his phone</b> is his real-time cashflow; the software competes with it for trust.",
+    ],
+    failure:[
+      "Hears 'you need internet to bill' → <b>stops listening</b>.",
+      "A figure looks wrong → distrusts the entire tool, calls the AMC, reverts to asking staff.",
+      "Internet down at GST deadline (has been burned before) → panic; this single memory shapes his fear of cloud tools.",
+    ],
+    fears:[
+      "A <b>counter conflict</b> (same last unit sold twice) that loses a big chemist.",
+      "<b>Expired-stock write-off</b> — ₹5k–₹30k/month bleeding out unseen.",
+      "An <b>ITC / GST notice</b> from a distributor's filing error he couldn't see.",
+      "The <b>drug inspector</b> arriving with the H1 register half-empty.",
+    ],
+    dos:[
+      "<b>Keyboard-first</b>, always — he judges in 60 seconds.",
+      "Money & <b>credit/outstanding visible before billing</b>; near-expiry surfaced, not buried.",
+      "<b>Offline billing</b> that just works; sync after.",
+      "An <b>owner dashboard he can read in 5 seconds</b>, numbers in <code>en-IN</code>.",
+      "<b>One-click WhatsApp</b> for statement / reminder / invoice.",
+    ],
+    donts:[
+      "Don't <b>gate billing on internet</b> — it's the one unforgivable sin.",
+      "Don't <b>bury money or expiry in a report</b> he has to remember to run.",
+      "Don't use <b>western number grouping</b> or English-only prose to convey state.",
+      "Don't make him <b>click a mouse</b> to see his own numbers.",
+    ],
+    quotes:[
+      "Unka ₹45,000 baaki hai — naya order nahi dunga jab tak clear nahi karta.",
+      "Marg purani motorcycle jaisa hai: har mechanic theek kar deta hai, par kharaab sabse galat time pe hota hai.",
+    ],
+    aspiration:"Wants billing as instant as PhonePe, sharing as easy as WhatsApp, and his khaata on his phone.",
+    apps:[
+      {n:"WhatsApp (+ Business)", u:"Orders to distributors as typed lists & voice notes; sends ledger statements and bill PDFs to chemists; Status to push ending schemes.", l:"Sharing means WhatsApp, not email. Voice note, forward-PDF and Status broadcast are verbs he already owns."},
+      {n:"PhonePe / Google Pay + bank SMS", u:"His real-time cashflow feed; the counter soundbox calling out 'paancho sau rupaye received' is his trust signal.", l:"Money events need instant, audible + visual confirmation — match the UPI success tick and sound."},
+      {n:"Khatabook / OkCredit", u:"Runs a quick udhar ledger on the phone even next to Marg — per-party running balance with a one-tap WhatsApp reminder.", l:"His Parties/credit mental model already lives here: balance per party, 'remind' in one tap."},
+      {n:"YouTube", u:"Learns schemes, GST changes and business tips in Hindi — searches the problem, watches a video.", l:"Help is a 60-second Hindi video, not a text doc or tooltip."},
+      {n:"Truecaller", u:"Screens unknown callers — distributor reps, collection agents, new chemists.", l:"Identity/trust on an unknown contact matters; show a name, not a number."},
+      {n:"Facebook + dealer groups", u:"Local market news and benchmarking among fellow dealers.", l:"Peer proof drives adoption — 'paas waale ne liya hai' is the strongest pitch."},
+    ],
+  },
+
+  {
+    id:"manager", ini:"R", name:"Rohit Agarwal", role:"Manager / Operator",
+    cap:"Everything except settings", modules:["Counter","Activity","Approvals","Purchases","Sales","Inventory","Parties","Payments","GST","Reports","Catalogue","Salesmen"],
+    tag:"The bridge — runs the floor, approves the discounts, would champion the switch.",
+    quote:"Papa ko bas total dikhana hai. Mujhe har counter pe nazar rakhni hai — kaun kya bech raha hai, kis ko discount de raha hai.",
+    who:"The owner's son / nephew, or the single most-trusted senior employee. <b>The operations brain of the shop</b> — assigns counters, owns vendor relationships, resolves OOS and substitutions, trains new cashiers, runs purchase entry and returns, and <b>approves the discount / void requests</b> cashiers raise. More educated and more digital than the owner; he is the person who would actually notice a better tool and push to adopt it. He carries the shop on his phone while walking the floor.",
+    facts:[
+      ["Age","25–38"],["Education","B.Com / BBA / B.Pharm, some college English"],
+      ["Language","Reads English ok; Hinglish with staff; English for vendors"],
+      ["Primary device","Phone (in hand) + roams all terminals"],
+      ["Marg","Grew up on it; the most fluent across the whole app"],
+      ["Also uses","WhatsApp Business, PhonePe, Excel"],
+    ],
+    day:[
+      {t:"Morning",w:"Opens, assigns counters, calls/WhatsApps vendors with orders, checks overnight payments."},
+      {t:"All day",w:"<b>Firefights</b> — OOS, price disputes, customer escalations; <b>approves discount requests on his phone</b> between tasks."},
+      {t:"Midday",w:"Handles returns and GRN entry; trains the new cashier by standing behind them (<em class='hi'>aise karo</em>)."},
+      {t:"Evening",w:"Reconciles each counter's takings, notes what ran out, briefs the owner on the day."},
+    ],
+    jtbd:[
+      "See <b>all counters live</b> — what's selling, what's low, who's billing what.",
+      "<b>Control what cashiers can do</b> — discount limits, and approve exceptions fast.",
+      "Order &amp; receive stock quickly (GRN), with the <b>vendor scheme applied correctly</b>.",
+      "Resolve OOS with a <b>substitute by salt</b> in seconds.",
+      "Train a new cashier to billing speed in 2–3 days.",
+    ],
+    marg:[
+      {k:"F2",a:"Sale bill"},{k:"F3",a:"Purchase voucher"},{k:"F4",a:"Sale / purchase return"},
+      {k:"F5",a:"Stock query"},{k:"F8",a:"Reports / day book"},{k:"Alt+C",a:"Create party/item on the fly"},
+    ],
+    language:[
+      "The <b>most likely of the five to actually read</b> a label, tooltip or setting.",
+      "Code-switches: <b>English for vendors and official docs</b>, Hinglish with staff and on WhatsApp.",
+      "Comfortable with apps, but still expects <b>keyboard speed</b> for the heavy entry work (GRN, returns).",
+      "Translates the system for the others — he's the one who explains a new screen to the cashier.",
+    ],
+    quirks:[
+      "<b>Constantly interrupted</b> — must be able to drop a task and resume exactly where he left off.",
+      "Thinks in <b>'counters' and 'what's pending my approval'</b>, not in modules.",
+      "Phone is his <b>command centre</b>; he wants to act (approve, check stock) without walking to a PC.",
+      "He benchmarks against rivals — <b>'the shop across the street got faster, what are they using?'</b>",
+    ],
+    failure:[
+      "Can't see across counters → <b>physically walks and checks each terminal</b> (Marg's exact failure).",
+      "Approvals are clunky/slow → cashiers just <b>call him and he okays it verbally</b>, defeating the control entirely.",
+      "Interrupted mid-GRN and loses his place → <b>re-enters lines</b>, risking double stock.",
+    ],
+    fears:[
+      "A <b>stock conflict across counters</b> embarrassing him in front of a customer.",
+      "A cashier giving an <b>unauthorized discount</b> he gets blamed for.",
+      "A <b>vendor scheme not applied</b> — money quietly left on the table.",
+      "Being held responsible by the owner for a mistake a junior made.",
+    ],
+    dos:[
+      "<b>Real-time multi-counter view</b> — the wedge that wins him.",
+      "<b>Approve / deny on the phone</b> in one tap, faster than a phone call.",
+      "<b>Per-cashier discount limits</b> + a clean approvals inbox.",
+      "<b>Resumable workflows</b> — never lose his place on interruption.",
+      "Fast <b>substitute-by-salt</b> and frictionless GRN with scheme auto-apply.",
+    ],
+    donts:[
+      "Don't make <b>approvals slower than just shouting 'haan de do'</b> across the shop.",
+      "Don't <b>hide cross-counter state</b> — that's the whole reason he'd switch.",
+      "Don't <b>drop his draft</b> when he's pulled away mid-entry.",
+      "Don't bury per-user controls so deep he won't bother setting them.",
+    ],
+    quotes:[
+      "Approval ke liye phone karega to main waise hi haan bol dunga — app mein ek tap mein dikha, tabhi kaam ka hai.",
+      "Naya ladka do din mein seekh jaata hai Marg pe — naya software bhi utna hi aasaan hona chahiye.",
+    ],
+    aspiration:"Benchmarks Salt against fintech apps — wants a live dashboard, in-app stock ordering, and approvals from his phone.",
+    apps:[
+      {n:"WhatsApp Business", u:"Labels, catalogue, broadcast lists and quick replies for vendor and customer comms.", l:"He already understands labels, templates and broadcast — he expects organisation features, not just chat."},
+      {n:"Instagram / Google Business Profile", u:"Runs the shop's online presence; fully Reels-literate.", l:"His bar for 'good UI' is a polished, swipe-smooth consumer app — Marg's screens embarrass him."},
+      {n:"Retailio / Saveo / Pharmarack / IndiaMART", u:"Actually orders stock online; compares distributor prices and schemes.", l:"He is ready for in-app B2B ordering (PO / ONDC); price + scheme comparison is a pattern he knows."},
+      {n:"Google Sheets / Excel", u:"Tracks counters, salesmen and stock in his own sheets.", l:"He builds his own dashboards — give him filters/exports or he rebuilds them in Sheets anyway."},
+      {n:"Telegram", u:"Distributor deal and scheme channels.", l:"Schemes arrive informally in chat; capturing them in the ERP is an unmet need he feels daily."},
+      {n:"CRED / fintech apps (personal)", u:"Aspirational, high-polish money apps.", l:"Automation, nudges and clean cards are his reference for 'modern' — set the visual bar there."},
+    ],
+  },
+
+  {
+    id:"accountant", ini:"B", name:"Banwari Lal", role:"Accountant / Munimji",
+    cap:"Bills, parties, payments, GST & reports", modules:["Counter","Activity","Sales","Parties","Payments","GST","Reports"],
+    tag:"Tally-brained, evening-shift, trusts his own tally over your auto-totals.",
+    quote:"System ka total alag, mera Excel alag — pehle dono milao, phir maano. GST mein ek rupaya idhar-udhar hua to notice aa jaata hai.",
+    who:"The <em class='hi'>munimji</em> — part-time or shared across a few shops, the <b>authority on books and GST</b>. Comes in the evening or 2–3 days a week. Reconciles the day's entries, records payments and receipts, cleans up ledgers, files GSTR-1/3B, fights GSTR-2B mismatches, and prepares for the CA at audit. He does <b>not</b> think in screens — he thinks in <b>Dr/Cr, vouchers and ledgers</b>. He has watched software get numbers wrong, so he keeps his own record and reconciles to the paisa before he believes anything.",
+    facts:[
+      ["Age","40–55"],["Education","B.Com; Tally-certified or self-taught"],
+      ["Language","Strong domain English (Dr/Cr, ITC, GST); UX English weak"],
+      ["Primary device","Back-office PC + own laptop + Excel + paper register"],
+      ["Marg & Tally","Both; exports to Excel constantly"],
+      ["Schedule","Evenings / few days a week; month-start = GST week"],
+    ],
+    day:[
+      {t:"Arrives ~3–5 PM",w:"Reconciles the previous day's entries against the day book and the cash counted."},
+      {t:"Evening",w:"Enters payments/receipts, allocates against open bills, chases any figure that doesn't tie out."},
+      {t:"Month-start",w:"<b>GST week</b> — 2–4 days: downloads GSTR-2B, matches against purchase entries in Excel, files GSTR-1/3B."},
+      {t:"Quarterly / annual",w:"Preps clean ledgers and exports for the CA; GSTR-9/9C if above ₹5 Cr."},
+    ],
+    jtbd:[
+      "Produce a <b>GST file that just uploads</b> — not a pile of data to re-key.",
+      "<b>Auto-reconcile GSTR-2B</b> against purchase entries; surface only the mismatches.",
+      "Get <b>clean, exportable ledgers</b> (CSV / Tally) that tie to the paisa.",
+      "Have an <b>audit trail</b> — who entered/changed what, when.",
+      "<b>No surprises</b> in the numbers; everything must be explainable.",
+    ],
+    marg:[
+      {k:"F7",a:"Journal voucher"},{k:"F8",a:"Day book"},{k:"Alt+L",a:"Party ledger"},
+      {k:"Alt+E",a:"Export to Excel"},{k:"F11",a:"GST / features"},
+    ],
+    language:[
+      "Fluent in <b>accounting English</b> (debit, credit, ITC, voucher) but UX verbs (<em class='hi'>void, allocate, post, reconcile</em>) need mapping to his ledger vocabulary.",
+      "Writes <b>narrations in Hindi/Hinglish</b>; expects Indian number format and Dr/Cr signs.",
+      "Reads carefully and <b>checks the working</b> — he will not accept a total he can't break down.",
+      "Prints and files hard copies; paper is his backup truth.",
+    ],
+    quirks:[
+      "Keeps a <b>parallel Excel / paper record</b> and trusts it until the software is proven over months.",
+      "<b>Batches his work</b> — does a week of entries in one sitting, often back-dated.",
+      "<b>Distrusts 'automatic' totals</b> — wants to see the calculation, not a black box.",
+      "<b>Reconciliation is his core ritual</b>: if it doesn't tie to zero, he stops everything to find the rupee.",
+    ],
+    failure:[
+      "Can't reconcile to the paisa → <b>halts and investigates</b>, won't move on.",
+      "Export is messy → <b>re-keys into Excel by hand</b> (a massive, silent time sink).",
+      "A mismatch he can't trace → <b>phone call to the distributor</b>, and a note in his register.",
+    ],
+    fears:[
+      "A <b>GST mismatch notice</b> or <b>ITC reversal</b> demand.",
+      "<b>Wrong opening balances</b> after migration that throw off every report.",
+      "A <b>black-box number</b> he's expected to defend to an officer but can't audit.",
+      "Being blamed for a filing error that was actually the distributor's late return.",
+    ],
+    dos:[
+      "<b>Show the working</b> behind every total — make the math inspectable.",
+      "<b>GSTR-2B match UI</b> + GSTR-1/3B export that uploads cleanly.",
+      "Clean <b>CSV / Tally export</b>; <b>back-dating</b> and <b>period locks</b>.",
+      "<b>Audit log</b> and Dr/Cr language he already recognises.",
+      "Let him <b>reconcile against his own figure</b> — show both and the difference.",
+    ],
+    donts:[
+      "Don't <b>hide the math</b> or present an unexplained auto-total.",
+      "Don't force <b>re-keying</b> — a bad export pushes him back to Excel.",
+      "Don't relabel accounting actions with <b>UX jargon</b> he has to decode.",
+      "Don't reformat money to <b>western grouping</b>; don't block <b>back-dated</b> entries.",
+    ],
+    quotes:[
+      "Total dikha do, par neeche calculation bhi — main andhe mein nahi maanta.",
+      "2B match karna sabse bada sar-dard hai. Jo distributor late file karta hai, uska notice mujhe aata hai.",
+    ],
+    aspiration:"Wants GST that reconciles itself and an export that needs zero re-typing — and every number must be one he can verify by hand.",
+    apps:[
+      {n:"Microsoft Excel / Google Sheets", u:"His true workplace — exports everything here; grids, formulas, totals at the bottom.", l:"His mental model IS the spreadsheet: sortable columns, copy-paste, footer totals. Mirror it, and export to it cleanly."},
+      {n:"GST portal + ClearTax / Tally ecosystem", u:"Files GSTR-1/3B; tolerates the clunky government UI but lives for a clean upload file.", l:"He knows the GSTN flow — give him the exact JSON/format it expects, no re-keying."},
+      {n:"Physical calculator + calculator app", u:"Punches numbers by hand to cross-check the software's totals.", l:"He re-verifies the math manually — show the working so it ties to his calculator, or he won't trust it."},
+      {n:"CamScanner / Drive scan", u:"Digitises paper vouchers and invoices.", l:"Scan-to-digitise is already a habit — it eases adoption of invoice OCR import."},
+      {n:"WhatsApp + Gmail", u:"Receives bill photos/screenshots from the owner on WhatsApp; CA correspondence and GST notices on email.", l:"Inputs arrive as chat images; formal outputs go out as PDF/email — support both ends."},
+    ],
+  },
+
+  {
+    id:"pharmacist", ini:"A", name:"Anjali Verma (D.Pharm)", role:"Pharmacist",
+    cap:"Counter, inventory & catalogue", modules:["Counter","Activity","Approvals","Inventory","Catalogue"],
+    tag:"Thinks in salts, substitutes on instinct, skips the H1 register when the queue is long.",
+    quote:"Brand nahi mila to salt se de dunga — same molecule hai. Par H1 register subah gyarah baje, line lagi ho... baad mein bharenge, aur bharte hi nahi.",
+    who:"The <b>registered pharmacist</b> whose name is on the licence — legally required to be present (in a retail shop, often the owner too). Handles the <b>dispensing judgment</b>: substitutes (same salt, different brand) when stock is out, checks dose and interactions, manages H1 / X drugs, counsels walk-ins. Knows molecules cold. <b>The H1-register-skipping behaviour is hers</b> — under a long queue she defers the register and falls back to the paper one, the exact compliance gap that hurts at inspection. Salt-first thinking is the unifying primitive of how she works.",
+    facts:[
+      ["Age","24–42"],["Education","D.Pharm / B.Pharm (legally mandated)"],
+      ["Language","Strong technical English (salts, doses); UX English moderate"],
+      ["Primary device","Counter terminal (+ the physical rack)"],
+      ["Marg","Stock query, salt search, batch/FEFO selection"],
+      ["Mental model","<em class='hi'>Iska salt kya hai</em> — molecule first, brand second"],
+    ],
+    day:[
+      {t:"Through the day",w:"Dispenses at the counter; for OOS, <b>hunts a substitute by salt</b> and offers the equivalent brand."},
+      {t:"On every sale",w:"Eyes the <b>strip/box for expiry and batch</b> out of habit, even when the screen shows it."},
+      {t:"Peak hours",w:"H1/X items come up; the <b>register entry gets deferred</b> to 'after the rush' — and often dropped."},
+      {t:"Receiving",w:"Checks incoming stock, shelves by molecule/company, flags near-expiry she spots."},
+    ],
+    jtbd:[
+      "Find a <b>substitute by salt instantly</b> when a brand is out of stock.",
+      "See <b>expiry &amp; batch at the point of sale</b>, not at checkout.",
+      "Handle <b>H1 / X compliance without losing the queue</b>.",
+      "Never dispense <b>expired or wrong</b> stock.",
+      "Be <b>inspector-ready</b> on the H1/X register without a scramble.",
+    ],
+    marg:[
+      {k:"F5",a:"Stock query"},{k:"Type salt",a:"Find by molecule, not brand"},
+      {k:"Enter",a:"Pick FEFO batch"},{k:"Ctrl+P",a:"Print"},
+    ],
+    language:[
+      "Reads <b>drug names and salts fluently</b> — these are technical tokens she knows by sight.",
+      "Counsels customers in <b>Hindi/regional</b>; UX English (<em class='hi'>schedule, register, compliance</em>) is understood but not instinctive.",
+      "Will <b>dismiss a soft compliance warning</b> she can click past — words don't stop her, a hard gate does.",
+      "Trusts the <b>physical strip</b> over the screen for expiry — a verification reflex.",
+    ],
+    quirks:[
+      "<b>Salt-first</b>: <em class='hi'>iska salt kya hai</em> drives every search and substitution; brand is secondary.",
+      "<b>Substitution is reflexive</b> — she'll offer an equivalent before the customer finishes asking.",
+      "Under time pressure, <b>compliance steps are deferred then dropped</b> — not from negligence, from queue physics.",
+      "Physically re-checks expiry on the strip even when the system says it's fine.",
+    ],
+    failure:[
+      "H1 form is long / blocks mid-flow during rush → <b>skips it or enters the minimum</b>, relies on the paper register.",
+      "Substitute search is slow → <b>walks to the rack</b> and reads boxes herself.",
+      "Expiry isn't surfaced until checkout → an expired strip <b>nearly goes out</b> before she catches it by eye.",
+    ],
+    fears:[
+      "A <b>dispensing error</b> — wrong drug, wrong dose — and the liability.",
+      "The <b>inspector on H1/X</b> with register gaps.",
+      "<b>Expired stock</b> sitting on the shelf and reaching a patient.",
+      "OOS losing the sale to the <b>chemist next door</b>.",
+    ],
+    dos:[
+      "<b>Salt-based search + ranked substitutes</b> (incl. out-of-stock → in-stock equivalents).",
+      "<b>Expiry / FEFO surfaced at point of sale</b>, before the item is added.",
+      "An <b>H1 gate that's FAST</b> — pre-fill doctor/patient from history, minimal taps — so it's used, not bypassed.",
+      "Clear <b>schedule flags</b> (H / H1 / X / OTC) and barcode/strip scan.",
+    ],
+    donts:[
+      "Don't make the H1 gate a <b>long mid-rush form</b> — it <em>will</em> be skipped, and you've lost the compliance entirely.",
+      "Don't rely on a <b>dismissable warning</b> for H1/X — soft warnings don't change her behaviour.",
+      "Don't <b>bury substitutes</b> or hide expiry until checkout.",
+      "Don't assume she'll read a compliance message she can click past.",
+    ],
+    quotes:[
+      "Customer poora bole usse pehle main alternative bata deti hoon — same salt, doosri company.",
+      "Register bharna hai, pata hai — par line lagi ho to billing rokun ya register bharun?",
+    ],
+    aspiration:"Wants to find a molecule and its substitutes as instantly as Tata 1mg, scan the strip, and accept a prescription as a WhatsApp photo.",
+    apps:[
+      {n:"Tata 1mg / PharmEasy", u:"Looks up salt, alternatives and MRP — even pros use 1mg to find a substitute or verify a price.", l:"1mg's salt-to-substitute search is her gold standard; match it. (She also watches these as the B2C threat.)"},
+      {n:"Google / Google Lens", u:"Searches 'X tablet uses / substitute'; scans a strip to identify it.", l:"Googling drug info and scanning strips is reflex — expect barcode/scan and inline drug info."},
+      {n:"WhatsApp", u:"Customers send prescription photos; she sends refill reminders and coordinates with doctors.", l:"Rx-as-photo is the real upload flow — prescription capture should accept a WhatsApp-style image."},
+      {n:"CIMS / Drug Today / Medscape", u:"Reference for interactions, dosing and brand-to-salt mapping.", l:"She consults references mid-counter — Salt can surface schedule / interaction / dose inline."},
+      {n:"PhonePe / GPay · YouTube", u:"Payments; D.Pharm and drug-info content in Hindi.", l:"Instant payment confirmation + video learning, same as everyone else."},
+    ],
+  },
+
+  {
+    id:"cashier", ini:"V", name:"Vijay Kumar", role:"Cashier / Biller",
+    cap:"Counter billing only", modules:["Counter","Activity","Approvals"],
+    tag:"Pure muscle memory and speed; reads almost nothing; freezes on anything new.",
+    quote:"Naam type karta hoon, Enter dabata hoon, ho gaya. Jab screen kuch naya dikhata hai... main sir ko bula leta hoon.",
+    who:"The front-line <b>fast biller</b> — hired young, trained by rote on the billing flow only. He turns an order into a printed GST bill as fast as humanly possible and does <b>not</b> understand GST, inventory or accounting — that's not his job. <b>Speed is the job and the metric.</b> His fingers know field positions, not labels; he bills by rhythm, not by reading. He's also the highest-turnover role, so the flow has to be learnable in days and stable forever. He is the <b>weakest reader of the five</b> — design for him and you've covered everyone.",
+    facts:[
+      ["Age","18–26"],["Education","10th / 12th pass"],
+      ["Language","Weakest English; recognises drug names, little else"],
+      ["Primary device","Counter terminal only"],
+      ["Marg","'Trained in 3 days'; lives in the billing flow"],
+      ["Tenure","6 months–2 yrs; high turnover"],
+    ],
+    day:[
+      {t:"Opens",w:"Takes his counter; first chemist's slip already in hand."},
+      {t:"Both peaks",w:"<b>Bills continuously</b> — type, Tab, Enter, type, Enter… print. Breaks rhythm only for OOS or a stuck screen."},
+      {t:"When stuck",w:"An unexpected screen → <b>calls the manager</b> (or mashes Enter/Esc to make it disappear)."},
+      {t:"Shift end",w:"Tallies his counter's cash and hands over."},
+    ],
+    jtbd:[
+      "Bill the order in front of me <b>as fast as possible</b>.",
+      "<b>Don't make the customer wait</b> (the next one is calling a competitor).",
+      "<b>Don't get scolded</b> by the manager.",
+      "Print, and move to the next customer.",
+    ],
+    marg:[
+      {k:"F2",a:"New sale bill"},{k:"type",a:"3–4 chars of the drug name"},
+      {k:"Tab",a:"Into quantity"},{k:"Enter",a:"Confirm line → next item"},{k:"Ctrl+P",a:"Print"},
+    ],
+    language:[
+      "<b>Barely reads English</b> — navigates by position, rhythm, colour and sound.",
+      "An English dialog or error is <b>invisible and frightening</b> — he reacts to 'the screen changed', not to the words.",
+      "Reads <b>digits fine</b>; learns the flow as a <b>fixed sequence of keystrokes</b>, not as meaning.",
+      "Learned by someone <b>standing behind him</b> showing the keys — never from help text.",
+    ],
+    quirks:[
+      "<b>Doesn't read the screen — feels it.</b> Fingers know where the qty field is; the label is irrelevant.",
+      "Any change in <b>field order, shortcut, or an extra dialog breaks him</b> and costs retraining days.",
+      "The <b>printed bill is 'done'</b> — his proof the job completed.",
+      "Will <b>repeat a wrong action faster</b> rather than stop to diagnose it.",
+    ],
+    failure:[
+      "Unexpected modal → <b>freeze + call manager</b>, or random Enter/Esc to dismiss it.",
+      "Internet drops → <b>he doesn't even know</b>; he keeps typing and expects it to work.",
+      "Layout/shortcut changed in an update → <b>slows to a crawl, makes errors</b>, gets frustrated and blames the tool.",
+    ],
+    fears:[
+      "The <b>customer / manager getting impatient</b> with him.",
+      "The <b>screen 'doing something new'</b> he doesn't recognise.",
+      "Being <b>blamed</b> for a mistake.",
+      "Losing his <b>rhythm</b> at peak.",
+    ],
+    dos:[
+      "A <b>rock-solid, never-changing keystroke sequence</b> — Tab/Enter rhythm is sacred.",
+      "<b>Forgiving fuzzy search</b> + typo tolerance; big, legible numbers.",
+      "<b>Offline-invisible</b> — billing just keeps working, no banner to react to.",
+      "Errors as <b>quiet inline hints</b>, never a blocking English modal.",
+      "<b>Print = an unmistakable 'done'</b> signal.",
+    ],
+    donts:[
+      "<b>NEVER move fields or change shortcuts</b> between versions — this is the single most expensive thing you can do to him.",
+      "Don't <b>interrupt with a modal mid-bill</b>; don't show a <b>blocking English error</b>.",
+      "Don't <b>require the mouse</b> for anything on the hot path.",
+      "Don't assume <b>he'll read</b> anything — he won't.",
+    ],
+    quotes:[
+      "Field idhar se udhar mat karo — ungli wahin jaati hai, dimaag nahi padhta.",
+      "Net gaya ki nahi mujhe nahi pata — bas bill banta rehna chahiye.",
+    ],
+    aspiration:"Wants billing to feel fast like a game and to end with a clear 'done' like a UPI payment — with nothing to read.",
+    apps:[
+      {n:"Instagram Reels / Moj / ShareChat", u:"Short-video native — consumes everything as 15-second regional-language clips.", l:"Training is a short video, never a manual. He will not read help text."},
+      {n:"BGMI / Free Fire (mobile gaming)", u:"Fast, repetitive, skilled input; learns 'combos' by repetition; chases a high score.", l:"He masters keystroke combos by reps, like a game — billing IS his game. Fast skilled input != reading ability; speed/count framing resonates."},
+      {n:"Google Pay / PhonePe", u:"Sends money home, does recharges; the green tick + sound = 'done'.", l:"His baseline for 'completed' is the UPI success animation and sound — make 'bill saved' feel exactly that."},
+      {n:"WhatsApp Status · YouTube · JioCinema", u:"Personal chat/status and entertainment; cricket is non-negotiable.", l:"Visual, audio-led, zero-reading interfaces are his entire digital world."},
+      {n:"Truecaller", u:"Identifies unknown callers.", l:"Recognition over recall — show names and icons, not codes."},
+    ],
+  },
+
+  {
+    id:"shopsales", ini:"D", name:"Deepak Sahu", role:"Shop Salesman / Counter attendant",
+    cap:"No distinct role yet — logs in as Cashier / Counter", modules:["Counter","Activity","Approvals","(needs Catalogue + Inventory read)"],
+    tag:"Knows the rack by heart, grows the basket, never says 'nahi hai'.",
+    quote:"Augmentin khatam? Moxikind de deta hoon — same salt hai, customer ko farak nahi padta. 'Nahi hai' bola matlab woh saamne waali dukaan chala gaya.",
+    who:"The <b>product-knowledge and relationship</b> person at the counter — distinct from the cashier (who only bills) and the pharmacist (who owns the clinical / Rx call). He greets the walk-in or reads the chemist's order slip, <b>finds the product on the rack</b>, quotes price and scheme, <b>offers a substitute when something's out</b>, and <b>upsells</b> the complementary item (calcium with the antibiotic, a sanitiser, baby care). In a wholesale shop he is the counter man who reads the order, checks availability and assembles it. The shop's <b>commercial relationship with the customer runs through him.</b>",
+    facts:[
+      ["Age","20–35"],["Education","12th / some college; product knowledge built on the job"],
+      ["Language","Hindi/regional; strong on brand names, weak UI English"],
+      ["Primary device","Shop terminal (often shared) + phone + the rack"],
+      ["Marg","Stock & price lookup; lighter billing than the cashier"],
+      ["Aspires to","Run his own counter one day, or become a company MR"],
+    ],
+    day:[
+      {t:"Through the day",w:"Greets walk-ins, reads order slips and WhatsApp lists, <b>picks stock off the rack</b>, quotes price + scheme."},
+      {t:"On every sale",w:"Looks for an <b>upsell</b> (one more line) and, on OOS, offers a <b>same-salt substitute</b> rather than lose the sale."},
+      {t:"With regulars",w:"Pulls their usual order from memory; handles the chit-chat and familiar credit (<em class='hi'>Sharma ji ka hisaab</em>)."},
+      {t:"Wholesale",w:"Reads the chemist's slip, checks availability, assembles/packs the order, hands a clean list to billing."},
+    ],
+    jtbd:[
+      "Find a product fast — by name or salt — and know <b>if it's in stock and where on the rack</b>.",
+      "Quote <b>price + the right scheme/discount</b> instantly (within my limit).",
+      "Offer a <b>substitute on OOS</b> and an <b>upsell</b> to grow the basket.",
+      "Keep the regular happy and the queue moving.",
+      "Hand a clean order to the cashier.",
+    ],
+    marg:[
+      {k:"F5",a:"Stock query — is it here, how many"},
+      {k:"Rate",a:"MRP / price + scheme lookup"},
+      {k:"type",a:"Find item by name / salt"},
+      {k:"Enter",a:"Add to the order"},
+    ],
+    language:[
+      "Knows <b>brand and product names fluently</b> (learned as tokens); UI English is secondary.",
+      "Talks to customers in <b>Hindi/regional</b> — persuasion and rapport are his real skill.",
+      "Strong on <b>price and numbers</b>; quick mental math for totals and round-figure discounts.",
+      "Reads messy handwritten slips and <em class='hi'>BP ki dawai</em> and maps them to the actual brand.",
+    ],
+    quirks:[
+      "Thinks in <b>products and shelf location</b>, not transactions — the rack is his database.",
+      "<b>Basket-grower</b> — every sale is a chance to add one more line.",
+      "Customers are <b>people with histories</b>, not party IDs — he remembers their usuals.",
+      "Improvises on OOS rather than ever saying <em class='hi'>nahi hai</em>.",
+    ],
+    failure:[
+      "No fast stock+location view → relies on memory and <b>physically checks the rack</b> (and stale memory means he tells a customer 'hai' when it isn't).",
+      "Can't see price/scheme quickly → <b>guesses or asks the manager</b>, slowing down.",
+      "OOS with no substitute surfaced → free-associates one from memory (sometimes the wrong salt).",
+    ],
+    fears:[
+      "Telling a customer <b>'available hai'</b> and then it isn't.",
+      "Losing a <b>regular to the shop next door</b>.",
+      "Quoting the <b>wrong price or over-discounting</b> and getting scolded.",
+    ],
+    dos:[
+      "<b>Stock + rack location + price + scheme in one lookup</b> — not three screens.",
+      "Surface <b>substitutes and complementary upsells</b> right at search.",
+      "<b>Discount within his limit</b> in one action; escalate over-limit to Approvals cleanly.",
+      "<b>Recognise the regular</b> — pull their history / usuals fast.",
+    ],
+    donts:[
+      "Don't split 'is it in stock', 'where', and 'what price' across screens.",
+      "Don't make him <b>leave the customer</b> to go check something.",
+      "Don't <b>hide substitutes / upsell</b> opportunities.",
+      "Don't bury his discount limit so he just asks the manager every time.",
+    ],
+    quotes:[
+      "Iske saath calcium bhi le lijiye — doctor ne likha hi hoga.",
+      "Stock screen pe location bhi dikhe to bina rack tak gaye bata dunga.",
+    ],
+  },
+
+  {
+    id:"fieldsales", ini:"K", name:"Karan Yadav", role:"Field Salesman / Order + Delivery",
+    cap:"Not an ERP user today — tracked as data in the Salesmen module", modules:["Salesmen (owner-facing data)","(needs a mobile order + collection app)"],
+    tag:"On a bike, on his beat — books orders, delivers, collects cash. Not a Marg user at all.",
+    quote:"Beat pe net milta hi nahi — order phone pe likhna padega, baad mein sync ho jaaye. Aur mera number kitna hua aaj, bas wahi dikha do.",
+    who:"The <b>outside</b> person — the one role <b>not at the counter and not on Marg</b>. He rides a fixed <b>beat</b> of 15–40 retail chemists (wholesale) or homes / clinics (retail): pitches schemes, <b>takes orders</b>, <b>delivers goods</b>, and <b>collects outstanding payments</b>. The owner trusts him with cash and on-the-spot credit calls, so his <b>integrity is the asset</b>. Today his 'system' is a <b>paper order pad + WhatsApp + phone calls + memory</b>. He is phone-native (UPI, Maps, WhatsApp) but has <b>never touched the ERP</b> — which makes him the strongest case for a separate <b>offline mobile app</b>, not a counter screen.",
+    facts:[
+      ["Age","22–40"],["Education","10th / 12th; rides a two-wheeler"],
+      ["Language","Weak written English; fluent, persuasive local speech"],
+      ["Primary device","<b>Phone only</b> — on a bike, patchy data (no terminal)"],
+      ["Marg","<b>None</b> — never at the desk; the paper pad is his real system"],
+      ["Paid","Partly on commission / incentive — his 'number' matters"],
+    ],
+    day:[
+      {t:"Morning",w:"Gets the day's <b>scheme list on WhatsApp</b>; loads goods; plans the beat."},
+      {t:"On the beat",w:"Visits chemists in sequence; <b>takes orders on a paper pad</b> or WhatsApps them to the shop; pitches schemes."},
+      {t:"Delivery",w:"Hands over goods, gets them checked, <b>collects cash / UPI / cheque</b> or notes the credit."},
+      {t:"End of day",w:"Returns and <b>reconciles cash</b> with the shop — a discrepancy is a trust issue."},
+    ],
+    jtbd:[
+      "Take an order at the chemist's shop fast, <b>on my phone, even with no signal</b> — catalogue, price, scheme.",
+      "See the chemist's <b>outstanding before I book</b> a new order.",
+      "<b>Collect payment</b> and have it hit the chemist's account (now, or on sync).",
+      "See <b>my sales number and commission</b> — am I hitting target?",
+      "Cover my <b>beat</b> efficiently and WhatsApp the bill to the chemist.",
+    ],
+    marg:[
+      {k:"📋",a:"Paper order pad — the real system today"},
+      {k:"WA",a:"WhatsApp the order to the shop"},
+      {k:"₹",a:"UPI — collect payment on the road"},
+      {k:"Map",a:"Beat navigation"},
+    ],
+    margTitle:"His tools on the road — not Marg",
+    language:[
+      "Among the <b>weakest written English</b>; navigates the phone by <b>icon, voice and number</b>.",
+      "Fluent and persuasive in the <b>local dialect</b> — relationship and the pitch are his craft.",
+      "Reads <b>brand names + amounts</b>; anything else is friction.",
+      "Records orders in <b>roman shorthand</b> or as a photo of the chemist's slip.",
+    ],
+    quirks:[
+      "Thinks in <b>beat, relationships and his number</b> — never in invoices.",
+      "<b>Offline is his default state</b>, not an edge case — signal is the exception.",
+      "<b>Paper + memory + WhatsApp</b> is his current system; least ERP-digitised, but very phone-fluent.",
+      "His <b>integrity is the product</b> — cash and credit on the road run on trust.",
+    ],
+    failure:[
+      "No signal at the shop → <b>writes on paper</b>, re-keys / WhatsApps a photo later (double work, errors).",
+      "Can't see outstanding → <b>books an order to a defaulter</b>; the owner is angry later, and it's on his number.",
+      "Cash collected but not synced → <b>day-end reconciliation mismatch</b> that looks like theft.",
+    ],
+    fears:[
+      "A <b>cash discrepancy</b> at day-end reconciliation.",
+      "Booking an order the chemist <b>won't pay for</b> — it counts against him.",
+      "Missing his <b>target / commission</b>.",
+      "A chemist on his beat <b>switching to a rival distributor</b>.",
+    ],
+    dos:[
+      "<b>Mobile-first, offline-first order booking</b> — catalogue + price + scheme + the chemist's outstanding, working with no signal, syncing later.",
+      "<b>Outstanding shown before booking</b>; warn/block on a defaulter.",
+      "<b>Collection capture</b> (cash / UPI / cheque) attributed to him, reconciled cleanly at day-end.",
+      "His <b>number &amp; commission</b> on a clear, motivating screen — like a delivery-partner earnings view.",
+    ],
+    donts:[
+      "Don't assume a <b>keyboard or desktop</b> — he has neither; he is <b>not a Marg user</b>.",
+      "Don't require <b>connectivity</b> to take an order or collect a payment.",
+      "Don't make day-end cash reconciliation feel like an <b>accusation</b>.",
+      "Don't <b>hide his commission / number</b> — it's his motivation.",
+    ],
+    quotes:[
+      "Naya order tab lunga jab purana clear ho — warna meri salary se katega.",
+      "Chemist UPI mujhe karta hai, par shop ke khaate mein turant chadhna chahiye.",
+      "Swiggy waale ka app dekha hai? Waisa hi chahiye — list, tap, ho gaya, net ho ya na ho.",
+    ],
+  },
+];
+
+/* Cross-persona comparison — dimensions × 5 */
+const COMPARE = [
+  ["English proficiency",{owner:"Functional spoken; low written",manager:"Moderate–good; reads UI",accountant:"Strong domain; weak UX",pharmacist:"Strong technical; moderate UX",cashier:"Very low — names only",shopsales:"Moderate — strong on product names",fieldsales:"Low written; fluent persuasive speech"}],
+  ["Primary device",{owner:"Phone + supervises terminals",manager:"Phone + roams floor",accountant:"PC + laptop + Excel",pharmacist:"Counter terminal + rack",cashier:"Counter terminal only",shopsales:"Shop terminal + phone + the rack",fieldsales:"Phone only — on a bike, no terminal"}],
+  ["Keyboard scope in Marg",{owner:"Reports (F8, ledger)",manager:"Broad — the whole app",accountant:"Vouchers, ledger, GST, export",pharmacist:"Stock query + salt search",cashier:"Billing flow only (narrow, deep)",shopsales:"Stock/price lookup; light billing",fieldsales:"None — not a Marg user"}],
+  ["Reading style",{owner:"Scans numbers, ignores prose",manager:"Reads selectively",accountant:"Audits the math",pharmacist:"Reads drug tokens fluently",cashier:"Reads nothing — muscle memory",shopsales:"Reads product names + price",fieldsales:"Icons, voice, numbers; minimal text"}],
+  ["Verifies against",{owner:"Bank SMS + cash + memory",manager:"Walks the counters",accountant:"Own Excel + paper register",pharmacist:"The physical strip / box",cashier:"The printed bill",shopsales:"The rack + his product memory",fieldsales:"Cash in pocket + his order pad"}],
+  ["When stuck, they…",{owner:"Distrust tool, curse, call AMC",manager:"Firefight / walk & check",accountant:"Stop, investigate, re-key",pharmacist:"Skip compliance / walk to rack",cashier:"Freeze + call manager",shopsales:"Improvise a substitute / check the rack",fieldsales:"Fall back to paper, sync later / call shop"}],
+  ["Change tolerance",{owner:"Low (but delegates)",manager:"Highest — the champion",accountant:"Low — wants stability + audit",pharmacist:"Medium",cashier:"Lowest — retraining cost",shopsales:"Medium",fieldsales:"Medium — but needs an app, not a screen"}],
+  ["Top fear",{owner:"Stuck money / inspector",manager:"Counter conflict / rogue discount",accountant:"GST notice / ITC reversal",pharmacist:"Dispensing error / H1 gap",cashier:"Customer waiting / screen changed",shopsales:"Saying 'hai' when it isn't / losing a regular",fieldsales:"Cash mismatch / booking a defaulter"}],
+  ["Design must give them",{owner:"Numbers, offline, 5-sec dashboard",manager:"Live counters + 1-tap approvals",accountant:"Inspectable math + clean export",pharmacist:"Salt search + fast H1 gate",cashier:"Unchanging keystrokes + no modals",shopsales:"Stock+location+price+substitute in one lookup",fieldsales:"Offline mobile order + collection + my number"}],
+  ["Lives in (outside the ERP)",{owner:"WhatsApp · PhonePe · Khatabook · YouTube",manager:"WhatsApp Business · Instagram · Retailio · Sheets",accountant:"Excel · GST portal · CamScanner · calculator",pharmacist:"Tata 1mg · WhatsApp · Google Lens",cashier:"Reels / Moj · BGMI · UPI · YouTube",shopsales:"WhatsApp · UPI · 1mg · calculator",fieldsales:"WhatsApp · Maps · UPI · paper pad"}],
+  ["Their bar for 'good'",{owner:"PhonePe — instant, audible, on WhatsApp",manager:"A fintech-app dashboard",accountant:"Excel — every figure ties & exports",pharmacist:"Tata 1mg — find by molecule",cashier:"A UPI 'done' + a game's speed",shopsales:"1mg lookup + a quick basket",fieldsales:"A delivery-partner app (Swiggy / Udaan)"}],
+];
+
+/* ============================================================ RENDER ============================================================ */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const ul = arr => `<ul>${arr.map(x=>`<li>${x}</li>`).join("")}</ul>`;
+
+function renderTabs(){
+  const tabs = [{id:"shared",ini:"≡",label:"Shared Context"}].concat(PERSONAS.map(p=>({id:p.id,ini:p.ini,label:p.role.split(" ")[0]})));
+  $("#tabs").innerHTML = tabs.map((t,i)=>`<button data-v="${t.id}" class="${i===0?'active':''}"><span class="ini">${t.ini}</span>${t.label}</button>`).join("");
+}
+
+function renderMatrix(){
+  const head = `<thead><tr><th>Behaviour</th>${PERSONAS.map(p=>`<th>${p.role.split(" / ")[0]}<span class="sub">${p.name}</span></th>`).join("")}</tr></thead>`;
+  const body = COMPARE.map(([dim,vals])=>`<tr><td class="dim">${dim}</td>${PERSONAS.map(p=>`<td><span class="v">${vals[p.id]}</span></td>`).join("")}</tr>`).join("");
+  $("#matrix").innerHTML = head + `<tbody>${body}</tbody>`;
+}
+
+function personaHTML(p){
+  const facts = p.facts.map(([l,v])=>`<div class="fact"><div class="fl">${l}</div><div class="fv">${v}</div></div>`).join("");
+  const day = p.day.map(d=>`<li><span class="t">${d.t}</span><span class="w">${d.w}</span></li>`).join("");
+  const keys = p.marg.map(k=>`<div class="kr"><span class="kbd">${k.k}</span><span>${k.a}</span></div>`).join("");
+  const works = p.modules.map(m=>`<span class="chip">${m}</span>`).join("");
+  return `
+  <section class="view" id="view-${p.id}">
+    <div class="phero">
+      <div class="pavatar">${p.ini}</div>
+      <div class="pmeta">
+        <div class="pname">${p.name}</div>
+        <div class="prole"><span class="badge neutral">${p.role}</span><span class="chip">${p.cap}</span></div>
+        <div class="ptag">${p.tag}</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px"><blockquote class="quote">“${p.quote}”<span class="who">— ${p.name}, ${p.role}</span></blockquote></div>
+
+    <div class="facts">${facts}</div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h3><span class="ic">👤</span> Who they are</h3>
+      <p>${p.who}</p>
+      <div class="worksin"><span class="lbl">Works in</span>${works}</div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="card"><h3><span class="ic">🕐</span> A day in the life</h3><ul class="tl">${day}</ul></div>
+      <div class="card"><h3><span class="ic">🎯</span> Jobs to be done</h3>${ul(p.jtbd)}</div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="card"><h3><span class="ic">⌨️</span> ${p.margTitle||"Marg muscle memory"}</h3><div class="keys">${keys}</div></div>
+      <div class="card"><h3><span class="ic">🔤</span> Language &amp; literacy behaviour</h3>${ul(p.language)}</div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h3><span class="ic">📱</span> Apps &amp; tools they live in <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-disabled)">— outside the ERP</span></h3>
+      <div class="aspiration"><b>Aspiration</b>${p.aspiration}</div>
+      <ul>${p.apps.map(a=>`<li><b>${a.n}</b> — ${a.u}<span class="lesson">${a.l}</span></li>`).join("")}</ul>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="card"><h3><span class="ic">🧠</span> Mental model &amp; quirks</h3>${ul(p.quirks)}</div>
+      <div class="card"><h3><span class="ic">⚠️</span> When it breaks — failure behaviour</h3>${ul(p.failure)}</div>
+    </div>
+
+    <div class="grid g3" style="margin-bottom:14px">
+      <div class="ddf do card"><h3><span class="ic">✅</span> Design — do</h3>${ul(p.dos)}</div>
+      <div class="ddf dont card"><h3><span class="ic">⛔</span> Design — don't</h3>${ul(p.donts)}</div>
+      <div class="ddf fear card"><h3><span class="ic">😰</span> Fears</h3>${ul(p.fears)}</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="ic">💬</span> In their words</h3>
+      ${p.quotes.map(q=>`<blockquote class="quote" style="margin-bottom:10px">“${q}”</blockquote>`).join("")}
+    </div>
+  </section>`;
+}
+
+function switchView(v){
+  $$("nav.tabs button").forEach(b=>b.classList.toggle("active", b.dataset.v===v));
+  $$(".view").forEach(s=>s.classList.toggle("active", s.id==="view-"+v));
+  window.scrollTo({top:0,behavior:"instant"});
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  renderTabs(); renderMatrix();
+  $("#persona-views").innerHTML = PERSONAS.map(personaHTML).join("");
+  $("#tabs").addEventListener("click",e=>{const b=e.target.closest("button"); if(b) switchView(b.dataset.v);});
+});
+</script>
+</body>
+</html>

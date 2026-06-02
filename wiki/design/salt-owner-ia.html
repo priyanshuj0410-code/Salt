@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Owner IA — Simplified &amp; Natural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px;height:46px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:var(--action-primary-text);display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:26px;box-shadow:var(--shadow-sm);}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);}
+
+  .persona{display:flex; gap:14px; align-items:center; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm); margin:16px 0 8px;}
+  .persona .av{width:48px;height:48px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:24px;}
+  .persona .nm{font-weight:600;} .persona .nm span{font-weight:400;color:var(--text-tertiary);font-size:var(--text-sm);}
+  .persona p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .intro{color:var(--text-secondary);font-size:var(--text-sm);max-width:940px;margin:14px 0 8px;line-height:1.6;}
+  .section-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);font-weight:600;margin:30px 0 12px;}
+
+  .grid{display:grid;gap:13px;} .g2{grid-template-columns:1fr 1fr;} .g3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:860px){.g2,.g3{grid-template-columns:1fr;}}
+  .card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 7px;font-size:var(--text-sm);font-weight:600;}
+  .card p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .card .num{font-family:var(--font-mono);color:var(--text-tertiary);font-size:11px;font-weight:600;margin-right:6px;}
+  em.hi{font-style:normal;background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:0 3px;border-radius:3px;color:var(--text-primary);}
+
+  /* hero: rail + home wireframe */
+  .hero{display:grid;grid-template-columns:248px 1fr;gap:16px;align-items:start;}
+  @media (max-width:860px){.hero{grid-template-columns:1fr;}}
+  .rail{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:10px;box-shadow:var(--shadow-sm);}
+  .rail .rh{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;padding:6px 8px 8px;}
+  .railitem{display:flex;align-items:center;gap:10px;padding:9px 9px;border-radius:var(--radius-md);cursor:pointer;color:var(--text-primary);}
+  .railitem:hover{background:var(--surface);}
+  .railitem.active{background:var(--action-primary);color:#fff;}
+  .railitem.active .kbd{background:#fff;color:var(--action-primary);border-color:#fff;}
+  .railitem .kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text-secondary);background:var(--surface-2);border:1px solid var(--border);border-bottom:2px solid var(--border-strong);border-radius:var(--radius-sm);flex:none;}
+  .railitem .rn{font-weight:600;font-size:var(--text-sm);} .railitem .rhi{color:var(--text-tertiary);font-size:11px;margin-left:auto;}
+  .railitem.active .rhi{color:#d4d4d8;}
+  .raildiv{height:1px;background:var(--divider);margin:8px 4px;}
+
+  .home{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 16px;box-shadow:var(--shadow-sm);}
+  .home .hwh{display:flex;align-items:center;gap:9px;margin-bottom:11px;}
+  .home .hwh .t{font-weight:600;} .home .hwh .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;}
+  .searchmock{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:9px 12px;color:var(--text-tertiary);font-size:var(--text-sm);margin-bottom:12px;}
+  .searchmock .k{margin-left:auto;font-family:var(--font-mono);font-size:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1px 6px;}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+  @media (max-width:600px){.tiles{grid-template-columns:repeat(2,1fr);}}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 12px;}
+  .tile .tl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;display:flex;align-items:center;gap:6px;}
+  .tile .tv{font-size:var(--text-lg);font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px;}
+  .tile .ts{font-size:11px;color:var(--text-tertiary);margin-top:1px;}
+  .tile.hero-tile{background:var(--action-primary);border-color:var(--action-primary);grid-column:span 2;}
+  .tile.hero-tile .tl{color:#a1a1aa;} .tile.hero-tile .tv{color:#fff;font-size:var(--text-xl);} .tile.hero-tile .ts{color:#d4d4d8;}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+  .dot.d{background:var(--danger);} .dot.w{background:var(--warning);} .dot.i{background:var(--info);}
+  .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;}
+  .qbtn{font-size:var(--text-sm);font-weight:500;padding:7px 13px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);}
+  .qbtn.primary{background:var(--action-primary);color:#fff;border-color:var(--action-primary);}
+
+  /* area cards */
+  .area{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px;scroll-margin-top:14px;}
+  .area.flash{animation:flash 1.2s ease;}
+  @keyframes flash{0%{box-shadow:0 0 0 3px var(--focus-ring-strong);}100%{box-shadow:var(--shadow-sm);}}
+  .area .ah{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
+  .area .ak{width:30px;height:30px;border-radius:var(--radius-md);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;font-size:14px;}
+  .area .an{font-size:var(--text-lg);font-weight:600;} .area .ahi{color:var(--text-tertiary);font-size:var(--text-sm);}
+  .area .atag{color:var(--text-secondary);font-size:var(--text-sm);font-style:italic;margin:0 0 12px;}
+  .area .arow{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px;}
+  .area .arl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;min-width:70px;}
+  .chip{font-size:var(--text-xs);padding:3px 9px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);}
+  .chip.lc{font-family:var(--font-mono);}
+  .chip.ab{border-style:dashed;}
+  .jtbd{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 11px;font-size:var(--text-sm);color:var(--text-primary);margin-bottom:10px;}
+  .jtbd b{color:var(--text-primary);}
+
+  /* coverage table */
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);}
+  table.mx{width:100%;border-collapse:separate;border-spacing:0;background:var(--background);min-width:680px;}
+  table.mx th,table.mx td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--divider);border-right:1px solid var(--divider);font-size:var(--text-sm);vertical-align:top;}
+  table.mx thead th{background:var(--surface);font-weight:600;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);}
+  table.mx td.old{font-weight:500;white-space:nowrap;}
+  table.mx td .arrow{color:var(--text-disabled);}
+  table.mx th:last-child,table.mx td:last-child{border-right:none;} table.mx tr:last-child td{border-bottom:none;}
+  .newpill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-primary);}
+
+  .move{background:var(--background);border:1px solid var(--border);border-left:3px solid var(--info-border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-sm);}
+  .move h4{margin:0 0 4px;font-size:var(--text-sm);font-weight:600;}
+  .move p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .move .ba{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;display:block;}
+
+  footer.foot{margin-top:30px;color:var(--text-tertiary);font-size:var(--text-xs);text-align:center;border-top:1px solid var(--border);padding-top:18px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1><span class="wordmark">Salt</span> — Owner IA, simplified &amp; natural</h1>
+      <p>A redesigned information architecture shaped to how the owner actually thinks — covering every touchpoint, in far fewer places.</p>
+    </div>
+  </header>
+
+  <div class="persona">
+    <div class="av">S</div>
+    <div>
+      <div class="nm">Santosh — Owner <span>· the persona this IA is shaped for</span></div>
+      <p>Watches more than he operates. Types little, reads numbers not menus, judges a tool in 60 seconds by typing a drug name. Thinks in <em class="hi">khaata</em> — who owes me, what I owe. His bar for "instant" is PhonePe; his ledger model is Khatabook; his channel is WhatsApp; his truth is the bank SMS. The internet drops, so billing must never stop.</p>
+    </div>
+  </div>
+
+  <p class="intro">
+    Today the app is <b>13 modules</b> organised the way the data is built. The owner doesn't think in modules — he thinks in <b>five questions</b>: how is my shop right now, who owes me, what do I have, what am I selling/buying, and am I covered. So the natural IA is <b>one Home that answers "how's my shop", five areas that match his mental model, and a Setup drawer tucked out of the daily path</b> — with the old <b>Reports silo dissolved into context</b>, <b>Money unified into one khaata</b>, and <b>Compliance unified into one place</b>. Nothing is removed; everything is regrouped. Click a rail item to jump to its area.
+  </p>
+
+  <div class="section-label">Principles — drawn straight from the persona</div>
+  <div class="grid g3" id="principles"></div>
+
+  <div class="section-label">The shape — one Home + five areas + a tucked Setup</div>
+  <div class="hero">
+    <div class="rail" id="rail"></div>
+    <div class="home">
+      <div class="hwh"><span class="lbl">Home · “Aaj”</span><span class="t" style="margin-left:auto;font-size:var(--text-xs);color:var(--text-tertiary);font-weight:500">what he sees first — the 60-second pulse</span></div>
+      <div class="searchmock">⌕ &nbsp;Type a drug, party, or bill…<span class="k">⌘K</span></div>
+      <div class="tiles" id="hometiles"></div>
+      <div class="quick">
+        <span class="qbtn primary">⌨ Bill now</span>
+        <span class="qbtn">₹ Receive payment</span>
+        <span class="qbtn">📦 New GRN</span>
+        <span class="qbtn">💬 Send reminders</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">The areas in detail — what's inside, what it serves, what it absorbs</div>
+  <div id="areas"></div>
+
+  <div class="section-label">Coverage check — every one of today's 13 modules has a home (nothing lost)</div>
+  <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
+
+  <div class="section-label">The big moves — and why each is right for this persona</div>
+  <div id="moves"></div>
+
+  <footer class="foot">
+    Synthesised from the IA systems map, the owner persona, the medicine-lifecycle coverage map, and the live module set. This is the <b>owner's</b> IA — a cashier would see only <b>Sell</b>, a field salesman a separate offline mobile app. A design proposal, not a spec.
+  </footer>
+</div>
+
+<script>
+const PRINCIPLES = [
+  {h:"One Home that answers “how’s my shop right now”", p:"Numbers first, not a menu. His morning is dashboard → chase overdue → remind — so Home is the pulse, and the Counter is one key away (not the landing)."},
+  {h:"Money is one place — the khaata", p:"Who owes me, what I owe, and collecting it, unified. Today this is scattered across Parties, Payments and Reports; he thinks of it as one thing."},
+  {h:"Reports dissolve into context", p:"No separate “Reports” silo. He thinks “show me my sales”, not “open Reports”. Each area carries its own numbers; the pulse lives on Home."},
+  {h:"Compliance is one place", p:"GST + the H1/X register + drug licences together — inspector-ready in one tab. Today they’re split across GST and Settings."},
+  {h:"Type to find, two keys to go", p:"⌘K everywhere, g+letter to any area, type a drug/party/bill name. Keyboard-first — this is literally his 60-second evaluation."},
+  {h:"Built for the bad day", p:"Billing never stops offline; money is en-IN (₹1,00,000); WhatsApp share/remind + pay-link are one tap. The internet will drop — design for it."},
+  {h:"Setup is tucked away", p:"Shops, users, import, print, integrations, audit — set once, then out of the daily path. Admin shouldn’t crowd the five things he does daily."},
+  {h:"Risk comes to him", p:"Near-expiry value, low stock, licence expiry, things needing his nod — surfaced on Home, not buried in a report he must remember to run."},
+  {h:"Same model, role-shaped", p:"This is the owner’s view. A cashier sees only Sell (the counter); the field salesman gets a separate offline order+collect app. One spine, trimmed per role."},
+];
+
+// Home pulse tiles
+const TILES = [
+  {hero:true, l:"Today’s sales", v:"₹1,24,500", s:"42 bills · cash ₹81k / credit ₹43k"},
+  {l:"Cash collected", v:"₹68,000", s:"18 receipts"},
+  {l:"Owed to me", v:"₹3,42,000", s:"23 parties overdue", dot:"d"},
+  {l:"I owe soon", v:"₹92,000", s:"3 vendors this week", dot:"w"},
+  {l:"Expiring", v:"₹89,000", s:"12 batches < 60 days", dot:"w"},
+  {l:"Low / out of stock", v:"14 items", s:"reorder due", dot:"w"},
+  {l:"Needs you", v:"2 approvals", s:"over-limit discount", dot:"i"},
+  {l:"Counter feed", v:"live", s:"3 counters billing now", dot:"i"},
+];
+
+// nav rail (attention order for the owner)
+const RAIL = [
+  {id:"home", k:"H", n:"Home", hi:"Aaj", active:true},
+  {id:"sell", k:"C", n:"Sell", hi:"Bikri"},
+  {id:"money", k:"M", n:"Money", hi:"Paisa"},
+  {id:"stock", k:"S", n:"Stock", hi:"Maal"},
+  {id:"buy", k:"B", n:"Buy", hi:"Kharid"},
+  {id:"comply", k:"T", n:"Comply", hi:"Hisaab"},
+  {div:true},
+  {id:"setup", k:",", n:"Setup", hi:"Dukaan"},
+];
+
+const AREAS = [
+  {id:"home", k:"H", n:"Home", hi:"“Aaj” — today", tag:"The 60-second answer to “how is my shop right now”.",
+   inside:["Today’s sales (cash vs credit)","Cash collected","Who owes me / what I owe soon","Near-expiry value at risk","Low / out of stock","Licence & inspector flags","Live counter feed","Needs you (approvals)","Type-to-find everything (⌘K)"],
+   jtbd:"Serves <b>all five jobs at a glance</b> — and is the drill-in point for each.",
+   life:["spans all"], absorbs:["Reports → dashboard","Activity","Approvals (owner view)","Global search"]},
+
+  {id:"sell", k:"C", n:"Sell", hi:"“Bikri” — the counter", tag:"Bill without stopping — and everything I’ve sold.",
+   inside:["Bill (counter: keyboard, FEFO, H1/X gate, split tender, offline)","Bills / sales history","Sales returns (credit notes)","Sale numbers (the sales reports, in place)"],
+   jtbd:"Job #1 — <b>bill fast without stopping</b>. Reachable anywhere via <code>g c</code>; “Bill now” sits on Home.",
+   life:["S7","S8","S9","S15"], absorbs:["Counter","Sales / bills","Credit notes","Reports → Sales"]},
+
+  {id:"money", k:"M", n:"Money", hi:"“Paisa” — the khaata", tag:"Who owes me, what I owe, and collecting it — the heart of the business.",
+   inside:["Who owes me (receivables + aging, per-party running balance)","What I owe (payables + upcoming)","Receive / make payment","WhatsApp reminder + pay-link (one tap)","Parties (customers & vendors, credit limits, merge)","Salesmen (sales, collections, commission)","Cash & bank (drawer, reconciliation)","Money numbers (P&L, trial balance, aging)"],
+   jtbd:"Job #2 — <b>know who owes me money right now</b>, before I give a new order on credit.",
+   life:["S12"], absorbs:["Parties","Payments","Salesmen","Reports → Financial","Bank rec"]},
+
+  {id:"stock", k:"S", n:"Stock", hi:"“Maal” — goods & risk", tag:"What I have, what’s at risk, what to buy back.",
+   inside:["What’s here (stock on hand + value)","Expiring soon (value at risk) — surfaced, not buried","Reorder / out of stock","Dead / slow","Catalogue (items, prices, salts, substitutes)","Adjust / count / destroy / transfer","Stock numbers"],
+   jtbd:"Job #3 — <b>know what’s about to expire</b> (60 days ahead), and what’s running out.",
+   life:["S6","S14"], absorbs:["Inventory (all)","Catalogue","Reports → Inventory"]},
+
+  {id:"buy", k:"B", n:"Buy", hi:"“Kharid” — purchasing", tag:"Order from the distributor, and take it in right.",
+   inside:["Order (purchase orders, reorder suggestions)","Receive (GRN, scan invoice / OCR)","Vendor schemes","Purchase returns (debit notes)","Purchase numbers"],
+   jtbd:"Keeps the <b>right stock at the right cost</b> — feeds Stock and Money. <code>g b</code>; “New GRN” on Home.",
+   life:["S4","S5","S15"], absorbs:["Purchases","GRN","Purchase orders","Vendor schemes","Debit notes","Reports → Purchase"]},
+
+  {id:"comply", k:"T", n:"Comply", hi:"“Hisaab” — tax & law", tag:"Stay legal and inspector-ready — in one place.",
+   inside:["File GST (GSTR-1/3B, liability, ITC, GSTR-2B recon, Tally export, HSN)","H1 / X register (inspector-ready PDF)","Drug licences (renewal alerts)","Tax numbers"],
+   jtbd:"Jobs #4 & #5 — <b>GST without losing a week</b>, and <b>survive the drug inspector</b> in 30 minutes.",
+   life:["S13"], absorbs:["GST & compliance","Drug licences (from Settings)","H1/X register","Reports → Tax"]},
+
+  {id:"setup", k:",", n:"Setup", hi:"“Dukaan” — set once", tag:"Set up once, then forget — out of the daily path.",
+   inside:["Shops","Users & roles","Import / migration","Print templates","Integrations (WhatsApp, Razorpay)","Data, privacy & audit"],
+   jtbd:"Infrequent admin — deliberately tucked below the five daily areas.",
+   life:["—"], absorbs:["Settings (all)"]},
+];
+
+const COVERAGE = [
+  ["Counter","Sell"],["Sales","Sell"],["Activity","Home"],["Approvals","Home (Needs you)"],
+  ["Reports","Home + each area (Sales→Sell, Purchase→Buy, Inventory→Stock, Financial→Money, Tax→Comply)"],
+  ["Parties","Money"],["Payments","Money"],["Salesmen","Money"],
+  ["Inventory","Stock"],["Catalogue","Stock"],
+  ["Purchases / GRN","Buy"],
+  ["GST & compliance","Comply"],["Drug licences (was in Settings)","Comply"],
+  ["Settings","Setup"],
+];
+
+const MOVES = [
+  {h:"13 modules → 1 Home + 5 areas + a tucked Setup", p:"Fewer, broader buckets organised by the owner’s mental model and the lifecycle flow, not by the data model. Less to scan, nothing to hunt for.", ba:"before: 13 top-level · after: 6 (+ Setup)"},
+  {h:"The Reports silo is dissolved", p:"He never thinks “go to Reports” — he thinks “show me my sales” or “my receivables”. So the dashboard becomes Home, and each report suite lives inside the area it describes.", ba:"Reports → Home + Sell / Buy / Stock / Money / Comply"},
+  {h:"Money is unified into one khaata", p:"Parties + Payments + receivables/payables + salesmen + financials in one place — exactly how he holds it in his head (and how Khatabook trained him). Today it’s spread across three modules.", ba:"Parties + Payments + Salesmen + Financial → Money"},
+  {h:"Compliance is unified", p:"GST, the H1/X register and drug-licence alerts in one tab — inspector-ready. Today the register sits under GST and licences under Settings; the inspector doesn’t care about that split.", ba:"GST + H1/X + licences → Comply"},
+  {h:"Home is the pulse — not the Counter", p:"The current IA makes Counter the landing for everyone. For the owner that’s wrong: his day opens with “how am I doing / who do I chase”. Counter stays one keystroke away and a “Bill now” button on Home — but it isn’t his home.", ba:"landing: Counter → Home (Counter = g c)"},
+  {h:"Natural language + numbers-first + offline/WhatsApp baseline", p:"Hinglish-friendly area names (Paisa, Maal, Kharid), every screen opens to its key numbers, money in en-IN, and WhatsApp + offline assumed throughout — matched to how he reads, counts and communicates.", ba:"labels & defaults tuned to the persona"},
+];
+
+/* render */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+$("#principles").innerHTML = PRINCIPLES.map((p,i)=>`<div class="card"><h3><span class="num">${String(i+1).padStart(2,'0')}</span>${p.h}</h3><p>${p.p}</p></div>`).join("");
+
+$("#hometiles").innerHTML = TILES.map(t=>`
+  <div class="tile ${t.hero?'hero-tile':''}">
+    <div class="tl">${t.dot?`<span class="dot ${t.dot}"></span>`:''}${t.l}</div>
+    <div class="tv">${t.v}</div><div class="ts">${t.s}</div>
+  </div>`).join("");
+
+$("#rail").innerHTML = `<div class="rh">Navigation (g + letter)</div>` + RAIL.map(r=>{
+  if(r.div) return `<div class="raildiv"></div>`;
+  return `<div class="railitem ${r.active?'active':''}" data-go="${r.id}"><span class="kbd">${r.k}</span><span class="rn">${r.n}</span><span class="rhi">${r.hi}</span></div>`;
+}).join("");
+
+$("#areas").innerHTML = AREAS.map(a=>`
+  <div class="area" id="area-${a.id}">
+    <div class="ah"><span class="ak">${a.k}</span><span class="an">${a.n}</span><span class="ahi">${a.hi}</span></div>
+    <p class="atag">${a.tag}</p>
+    <div class="arow"><span class="arl">Inside</span>${a.inside.map(i=>`<span class="chip">${i}</span>`).join("")}</div>
+    <div class="jtbd">${a.jtbd}</div>
+    <div class="arow"><span class="arl">Lifecycle</span>${a.life.map(l=>`<span class="chip lc">${l}</span>`).join("")}</div>
+    <div class="arow"><span class="arl">Absorbs</span>${a.absorbs.map(x=>`<span class="chip ab">${x}</span>`).join("")}</div>
+  </div>`).join("");
+
+$("#coverage").innerHTML = `<thead><tr><th>Today’s module</th><th></th><th>New home</th></tr></thead><tbody>` +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill">${n}</span></td></tr>`).join("") +
+  `</tbody>`;
+
+$("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");
+
+// rail → scroll to area
+$("#rail").addEventListener("click",e=>{
+  const it=e.target.closest(".railitem"); if(!it) return;
+  const id=it.getAttribute("data-go"); const el=$("#area-"+id); if(!el) return;
+  $$(".railitem").forEach(r=>r.classList.toggle("active", r===it));
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pharmacist IA — Simplified &amp; Natural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px;height:46px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:var(--action-primary-text);display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:26px;box-shadow:var(--shadow-sm);}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);}
+
+  .persona{display:flex; gap:14px; align-items:center; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm); margin:16px 0 8px;}
+  .persona .av{width:48px;height:48px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:24px;}
+  .persona .nm{font-weight:600;} .persona .nm span{font-weight:400;color:var(--text-tertiary);font-size:var(--text-sm);}
+  .persona p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .intro{color:var(--text-secondary);font-size:var(--text-sm);max-width:940px;margin:14px 0 8px;line-height:1.6;}
+  .base-note{background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-lg);padding:11px 14px;font-size:var(--text-sm);color:var(--text-primary);line-height:1.55;margin:12px 0 0;}
+  .base-note b{color:var(--info);}
+  .section-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);font-weight:600;margin:30px 0 12px;}
+
+  .grid{display:grid;gap:13px;} .g3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:860px){.g3{grid-template-columns:1fr;}}
+  .card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 7px;font-size:var(--text-sm);font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .card p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .card .num{font-family:var(--font-mono);color:var(--text-tertiary);font-size:11px;font-weight:600;}
+  .ptag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid;}
+  .ptag.changed{color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);}
+  .ptag.new{color:var(--info);background:var(--info-bg);border-color:var(--info-border);}
+  .ptag.kept{color:var(--text-tertiary);background:var(--surface-2);border-color:var(--border);}
+  em.hi{font-style:normal;background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:0 3px;border-radius:3px;color:var(--text-primary);}
+
+  .hero{display:grid;grid-template-columns:248px 1fr;gap:16px;align-items:start;}
+  @media (max-width:860px){.hero{grid-template-columns:1fr;}}
+  .rail{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:10px;box-shadow:var(--shadow-sm);}
+  .rail .rh{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;padding:6px 8px 8px;}
+  .railitem{display:flex;align-items:center;gap:10px;padding:9px 9px;border-radius:var(--radius-md);cursor:pointer;color:var(--text-primary);}
+  .railitem:hover{background:var(--surface);}
+  .railitem.active{background:var(--action-primary);color:#fff;}
+  .railitem.active .kbd{background:#fff;color:var(--action-primary);border-color:#fff;}
+  .railitem.disabled{opacity:.5;cursor:not-allowed;}
+  .railitem .kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text-secondary);background:var(--surface-2);border:1px solid var(--border);border-bottom:2px solid var(--border-strong);border-radius:var(--radius-sm);flex:none;}
+  .railitem .rn{font-weight:600;font-size:var(--text-sm);} .railitem .rhi{color:var(--text-tertiary);font-size:11px;margin-left:auto;}
+  .railitem.active .rhi{color:#d4d4d8;}
+  .railitem.persist{border:1px dashed var(--border-strong);} .railitem.persist .rhi{color:var(--info);}
+  .rail .rsub{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-disabled);font-weight:600;padding:4px 8px 6px;}
+  .raildiv{height:1px;background:var(--divider);margin:8px 4px;}
+
+  .home{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 16px;box-shadow:var(--shadow-sm);}
+  .home .hwh{display:flex;align-items:center;gap:9px;margin-bottom:11px;}
+  .home .hwh .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;}
+  .searchmock{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:9px 12px;color:var(--text-tertiary);font-size:var(--text-sm);margin-bottom:12px;}
+  .searchmock .cam{font-size:13px;} .searchmock .k{margin-left:auto;font-family:var(--font-mono);font-size:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1px 6px;}
+
+  .dpanel{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;background:var(--surface);margin-bottom:12px;}
+  .dph{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;margin-bottom:9px;}
+  .dline{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius-md);margin-bottom:7px;}
+  .dline .dn{font-weight:600;font-size:var(--text-sm);} .dline .dsalt{color:var(--text-tertiary);font-size:11px;}
+  .dline .dmeta{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);white-space:nowrap;}
+  .dline.oos{border-style:dashed;}
+  .dline.oos .dmeta{color:var(--danger);}
+  .subcallout{display:flex;align-items:center;gap:9px;padding:8px 10px;background:var(--success-bg);border:1px solid var(--success-border);border-radius:var(--radius-md);margin-bottom:7px;font-size:var(--text-sm);color:var(--text-primary);}
+  .subcallout .sl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--success);flex:none;}
+  .subcallout .use{margin-left:auto;font-size:11px;font-weight:600;background:var(--background);border:1px solid var(--success-border);border-radius:var(--radius-sm);padding:2px 8px;color:var(--success);}
+  .gate{display:flex;align-items:center;gap:10px;padding:10px 11px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--text-primary);}
+  .gate .gl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--danger);flex:none;}
+  .gate .gfields{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);white-space:nowrap;}
+
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+  @media (max-width:600px){.tiles{grid-template-columns:1fr;}}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 12px;}
+  .tile .tl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;display:flex;align-items:center;gap:6px;}
+  .tile .tv{font-size:var(--text-base);font-weight:600;margin-top:3px;}
+  .tile .ts{font-size:11px;color:var(--text-tertiary);margin-top:1px;}
+  .tile.attn{background:var(--danger-bg);border-color:var(--danger-border);}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+  .dot.d{background:var(--danger);} .dot.w{background:var(--warning);} .dot.i{background:var(--info);}
+  .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;}
+  .qbtn{font-size:var(--text-sm);font-weight:500;padding:7px 13px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);}
+  .qbtn.primary{background:var(--action-primary);color:#fff;border-color:var(--action-primary);}
+
+  .area{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px;scroll-margin-top:14px;}
+  .area.flash{animation:flash 1.2s ease;}
+  @keyframes flash{0%{box-shadow:0 0 0 3px var(--focus-ring-strong);}100%{box-shadow:var(--shadow-sm);}}
+  .area .ah{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
+  .area .ak{width:30px;height:30px;border-radius:var(--radius-md);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;font-size:14px;}
+  .area .an{font-size:var(--text-lg);font-weight:600;} .area .ahi{color:var(--text-tertiary);font-size:var(--text-sm);}
+  .area .ntag{margin-left:auto;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:var(--radius-sm);}
+  .ntag.new{color:var(--info);background:var(--info-bg);border:1px solid var(--info-border);}
+  .ntag.changed{color:var(--warning);background:var(--warning-bg);border:1px solid var(--warning-border);}
+  .area .atag{color:var(--text-secondary);font-size:var(--text-sm);font-style:italic;margin:0 0 12px;}
+  .area .arow{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px;}
+  .area .arl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;min-width:70px;}
+  .chip{font-size:var(--text-xs);padding:3px 9px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);}
+  .chip.lc{font-family:var(--font-mono);} .chip.ab{border-style:dashed;}
+  .jtbd{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 11px;font-size:var(--text-sm);color:var(--text-primary);}
+  .jtbd b{color:var(--text-primary);}
+  .delta{margin-top:10px;font-size:var(--text-xs);color:var(--text-tertiary);border-top:1px dashed var(--border);padding-top:9px;line-height:1.5;}
+  .delta b{color:var(--info);}
+
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);}
+  table.mx{width:100%;border-collapse:separate;border-spacing:0;background:var(--background);min-width:680px;}
+  table.mx th,table.mx td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--divider);border-right:1px solid var(--divider);font-size:var(--text-sm);vertical-align:top;}
+  table.mx thead th{background:var(--surface);font-weight:600;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);}
+  table.mx td.old{font-weight:500;white-space:nowrap;}
+  table.mx td .arrow{color:var(--text-disabled);}
+  table.mx th:last-child,table.mx td:last-child{border-right:none;} table.mx tr:last-child td{border-bottom:none;}
+  .newpill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-primary);}
+  .newpill.lock{background:var(--surface);border-style:dashed;color:var(--text-tertiary);}
+
+  .move{background:var(--background);border:1px solid var(--border);border-left:3px solid var(--info-border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-sm);}
+  .move h4{margin:0 0 4px;font-size:var(--text-sm);font-weight:600;}
+  .move p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .move .ba{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;display:block;}
+
+  footer.foot{margin-top:30px;color:var(--text-tertiary);font-size:var(--text-xs);text-align:center;border-top:1px solid var(--border);padding-top:18px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1><span class="wordmark">Salt</span> — Pharmacist IA, simplified &amp; natural</h1>
+      <p>The same base — but her Home is the counter, and compliance stops being a place.</p>
+    </div>
+  </header>
+
+  <div class="persona">
+    <div class="av">A</div>
+    <div>
+      <div class="nm">Anjali — Pharmacist (D.Pharm) <span>· the registered name on the licence; legally must be present</span></div>
+      <p>Thinks in <b>salts</b> — <em class="hi">iska salt kya hai</em> — molecule first, brand second. Substitutes on instinct when stock is out; checks the strip for expiry by habit. Her gold standard is <b>Tata 1mg’s</b> salt search; customers send the Rx as a <b>WhatsApp photo</b>. Her defining behaviour: under a long queue she <b>skips the H1 register</b> — the gap that hurts at inspection. Clinical, not commercial.</p>
+    </div>
+  </div>
+
+  <div class="base-note">
+    <b>Base = Owner + Manager + Accountant.</b> She inherits the spine, type-to-find, offline + en-IN + Hinglish (owner), and the two cross-role patterns from the manager &amp; accountant: <b>Home answers the role’s first question</b>, and <b>each role gets one persistent action surface</b> (manager → Inbox, accountant → Export, pharmacist → <b>Salt search</b>). Two things change hard for her: her <b>Home is a working counter, not a dashboard</b>, and <b>compliance becomes an inline gate, not a destination</b> — while the entire <b>commercial half</b> of the app falls away.
+  </div>
+
+  <div class="section-label">Principles — what carries over from the three bases, what changes</div>
+  <div class="grid g3" id="principles"></div>
+
+  <div class="section-label">The shape — Dispense (home) + Salt search + Shelf + Drug book (commerce is gone)</div>
+  <div class="hero">
+    <div class="rail" id="rail"></div>
+    <div class="home">
+      <div class="hwh"><span class="lbl">Home · “Counter / Dispense”</span><span style="margin-left:auto;font-size:var(--text-xs);color:var(--text-tertiary);font-weight:500">her home is a working screen — the patient in front of her</span></div>
+      <div class="searchmock">⌕ &nbsp;Type a salt or brand<span class="cam">· 📷 scan a strip</span><span class="k">⌘K</span></div>
+      <div class="dpanel">
+        <div class="dph">Now dispensing</div>
+        <div class="dline"><div><span class="dn">Pan-D</span> <span class="dsalt">· Pantoprazole + Domperidone</span></div><span class="dmeta">B:PD2410 · exp 08/26 · ×10</span></div>
+        <div class="dline oos"><div><span class="dn">Augmentin 625</span> <span class="dsalt">· Amoxicillin + Clavulanate</span></div><span class="dmeta">out of stock</span></div>
+        <div class="subcallout"><span class="sl">Same salt</span><div>→ <b>Moxikind-CV 625</b> · 42 in stock · exp 11/26</div><span class="use">use</span></div>
+        <div class="gate"><span class="gl">Schedule H1</span><div><b>Azithral 500</b> — record doctor + patient to continue</div><span class="gfields">Dr: R.K. Sharma (last) · Patient: ▢</span></div>
+      </div>
+      <div class="tiles" id="hometiles"></div>
+      <div class="quick">
+        <span class="qbtn primary">＋ Add by salt</span>
+        <span class="qbtn">📷 Scan strip</span>
+        <span class="qbtn">📎 Attach Rx</span>
+        <span class="qbtn">✓ Complete (F9)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">The areas in detail — pharmacist’s lens, and the delta from owner / manager / accountant</div>
+  <div id="areas"></div>
+
+  <div class="section-label">Coverage check — clinical only (5 of 13 modules; the commercial half isn’t hers)</div>
+  <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
+  <p class="intro" style="margin-top:10px">Note: the H1/X <b>register</b> doesn’t get its own area — she <b>records it inline at dispense</b> (the gate), and the inspector-facing export stays with the owner/accountant. Making the gate fast is the whole point: a register she has to <em>navigate to</em> is a register that stays empty at 11 a.m.</p>
+
+  <div class="section-label">The big moves — how the base changed for this persona</div>
+  <div id="moves"></div>
+
+  <footer class="foot">
+    Built on the Owner + Manager + Accountant IA bases, reshaped from the pharmacist persona (salt-first · substitute-by-instinct · the skipped H1 register · physical-strip trust) and her place in the lifecycle (S8 — the dispensing gate; the clinical front line). A design proposal, not a spec.
+  </footer>
+</div>
+
+<script>
+const PRINCIPLES = [
+  {h:"Home is the counter, not a dashboard", tag:["changed","Changed"], p:"Owner/Manager/Accountant each open to a dashboard answering a question. She dispenses all day — so her Home is the working dispense screen, the patient in front of her. (The cashier will take this to its limit.)"},
+  {h:"Compliance is a gate, not a place", tag:["new","New"], p:"The accountant has Tax as a destination he files at. The pharmacist records the H1/X register inline at the moment of dispensing — fast, pre-filled from history. A register she has to navigate to is a register that stays empty under a queue."},
+  {h:"Salt search is her constant surface", tag:["new","New"], p:"Her version of the manager’s Inbox / accountant’s Export. The 1mg-style “iska salt kya hai → ranked substitutes, in-stock first” lookup, one key away from anywhere — the action she takes all day."},
+  {h:"Salt-first, not SKU-first", tag:["new","New"], p:"Search and the catalogue are organised by molecule; brand is the second field, not the first. Substitution is the default path, not a dead end, when something is out of stock."},
+  {h:"Physical-first trust", tag:["new","New"], p:"She checks the strip by habit, so the screen matches the strip — scan a barcode/strip to find it, expiry surfaced before the line is added, and the prescription accepted as a WhatsApp photo."},
+  {h:"The commercial half is gone", tag:["changed","Changed"], p:"No Money, no GST filing, no Reports, no Parties, no Setup — she is clinical, not commercial. The exact opposite slice of the app from the accountant, who had only the commercial half."},
+  {h:"The dispense flow never changes", tag:["kept","Inherited"], p:"Consistent keystrokes and field order so speed holds under the queue — the same stability the cashier needs, and offline billing that doesn’t stop when the internet drops."},
+  {h:"Type-to-find · ⌘K · en-IN · Hinglish", tag:["kept","Inherited"], p:"Unchanged from the base: keyboard-first, Indian money format on price, Hinglish-friendly labels, numbers and names read at a glance."},
+];
+
+const TILES = [
+  {l:"Expiring on my shelf", v:"₹89k · 12 batches", s:"pull / prioritise", dot:"w"},
+  {l:"Recall flag", v:"1 batch", s:"Augmentin B:AUG2403 — segregate", dot:"d", attn:true},
+  {l:"Today’s H1 / X", v:"7 logged", s:"my register, so far", dot:"i"},
+];
+
+const RAIL = [
+  {id:"dispense", k:"D", n:"Dispense", hi:"Counter", active:true},
+  {id:"find", k:"F", n:"Salt search", hi:"persistent", persist:true},
+  {id:"shelf", k:"S", n:"Shelf", hi:"Maal"},
+  {id:"book", k:"B", n:"Drug book", hi:"Dawai"},
+  {div:true},
+  {sub:"Not the pharmacist’s view"},
+  {id:"money", k:"🔒", n:"Money · GST · Reports", hi:"commercial", disabled:true},
+  {id:"setup", k:"🔒", n:"Settings", hi:"owner only", disabled:true},
+];
+
+const AREAS = [
+  {id:"dispense", k:"D", n:"Dispense", hi:"“Counter” — her home", ntag:["changed","home = a working screen"],
+   tag:"The patient in front of her — found, substituted if needed, made safe & legal, given.",
+   inside:["Salt / brand search · scan a strip","FEFO batch + expiry surfaced before the line is added","Substitute on OOS (same salt, in-stock first)","H1 / X gate — inline, pre-filled doctor/patient","Attach the Rx (WhatsApp-style photo)","Today’s H1/X log (her register so far)","Complete & print (offline)"],
+   jtbd:"Her first question — <b>“what does this customer need, is it in stock or substitutable, and is it safe & legal to give?”</b> — answered without leaving the screen.",
+   life:["S7","S8","S11"], absorbs:["Counter","H1/X register (entry)","Approvals (request an override inline)","Activity"],
+   delta:"Owner’s Home is a money pulse, manager’s a live floor, accountant’s a reconcile-list — all <b>dashboards</b>. Hers is the <b>counter itself</b>: she lives in the doing-screen, and compliance happens here, not in a separate tab."},
+
+  {id:"find", k:"F", n:"Salt search", hi:"“iska salt kya hai” — persistent", ntag:["new","her constant surface"],
+   tag:"Find the molecule and its substitutes — instantly, from anywhere.",
+   inside:["Search by salt / molecule (brand is secondary)","Ranked substitutes — in-stock first, then orderable","Schedule (H / H1 / X / OTC) shown on every result","Pack / strength match","Dose & interaction reference (CIMS / 1mg-style)"],
+   jtbd:"The action she takes <b>all day</b>: a brand is out or a customer wants it cheaper → find the same salt that’s on the shelf, fast.",
+   life:["S8"], absorbs:["Catalogue → substitutes / salt index","item_substitutes"],
+   delta:"The exact slot the manager fills with an <b>Inbox</b> and the accountant with <b>Export</b> — one persistent action per role. Hers is the 1mg lookup she already trusts, made first-class."},
+
+  {id:"shelf", k:"S", n:"Shelf", hi:"“Maal” — her stock", ntag:["changed","stock, for safety"],
+   tag:"What’s on my shelf, and what must come off it.",
+   inside:["What’s here (qty, batch, expiry, location)","Expiring soon — pull & prioritise","Near-expiry / out of stock","Cold-chain items","Physical count","Segregate a recalled / expired batch"],
+   jtbd:"Two safety jobs: <b>never dispense expired</b>, and <b>never run out</b> in front of a customer (or they go next door).",
+   life:["S6","S14","S15"], absorbs:["Inventory (operational)"],
+   delta:"Owner <b>watches</b> the expiry risk and the manager <b>acts</b> on it commercially (returns, claims). The pharmacist’s lens is <b>clinical safety</b> — pull it off the shelf so it can’t reach a patient. No money attached."},
+
+  {id:"book", k:"B", n:"Drug book", hi:"“Dawai” — the knowledge", ntag:["changed","catalogue as a reference"],
+   tag:"The molecule knowledge — brand ↔ salt, schedule, dose.",
+   inside:["Brand ↔ salt mapping","Schedule (H / H1 / X / OTC) & licence need","Pack / strength / form","Substitutes graph (same salt)","Dose & interaction reference","Flag a wrong attribute (GST/HSN are someone else’s concern)"],
+   jtbd:"Her reference and the source of truth behind every substitution and every schedule gate — the catalogue, seen as a <b>drug book</b>, not a price list.",
+   life:["S2","S8"], absorbs:["Catalogue (knowledge view)"],
+   delta:"Owner/manager see the catalogue as a <b>priced item master</b> (MRP, GST, margin); the accountant barely touches it. The pharmacist sees it as a <b>clinical reference</b> — molecules, schedules and doses, price stripped out."},
+];
+
+const COVERAGE = [
+  ["Counter","Dispense (her home)"],
+  ["Catalogue","Drug book + Salt search"],
+  ["Inventory","Shelf"],
+  ["Activity","Dispense (safety strip)"],
+  ["Approvals","inline at Dispense (request an override / controlled sign-off)"],
+  ["H1 / X register","inline gate at Dispense (entry) + today’s log — no separate area"],
+  ["Sales · Parties · Payments · GST filing · Reports · Salesmen · Settings","— not her view (commercial & admin)"],
+];
+
+const MOVES = [
+  {h:"Home becomes a working screen, not a dashboard", p:"The first three roles open to a dashboard that answers a question (pulse / floor / desk). The pharmacist opens to the dispense counter — because she dispenses all day. Her “first question” is answered by doing, not by reading tiles.", ba:"dashboard Home → the counter is Home"},
+  {h:"Compliance is a gate, not a destination", p:"The H1/X register doesn’t get an area. It’s recorded inline at the moment of dispensing — fast and pre-filled — because a register she must navigate to is the register that sits empty during the 11 a.m. rush. This is the direct fix for her defining behaviour.", ba:"Tax-as-area → H1/X-as-inline-gate"},
+  {h:"Her persistent surface is Salt search", p:"Same structural slot as the manager’s Inbox and the accountant’s Export — the one action a role does all day. Hers is the molecule → substitute lookup she already trusts from 1mg, one key away from anywhere.", ba:"Inbox / Export ⟷ Salt search"},
+  {h:"The commercial half disappears", p:"No Money, GST-filing, Reports, Parties or Setup. The pharmacist is the mirror image of the accountant: he had only the commercial/back-office half; she has only the clinical/front-line half. Between them they barely overlap.", ba:"13 modules → 4 clinical surfaces"},
+  {h:"Salt-first and physical-first", p:"Search defaults to the molecule, substitution is the default OOS path, the screen matches the physical strip (scan/barcode, expiry before add), and the Rx is accepted as a photo — every default re-pointed from “SKU/transaction” to “molecule/strip”.", ba:"SKU/txn defaults → salt/strip defaults"},
+  {h:"Same dispense flow, forever", p:"Inherited stability: consistent keystrokes and offline billing so her speed holds under the queue. The pattern she shares with the cashier — the next, and most extreme, case of “the counter is the whole app”.", ba:"+ stable, offline dispense flow"},
+];
+
+/* render */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+$("#principles").innerHTML = PRINCIPLES.map((p,i)=>`<div class="card"><h3><span class="num">${String(i+1).padStart(2,'0')}</span>${p.h} <span class="ptag ${p.tag[0]}">${p.tag[1]}</span></h3><p>${p.p}</p></div>`).join("");
+
+$("#hometiles").innerHTML = TILES.map(t=>`
+  <div class="tile ${t.attn?'attn':''}">
+    <div class="tl">${t.dot?`<span class="dot ${t.dot}"></span>`:''}${t.l}</div>
+    <div class="tv">${t.v}</div><div class="ts">${t.s}</div>
+  </div>`).join("");
+
+$("#rail").innerHTML = `<div class="rh">Navigation (g + letter)</div>` + RAIL.map(r=>{
+  if(r.div) return `<div class="raildiv"></div>`;
+  if(r.sub) return `<div class="rsub">${r.sub}</div>`;
+  return `<div class="railitem ${r.active?'active':''} ${r.disabled?'disabled':''} ${r.persist?'persist':''}" data-go="${r.id}"><span class="kbd">${r.k}</span><span class="rn">${r.n}</span><span class="rhi">${r.hi}</span></div>`;
+}).join("");
+
+$("#areas").innerHTML = AREAS.map(a=>`
+  <div class="area" id="area-${a.id}">
+    <div class="ah"><span class="ak">${a.k}</span><span class="an">${a.n}</span><span class="ahi">${a.hi}</span><span class="ntag ${a.ntag[0]}">${a.ntag[1]}</span></div>
+    <p class="atag">${a.tag}</p>
+    <div class="arow"><span class="arl">Inside</span>${a.inside.map(i=>`<span class="chip">${i}</span>`).join("")}</div>
+    <div class="jtbd">${a.jtbd}</div>
+    <div class="arow" style="margin-top:10px"><span class="arl">Lifecycle</span>${a.life.map(l=>`<span class="chip lc">${l}</span>`).join("")}<span class="arl" style="margin-left:8px">Absorbs</span>${a.absorbs.map(x=>`<span class="chip ab">${x}</span>`).join("")}</div>
+    <div class="delta">↔ <b>vs the others</b> — ${a.delta}</div>
+  </div>`).join("");
+
+$("#coverage").innerHTML = `<thead><tr><th>Today’s module</th><th></th><th>Pharmacist’s home for it</th></tr></thead><tbody>` +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('—')?'lock':''}">${n}</span></td></tr>`).join("") +
+  `</tbody>`;
+
+$("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");
+
+$("#rail").addEventListener("click",e=>{
+  const it=e.target.closest(".railitem"); if(!it||it.classList.contains("disabled")) return;
+  const id=it.getAttribute("data-go"); const el=$("#area-"+id); if(!el) return;
+  $$(".railitem").forEach(r=>r.classList.toggle("active", r===it));
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+});
+</script>
+</body>
+</html>

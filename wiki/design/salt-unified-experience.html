@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Salt — One Unified Experience (the 7 personas reconciled)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1200px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px;height:46px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:var(--action-primary-text);display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:26px;box-shadow:var(--shadow-sm);}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);}
+  .intro{color:var(--text-secondary);font-size:var(--text-sm);max-width:960px;margin:14px 0 8px;line-height:1.6;}
+  .section-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);font-weight:600;margin:30px 0 12px;}
+
+  .grid{display:grid;gap:13px;} .g3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:860px){.g3{grid-template-columns:1fr;}}
+  .card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 7px;font-size:var(--text-sm);font-weight:600;}
+  .card p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .card .num{font-family:var(--font-mono);color:var(--text-tertiary);font-size:11px;font-weight:600;margin-right:6px;}
+  em.hi{font-style:normal;background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:0 3px;border-radius:3px;color:var(--text-primary);}
+
+  /* composer */
+  .composer{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
+  @media (max-width:880px){.composer{grid-template-columns:1fr;}}
+  .panel{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px 15px;box-shadow:var(--shadow-sm);}
+  .panel .ph{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;margin-bottom:9px;}
+  .presetbar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:7px;}
+  .pchip{font-size:11px;font-weight:500;padding:5px 10px;border-radius:20px;border:1px solid var(--border);background:var(--surface);cursor:pointer;color:var(--text-primary);}
+  .pchip:hover{border-color:var(--border-strong);}
+  .pchip.active{background:var(--action-primary);color:#fff;border-color:var(--action-primary);}
+  .pchip.mix{border-style:dashed;}
+  .presethint{font-size:11px;color:var(--text-tertiary);margin:2px 0 6px;line-height:1.45;}
+
+  .agroup{margin-top:10px;} .agl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-disabled);font-weight:700;margin:8px 0 5px;}
+  .atom{display:flex;align-items:flex-start;gap:9px;padding:7px 8px;border-radius:var(--radius-md);cursor:pointer;border:1px solid transparent;}
+  .atom:hover{background:var(--surface);}
+  .atom.on{background:var(--surface-2);border-color:var(--border);}
+  .atom .box{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--border-strong);flex:none;display:grid;place-items:center;font-size:11px;color:#fff;margin-top:1px;}
+  .atom.on .box{background:var(--action-primary);border-color:var(--action-primary);}
+  .atom .al{font-size:var(--text-sm);font-weight:500;} .atom .as{font-size:11px;color:var(--text-tertiary);}
+  .atom .akey{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--text-disabled);flex:none;}
+  .anew{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--info);background:var(--info-bg);border:1px solid var(--info-border);border-radius:3px;padding:0 4px;margin-left:5px;vertical-align:middle;}
+
+  /* preview */
+  .preview{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .pvhead{padding:14px 16px;border-bottom:1px solid var(--divider);background:var(--surface);}
+  .pvlabel{font-size:var(--text-lg);font-weight:600;display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .matchtag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 8px;border-radius:var(--radius-sm);}
+  .matchtag.preset{color:var(--success);background:var(--success-bg);border:1px solid var(--success-border);}
+  .matchtag.mix{color:var(--info);background:var(--info-bg);border:1px solid var(--info-border);}
+  .matchtag.custom{color:var(--warning);background:var(--warning-bg);border:1px solid var(--warning-border);}
+  .pvderiv{display:flex;gap:18px;flex-wrap:wrap;margin-top:9px;}
+  .pvd{font-size:11px;} .pvd .k{text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;font-size:9px;display:block;} .pvd b{font-size:var(--text-sm);font-weight:600;}
+  .pvbody{display:grid;grid-template-columns:150px 1fr;gap:0;}
+  @media (max-width:620px){.pvbody{grid-template-columns:1fr;}}
+  .pvrail{border-right:1px solid var(--divider);padding:12px 10px;}
+  @media (max-width:620px){.pvrail{border-right:none;border-bottom:1px solid var(--divider);display:flex;flex-wrap:wrap;gap:6px;}}
+  .rl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-disabled);font-weight:700;padding:2px 6px 7px;}
+  .ri{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--text-disabled);}
+  .ri.lit{color:var(--text-primary);font-weight:500;} .ri.lit .dot{background:var(--success);}
+  .ri.home{color:var(--action-primary);font-weight:600;}
+  .ri .dot{width:6px;height:6px;border-radius:50%;background:var(--border-strong);flex:none;}
+  .ri .mob{margin-left:auto;font-size:9px;color:var(--info);font-weight:700;}
+  .ri.verbrow{color:var(--info);font-weight:600;}
+  .pvmain{padding:13px 15px;}
+  .pvsec{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:700;margin:0 0 8px;}
+  .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+  @media (max-width:520px){.tiles{grid-template-columns:1fr;}}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:9px 11px;font-size:var(--text-sm);}
+  .tile .tk{font-size:9px;color:var(--text-disabled);font-family:var(--font-mono);float:right;}
+  .gates{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;}
+  .gate{font-size:11px;font-weight:600;color:var(--danger);background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:20px;padding:2px 9px;}
+  .nogate{font-size:11px;color:var(--text-tertiary);}
+  .strip{margin:0;border-top:1px solid var(--divider);padding:12px 15px;background:var(--surface);font-size:var(--text-sm);color:var(--text-secondary);line-height:1.55;}
+  .strip b{color:var(--text-primary);}
+  .gaplist{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px;}
+  .gapchip{font-size:11px;color:var(--warning);background:var(--warning-bg);border:1px solid var(--warning-border);border-radius:var(--radius-sm);padding:2px 8px;}
+
+  /* reconcile table */
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);}
+  table.mx{width:100%;border-collapse:separate;border-spacing:0;background:var(--background);min-width:820px;}
+  table.mx th,table.mx td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--divider);border-right:1px solid var(--divider);font-size:var(--text-xs);vertical-align:top;line-height:1.5;}
+  table.mx thead th{background:var(--surface);font-weight:600;font-size:var(--text-sm);color:var(--text-primary);}
+  table.mx td.who{font-weight:600;white-space:nowrap;} table.mx td.who .av{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--action-primary);color:#fff;font-family:var(--font-display);font-size:10px;margin-right:6px;vertical-align:middle;}
+  table.mx td .atoms{font-family:var(--font-mono);color:var(--text-tertiary);}
+  table.mx th:last-child,table.mx td:last-child{border-right:none;} table.mx tr:last-child td{border-bottom:none;}
+
+  .move{background:var(--background);border:1px solid var(--border);border-left:3px solid var(--info-border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-sm);}
+  .move h4{margin:0 0 4px;font-size:var(--text-sm);font-weight:600;}
+  .move p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .move .ba{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;display:block;}
+
+  footer.foot{margin-top:30px;color:var(--text-tertiary);font-size:var(--text-xs);text-align:center;border-top:1px solid var(--border);padding-top:18px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1><span class="wordmark">Salt</span> — one experience, seven views</h1>
+      <p>Reconciling the 7 persona IAs into a single adaptive app — where a “persona” is a derived view, and duties can be shared or absent.</p>
+    </div>
+  </header>
+
+  <p class="intro">
+    There were never seven apps — there is <b>one experience</b>, projected differently for whoever's looking. A view is a function of three knobs: <b>which capability atoms you hold</b>, your <b>altitude</b> on each (watch · operate · file), and your <b>context</b> (counter · desk · road · offline). The seven personas are just the seven common <b>presets</b>; the real world freely <b>mixes</b> them (the owner who also dispenses and bills), <b>drops</b> them (no field salesman), or <b>shares</b> them (a cashier and a pharmacist on one counter). Below: toggle capabilities and watch the single app recompose. Load a persona preset and it re-derives <em>exactly</em> the IA built for that role — one projector, seven projections.
+  </p>
+
+  <div class="section-label">The model — one substrate, a lens per user</div>
+  <div class="grid g3">
+    <div class="card"><h3><span class="num">01</span>One substrate</h3><p>Every capability and all the lifecycle data live in one app — the union of all seven IAs. Nothing is role-specific at the data layer; the counter, the books, the beat all read and write the same tables.</p></div>
+    <div class="card"><h3><span class="num">02</span>A lens, not an app</h3><p>What a user sees is a <b>projection</b>: the union of their capability atoms, arranged by altitude and context. Change the atoms and the Home, primary surface, persistent action, lit nav and inline gates all recompose — live.</p></div>
+    <div class="card"><h3><span class="num">03</span>Personas are presets</h3><p>Each of the seven is a named bundle of atoms + a default altitude. They're starting points, not cages — merge them, drop them, or hand-assign atoms to a real person. The persona is <b>emergent</b>, not built.</p></div>
+  </div>
+
+  <div class="section-label">The lens composer — toggle capabilities, watch the one app recompose</div>
+  <div class="composer">
+    <div class="panel">
+      <div class="ph">Load a preset</div>
+      <div class="presetbar" id="presets"></div>
+      <div class="presethint" id="presethint"></div>
+      <div class="ph" style="margin-top:12px">…or hand-pick the capability atoms</div>
+      <div id="atoms"></div>
+    </div>
+    <div class="preview" id="preview"></div>
+  </div>
+
+  <div class="section-label">How the seven reconcile — same derivation, seven results</div>
+  <div class="matrix-wrap"><table class="mx" id="reconcile"></table></div>
+  <p class="intro" style="margin-top:11px">Each row is just a capability bundle run through the same lens function — and out comes the Home, the one action, and the landing surface I designed persona-by-persona. The derivation <b>is</b> the reconciliation.</p>
+
+  <div class="section-label">Shared, absent, solo — how the real world bends it</div>
+  <div class="grid g3">
+    <div class="card"><h3>Shared duties</h3><p>A capability attaches to <b>whoever holds it</b> — and more than one person can. Events route to <em>any holder present</em>: an approval to any approver, an H1 gate to any pharmacist on shift, a collection to whoever's on the beat. The interlocks bind to a <b>capability</b>, never to “the manager” by name.</p></div>
+    <div class="card"><h3>Absent duties</h3><p>An atom no one holds doesn't vanish — the stage and its data still exist. The system <b>flags it as a gap</b> (“no one is assigned to reconcile GST — books may drift”), or it <b>folds up to the owner</b> by default. There is no “missing app”, only an unassigned job.</p></div>
+    <div class="card"><h3>The solo operator</h3><p>One person holding every hat gets the <b>union</b> — but it stays calm through <b>altitude + progressive disclosure + mode-switch</b>: the counter is front-and-centre by day (80% of his time), books &amp; GST tucked but present by evening, gates inline. Still one app, one lens — just a wide one.</p></div>
+  </div>
+
+  <div class="section-label">What dissolves — the per-persona elements become derived, not hand-built</div>
+  <div id="moves"></div>
+
+  <div class="section-label">Real-shop validation — a Varanasi wholesale pharmacy</div>
+  <p class="intro">A live stress test: a wholesale pharmacy with <b>2 owners who both man counters</b>, a <b>third counter</b> run by an employee, <b>3–4 in-shop salespeople</b> across the floor and godown, <b>4 field salesmen</b>, and an <b>external CA</b> for tax &amp; compliance. None of the clean seven fit it as-is — yet the lens model absorbs it. Load <b>Working owner (wholesale)</b>, <b>Godown / picker</b> or <b>External CA</b> in the composer above to watch each lens derive.</p>
+  <div class="matrix-wrap"><table class="mx">
+    <thead><tr><th>Person (×count)</th><th>Capability atoms</th><th>Lands on</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td class="who">Owner ×2</td><td><span class="atoms">A B D E F H I L M · O</span></td><td>Counter (+ money/approvals strip)</td><td>Operate altitude flips the landing pulse → counter; wholesale <b>O</b>, not retail <b>C</b>.</td></tr>
+      <tr><td class="who">Counter employee ×1</td><td><span class="atoms">A B</span></td><td>Counter — sell / bill</td><td>Over-limit → <b>any owner</b> (any-holder routing; no manager exists).</td></tr>
+      <tr><td class="who">Floor salesperson ×2</td><td><span class="atoms">A (B)</span></td><td>Counter — sell</td><td>The unified lookup: stock + location + price + scheme + substitute.</td></tr>
+      <tr><td class="who">Godown staff ×1–2</td><td><span class="atoms">E F · N</span></td><td>Stock / godown (mobile)</td><td><b>N</b> = pick / fulfil (new atom); reuses the field offline/scan substrate.</td></tr>
+      <tr><td class="who">Field salesman ×4</td><td><span class="atoms">G</span></td><td>Beat (mobile, offline)</td><td>4 instances; their orders sync in → feed the godown pick queue.</td></tr>
+      <tr><td class="who">External CA ×1</td><td><span class="atoms">K L + Export</span></td><td>Desk — file (scoped, remote)</td><td>Lens clean; external / multi-shop access is the off-axis gap.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid g3" style="margin-top:13px">
+    <div class="card"><h3>What held up</h3><p>No manager → atoms redistribute to owners / godown / field; no empty screen. Operating owners → altitude flips the landing to the counter. The employee's over-limit routes to <b>any owner</b> (a capability, not a name). 2 owners · 4 field · ~3 shop = multi-instance + 3-counter realtime. The field offline/scan substrate is reused by the godown.</p></div>
+    <div class="card"><h3>What it surfaced</h3><p><b>✦ additive</b> — a <b>pick / fulfil</b> atom (godown picking) and a wholesale <b>supply-compliance</b> atom (buyer licence + supply register; <b>C</b> was retail-shaped). <b>⚠ off-axis</b> — the external CA's <b>access model</b> (scoped, expiring, multi-shop, read + export) is tenancy, not IA. And the model correctly <b>flags a gap</b>: with only a tax CA, daily books may drift.</p></div>
+    <div class="card"><h3>The V3 verdict</h3><p>Every org-shape divergence was <b>config + derivation</b> — no restructure. The two domain gaps are <b>additive atoms</b> (13 → 15, now live in the composer). The one off-axis item (external access) is exactly the conscious bet named earlier — the test <b>found</b> it, which is the model working. <b>No V3.</b></p></div>
+  </div>
+
+  <footer class="foot">
+    The reconciliation of seven persona IAs into one adaptive experience: capability atoms × altitude × context → a derived lens. Validated against a real Varanasi wholesale pharmacy. Styled with the Salt design system; pairs with the systems map, persona deck, lifecycle and the seven role IAs. A design model, not a spec.
+  </footer>
+</div>
+
+<script>
+/* ---- capability atoms (the assignable building blocks) ---- */
+const ATOMS = [
+  {id:"A", label:"Sell at counter", sub:"find · substitute · quote · upsell", group:"At the counter", nav:["counter"], home:["OOS asks · regulars","A"]},
+  {id:"B", label:"Bill & take payment", sub:"the fast invoice", group:"At the counter", nav:["counter"], home:["today's bills · cash","B"]},
+  {id:"C", label:"Dispense gate", sub:"H1/X · clinical · FEFO", group:"At the counter", nav:["counter"], home:["H1/X today · expiring","C"], gate:"H1 / X"},
+  {id:"D", label:"Order stock", sub:"PO · reorder", group:"Buy & stock", nav:["buy"], home:["reorder / low","D"]},
+  {id:"E", label:"Receive stock (GRN)", sub:"verify · ITC", group:"Buy & stock", nav:["buy"], home:["GRNs to verify","E"]},
+  {id:"F", label:"Stock health", sub:"expiry · count · returns", group:"Buy & stock", nav:["stock"], home:["expiring · dead stock","F"]},
+  {id:"G", label:"Field beat", sub:"order · deliver · collect", group:"On the road", nav:["field"], home:["beat · cash in hand","G"], gate:"credit before booking", mobile:true},
+  {id:"H", label:"Payments & collections", sub:"receive · chase", group:"Money", nav:["money"], home:["owed to me · collect today","H"]},
+  {id:"I", label:"Credit & approvals", sub:"set limits · approve exceptions", group:"Money", nav:["money","inbox"], home:["needs you","I"], gate:"credit / discount"},
+  {id:"J", label:"Keep the books", sub:"Dr/Cr · reconcile", group:"Money", nav:["money","export"], home:["doesn't tie · unallocated","J"]},
+  {id:"K", label:"File GST & compliance", sub:"GSTR · 2B · registers", group:"Compliance", nav:["comply","export"], home:["due to file · 2B mismatch","K"]},
+  {id:"L", label:"Pulse & reports", sub:"money · sales · risk", group:"Oversight", nav:["home"], home:["today's sales · pulse","L"]},
+  {id:"M", label:"Configure the shop", sub:"users · shops · integrations", group:"Oversight", nav:["setup"]},
+  {id:"N", label:"Pick & fulfil", sub:"assemble · stage · dispatch (godown)", group:"Buy & stock", nav:["stock"], home:["pick queue · to dispatch","N"], isNew:true},
+  {id:"O", label:"Supply compliance", sub:"buyer licence · schedule register (wholesale)", group:"Compliance", nav:["comply"], home:["buyer licence · supply register","O"], gate:"buyer licence", isNew:true},
+];
+const ATOM = Object.fromEntries(ATOMS.map(a=>[a.id,a]));
+const GROUPS = ["At the counter","Buy & stock","On the road","Money","Compliance","Oversight"];
+
+const NAV = [
+  {id:"home",label:"Home"},{id:"counter",label:"Counter"},{id:"buy",label:"Buy"},{id:"stock",label:"Stock"},
+  {id:"money",label:"Money"},{id:"comply",label:"Comply"},{id:"field",label:"Field · mobile"},{id:"setup",label:"Setup"},
+];
+
+const PRESETS = [
+  {id:"owner",label:"Owner",atoms:"ABCDEFGHIJKLM".split(""),surface:"Pulse (Home)",verb:"Scan the pulse",alt:"all altitudes",note:"Holds every capability — watches the money, configures the shop, supervises the rest."},
+  {id:"manager",label:"Manager",atoms:"ABCDEFGHIJKL".split(""),surface:"Floor — live counters",verb:"Approve (Inbox)",alt:"operate · approve",note:"Everything except Setup — operates the floor and clears the Inbox."},
+  {id:"accountant",label:"Accountant",atoms:["H","J","K","L"],surface:"Desk — reconcile & file",verb:"Export",alt:"file · watch",note:"Books + GST only — the back office. Operations appear as numbers, not screens."},
+  {id:"pharmacist",label:"Pharmacist",atoms:["A","C","F"],surface:"Counter — dispense",verb:"Find (salt)",alt:"operate · clinical",note:"Dispense + clinical + shelf. The commercial half falls away; H1 is an inline gate."},
+  {id:"cashier",label:"Cashier",atoms:["B"],surface:"Counter — bill",verb:"Bill (the screen)",alt:"operate · one stage",note:"Billing only — the counter is the whole app. Walls escalate; nothing to navigate."},
+  {id:"shop",label:"Shop salesman",atoms:["A","B"],surface:"Counter — sell",verb:"Find (commercial)",alt:"operate · sell",note:"The selling lens on the counter — one lookup for stock, location, price, scheme, substitute."},
+  {id:"field",label:"Field salesman",atoms:["G"],surface:"Beat (mobile app)",verb:"Sync + collect",alt:"operate · the road",note:"A separate offline-first mobile app — order, deliver, collect. Forks from the desktop base."},
+  {id:"solo",label:"Solo chemist (1 person)",mix:true,atoms:"ABCDEFHIJKLM".split(""),surface:"Counter by day → Office by evening",verb:"all — by altitude",alt:"all (one person)",note:"One human wears every hat except a field team. Still one app — altitude + disclosure keep it calm."},
+  {id:"noacct",label:"Owner, no accountant",mix:true,atoms:["D","E","H","I","J","K","L","M"],surface:"Pulse + Desk",verb:"Export + approve",alt:"watch · file · configure",note:"No munim on the team — the owner absorbs Books + GST himself."},
+  {id:"duo",label:"Counter duo (shared)",mix:true,atoms:["A","B","C","F"],surface:"Counter (shared)",verb:"Find + bill",alt:"operate",note:"A cashier and a pharmacist share one counter — duties overlap; events route to whoever's free."},
+  {id:"vowner",label:"Working owner (wholesale)",mix:true,atoms:["A","B","D","E","F","H","I","L","M","O"],surface:"Counter (+ money & approvals strip)",verb:"Approve + bill",alt:"operate · approve · configure",note:"Varanasi: both owners man counters AND own the shop. Operate altitude flips the landing pulse → counter; wholesale supply-compliance (O), not the retail dispense gate."},
+  {id:"godown",label:"Godown / picker",mix:true,atoms:["E","F","N"],surface:"Stock / godown (mobile)",verb:"Scan + pick",alt:"operate",note:"Varanasi: receives stock and picks/assembles wholesale orders off the field + counter queue. Reuses the field app's offline/scan substrate."},
+  {id:"extca",label:"External CA",mix:true,atoms:["K","L"],surface:"Desk — file (scoped, remote)",verb:"Export",alt:"file · watch",note:"Varanasi: external, multi-shop, read + export-only. The lens is clean — the access model (scoped/expiring external membership) is the off-axis gap this test surfaced."},
+];
+
+const RECON = ["owner","manager","accountant","pharmacist","cashier","shop","field"];
+const INI = {owner:"S",manager:"R",accountant:"B",pharmacist:"A",cashier:"V",shop:"D",field:"K"};
+
+const MOVES = [
+  {h:"Home → a derived signal-feed", p:"There aren't seven hand-built Homes. Home assembles the signal tiles of whatever atoms you hold — so the owner gets the money pulse, the accountant the reconcile-list, the pharmacist the dispense screen, all from one rule.", ba:"7 Homes → 1 assembled feed"},
+  {h:"The “one constant action” → derived", p:"Approve / Export / Find / Sync / Bill isn't assigned per persona — it falls out of your atoms (credit→Approve, books→Export, dispense→Find, beat→Sync). The persistent surface is computed, not chosen.", ba:"per-role verb → derived verb"},
+  {h:"Gates → capability-driven, any-holder", p:"The H1/X gate appears for anyone holding the dispense atom; the credit gate for anyone selling on credit. They bind to a capability and fire for whoever's present — not to a named role.", ba:"role gates → capability gates"},
+  {h:"Escalation → routes to a capability", p:"“Send to the manager's Inbox” becomes “send to any holder of the approvals atom”. In a solo shop that's the owner; in a big one, any approver on shift. The pipe is the same; the endpoint is whoever holds the hat.", ba:"→ manager → → any approver"},
+  {h:"The counter → three lenses on one surface", p:"Sell, dispense and bill are atoms A/C/B over one counter. Hold one and you get that lens; hold all three (solo) and the controls compose. The counter was never three screens — it's one surface, capability-lit.", ba:"3 counters → 1 surface, 3 atoms"},
+  {h:"The mobile fork → a context projection", p:"The field app isn't a separate product — it's the same substrate projected for the beat atom on a phone, offline. Context (device + connectivity) is the third knob; give the beat atom to anyone on a bike and they get that projection.", ba:"separate app → context projection"},
+];
+
+/* ---- derivation: capabilities -> lens ---- */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+let held = new Set(PRESETS[0].atoms);
+
+const keyOf = set => [...set].sort().join("");
+function matchPreset(set){ const k=keyOf(set); return PRESETS.find(p=>keyOf(new Set(p.atoms))===k); }
+
+function deriveVerb(s){
+  if(s.has("I")) return "Approve · Inbox";
+  if(s.has("J")||s.has("K")) return "Export";
+  if(s.has("A")||s.has("C")) return "Find";
+  if(s.has("G")) return "Sync + collect";
+  if(s.has("B")) return "Bill (the screen)";
+  return "—";
+}
+function deriveSurface(s){
+  const counter = s.has("A")||s.has("B")||s.has("C");
+  const back = s.has("J")||s.has("K");
+  if(s.has("G") && s.size<=2) return "Beat (mobile app)";
+  if(counter){ if(s.has("C")) return "Counter — dispense"; if(s.has("A")) return "Counter — sell"; return "Counter — bill"; }
+  if(s.has("E")||s.has("F")||s.has("N")) return "Stock / godown (mobile)";
+  if(back) return "Desk — reconcile & file";
+  if(s.has("L")||s.has("I")) return "Pulse / Floor";
+  if(s.has("G")) return "Beat (mobile app)";
+  return "Home";
+}
+function deriveAlt(s){
+  const f=[];
+  if(s.has("L")) f.push("watch");
+  if(["A","B","C","D","E","F","G","H","N","O"].some(x=>s.has(x))) f.push("operate");
+  if(s.has("I")) f.push("approve");
+  if(s.has("J")||s.has("K")) f.push("file");
+  if(s.has("M")) f.push("configure");
+  return f.join(" · ")||"—";
+}
+const ESSENTIAL = {B:"billing",E:"receiving stock",F:"stock health",H:"payments",J:"the books",K:"GST"};
+
+function render(){
+  // preset bar
+  const m = matchPreset(held);
+  $("#presets").innerHTML = PRESETS.map(p=>`<span class="pchip ${p.mix?'mix':''} ${m&&m.id===p.id?'active':''}" data-preset="${p.id}">${p.label}</span>`).join("");
+  $("#presethint").textContent = m ? m.note : "Custom mix — hand-picked capabilities. The app composes a lens for exactly this set.";
+
+  // atoms
+  $("#atoms").innerHTML = GROUPS.map(g=>{
+    const items = ATOMS.filter(a=>a.group===g).map(a=>`
+      <div class="atom ${held.has(a.id)?'on':''}" data-atom="${a.id}">
+        <span class="box">${held.has(a.id)?'✓':''}</span>
+        <span><span class="al">${a.label}</span>${a.isNew?'<span class="anew">new</span>':''} <span class="as">— ${a.sub}</span></span>
+        <span class="akey">${a.id}</span>
+      </div>`).join("");
+    return `<div class="agroup"><div class="agl">${g}</div>${items}</div>`;
+  }).join("");
+
+  // derive
+  const litNav = new Set(["home"]); const homeSignals=[]; const gates=new Set();
+  ATOMS.forEach(a=>{ if(held.has(a.id)){ (a.nav||[]).forEach(n=>litNav.add(n)); if(a.home) homeSignals.push(a.home); if(a.gate) gates.add(a.gate); } });
+  const surface = m ? m.surface : deriveSurface(held);
+  const verb = m ? m.verb : deriveVerb(held);
+  const alt = m ? m.alt : deriveAlt(held);
+  const label = m ? m.label : "Custom lens";
+  const tagClass = m ? (m.mix?"mix":"preset") : "custom";
+  const tagText = m ? (m.mix?"real-world mix":"persona preset") : "custom";
+  const isMobile = litNav.has("field") && held.size<=2;
+
+  // rail
+  const railHome = `<div class="ri home"><span class="dot"></span>Home — ${surface.split(' —')[0].split(' (')[0]}</div>`;
+  const railItems = NAV.filter(n=>n.id!=="home").map(n=>{
+    const lit = litNav.has(n.id);
+    const mob = n.id==="field" && lit ? `<span class="mob">MOBILE</span>` : "";
+    return `<div class="ri ${lit?'lit':''}"><span class="dot"></span>${n.label}${mob}</div>`;
+  }).join("");
+  const verbRow = `<div class="ri verbrow"><span class="dot" style="background:var(--info)"></span>▸ ${verb}</div>`;
+
+  // tiles
+  const tiles = homeSignals.length
+    ? homeSignals.map(h=>`<div class="tile">${h[0]}<span class="tk">${h[1]}</span></div>`).join("")
+    : `<div class="tile" style="grid-column:1/-1;color:var(--text-tertiary)">Just the counter — no dashboard tiles.</div>`;
+
+  // gates
+  const gatesHtml = gates.size ? [...gates].map(g=>`<span class="gate">⚠ ${g}</span>`).join("") : `<span class="nogate">No inline gates for this lens.</span>`;
+
+  // strip: shared / gaps
+  const unheld = Object.keys(ESSENTIAL).filter(x=>!held.has(x));
+  let stripMsg;
+  if(held.size>=10) stripMsg = `<b>One person, many hats.</b> This lens is the near-union — kept calm by altitude + progressive disclosure (counter by day, office by evening). Still one app.`;
+  else if(held.size<=2) stripMsg = `<b>A narrow lens.</b> Almost every job is held by others — or escalated to them. This person never navigates the rest; it simply isn't lit.`;
+  else stripMsg = `<b>A focused lens.</b> Surfaces light up only for the capabilities held; everything else stays dim, owned by someone with that hat.`;
+  const gapHtml = unheld.length
+    ? `<div style="margin-top:8px">If this were the whole shop, these jobs are <b>unassigned</b> — flagged, or folded up to the owner:</div><div class="gaplist">${unheld.map(x=>`<span class="gapchip">${ESSENTIAL[x]}</span>`).join("")}</div>`
+    : `<div style="margin-top:8px;color:var(--success)">Every essential job is covered by this lens.</div>`;
+
+  $("#preview").innerHTML = `
+    <div class="pvhead">
+      <div class="pvlabel">${label} <span class="matchtag ${tagClass}">${tagText}</span></div>
+      <div class="pvderiv">
+        <span class="pvd"><span class="k">Lands on</span><b>${surface}</b></span>
+        <span class="pvd"><span class="k">One constant action</span><b>${verb}</b></span>
+        <span class="pvd"><span class="k">Altitude</span><b>${alt}</b></span>
+        <span class="pvd"><span class="k">Atoms held</span><b>${held.size}</b></span>
+      </div>
+    </div>
+    <div class="pvbody">
+      <div class="pvrail">
+        <div class="rl">One nav, lit by capability</div>
+        ${railHome}${railItems}${verb!=="—"?verbRow:""}
+      </div>
+      <div class="pvmain">
+        <div class="pvsec">Home — assembled from held capabilities</div>
+        <div class="tiles">${tiles}</div>
+        <div class="pvsec" style="margin-top:14px">Inline gates</div>
+        ${gatesHtml}
+      </div>
+    </div>
+    <div class="strip">${stripMsg}${gapHtml}</div>`;
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  // reconcile table
+  $("#reconcile").innerHTML = `<thead><tr><th>Persona (preset)</th><th>Capability atoms</th><th>→ Home lands on</th><th>→ One action</th></tr></thead><tbody>` +
+    RECON.map(id=>{ const p=PRESETS.find(x=>x.id===id);
+      return `<tr><td class="who"><span class="av">${INI[id]}</span>${p.label}</td><td><span class="atoms">${p.atoms.join(" · ")}</span></td><td>${p.surface}</td><td>${p.verb}</td></tr>`;
+    }).join("") + `</tbody>`;
+
+  $("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");
+
+  render();
+  $("#presets").addEventListener("click",e=>{ const c=e.target.closest("[data-preset]"); if(!c) return;
+    const p=PRESETS.find(x=>x.id===c.getAttribute("data-preset")); held=new Set(p.atoms); render(); });
+  $("#atoms").addEventListener("click",e=>{ const a=e.target.closest("[data-atom]"); if(!a) return;
+    const id=a.getAttribute("data-atom"); held.has(id)?held.delete(id):held.add(id); render(); });
+});
+</script>
+</body>
+</html>

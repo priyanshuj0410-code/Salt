@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Accountant IA — Simplified &amp; Natural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px;height:46px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:var(--action-primary-text);display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:26px;box-shadow:var(--shadow-sm);}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);}
+
+  .persona{display:flex; gap:14px; align-items:center; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm); margin:16px 0 8px;}
+  .persona .av{width:48px;height:48px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:24px;}
+  .persona .nm{font-weight:600;} .persona .nm span{font-weight:400;color:var(--text-tertiary);font-size:var(--text-sm);}
+  .persona p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .intro{color:var(--text-secondary);font-size:var(--text-sm);max-width:940px;margin:14px 0 8px;line-height:1.6;}
+  .base-note{background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-lg);padding:11px 14px;font-size:var(--text-sm);color:var(--text-primary);line-height:1.55;margin:12px 0 0;}
+  .base-note b{color:var(--info);}
+  .section-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);font-weight:600;margin:30px 0 12px;}
+
+  .grid{display:grid;gap:13px;} .g3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:860px){.g3{grid-template-columns:1fr;}}
+  .card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 7px;font-size:var(--text-sm);font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .card p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .card .num{font-family:var(--font-mono);color:var(--text-tertiary);font-size:11px;font-weight:600;}
+  .ptag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid;}
+  .ptag.changed{color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);}
+  .ptag.new{color:var(--info);background:var(--info-bg);border-color:var(--info-border);}
+  .ptag.kept{color:var(--text-tertiary);background:var(--surface-2);border-color:var(--border);}
+  em.hi{font-style:normal;background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:0 3px;border-radius:3px;color:var(--text-primary);}
+
+  .hero{display:grid;grid-template-columns:248px 1fr;gap:16px;align-items:start;}
+  @media (max-width:860px){.hero{grid-template-columns:1fr;}}
+  .rail{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:10px;box-shadow:var(--shadow-sm);}
+  .rail .rh{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;padding:6px 8px 8px;}
+  .railitem{display:flex;align-items:center;gap:10px;padding:9px 9px;border-radius:var(--radius-md);cursor:pointer;color:var(--text-primary);}
+  .railitem:hover{background:var(--surface);}
+  .railitem.active{background:var(--action-primary);color:#fff;}
+  .railitem.active .kbd{background:#fff;color:var(--action-primary);border-color:#fff;}
+  .railitem.disabled{opacity:.5;cursor:not-allowed;}
+  .railitem .kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text-secondary);background:var(--surface-2);border:1px solid var(--border);border-bottom:2px solid var(--border-strong);border-radius:var(--radius-sm);flex:none;}
+  .railitem .rn{font-weight:600;font-size:var(--text-sm);} .railitem .rhi{color:var(--text-tertiary);font-size:11px;margin-left:auto;}
+  .railitem.active .rhi{color:#d4d4d8;}
+  .rail .rsub{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-disabled);font-weight:600;padding:4px 8px 6px;}
+  .raildiv{height:1px;background:var(--divider);margin:8px 4px;}
+
+  .home{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 16px;box-shadow:var(--shadow-sm);}
+  .home .hwh{display:flex;align-items:center;gap:9px;margin-bottom:11px;}
+  .home .hwh .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;}
+  .searchmock{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:9px 12px;color:var(--text-tertiary);font-size:var(--text-sm);margin-bottom:12px;}
+  .searchmock .calc{font-size:13px;} .searchmock .k{margin-left:auto;font-family:var(--font-mono);font-size:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1px 6px;}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+  @media (max-width:600px){.tiles{grid-template-columns:repeat(2,1fr);}}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 12px;}
+  .tile .tl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;display:flex;align-items:center;gap:6px;}
+  .tile .tv{font-size:var(--text-lg);font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px;}
+  .tile .ts{font-size:11px;color:var(--text-tertiary);margin-top:1px;}
+  .tile.hero-tile{background:var(--action-primary);border-color:var(--action-primary);grid-column:span 2;}
+  .tile.hero-tile .tl{color:#a1a1aa;} .tile.hero-tile .tv{color:#fff;font-size:var(--text-xl);} .tile.hero-tile .ts{color:#d4d4d8;}
+  .tile.attn{background:var(--danger-bg);border-color:var(--danger-border);}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+  .dot.d{background:var(--danger);} .dot.w{background:var(--warning);} .dot.i{background:var(--info);} .dot.s{background:var(--success);}
+  .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;}
+  .qbtn{font-size:var(--text-sm);font-weight:500;padding:7px 13px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);}
+  .qbtn.primary{background:var(--action-primary);color:#fff;border-color:var(--action-primary);}
+
+  .area{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px;scroll-margin-top:14px;}
+  .area.flash{animation:flash 1.2s ease;}
+  @keyframes flash{0%{box-shadow:0 0 0 3px var(--focus-ring-strong);}100%{box-shadow:var(--shadow-sm);}}
+  .area .ah{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
+  .area .ak{width:30px;height:30px;border-radius:var(--radius-md);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;font-size:14px;}
+  .area .an{font-size:var(--text-lg);font-weight:600;} .area .ahi{color:var(--text-tertiary);font-size:var(--text-sm);}
+  .area .ntag{margin-left:auto;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:var(--radius-sm);}
+  .ntag.new{color:var(--info);background:var(--info-bg);border:1px solid var(--info-border);}
+  .ntag.changed{color:var(--warning);background:var(--warning-bg);border:1px solid var(--warning-border);}
+  .area .atag{color:var(--text-secondary);font-size:var(--text-sm);font-style:italic;margin:0 0 12px;}
+  .area .arow{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px;}
+  .area .arl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;min-width:70px;}
+  .chip{font-size:var(--text-xs);padding:3px 9px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);}
+  .chip.lc{font-family:var(--font-mono);} .chip.ab{border-style:dashed;}
+  .jtbd{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 11px;font-size:var(--text-sm);color:var(--text-primary);}
+  .jtbd b{color:var(--text-primary);}
+  .delta{margin-top:10px;font-size:var(--text-xs);color:var(--text-tertiary);border-top:1px dashed var(--border);padding-top:9px;line-height:1.5;}
+  .delta b{color:var(--info);}
+
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);}
+  table.mx{width:100%;border-collapse:separate;border-spacing:0;background:var(--background);min-width:680px;}
+  table.mx th,table.mx td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--divider);border-right:1px solid var(--divider);font-size:var(--text-sm);vertical-align:top;}
+  table.mx thead th{background:var(--surface);font-weight:600;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);}
+  table.mx td.old{font-weight:500;white-space:nowrap;}
+  table.mx td .arrow{color:var(--text-disabled);}
+  table.mx th:last-child,table.mx td:last-child{border-right:none;} table.mx tr:last-child td{border-bottom:none;}
+  .newpill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-primary);}
+  .newpill.lock{background:var(--surface);border-style:dashed;color:var(--text-tertiary);}
+
+  .move{background:var(--background);border:1px solid var(--border);border-left:3px solid var(--info-border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-sm);}
+  .move h4{margin:0 0 4px;font-size:var(--text-sm);font-weight:600;}
+  .move p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .move .ba{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;display:block;}
+
+  footer.foot{margin-top:30px;color:var(--text-tertiary);font-size:var(--text-xs);text-align:center;border-top:1px solid var(--border);padding-top:18px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1><span class="wordmark">Salt</span> — Accountant IA, simplified &amp; natural</h1>
+      <p>The same base again — collapsed to the one slice the accountant owns: the <b>books</b> and the <b>tax</b>.</p>
+    </div>
+  </header>
+
+  <div class="persona">
+    <div class="av">B</div>
+    <div>
+      <div class="nm">Banwari — Accountant / Munimji <span>· evening-shift, often shared across shops</span></div>
+      <p>Thinks in <b>Dr/Cr, vouchers and ledgers</b>, not screens. Keeps a parallel Excel and <b>distrusts auto-totals</b> until they tie to the paisa. Batches a week of entries at once, often back-dated. Strong accounting English, weak UX English. <b>Excel is his real workplace</b>; his fears are a GST mismatch notice and ITC reversal. He owns the back end of the chain — <em class="hi">settle &amp; comply</em>.</p>
+    </div>
+  </div>
+
+  <div class="base-note">
+    <b>Base = the Owner + Manager IAs.</b> He inherits the spine, numbers-first, type-to-find, Reports-in-context, en-IN &amp; Hinglish (from the owner), and two manager patterns: <b>Home answers the role's first question</b>, and <b>each role gets one persistent action surface</b> (manager → Inbox; accountant → <b>Export</b>). What changes is the scale: <b>operations disappear</b> — there's no Sell/Buy/Stock to run — so the whole IA collapses to a <b>Desk</b>, the <b>Books</b>, and the <b>Tax</b>.
+  </div>
+
+  <div class="section-label">Principles — what carries over from the two bases, what changes</div>
+  <div class="grid g3" id="principles"></div>
+
+  <div class="section-label">The shape — Desk + Export + Books + Tax (operations are gone)</div>
+  <div class="hero">
+    <div class="rail" id="rail"></div>
+    <div class="home">
+      <div class="hwh"><span class="lbl">Home · “Desk”</span><span style="margin-left:auto;font-size:var(--text-xs);color:var(--text-tertiary);font-weight:500">what he sees first — what doesn’t tie &amp; what’s due to file</span></div>
+      <div class="searchmock">⌕ &nbsp;Find a ledger, voucher, party, GSTIN…<span class="calc">🧮</span><span class="k">⌘K</span></div>
+      <div class="tiles" id="hometiles"></div>
+      <div class="quick">
+        <span class="qbtn primary">⚖ Reconcile</span>
+        <span class="qbtn">📄 File GSTR-3B</span>
+        <span class="qbtn">⬇ Export → Tally / Excel</span>
+        <span class="qbtn">＋ New voucher</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">The areas in detail — accountant’s lens, and the delta from owner &amp; manager</div>
+  <div id="areas"></div>
+
+  <div class="section-label">Coverage check — his view is small by design (7 of 13 modules; the rest aren’t his job)</div>
+  <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
+  <p class="intro" style="margin-top:10px">Note: purchase invoices still feed his <b>ITC</b> inside Tax and his <b>payables</b> inside Books — he <em>reads</em> them as figures; he doesn’t do GRN. Operations produce numbers; the accountant only ever sees the numbers.</p>
+
+  <div class="section-label">The big moves — how the base changed for this persona</div>
+  <div id="moves"></div>
+
+  <footer class="foot">
+    Built on the Owner + Manager IA bases, reshaped from the accountant persona (Dr/Cr · reconcile-to-the-paisa · Excel-home · GST · evening batch-work) and his place in the lifecycle (Phase 5 — settle &amp; comply). A design proposal, not a spec.
+  </footer>
+</div>
+
+<script>
+const PRINCIPLES = [
+  {h:"Home is the Desk — reconcile &amp; file", tag:["changed","Changed"], p:"His first question is neither “how’s my money” (owner) nor “what’s happening” (manager) — it’s “what doesn’t tie, and what’s due to file?”. The Home is a worklist of mismatches and deadlines."},
+  {h:"Operations collapse to their numbers", tag:["changed","Changed"], p:"There is no Sell, Buy or Stock to run — those aren’t his job. Their financial output appears as figures inside Books and Tax. The biggest shrink of any role so far: 7 areas → 3."},
+  {h:"Export is his constant surface", tag:["new","New"], p:"The exact parallel to the manager’s Inbox — one persistent action a role does all day. The manager approves; the accountant exports to Excel / Tally. A clean export that needs no re-keying is the difference between an hour and a day."},
+  {h:"Money becomes Books — Dr/Cr", tag:["changed","Changed"], p:"The owner’s emotional khaata and the manager’s daily chase become formal double-entry books: ledgers, vouchers, a trial balance that must tie. Same data, seen as accounting."},
+  {h:"Tax goes deep", tag:["changed","Changed"], p:"Owner monitors liability; manager keeps the register filled. The accountant does the deep work — GSTR-2B reconciliation, the ITC register, and clean export are first-class, not buried."},
+  {h:"Show the working — let me verify", tag:["new","New"], p:"He distrusts a black-box total. Every number opens to its calculation; he can reconcile against his own figure (show both + the difference), back-date entries, and lock a filed period. Plus an audit trail."},
+  {h:"His vocabulary, not UX jargon", tag:["new","New"], p:"Debit / credit, voucher, ledger, ITC, narration — the accounting words he knows. Not “allocate / void / post” as abstract UX verbs he has to decode."},
+  {h:"Numbers-first · ⌘K · Reports-in-context · en-IN", tag:["kept","Inherited"], p:"Unchanged from the base: every screen opens to its key figures, type-to-find and g+letter, no separate Reports silo, Indian money format, Hinglish-friendly labels."},
+];
+
+const TILES = [
+  {hero:true, l:"Books tie?", v:"Off by ₹1,240", s:"3 entries to fix · Apr 2026", dot:"d"},
+  {l:"Due to file", v:"GSTR-3B", s:"in 4 days", dot:"w", attn:false},
+  {l:"GSTR-2B", v:"6 mismatches", s:"vs purchase entries", dot:"d", attn:true},
+  {l:"To enter", v:"12 receipts", s:"from the floor / WhatsApp", dot:"i"},
+  {l:"Unallocated", v:"₹84,000", s:"9 payments, not applied", dot:"w"},
+  {l:"ITC at risk", v:"₹12,400", s:"unreconciled / expired", dot:"d"},
+];
+
+const RAIL = [
+  {id:"desk", k:"D", n:"Desk", hi:"Mez", active:true},
+  {id:"export", k:"E", n:"Export", hi:"Nikaalo"},
+  {id:"books", k:"K", n:"Books", hi:"Bahi-khata"},
+  {id:"tax", k:"T", n:"Tax", hi:"Hisaab"},
+  {div:true},
+  {sub:"Not the accountant’s view"},
+  {id:"ops", k:"🔒", n:"Operations", hi:"Sell · Buy · Stock", disabled:true},
+  {id:"admin", k:"🔒", n:"Approvals · Setup", hi:"owner / manager", disabled:true},
+];
+
+const AREAS = [
+  {id:"desk", k:"D", n:"Desk", hi:"“Mez” — the worklist", ntag:["changed","reshaped"],
+   tag:"What doesn’t tie, and what’s due to file.",
+   inside:["To reconcile (entries that don’t tie, opening-balance gaps)","GSTR-2B mismatches","Unallocated receipts / payments","Due to file (GST deadlines, with a countdown)","To enter (receipts from the floor / WhatsApp; the batch backlog)","Period figures (cash, receivables, payables — for his check)","Calculator · Export · ⌘K"],
+   jtbd:"His first question — <b>“what doesn’t tie, and what’s due?”</b> — the evening batch-work list, in priority order.",
+   life:["S12","S13"], absorbs:["Reports → financial dashboard","Activity (financial events)","a reconciliation worklist"],
+   delta:"Owner’s Home is the <b>money pulse</b>; manager’s is the <b>live floor</b>. The accountant’s is the <b>reconcile-&amp;-file worklist</b> — he watches what’s <em>unsettled</em>, not what’s live."},
+
+  {id:"export", k:"E", n:"Export", hi:"“Nikaalo” — get it out", ntag:["new","new surface"],
+   tag:"Get it out clean — no re-keying.",
+   inside:["Tally XML","Excel / CSV (any view)","GSTN JSON (GSTR-1)","Period pack for the CA","Templated / repeatable exports"],
+   jtbd:"<b>Excel is his real workplace.</b> A clean export that doesn’t need re-typing is the difference between an hour and a day — so it’s one tap from anywhere.",
+   life:["S13"], absorbs:["Export across Reports & GST","Settings → Data export (the slice he needs)"],
+   delta:"Mirrors the manager’s <b>Inbox</b> — each role gets one constant action surface. The manager <b>approves</b> all day; the accountant <b>exports</b> all day."},
+
+  {id:"books", k:"K", n:"Books", hi:"“Bahi-khata” — the ledgers", ntag:["changed","Money, as accounting"],
+   tag:"The Dr/Cr truth — tie it to the paisa, show me the working.",
+   inside:["Ledgers (parties + control accounts, Dr/Cr balances)","Vouchers (receipts, payments, journals — record &amp; back-date)","Trial balance (must tie to zero)","P&amp;L · Balance sheet","Receivables / payables aging","Record payment &amp; allocate against bills","The working behind every total"],
+   jtbd:"Keep the books the <b>single truth</b> — reconcile to the paisa, and nothing is a black box.",
+   life:["S9","S12"], absorbs:["Parties","Payments","Reports → Financial"],
+   delta:"Owner’s Money is the emotional <b>khaata</b> + the credit <b>decision</b>; manager’s is the daily <b>chase</b>. The accountant’s is the formal <b>double-entry books</b> — same data, seen as Dr/Cr, vouchers and a trial balance that has to tie."},
+
+  {id:"tax", k:"T", n:"Tax", hi:"“Hisaab” — GST & filing", ntag:["changed","deepened"],
+   tag:"File without losing a week — and never get a mismatch notice.",
+   inside:["GSTR-1 / GSTR-3B","GSTR-2B reconciliation (match vs purchases) — front-and-centre","ITC register (+ reversal on expiry / returns)","Liability · HSN summary","H1 / X register &amp; licences (for the record)","Period lock &amp; back-date · audit trail"],
+   jtbd:"<b>GSTR-2B reconciliation</b> is his biggest headache and <b>ITC at risk</b> his biggest fear — his month is won or lost here.",
+   life:["S13","S14","S15"], absorbs:["GST & compliance","H1/X register","Drug licences","Reports → Tax"],
+   delta:"Owner <b>monitors</b> liability &amp; inspector-readiness; manager <b>keeps the register filled</b> on the floor; the accountant does the deep <b>filing</b> — 2B recon, ITC, export — alone. The market gaps (2B recon, ITC reversal) are his daily fight."},
+];
+
+const COVERAGE = [
+  ["Parties / Payments","Books"],
+  ["Reports","Desk + Books (financial) + Tax (tax)"],
+  ["GST & compliance + licences","Tax"],
+  ["Sales / bills","data inside Tax (GSTR-1) & Books (receivable)"],
+  ["Activity","Desk (financial events)"],
+  ["Data export (from Settings)","Export"],
+  ["Purchases · Inventory · Catalogue · Salesmen · Approvals · Settings","— not his view (operations & admin)"],
+];
+
+const MOVES = [
+  {h:"Home → Desk: the reconcile-&-file worklist", p:"A third distinct Home. Owner = money pulse, Manager = live floor, Accountant = “what doesn’t tie, and what’s due to file”. Each role’s Home answers that role’s own first question — the pattern is the constant; the content changes.", ba:"Home: pulse → floor → desk"},
+  {h:"Operations collapse to their numbers", p:"Sell, Buy and Stock vanish as areas — he doesn’t run them. Their financial output appears as figures inside Books and Tax. This is the biggest shrink of any role: from the owner’s 7 surfaces to the accountant’s 3 + Export.", ba:"7 areas → Desk + Books + Tax"},
+  {h:"Export becomes the persistent surface", p:"Where the manager has an Inbox he clears all day, the accountant has an Export he runs all day. One persistent action per role — his answer to “Excel is my real workplace, don’t make me re-key”.", ba:"manager Inbox ⟷ accountant Export"},
+  {h:"Money → Books (double-entry)", p:"The same Parties + Payments + financials, reframed into the only model he trusts: ledgers, vouchers, and a trial balance that must tie to zero — with the working shown behind every total.", ba:"khaata / chase → Dr/Cr books"},
+  {h:"Tax goes deep where the market is weak", p:"GSTR-2B reconciliation, the ITC register and clean export are first-class for him — exactly the gaps the coverage map showed no competitor fills. The accountant is the user who makes those features matter.", ba:"Comply (monitor) → Tax (file + reconcile)"},
+  {h:"New trust mechanics", p:"Show-the-working, reconcile-against-his-own-figure, back-date, lock-the-period, audit trail, accounting vocabulary. He won’t trust an auto-total he can’t open — so every number is openable.", ba:"+ verify / back-date / lock / audit"},
+];
+
+/* render */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+$("#principles").innerHTML = PRINCIPLES.map((p,i)=>`<div class="card"><h3><span class="num">${String(i+1).padStart(2,'0')}</span>${p.h} <span class="ptag ${p.tag[0]}">${p.tag[1]}</span></h3><p>${p.p}</p></div>`).join("");
+
+$("#hometiles").innerHTML = TILES.map(t=>`
+  <div class="tile ${t.hero?'hero-tile':''} ${t.attn?'attn':''}">
+    <div class="tl">${t.dot?`<span class="dot ${t.dot}"></span>`:''}${t.l}</div>
+    <div class="tv">${t.v}</div><div class="ts">${t.s}</div>
+  </div>`).join("");
+
+$("#rail").innerHTML = `<div class="rh">Navigation (g + letter)</div>` + RAIL.map(r=>{
+  if(r.div) return `<div class="raildiv"></div>`;
+  if(r.sub) return `<div class="rsub">${r.sub}</div>`;
+  return `<div class="railitem ${r.active?'active':''} ${r.disabled?'disabled':''}" data-go="${r.id}"><span class="kbd">${r.k}</span><span class="rn">${r.n}</span><span class="rhi">${r.hi}</span></div>`;
+}).join("");
+
+$("#areas").innerHTML = AREAS.map(a=>`
+  <div class="area" id="area-${a.id}">
+    <div class="ah"><span class="ak">${a.k}</span><span class="an">${a.n}</span><span class="ahi">${a.hi}</span><span class="ntag ${a.ntag[0]}">${a.ntag[1]}</span></div>
+    <p class="atag">${a.tag}</p>
+    <div class="arow"><span class="arl">Inside</span>${a.inside.map(i=>`<span class="chip">${i}</span>`).join("")}</div>
+    <div class="jtbd">${a.jtbd}</div>
+    <div class="arow" style="margin-top:10px"><span class="arl">Lifecycle</span>${a.life.map(l=>`<span class="chip lc">${l}</span>`).join("")}<span class="arl" style="margin-left:8px">Absorbs</span>${a.absorbs.map(x=>`<span class="chip ab">${x}</span>`).join("")}</div>
+    <div class="delta">↔ <b>vs owner &amp; manager</b> — ${a.delta}</div>
+  </div>`).join("");
+
+$("#coverage").innerHTML = `<thead><tr><th>Today’s module</th><th></th><th>Accountant’s home for it</th></tr></thead><tbody>` +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('—')?'lock':''}">${n}</span></td></tr>`).join("") +
+  `</tbody>`;
+
+$("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");
+
+$("#rail").addEventListener("click",e=>{
+  const it=e.target.closest(".railitem"); if(!it||it.classList.contains("disabled")) return;
+  const id=it.getAttribute("data-go"); const el=$("#area-"+id); if(!el) return;
+  $$(".railitem").forEach(r=>r.classList.toggle("active", r===it));
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+});
+</script>
+</body>
+</html>

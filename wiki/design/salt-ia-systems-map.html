@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Salt — Information Architecture Systems Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================================
+     Salt design tokens — faithful to apps/web/src/index.css (design.md §2).
+     Light, quiet, zinc-based. Color is reserved for STATE only.
+     ===================================================================== */
+  :root {
+    --background: #ffffff;
+    --surface: #fafafa;            /* zinc-50  */
+    --surface-2: #f4f4f5;          /* zinc-100 */
+    --border: #e4e4e7;             /* zinc-200 */
+    --border-strong: #d4d4d8;      /* zinc-300 */
+    --divider: #f4f4f5;
+
+    --text-primary: #18181b;       /* zinc-900 */
+    --text-secondary: #52525b;     /* zinc-600 */
+    --text-tertiary: #676770;      /* zinc-500 (AA) */
+    --text-disabled: #a1a1aa;      /* zinc-400 */
+    --text-inverse: #fafafa;
+
+    --action-primary: #18181b;
+    --action-primary-hover: #27272a;
+    --action-primary-text: #ffffff;
+    --action-secondary: #f4f4f5;
+    --action-secondary-hover: #e4e4e7;
+
+    /* Semantic — on light: text = saturated, fills use the -bg / -border tints */
+    --success: #166534;  --success-bg: #f0fdf4;  --success-border: #bbf7d0;
+    --warning: #b45309;  --warning-bg: #fffbeb;  --warning-border: #fde68a;
+    --danger:  #b91c1c;  --danger-bg:  #fef2f2;  --danger-border:  #fecaca;
+    --info:    #1e40af;  --info-bg:    #eff6ff;  --info-border:    #bfdbfe;
+
+    --focus-ring: rgba(24, 24, 27, 0.15);
+    --focus-ring-strong: rgba(24, 24, 27, 0.30);
+
+    --radius-sm: 0.25rem;  --radius-md: 0.375rem;  --radius-lg: 0.5rem;  --radius-xl: 0.75rem;
+
+    --font-sans: "Geist", "Geist Variable", "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono: "Geist Mono", "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+
+    --text-xs: 0.6875rem;   --text-sm: 0.8125rem;   --text-base: 0.9375rem;
+    --text-lg: 1.0625rem;   --text-xl: 1.375rem;    --text-2xl: 1.75rem;
+
+    --shadow-sm: 0 1px 2px rgba(24,24,27,.06);
+    --shadow-md: 0 4px 14px rgba(24,24,27,.08), 0 1px 3px rgba(24,24,27,.06);
+    --shadow-lg: 0 16px 40px rgba(24,24,27,.16);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--surface);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+  a { color: var(--info); text-decoration: none; }
+  :focus-visible { outline: 2px solid var(--focus-ring-strong); outline-offset: 2px; border-radius: 3px; }
+  .wrap { max-width: 1520px; margin: 0 auto; padding: 26px 28px 90px; }
+  .mono { font-family: var(--font-mono); }
+
+  /* ---- Header ---- */
+  header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; flex-wrap: wrap; margin-bottom: 22px; }
+  .brand { display: flex; align-items: center; gap: 15px; }
+  .logo {
+    width: 46px; height: 46px; border-radius: var(--radius-lg); flex: none;
+    background: var(--action-primary); color: var(--action-primary-text);
+    display: grid; place-items: center; font-family: var(--font-display); font-weight: 600; font-size: 26px;
+    box-shadow: var(--shadow-sm);
+  }
+  .brand h1 { margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
+  .brand h1 .wordmark { font-family: var(--font-display); font-weight: 600; }
+  .brand p { margin: 3px 0 0; color: var(--text-secondary); font-size: var(--text-sm); }
+  code { background: var(--surface-2); border: 1px solid var(--border); padding: 0 5px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 0.85em; }
+
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  .stat { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 9px 14px; min-width: 76px; box-shadow: var(--shadow-sm); }
+  .stat b { display: block; font-size: 20px; line-height: 1.1; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat span { color: var(--text-tertiary); font-size: 10.5px; text-transform: uppercase; letter-spacing: .55px; font-weight: 500; }
+  .stat.hero { background: var(--action-primary); border-color: var(--action-primary); box-shadow: var(--shadow-md); }
+  .stat.hero b { color: var(--text-inverse); }
+  .stat.hero span { color: #a1a1aa; }
+
+  /* ---- Tabs ---- */
+  nav.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin: 8px 0 22px; flex-wrap: wrap; }
+  nav.tabs button {
+    background: none; border: none; color: var(--text-secondary); cursor: pointer;
+    padding: 11px 16px; font-family: var(--font-sans); font-size: var(--text-sm); font-weight: 500;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  nav.tabs button:hover { color: var(--text-primary); }
+  nav.tabs button.active { color: var(--text-primary); border-bottom-color: var(--action-primary); font-weight: 600; }
+
+  /* ---- Toolbar ---- */
+  .toolbar { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .search { flex: 1 1 280px; max-width: 440px; position: relative; }
+  .search input {
+    width: 100%; background: var(--background); border: 1px solid var(--border); color: var(--text-primary);
+    padding: 9px 12px 9px 34px; border-radius: var(--radius-lg); font-size: var(--text-sm); font-family: var(--font-sans);
+    outline: none; height: 38px; box-shadow: var(--shadow-sm);
+  }
+  .search input::placeholder { color: var(--text-disabled); }
+  .search input:focus { border-color: var(--border-strong); box-shadow: 0 0 0 3px var(--focus-ring); }
+  .search::before { content: "⌕"; position: absolute; left: 12px; top: 8px; color: var(--text-tertiary); font-size: 16px; }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); cursor: pointer; user-select: none; font-size: var(--text-sm); }
+  .toggle input { accent-color: var(--action-primary); width: 15px; height: 15px; }
+  .legend { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; font-size: var(--text-xs); color: var(--text-tertiary); align-items: center; }
+  .legend span { display: inline-flex; align-items: center; }
+
+  /* ---- Dot primitive (design.md §5.5 — 6px) ---- */
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; flex: none; }
+  .dot.built { background: var(--success); } .dot.planned { background: var(--warning); } .dot.legacy { background: var(--danger); }
+  .legend .dot { margin-right: 6px; }
+
+  /* ---- Kbd primitive (design.md §5.4 — mono, surface-2, 2px bottom border) ---- */
+  .kbd {
+    display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--text-secondary);
+    background: var(--surface-2); border: 1px solid var(--border); border-bottom: 2px solid var(--border-strong);
+    border-radius: var(--radius-sm); flex: none; line-height: 1;
+  }
+
+  /* ---- Badge primitive (design.md §5.3) — tinted, never saturated-fill ---- */
+  .badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: var(--radius-sm); text-transform: uppercase; letter-spacing: .4px; border: 1px solid; white-space: nowrap; }
+  .badge.built { color: var(--success); background: var(--success-bg); border-color: var(--success-border); }
+  .badge.planned { color: var(--warning); background: var(--warning-bg); border-color: var(--warning-border); }
+  .badge.legacy { color: var(--danger); background: var(--danger-bg); border-color: var(--danger-border); }
+
+  .view { display: none; }
+  .view.active { display: block; }
+  .intro { color: var(--text-secondary); font-size: var(--text-sm); max-width: 900px; margin-bottom: 20px; line-height: 1.55; }
+
+  /* ---- System Map (layered) ---- */
+  .band { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 15px 17px; margin-bottom: 13px; box-shadow: var(--shadow-sm); }
+  .band > .band-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 13px; flex-wrap: wrap; }
+  .band > .band-h h3 { margin: 0; font-size: var(--text-base); font-weight: 600; }
+  .band > .band-h .sub { color: var(--text-tertiary); font-size: var(--text-xs); }
+  .band-flow { text-align: center; color: var(--border-strong); font-size: 16px; margin: -4px 0 7px; }
+  .row { display: flex; gap: 9px; flex-wrap: wrap; }
+  .chip {
+    background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 9px 12px; cursor: default; display: flex; align-items: center; gap: 9px; min-width: 124px;
+    transition: border-color .12s, box-shadow .12s, transform .12s;
+  }
+  .chip .tx { min-width: 0; flex: 1; }
+  .chip .nm { font-weight: 500; font-size: var(--text-sm); color: var(--text-primary); }
+  .chip .meta { font-size: var(--text-xs); color: var(--text-tertiary); font-family: var(--font-mono); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip.clickable { cursor: pointer; }
+  .chip.clickable:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .chip .dot { margin-left: auto; }
+  .chip.sys { min-width: auto; }
+  .chip.ext { background: var(--surface); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+  @media (max-width: 900px){ .two-col { grid-template-columns: 1fr; } }
+
+  /* ---- IA Explorer ---- */
+  .mod { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-xl); margin-bottom: 9px; overflow: hidden; box-shadow: var(--shadow-sm); }
+  .mod-h { display: flex; align-items: center; gap: 12px; padding: 13px 16px; cursor: pointer; }
+  .mod-h:hover { background: var(--surface); }
+  .mod-h .title { font-weight: 600; font-size: var(--text-base); }
+  .mod-h .path { color: var(--text-tertiary); font-family: var(--font-mono); font-size: var(--text-xs); }
+  .mod-h .roles { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; }
+  .pill { font-size: 10.5px; padding: 2px 8px; border-radius: 20px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary); white-space: nowrap; text-transform: capitalize; }
+  .caret { color: var(--text-disabled); transition: transform .15s; font-size: 12px; }
+  .mod.open .caret { transform: rotate(90deg); }
+  .mod-body { display: none; padding: 2px 16px 16px; border-top: 1px solid var(--divider); }
+  .mod.open .mod-body { display: block; }
+  .mod-summary { color: var(--text-secondary); font-size: var(--text-sm); margin: 13px 0 14px; line-height: 1.55; }
+  .screen { display: flex; align-items: center; gap: 10px; padding: 7px 9px; border-radius: var(--radius-md); }
+  .screen:hover { background: var(--surface); }
+  .screen .sname { font-weight: 500; font-size: var(--text-sm); }
+  .screen .spath { color: var(--text-tertiary); font-family: var(--font-mono); font-size: var(--text-xs); margin-left: auto; }
+  .screen .snote { color: var(--text-tertiary); font-size: var(--text-xs); }
+  .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 11px; align-items: center; }
+  .tag-row .lbl { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .55px; font-weight: 600; width: 100%; margin-top: 8px; }
+  .tag { font-size: var(--text-xs); padding: 3px 8px; border-radius: var(--radius-md); background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary); font-family: var(--font-mono); }
+  .tag.rpc { color: var(--info); background: var(--info-bg); border-color: var(--info-border); }
+  .tag.view { color: var(--text-secondary); }
+
+  /* ---- Data Model ---- */
+  .dm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 13px; }
+  .dm-card { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 15px; box-shadow: var(--shadow-sm); }
+  .dm-card.legacy { border-left: 3px solid var(--danger-border); }
+  .dm-card h4 { margin: 0 0 4px; font-size: var(--text-sm); font-weight: 600; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .dm-card .cnt { color: var(--text-tertiary); font-size: var(--text-xs); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .dm-card .desc { color: var(--text-tertiary); font-size: var(--text-xs); margin: 0 0 12px; line-height: 1.5; }
+  .ent-list { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* ---- Flows ---- */
+  .flow { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 16px 17px; margin-bottom: 11px; box-shadow: var(--shadow-sm); }
+  .flow .fh { display: flex; align-items: baseline; gap: 10px; margin-bottom: 13px; flex-wrap: wrap; }
+  .flow .fh h4 { margin: 0; font-size: var(--text-base); font-weight: 600; }
+  .flow .fh .who { font-size: var(--text-xs); color: var(--text-secondary); background: var(--surface-2); border: 1px solid var(--border); padding: 2px 9px; border-radius: 20px; }
+  .flow .fh .tt { font-size: var(--text-xs); color: var(--text-tertiary); margin-left: auto; font-variant-numeric: tabular-nums; }
+  .steps { display: flex; align-items: stretch; gap: 0; flex-wrap: wrap; }
+  .step { background: var(--surface); border: 1px solid var(--border); border-top: 2px solid var(--action-primary); border-radius: var(--radius-lg); padding: 9px 12px; min-width: 134px; max-width: 210px; }
+  .step .sm { font-size: 10px; font-weight: 600; margin-bottom: 3px; color: var(--text-primary); text-transform: uppercase; letter-spacing: .4px; }
+  .step .sa { font-size: var(--text-xs); color: var(--text-secondary); line-height: 1.45; }
+  .arrow { display: grid; place-items: center; color: var(--text-disabled); padding: 0 8px; font-size: 16px; }
+
+  /* ---- Roles ---- */
+  .matrix { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .matrix th, .matrix td { padding: 10px 8px; text-align: center; border-bottom: 1px solid var(--divider); border-right: 1px solid var(--divider); font-size: var(--text-sm); }
+  .matrix th { background: var(--surface); font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-size: 11px; letter-spacing: .4px; }
+  .matrix th.mod-col, .matrix td.mod-col { text-align: left; font-weight: 500; white-space: nowrap; position: sticky; left: 0; background: var(--background); }
+  .matrix th.mod-col { background: var(--surface); }
+  .matrix tr:last-child td { border-bottom: none; }
+  .matrix td:last-child, .matrix th:last-child { border-right: none; }
+  .yes { color: var(--success); font-weight: 700; } .no { color: var(--text-disabled); }
+  .role-desc { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px,1fr)); gap: 10px; margin-top: 15px; }
+  .role-desc div { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 12px 14px; box-shadow: var(--shadow-sm); }
+  .role-desc b { text-transform: capitalize; font-weight: 600; }
+  .role-desc .cnt { color: var(--text-tertiary); font-size: 11px; }
+  .role-desc p { margin: 5px 0 0; color: var(--text-secondary); font-size: var(--text-xs); line-height: 1.5; }
+
+  /* ---- Redesign notes ---- */
+  .note { background: var(--background); border: 1px solid var(--border); border-left: 3px solid var(--warning-border); border-radius: var(--radius-lg); padding: 13px 16px; margin-bottom: 10px; box-shadow: var(--shadow-sm); }
+  .note h4 { margin: 0 0 5px; font-size: var(--text-sm); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .note h4::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--warning); flex: none; }
+  .note p { margin: 0; color: var(--text-secondary); font-size: var(--text-xs); line-height: 1.55; }
+  .note.debt { border-left-color: var(--danger-border); } .note.debt h4::before { background: var(--danger); }
+  .note.opp { border-left-color: var(--info-border); } .note.opp h4::before { background: var(--info); }
+
+  /* ---- Drawer ---- */
+  .drawer-bg { position: fixed; inset: 0; background: rgba(24,24,27,.20); opacity: 0; pointer-events: none; transition: opacity .18s; z-index: 40; }
+  .drawer-bg.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100%; width: 470px; max-width: 92vw; z-index: 50;
+    background: var(--background); border-left: 1px solid var(--border-strong); box-shadow: var(--shadow-lg);
+    transform: translateX(100%); transition: transform .2s ease; overflow-y: auto;
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-h { position: sticky; top: 0; background: var(--background); padding: 19px 22px 15px; border-bottom: 1px solid var(--divider); z-index: 2; }
+  .drawer-h .x { position: absolute; top: 16px; right: 18px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary);
+    width: 28px; height: 28px; border-radius: var(--radius-md); cursor: pointer; font-size: 14px; }
+  .drawer-h .x:hover { color: var(--text-primary); border-color: var(--border-strong); }
+  .drawer-h h3 { margin: 0; font-size: var(--text-xl); font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .drawer-h .sub { color: var(--text-secondary); font-size: var(--text-xs); margin-top: 7px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .drawer-body { padding: 17px 22px 44px; }
+  .dsec { margin-bottom: 19px; }
+  .dsec > .lbl { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .6px; font-weight: 600; margin-bottom: 9px; display: block; }
+  footer.foot { margin-top: 30px; color: var(--text-tertiary); font-size: var(--text-xs); text-align: center; border-top: 1px solid var(--border); padding-top: 18px; line-height: 1.7; }
+  .hide { display: none !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">S</div>
+      <div>
+        <h1><span class="wordmark">Salt</span> — Information Architecture</h1>
+        <p>End-to-end systems map · cloud-first ERP for Indian medical retail · as-built on <code>main</code></p>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-v="map" class="active">System Map</button>
+    <button data-v="ia">IA Explorer</button>
+    <button data-v="data">Data Model</button>
+    <button data-v="flows">User Flows</button>
+    <button data-v="roles">Roles &amp; Access</button>
+    <button data-v="notes">Redesign Notes</button>
+  </nav>
+
+  <div class="toolbar">
+    <label class="search"><input id="q" type="text" placeholder="Filter modules, screens, tables, RPCs…" /></label>
+    <label class="toggle"><input type="checkbox" id="hidePlanned" /> Hide planned</label>
+    <div class="legend">
+      <span><i class="dot built"></i>Built</span>
+      <span><i class="dot planned"></i>Planned</span>
+      <span><i class="dot legacy"></i>Legacy / superseded</span>
+    </div>
+  </div>
+
+  <!-- ============ SYSTEM MAP ============ -->
+  <section class="view active" id="view-map">
+    <p class="intro">The platform read top-to-bottom: a request enters through <b>auth &amp; onboarding</b>, runs inside the <b>app shell</b> (role-gated sidebar + keyboard), fans out across <b>13 functional modules</b>, all of which sit on a set of <b>cross-cutting systems</b> and a shared <b>Postgres data backbone</b> (every write is an RPC; stock and money are double-entry), reaching <b>external systems</b> at the edges. Click any module tile for detail.</p>
+
+    <div class="band">
+      <div class="band-h"><h3>① Entry &amp; Auth</h3><span class="sub">Supabase Auth (GoTrue) · 3-gate ProtectedRoute · per-org + role-aware RLS</span></div>
+      <div class="row" id="map-entry"></div>
+    </div>
+    <div class="band-flow">▼</div>
+
+    <div class="band">
+      <div class="band-h"><h3>② App Shell</h3><span class="sub">AppLayout · role-gated sidebar (navConfig) · g+letter go-to · ⌘K command palette · offline banner · presence</span></div>
+      <div class="row" id="map-shell"></div>
+    </div>
+    <div class="band-flow">▼</div>
+
+    <div class="band">
+      <div class="band-h"><h3>③ Functional Modules</h3><span class="sub">13 top-level modules · the navigable surface · click for screens, entities &amp; RPCs</span></div>
+      <div class="row" id="map-modules"></div>
+    </div>
+    <div class="band-flow">▼</div>
+
+    <div class="two-col">
+      <div class="band">
+        <div class="band-h"><h3>④ Cross-cutting Systems</h3><span class="sub">shared substrate every module leans on</span></div>
+        <div class="row" id="map-systems"></div>
+      </div>
+      <div class="band">
+        <div class="band-h"><h3>⑥ External Systems</h3><span class="sub">the edges Salt talks to</span></div>
+        <div class="row" id="map-external"></div>
+      </div>
+    </div>
+    <div class="band-flow">▼</div>
+
+    <div class="band">
+      <div class="band-h"><h3>⑤ Data Backbone (Postgres / Supabase)</h3><span class="sub">~80 tables · 15 reporting views · ~60 RPC write-paths · money = integer paise</span></div>
+      <div class="row" id="map-data"></div>
+    </div>
+  </section>
+
+  <!-- ============ IA EXPLORER ============ -->
+  <section class="view" id="view-ia">
+    <p class="intro">The navigable tree exactly as shipped, from <code>navConfig.ts</code> + <code>App.tsx</code>. Each module expands to its screens with live route and build status. Role chips show default visibility from the capability matrix (<code>lib/permissions.ts</code>).</p>
+    <div id="ia-list"></div>
+  </section>
+
+  <!-- ============ DATA MODEL ============ -->
+  <section class="view" id="view-data">
+    <p class="intro">Every live table grouped by domain (migrations <code>0001–0057</code>), the owning module, and the RPC write-paths. The as-built core is <b>not</b> CRUD — sales post through <code>create_sales_invoice</code>, purchases through <code>receive_purchase</code>, and both move <code>stock_movements</code> and <code>ledger_entries</code> (double-entry) atomically.</p>
+    <div class="dm-grid" id="dm-grid"></div>
+    <div class="band" style="margin-top:16px">
+      <div class="band-h"><h3>Reporting views (read layer)</h3><span class="sub">security-invoker views — the Reports &amp; GST screens read these, never raw tables</span></div>
+      <div class="ent-list" id="dm-views"></div>
+    </div>
+    <div class="band">
+      <div class="band-h"><h3>Key RPC write-paths</h3><span class="sub">security-definer functions — the only way writes happen</span></div>
+      <div class="ent-list" id="dm-rpcs"></div>
+    </div>
+  </section>
+
+  <!-- ============ FLOWS ============ -->
+  <section class="view" id="view-flows">
+    <p class="intro">The seven journeys the product is optimised for, drawn across module boundaries. Each hop is a real screen.</p>
+    <div id="flows-list"></div>
+  </section>
+
+  <!-- ============ ROLES ============ -->
+  <section class="view" id="view-roles">
+    <p class="intro">The capability matrix — which of the 5 roles sees each module by default (<code>ROLE_MODULES</code>). Owners can layer per-user grant/revoke on top. <code>counter</code> is always allowed (it is the redirect target).</p>
+    <div style="overflow-x:auto"><table class="matrix" id="role-matrix"></table></div>
+    <div class="role-desc" id="role-desc"></div>
+  </section>
+
+  <!-- ============ NOTES ============ -->
+  <section class="view" id="view-notes">
+    <p class="intro">Observations surfaced while mapping — drift between the docs, the nav, and the live schema, plus structural questions worth resolving in a redesign. Not bugs; redesign inputs.</p>
+    <div id="notes-list"></div>
+  </section>
+
+  <footer class="foot">Generated from the Salt repo — <code>navConfig.ts</code>, <code>App.tsx</code>, <code>lib/permissions.ts</code>, <code>supabase/migrations/0001–0057</code>, and the <code>wiki/</code>.<br/>Styled with the Salt design system (<code>design.md</code> · <code>apps/web/src/index.css</code>). A static snapshot for review; re-generate after IA changes.</footer>
+</div>
+
+<!-- Drawer -->
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-h">
+    <button class="x" id="drawerX">✕</button>
+    <h3 id="dTitle"></h3>
+    <div class="sub" id="dSub"></div>
+  </div>
+  <div class="drawer-body" id="dBody"></div>
+</aside>
+
+<script>
+/* ============================================================
+   DATA  — derived from the live repo (not the stale wiki)
+   ============================================================ */
+
+// 13 functional modules in nav order (authoritative: navConfig.ts + App.tsx)
+const MODULES = [
+  { key:"c", label:"Counter", landing:"/", status:"built", roles:["owner","manager","accountant","pharmacist","cashier"],
+    summary:"The speed-critical POS. Keyboard-first billing, salt/name search, FEFO batch pick, tender split, hold/park, Schedule H1/X hard gate, credit-limit check, save+print.",
+    screens:[
+      {n:"Active bill", p:"/", s:"built", note:"useBill store"},
+      {n:"Hold / park bill", p:"(in-screen)", s:"built", note:"held_bills"},
+      {n:"H1 / X dispensing gate", p:"(modal)", s:"built", note:"blocks checkout"},
+      {n:"Tender split", p:"(in-screen)", s:"built", note:"cash/UPI/card"},
+    ],
+    ent:["sales_invoices","sale_lines","sale_tenders","held_bills","batches","items"],
+    rpc:["create_sales_invoice","hold_bill","resume_bill","discard_held_bill","enforce_h1_gate","record_h1_entry","resolve_price","party_credit","next_doc_no"],
+    sys:["Keyboard system","Offline outbox","Realtime (stock)","Approvals (over-limit discount)","H1/X compliance","GST engine"] },
+
+  { key:"v", label:"Activity", landing:"/activity", status:"built", roles:["owner","manager","accountant","pharmacist","cashier"],
+    summary:"Shop-wide live activity feed — who did what across counters. The visible half of the multi-counter wedge.",
+    screens:[{n:"Live feed", p:"/activity", s:"built", note:"activity_events + triggers"}],
+    ent:["activity_events"], rpc:["tg_log_activity (trigger)"], sys:["Realtime","Presence"] },
+
+  { key:"o", label:"Approvals", landing:"/approvals", status:"built", roles:["owner","manager","pharmacist","cashier"],
+    summary:"Manager inbox for actions that exceed a cashier's authority — chiefly discounts over the configured limit and invoice voids. Request → decide.",
+    screens:[{n:"Manager inbox", p:"/approvals", s:"built", note:"approval_requests"}],
+    ent:["approval_requests"], rpc:["cancel_approval_request","decide_approval_request"], sys:["Realtime","Discount limits","Counter (requestor)"] },
+
+  { key:"p", label:"Purchases", landing:"/purchases", status:"built", roles:["owner","manager"],
+    summary:"Inbound side of inventory — GRN (goods receipt) with scheme free-goods, multi-rate GST, trade discount → stock in + vendor payable + ITC. Plus POs, reorder suggestions, OCR invoice scan, vendor schemes, and debit notes (purchase returns).",
+    screens:[
+      {n:"GRN history", p:"/purchases", s:"built"},
+      {n:"Receive stock (GRN)", p:"/purchases/new", s:"built"},
+      {n:"GRN detail", p:"/purchases/:id", s:"built"},
+      {n:"Scan invoice (OCR)", p:"/purchases/scan", s:"built", note:"camera → auto-fill"},
+      {n:"Scan history", p:"/purchases/scans", s:"built"},
+      {n:"Purchase orders", p:"/purchases/orders", s:"built"},
+      {n:"New PO", p:"/purchases/orders/new", s:"built"},
+      {n:"PO detail", p:"/purchases/orders/:id", s:"built"},
+      {n:"Reorder suggestions", p:"/purchases/orders/suggest", s:"built", note:"auto-PO"},
+      {n:"Vendor schemes", p:"/purchases/schemes", s:"built"},
+      {n:"Debit notes", p:"/purchases/returns", s:"built"},
+      {n:"New debit note", p:"/purchases/returns/new", s:"built"},
+      {n:"Debit note detail", p:"/purchases/returns/:id", s:"built"},
+    ],
+    ent:["purchases","purchase_lines","purchase_orders","po_lines","purchase_ocr_jobs","vendor_schemes","debit_notes","debit_note_lines","invoice_scans"],
+    rpc:["receive_purchase","create_debit_note"], sys:["Inventory (stock in)","Accounting (payable)","GST (ITC)","OCR integration","Returns engine"] },
+
+  { key:"s", label:"Sales", landing:"/bills", status:"built", roles:["owner","manager","accountant"],
+    summary:"Sale-invoice history (the persisted output of Counter), with credit notes (sales returns) and the H1/X register (the latter lives under GST).",
+    screens:[
+      {n:"Invoices", p:"/bills", s:"built"},
+      {n:"Invoice detail", p:"/bills (row)", s:"built", note:"print / WhatsApp / void"},
+      {n:"Credit notes", p:"/bills/credit-notes", s:"built", note:"route exists; nav still lists it planned"},
+      {n:"H1 / X register", p:"→ /gst/h1", s:"built", note:"cross-linked from GST"},
+    ],
+    ent:["sales_invoices","sale_lines","credit_notes","credit_note_lines"],
+    rpc:["void_sales_invoice","create_credit_note"], sys:["Returns engine","GST","Print","WhatsApp share"] },
+
+  { key:"i", label:"Inventory", landing:"/inventory", status:"built", roles:["owner","manager","pharmacist"],
+    summary:"What's on hand and what to do about it. Read views (near-expiry, dead/slow, reorder, OOS, turnover) over stock_movements + batches; write paths for adjustments, physical count, expiry destruction (with ITC reversal), and inter-shop transfers.",
+    screens:[
+      {n:"Stock ledger", p:"/inventory", s:"built", note:"v_stock_on_hand"},
+      {n:"Near expiry", p:"/inventory/near-expiry", s:"built", note:"v_near_expiry"},
+      {n:"Dead / slow stock", p:"/inventory/dead-stock", s:"built", note:"v_dead_stock"},
+      {n:"Reorder", p:"/inventory/reorder", s:"built"},
+      {n:"Out of stock", p:"/inventory/out-of-stock", s:"built"},
+      {n:"Turnover", p:"/inventory/turnover", s:"built"},
+      {n:"Adjustments", p:"/inventory/adjustments", s:"built", note:"adjust_stock"},
+      {n:"Physical count", p:"/inventory/count", s:"built", note:"finalize_physical_count"},
+      {n:"Expiry destruction", p:"/inventory/destruction", s:"built", note:"§17(5) ITC reversal"},
+      {n:"Transfers", p:"/inventory/transfers", s:"built", note:"inter-shop"},
+    ],
+    ent:["stock_movements","batches","stock_transfers","stock_transfer_lines","physical_counts","physical_count_lines"],
+    rpc:["adjust_stock","finalize_physical_count","receive_transfer"], sys:["Accounting (write-off)","Realtime","Multi-shop"] },
+
+  { key:"a", label:"Parties", landing:"/parties", status:"built", roles:["owner","manager","accountant"],
+    summary:"Customers, vendors and control accounts on one ledger model. Profile = outstanding (aging) + history + details. Merge de-duplication, classification, credit, doctors/patients masters, and PII export/erase.",
+    screens:[
+      {n:"All parties", p:"/parties", s:"built"},
+      {n:"Customers", p:"/parties?type=customer", s:"built"},
+      {n:"Vendors", p:"/parties?type=vendor", s:"built"},
+      {n:"Party profile", p:"/parties/:id", s:"built", note:"outstanding / history / details"},
+      {n:"Vendor purchase entry", p:"/parties/:id/purchase", s:"legacy", note:"GRN-lite, superseded by /purchases/new"},
+    ],
+    ent:["ledgers","ledger_bills","known_vendors","doctors","patients"],
+    rpc:["merge_ledgers","classify_parties","party_credit","erase_party_pii","export_party_pii"], sys:["PII privacy","WhatsApp","Credit limits"] },
+
+  { key:"m", label:"Payments", landing:"/payments", status:"built", roles:["owner","manager","accountant"],
+    summary:"Money in (from customers) and out (to vendors), allocated against open invoices. Cash drawer, cheque due-dates, gateway (Razorpay) capture, salesman attribution. Bank reconciliation is planned.",
+    screens:[
+      {n:"Receive payment", p:"/payments", s:"built"},
+      {n:"Make payment", p:"/payments/make", s:"built"},
+      {n:"Bank reconciliation", p:"—", s:"planned", note:"bank_statement_lines exists; no UI/route yet"},
+    ],
+    ent:["payments","payment_allocations","bank_statement_lines","cash_drawer"],
+    rpc:["record_payment","record_gateway_payment"], sys:["Accounting","Razorpay","WhatsApp","Salesman attribution"] },
+
+  { key:"t", label:"GST & compliance", landing:"/gst", status:"built", roles:["owner","manager","accountant"],
+    summary:"The accountant's Excel, replaced. GSTR-1 (B2B/B2C/HSN), GSTR-3B, live liability, ITC register, Tally XML export, HSN summary, the Schedule H1/X register (inspector PDF), and invoice-series management. GSTR-2B auto-recon is planned (tables exist).",
+    screens:[
+      {n:"GSTR-1", p:"/gst", s:"built", note:"GSTN JSON"},
+      {n:"GSTR-3B", p:"/gst/gstr3b", s:"built"},
+      {n:"Liability", p:"/gst/liability", s:"built"},
+      {n:"ITC register", p:"/gst/itc", s:"built", note:"+ expiry reversal"},
+      {n:"Tally export", p:"/gst/tally", s:"built", note:"XML"},
+      {n:"HSN summary", p:"/gst/hsn", s:"built"},
+      {n:"H1 / X register", p:"/gst/h1", s:"built", note:"inspector PDF"},
+      {n:"Invoice series", p:"/gst/series", s:"built", note:"FY-scoped numbering"},
+      {n:"GSTR-2B recon", p:"—", s:"planned", note:"gstr2b_* tables + import exist; matching UI not wired"},
+      {n:"Drug licenses", p:"→ /settings/licenses", s:"built", note:"lives under Settings"},
+    ],
+    ent:["gst_returns","h1_register","gstr2b_imports","gstr2b_lines","gstr2b_matches","invoice_series","drug_licenses","gst_rate_schedule"],
+    rpc:["next_doc_no","current_indian_fy","gst_rate_for","record_h1_entry"], sys:["GSTN portal export","Tally export"] },
+
+  { key:"r", label:"Reports", landing:"/reports", status:"built", roles:["owner","manager","accountant"],
+    summary:"Owner dashboard + five suites (sales / purchase / inventory / financial / tax) over the v_* views. Operational-basis filters, paged fetch, CSV/PDF export.",
+    screens:[
+      {n:"Dashboard", p:"/reports", s:"built"},
+      {n:"Sales reports", p:"/reports/sales", s:"built"},
+      {n:"Purchase reports", p:"/reports/purchases", s:"built"},
+      {n:"Inventory reports", p:"/reports/inventory", s:"built"},
+      {n:"Financial reports", p:"/reports/financial", s:"built", note:"P&L, balance sheet, trial balance"},
+      {n:"Tax reports", p:"/reports/tax", s:"built"},
+    ],
+    ent:["v_sales_register","v_purchase_register","v_receivables_aging","v_payables_aging","v_trial_balance","v_pnl","v_balance_sheet"],
+    rpc:[], sys:["Export (CSV / PDF)"] },
+
+  { key:"k", label:"Catalogue", landing:"/catalogue", status:"built", roles:["owner","manager","pharmacist"],
+    summary:"The item master + batches, on top of a crowd-sourced master catalogue (the data moat): master_items with versioning, brand aliases, salt-based substitutes, price stats, and a submit/review/promote pipeline. Item-level GST, schedule, cold-chain, price rules.",
+    screens:[
+      {n:"Items", p:"/catalogue", s:"built"},
+      {n:"Item detail", p:"/catalogue/:id", s:"built", note:"details / batches / price history"},
+    ],
+    ent:["items","batches","master_items","master_item_revisions","master_item_submissions","master_price_stats","brand_aliases","item_aliases","item_substitutes","price_rules","gst_rate_schedule"],
+    rpc:["merge_items","promote_to_master","review_master_submission","refresh_master_price_stats","record_master_item_revision","resolve_price"], sys:["Master catalogue moat","Salt substitutes","Pricing rules"] },
+
+  { key:"e", label:"Salesmen", landing:"/salesmen", status:"built", roles:["owner","manager"],
+    summary:"Field-salesman management for wholesale dealers: master, commission on net sales, and order/collection attribution.",
+    screens:[
+      {n:"All salesmen", p:"/salesmen", s:"built", note:"master + report"},
+      {n:"Salesman detail", p:"/salesmen/:id", s:"built", note:"commission, attributed sales"},
+    ],
+    ent:["salesmen"], rpc:["(attribution via create_sales_invoice / record_payment)"], sys:["Commission","Attribution"] },
+
+  { key:",", label:"Settings", landing:"/owner", status:"built", roles:["owner"],
+    summary:"Owner control panel — and currently a catch-all: team/RBAC, the whole import pipeline, org & shops, compliance licenses, print templates, data export, audit log, PII privacy, discount limits, and integration config.",
+    screens:[
+      {n:"Users & invites", p:"/owner", s:"built"},
+      {n:"Roles & permissions", p:"/settings/users", s:"built", note:"grant/revoke per user"},
+      {n:"Import / migration hub", p:"/import", s:"built"},
+      {n:"Smart Importer", p:"/import/smart", s:"built", note:"cascade stepper, lazy-loaded"},
+      {n:"Purchase invoice import", p:"/import/purchases", s:"built"},
+      {n:"GL opening import", p:"/import/gl", s:"built"},
+      {n:"Organisation", p:"/settings/organisation", s:"built"},
+      {n:"Shops", p:"/settings/shops", s:"built", note:"multi-shop"},
+      {n:"Drug licenses", p:"/settings/licenses", s:"built"},
+      {n:"Print templates", p:"/settings/print", s:"built"},
+      {n:"Data export", p:"/settings/export", s:"built"},
+      {n:"Audit log", p:"/settings/audit", s:"built"},
+      {n:"Data privacy (PII)", p:"/settings/privacy", s:"built"},
+      {n:"Discount limits", p:"/settings/limits", s:"built"},
+      {n:"WhatsApp", p:"/settings/integrations/whatsapp", s:"built"},
+      {n:"Setup wizard", p:"/setup", s:"built", note:"owner first-run"},
+    ],
+    ent:["orgs","memberships","shops","shop_members","org_settings","shop_settings","invites","migration_tokens","print_templates","drug_licenses","audit_log","b2b_connections"],
+    rpc:["create_invite","redeem_invite","create_migration_token","redeem_migration_token","set_member_role","import_catalog","import_gl_opening","seed_chart_of_accounts"], sys:["Import pipeline","RBAC","Audit","PII privacy","Integrations config"] },
+];
+
+const SHELL = [
+  { label:"Login", meta:"/login · email+pw, Google", status:"built" },
+  { label:"Onboarding", meta:"/onboarding · create / join", status:"built" },
+  { label:"Setup wizard", meta:"/setup · owner first-run", status:"built" },
+  { label:"ProtectedRoute", meta:"session → membership → role", status:"built" },
+  { label:"AppLayout", meta:"sidebar + topbar shell", status:"built" },
+  { label:"Command palette", meta:"⌘K global search/nav", status:"built" },
+  { label:"Keyboard go-to", meta:"g + letter", status:"built" },
+  { label:"Offline banner", meta:"connection state", status:"built" },
+  { label:"Presence", meta:"who's online", status:"built" },
+];
+
+const SYSTEMS = [
+  { label:"Auth & per-org RLS", meta:"deny-by-default · is_member()", status:"built" },
+  { label:"Role-aware RLS", meta:"0044 · role gates in DB", status:"built" },
+  { label:"Multi-shop", meta:"0014 · shops + shop_members", status:"built" },
+  { label:"Double-entry accounting", meta:"0017 · ledger_entries", status:"built" },
+  { label:"Stock-movement backbone", meta:"0016 · stock_movements", status:"built" },
+  { label:"Realtime", meta:"Supabase postgres-changes", status:"built" },
+  { label:"Presence / activity", meta:"feed + who's-online", status:"built" },
+  { label:"Offline-first", meta:"IndexedDB + RPC outbox (P1)", status:"planned" },
+  { label:"Approvals workflow", meta:"over-limit / void", status:"built" },
+  { label:"Entity messaging", meta:"0029 · notes per record", status:"built" },
+  { label:"Audit log", meta:"0038 · audit_capture", status:"built" },
+  { label:"Idempotency keys", meta:"0045 · safe retries", status:"built" },
+  { label:"PII privacy", meta:"0041 · erase / export", status:"built" },
+  { label:"Import pipeline", meta:"CSV · migrator · Smart · OCR", status:"built" },
+  { label:"Master catalogue moat", meta:"crowd-sourced master_items", status:"built" },
+  { label:"Keyboard system", meta:"g-nav · ⌘K · per-screen", status:"built" },
+  { label:"Design system", meta:"base-nova · density switch", status:"built" },
+  { label:"GST engine", meta:"gst_rate_schedule · paise", status:"built" },
+];
+
+const EXTERNAL = [
+  { label:"Supabase Postgres", meta:"DB + RLS + triggers", status:"built" },
+  { label:"PostgREST", meta:"auto REST", status:"built" },
+  { label:"Supabase Auth", meta:"GoTrue · email + Google", status:"built" },
+  { label:"Supabase Realtime", meta:"live stock / feed", status:"built" },
+  { label:"Edge Functions", meta:"whatsapp-send · razorpay-link", status:"built" },
+  { label:"Supabase Storage", meta:"invoice scans", status:"built" },
+  { label:"Marg ERP (DBF)", meta:"→ Go migrator", status:"built" },
+  { label:"GSTN portal", meta:"GSTR-1 JSON · GSTR-2B", status:"built" },
+  { label:"Tally", meta:"XML export", status:"built" },
+  { label:"WhatsApp", meta:"click-to-chat + Cloud API", status:"built" },
+  { label:"Razorpay", meta:"payment links + webhook", status:"built" },
+  { label:"OCR provider", meta:"invoice scanning", status:"built" },
+  { label:"ONDC / Beckn", meta:"B2B + B2C", status:"planned" },
+  { label:"Vercel", meta:"hosting + CI", status:"built" },
+];
+
+const DOMAINS = [
+  { name:"Identity & Tenancy", module:"Settings / Auth", desc:"Who, which org, which shop, and how teams are provisioned.",
+    ents:["profiles","orgs","memberships","shops","shop_members","salt_admins","invites","migration_tokens"] },
+  { name:"Catalogue & Pricing", module:"Catalogue", desc:"Item master, batches, and the crowd-sourced master catalogue + pricing.",
+    ents:["items","batches","master_items","master_item_revisions","master_item_submissions","master_price_stats","brand_aliases","item_aliases","item_substitutes","price_rules","gst_rate_schedule"] },
+  { name:"Parties & Clinical", module:"Parties", desc:"Customers, vendors, control accounts, and the doctor/patient masters behind H1.",
+    ents:["ledgers","ledger_bills","known_vendors","doctors","patients"] },
+  { name:"Sales & Counter", module:"Counter / Sales", desc:"Persisted sale invoices, lines, tenders and parked bills.",
+    ents:["sales_invoices","sale_lines","sale_tenders","held_bills","invoice_series","invoice_scans"] },
+  { name:"Purchasing", module:"Purchases", desc:"GRN, purchase orders, OCR jobs and vendor schemes.",
+    ents:["purchases","purchase_lines","purchase_orders","po_lines","purchase_ocr_jobs","vendor_schemes"] },
+  { name:"Inventory", module:"Inventory", desc:"The movement ledger, transfers and physical counts. Batch qty is derived, not authoritative.",
+    ents:["stock_movements","stock_transfers","stock_transfer_lines","physical_counts","physical_count_lines"] },
+  { name:"Returns", module:"Sales / Purchases", desc:"Credit notes (sales) and debit notes (purchase) with partial-return re-computation.",
+    ents:["credit_notes","credit_note_lines","debit_notes","debit_note_lines"] },
+  { name:"Money & Accounting", module:"Payments", desc:"Payments + allocations and the double-entry general ledger backbone.",
+    ents:["payments","payment_allocations","bank_statement_lines","cash_drawer","chart_accounts","journal_vouchers","ledger_entries"] },
+  { name:"GST & Compliance", module:"GST", desc:"Returns, the H1/X register, GSTR-2B recon staging and drug licenses.",
+    ents:["gst_returns","h1_register","gstr2b_imports","gstr2b_lines","gstr2b_matches","drug_licenses"] },
+  { name:"Field force", module:"Salesmen", desc:"Salesman master; attribution lives on sales/payments.",
+    ents:["salesmen"] },
+  { name:"Platform", module:"Cross-cutting", desc:"Activity, messaging, approvals, audit, settings and integration stubs.",
+    ents:["activity_events","entity_messages","approval_requests","audit_log","idempotency_keys","org_settings","shop_settings","print_templates","b2b_connections","ondc_listings"] },
+  { name:"Legacy (superseded)", module:"—", desc:"The original unified order model — replaced by sales_invoices + purchases, but still present in the schema.", legacy:true,
+    ents:["orders","order_lines"] },
+];
+
+const VIEWS = ["v_stock_on_hand","v_near_expiry","v_dead_stock","v_receivables_aging","v_payables_aging","v_sales_register","v_purchase_register","v_trial_balance","v_pnl","v_balance_sheet","v_gstr1_b2b","v_gstr1_b2c","v_gstr1_hsn","v_gstr3b_summary","v_itc_register"];
+
+const RPC_GROUPS = [
+  { g:"Onboarding & team", r:["create_org","create_invite","redeem_invite","set_member_role","create_migration_token","redeem_migration_token"] },
+  { g:"Sales & counter", r:["create_sales_invoice","void_sales_invoice","hold_bill","resume_bill","discard_held_bill","next_doc_no","resolve_price","party_credit"] },
+  { g:"Purchasing", r:["receive_purchase","receive_transfer"] },
+  { g:"Returns", r:["create_credit_note","create_debit_note"] },
+  { g:"Inventory", r:["adjust_stock","finalize_physical_count"] },
+  { g:"Money & GL", r:["record_payment","record_gateway_payment","post_entry","seed_chart_of_accounts"] },
+  { g:"Compliance", r:["enforce_h1_gate","record_h1_entry","gst_rate_for","current_indian_fy"] },
+  { g:"Parties & catalogue", r:["classify_parties","merge_ledgers","merge_items","promote_to_master","review_master_submission","refresh_master_price_stats"] },
+  { g:"Privacy & import", r:["erase_party_pii","export_party_pii","import_catalog","import_gl_opening","audit_capture"] },
+  { g:"Approvals", r:["cancel_approval_request","decide_approval_request"] },
+];
+
+const FLOWS = [
+  { name:"Morning opening", who:"Owner", tt:"< 5 min", steps:[
+    {m:"Reports", a:"Dashboard — today vs overdue vs near-expiry"},
+    {m:"Parties", a:"Drill overdue → party profile"},
+    {m:"Parties", a:"W → WhatsApp reminder, one keystroke/party"},
+  ]},
+  { name:"Receive stock (GRN)", who:"Owner / Manager", tt:"2–3 min / 10 lines", steps:[
+    {m:"Purchases", a:"N → New GRN, vendor + invoice"},
+    {m:"Purchases", a:"Lines: batch, expiry, qty, free, MRP, PTR, GST"},
+    {m:"Inventory", a:"Stock incremented (stock_movements)"},
+    {m:"Payments", a:"Vendor payable created"},
+    {m:"GST", a:"ITC recorded per line"},
+  ]},
+  { name:"Counter billing (peak)", who:"Cashier", tt:"< 5 min / 20 lines", steps:[
+    {m:"Counter", a:"Type → ↓ → Enter (FEFO batch)"},
+    {m:"Approvals", a:"Over-limit discount? → request"},
+    {m:"GST", a:"H1/X item → hard gate (doctor/patient)"},
+    {m:"Counter", a:"F9 → create_sales_invoice, stock down, print"},
+  ]},
+  { name:"Customer pays", who:"Owner / Accountant", tt:"< 2 min", steps:[
+    {m:"Parties", a:"Find party → Outstanding tab"},
+    {m:"Payments", a:"P → Receive payment, allocate oldest-first"},
+    {m:"Payments", a:"W → WhatsApp receipt"},
+  ]},
+  { name:"Near-expiry return", who:"Owner", tt:"—", steps:[
+    {m:"Inventory", a:"Near-expiry, ranked by value-at-risk"},
+    {m:"Purchases", a:"R → debit note, pre-filled batch+vendor"},
+    {m:"GST", a:"ITC reversal pre-computed → GSTR-3B"},
+    {m:"Purchases", a:"W → WhatsApp debit note to vendor"},
+  ]},
+  { name:"Monthly GST filing", who:"Accountant", tt:"2–3 hrs (was 2–4 days)", steps:[
+    {m:"GST", a:"GSTR-2B recon (planned) — match imports"},
+    {m:"GST", a:"GSTR-1 → export GSTN JSON"},
+    {m:"GST", a:"GSTR-3B → review ITC + reversals"},
+    {m:"GST", a:"Tally XML export for the CA"},
+  ]},
+  { name:"Drug inspector visit", who:"Owner / Pharmacist", tt:"< 5 min", steps:[
+    {m:"GST", a:"H1/X register → export inspector PDF"},
+    {m:"Settings", a:"Drug licenses — all current?"},
+    {m:"Sales", a:"Look up any named invoice/batch"},
+  ]},
+];
+
+const ROLE_MODULES = {
+  owner:      ["counter","activity","approvals","purchases","sales","inventory","parties","payments","gst","reports","catalogue","salesmen","settings"],
+  manager:    ["counter","activity","approvals","purchases","sales","inventory","parties","payments","gst","reports","catalogue","salesmen"],
+  accountant: ["counter","activity","sales","parties","payments","gst","reports"],
+  pharmacist: ["counter","activity","approvals","inventory","catalogue"],
+  cashier:    ["counter","activity","approvals"],
+};
+const ROLE_DESC = {
+  owner:"Full access, including settings and user management.",
+  manager:"Runs day-to-day operations — everything except settings.",
+  accountant:"Bills, parties, payments, GST and reports.",
+  pharmacist:"Counter, inventory and catalogue.",
+  cashier:"Counter billing only.",
+};
+const MATRIX_MODS = [
+  ["counter","Counter"],["activity","Activity"],["approvals","Approvals"],["purchases","Purchases"],
+  ["sales","Sales"],["inventory","Inventory"],["parties","Parties"],["payments","Payments"],
+  ["gst","GST & compliance"],["reports","Reports"],["catalogue","Catalogue"],["salesmen","Salesmen"],["settings","Settings"],
+];
+
+const NOTES = [
+  { t:"debt", h:"Two sales models coexist", p:"The legacy unified orders / order_lines + place_order RPC (migration 0010/0011) is superseded by sales_invoices / sale_lines + create_sales_invoice (0018+) and purchases / purchase_lines + receive_purchase (0019+), but the old tables and RPC still ship. /parties/:id/purchase is the last screen still on the legacy GRN-lite path. Decide: migrate + drop, or keep as a fallback." },
+  { t:"debt", h:"Wiki schema docs are stale", p:"architecture/data-model.md and architecture/schema.md still describe the orders model and stop at migration 0012/0013. The live DB is at 0057 with ~80 tables. Trust the migrations, grn.md and gst-returns.md. Worth a reconciliation pass before the redesign references them." },
+  { t:"opp", h:"Nav vs reality drift", p:"Credit notes (/bills/credit-notes) and the H1 register (/gst/h1) are built but navConfig still lists them planned or only cross-links them. Drug licenses sits under Settings yet is referenced from GST. GSTR-2B recon and Bank reconciliation have tables but no nav route. The sidebar undersells what is actually shipped." },
+  { t:"opp", h:"H1/X register has no home of its own", p:"It is conceptually a Sales/compliance artifact but is reachable only through GST. The Sales module lists it as an unbuilt child. Pick one canonical location and cross-link the other." },
+  { t:"debt", h:"Settings is a 16-item catch-all", p:"Team/RBAC, the entire import pipeline, org & shops, compliance licenses, print, export, audit, PII, discount limits and integrations are all under one module. As surfaces grow this becomes the junk drawer — candidate to split (e.g. Admin vs Compliance vs Data/Import vs Integrations)." },
+  { t:"opp", h:"Multi-shop is modeled but thinly surfaced", p:"shops + shop_members + transfers exist (0014/0030), but most screens operate org-level, not shop-scoped. A redesign should decide where the shop selector lives and which screens are per-shop vs consolidated." },
+  { t:"opp", h:"The strategic wedge is half-built", p:"Activity feed + presence + realtime stock are live (the visible half of multi-counter). Offline-first is Phase-1 design only (IndexedDB cache + RPC outbox), and true multi-counter live sync / handoff is not built. This is the PRD's core differentiator — weight it in the redesign." },
+  { t:"opp", h:"Reporting reads views, not tables", p:"All Reports/GST screens read the 15 v_* security-invoker views, never raw tables. That is a clean seam — a redesign can reshape screens without touching write paths, as long as the view contracts hold." },
+];
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+let state = { hidePlanned:false, q:"" };
+
+const dot = s => `<span class="dot ${s}"></span>`;
+const badge = s => { const m={built:"Built",planned:"Planned",legacy:"Legacy"}; return `<span class="badge ${s}">${m[s]||s}</span>`; };
+
+// ---- Stats ----
+function renderStats(){
+  let built=0, planned=0;
+  MODULES.forEach(m=>m.screens.forEach(s=> s.s==="planned"?planned++: (s.s!=="legacy"&&built++)));
+  const tables = DOMAINS.reduce((a,d)=>a+d.ents.length,0);
+  const data = [
+    [MODULES.length,"Modules",true],
+    [built,"Screens built"],
+    [planned,"Screens planned"],
+    [tables,"Tables"],
+    [VIEWS.length,"Views"],
+    [RPC_GROUPS.reduce((a,g)=>a+g.r.length,0),"RPCs"],
+    [Object.keys(ROLE_MODULES).length,"Roles"],
+  ];
+  $("#stats").innerHTML = data.map(([b,s,hero])=>`<div class="stat ${hero?'hero':''}"><b>${b}</b><span>${s}</span></div>`).join("");
+}
+
+// ---- System Map ----
+function chip(opts){
+  const k = opts.key ? `<span class="kbd">${opts.key.toUpperCase()}</span>` : "";
+  const d = opts.status ? dot(opts.status) : "";
+  return `<div class="chip ${opts.cls||""}" ${opts.data||""} data-status="${opts.status||"built"}" data-search="${(opts.label+" "+(opts.meta||"")).toLowerCase()}">
+    ${k}<div class="tx"><div class="nm">${opts.label}</div>${opts.meta?`<div class="meta">${opts.meta}</div>`:""}</div>${d}</div>`;
+}
+function renderMap(){
+  $("#map-entry").innerHTML = SHELL.slice(0,3).map(s=>chip({label:s.label,meta:s.meta,status:s.status,cls:"sys"})).join("");
+  $("#map-shell").innerHTML = SHELL.slice(3).map(s=>chip({label:s.label,meta:s.meta,status:s.status,cls:"sys"})).join("");
+  $("#map-modules").innerHTML = MODULES.map(m=>chip({
+    key:m.key, label:m.label, meta:m.landing, status:m.status, cls:"clickable", data:`data-mod="${m.label}"`
+  })).join("");
+  $("#map-systems").innerHTML = SYSTEMS.map(s=>chip({label:s.label,meta:s.meta,status:s.status,cls:"sys"})).join("");
+  $("#map-external").innerHTML = EXTERNAL.map(s=>chip({label:s.label,meta:s.meta,status:s.status,cls:"sys ext"})).join("");
+  $("#map-data").innerHTML = DOMAINS.map(d=>chip({
+    label:d.name, meta:`${d.ents.length} tables`, status:d.legacy?"legacy":"built", cls:"sys"
+  })).join("");
+}
+
+// ---- IA Explorer ----
+function renderIA(){
+  $("#ia-list").innerHTML = MODULES.map(m=>{
+    const screens = m.screens.map(s=>`
+      <div class="screen" data-status="${s.s}" data-search="${(s.n+" "+s.p+" "+(s.note||"")).toLowerCase()}">
+        ${badge(s.s)}
+        <span class="sname">${s.n}</span>
+        ${s.note?`<span class="snote">— ${s.note}</span>`:""}
+        <span class="spath">${s.p}</span>
+      </div>`).join("");
+    const tagBlock = (lbl, arr, cls)=> arr.length? `<span class="lbl">${lbl}</span>${arr.map(x=>`<span class="tag ${cls}">${x}</span>`).join("")}` : "";
+    return `
+    <div class="mod" data-mod="${m.label}" data-search="${(m.label+" "+m.summary+" "+m.ent.join(" ")+" "+m.rpc.join(" ")).toLowerCase()}">
+      <div class="mod-h">
+        <span class="kbd">${m.key.toUpperCase()}</span>
+        <span class="title">${m.label}</span>
+        <span class="path">${m.landing}</span>
+        ${badge(m.status)}
+        <span class="roles">${m.roles.map(r=>`<span class="pill">${r}</span>`).join("")}</span>
+        <span class="caret">▸</span>
+      </div>
+      <div class="mod-body">
+        <div class="mod-summary">${m.summary}</div>
+        ${screens}
+        <div class="tag-row">
+          ${tagBlock("Entities", m.ent, "ent")}
+          ${tagBlock("RPCs / write-paths", m.rpc, "rpc")}
+          ${tagBlock("Systems touched", m.sys, "sys")}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ---- Data Model ----
+function renderData(){
+  $("#dm-grid").innerHTML = DOMAINS.map(d=>`
+    <div class="dm-card ${d.legacy?'legacy':''}" data-search="${(d.name+" "+d.ents.join(" ")+" "+d.desc).toLowerCase()}" data-status="${d.legacy?'legacy':'built'}">
+      <h4>${d.name} <span class="cnt">${d.ents.length} · ${d.module}</span></h4>
+      <p class="desc">${d.desc}</p>
+      <div class="ent-list">${d.ents.map(e=>`<span class="tag">${e}</span>`).join("")}</div>
+    </div>`).join("");
+  $("#dm-views").innerHTML = VIEWS.map(v=>`<span class="tag view" data-search="${v}">${v}</span>`).join("");
+  $("#dm-rpcs").innerHTML = RPC_GROUPS.map(g=>`
+    <div style="width:100%"><div class="tag-row"><span class="lbl">${g.g}</span></div>
+    <div class="ent-list">${g.r.map(r=>`<span class="tag rpc" data-search="${r}">${r}</span>`).join("")}</div></div>`).join("");
+}
+
+// ---- Flows ----
+function renderFlows(){
+  $("#flows-list").innerHTML = FLOWS.map(f=>{
+    const steps = f.steps.map((s,i)=>{
+      const step = `<div class="step"><div class="sm">${s.m}</div><div class="sa">${s.a}</div></div>`;
+      return i < f.steps.length-1 ? step + `<div class="arrow">›</div>` : step;
+    }).join("");
+    return `<div class="flow" data-search="${(f.name+" "+f.who+" "+f.steps.map(s=>s.m+" "+s.a).join(" ")).toLowerCase()}">
+      <div class="fh"><h4>${f.name}</h4><span class="who">${f.who}</span><span class="tt">⏱ ${f.tt}</span></div>
+      <div class="steps">${steps}</div></div>`;
+  }).join("");
+}
+
+// ---- Roles ----
+function renderRoles(){
+  const roles = Object.keys(ROLE_MODULES);
+  let head = `<tr><th class="mod-col">Module</th>${roles.map(r=>`<th>${r}</th>`).join("")}</tr>`;
+  let rows = MATRIX_MODS.map(([k,lbl])=>{
+    const cells = roles.map(r=>{
+      const ok = ROLE_MODULES[r].includes(k);
+      return `<td class="${ok?'yes':'no'}">${ok?'●':'○'}</td>`;
+    }).join("");
+    return `<tr><td class="mod-col">${lbl}</td>${cells}</tr>`;
+  }).join("");
+  $("#role-matrix").innerHTML = head + rows;
+  $("#role-desc").innerHTML = roles.map(r=>`<div><b>${r}</b> <span class="cnt">· ${ROLE_MODULES[r].length} modules</span><p>${ROLE_DESC[r]}</p></div>`).join("");
+}
+
+// ---- Notes ----
+function renderNotes(){
+  $("#notes-list").innerHTML = NOTES.map(n=>`<div class="note ${n.t}"><h4>${n.h}</h4><p>${n.p}</p></div>`).join("");
+}
+
+/* ============================================================
+   DRAWER
+   ============================================================ */
+function openDrawer(label){
+  const m = MODULES.find(x=>x.label===label);
+  if(!m) return;
+  $("#dTitle").innerHTML = `<span class="kbd">${m.key.toUpperCase()}</span> ${m.label}`;
+  $("#dSub").innerHTML = `${badge(m.status)} <span class="path mono" style="color:var(--text-tertiary)">${m.landing}</span> <span style="color:var(--text-disabled)">·</span> ${m.roles.join(", ")}`;
+  const sec = (lbl, html)=> html ? `<div class="dsec"><span class="lbl">${lbl}</span>${html}</div>` : "";
+  const screens = m.screens.map(s=>`<div class="screen" style="padding:6px 0">${badge(s.s)}<span class="sname">${s.n}</span>${s.note?`<span class="snote">— ${s.note}</span>`:""}<span class="spath">${s.p}</span></div>`).join("");
+  $("#dBody").innerHTML =
+    sec("Summary", `<p style="color:var(--text-secondary);margin:0;font-size:var(--text-sm);line-height:1.55">${m.summary}</p>`) +
+    sec(`Screens (${m.screens.length})`, screens) +
+    sec("Entities", `<div class="ent-list">${m.ent.map(e=>`<span class="tag">${e}</span>`).join("")}</div>`) +
+    sec("RPCs / write-paths", m.rpc.length?`<div class="ent-list">${m.rpc.map(r=>`<span class="tag rpc">${r}</span>`).join("")}</div>`:`<p style="color:var(--text-tertiary);margin:0;font-size:var(--text-sm)">Read-only (views).</p>`) +
+    sec("Systems touched", `<div class="ent-list">${m.sys.map(s=>`<span class="tag">${s}</span>`).join("")}</div>`);
+  $("#drawer").classList.add("open");
+  $("#drawerBg").classList.add("open");
+}
+function closeDrawer(){ $("#drawer").classList.remove("open"); $("#drawerBg").classList.remove("open"); }
+
+/* ============================================================
+   FILTERS + WIRING
+   ============================================================ */
+function applyFilters(){
+  const q = state.q.trim().toLowerCase();
+  const hp = state.hidePlanned;
+  $$("[data-search]").forEach(el=>{
+    const txt = el.getAttribute("data-search")||"";
+    const st = el.getAttribute("data-status")||"built";
+    let show = true;
+    if(q && !txt.includes(q)) show = false;
+    if(hp && st==="planned") show = false;
+    el.classList.toggle("hide", !show);
+  });
+  if(q){
+    $$(".mod").forEach(mod=>{
+      const anyScreen = $$(".screen:not(.hide)", mod).length>0;
+      const selfMatch = (mod.getAttribute("data-search")||"").includes(q);
+      mod.classList.toggle("hide", !(selfMatch || anyScreen));
+      if(selfMatch || anyScreen) mod.classList.add("open");
+    });
+  } else {
+    $$(".mod").forEach(mod=> mod.classList.remove("hide"));
+  }
+}
+
+function switchView(v){
+  $$("nav.tabs button").forEach(b=> b.classList.toggle("active", b.dataset.v===v));
+  $$(".view").forEach(s=> s.classList.toggle("active", s.id==="view-"+v));
+}
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  renderStats(); renderMap(); renderIA(); renderData(); renderFlows(); renderRoles(); renderNotes();
+
+  $("#tabs").addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) switchView(b.dataset.v); });
+
+  document.body.addEventListener("click", e=>{
+    const chipEl = e.target.closest(".chip[data-mod]");
+    if(chipEl){ openDrawer(chipEl.getAttribute("data-mod")); return; }
+    const modH = e.target.closest(".mod-h");
+    if(modH){ modH.parentElement.classList.toggle("open"); return; }
+  });
+
+  $("#drawerX").addEventListener("click", closeDrawer);
+  $("#drawerBg").addEventListener("click", closeDrawer);
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeDrawer(); });
+
+  $("#q").addEventListener("input", e=>{ state.q = e.target.value; applyFilters(); });
+  $("#hidePlanned").addEventListener("change", e=>{ state.hidePlanned = e.target.checked; applyFilters(); });
+});
+</script>
+</body>
+</html>

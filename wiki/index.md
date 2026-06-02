@@ -1,6 +1,6 @@
 ---
 type: index
-updated: 2026-06-02
+updated: 2026-06-03
 ---
 
 # Wiki index
@@ -15,6 +15,12 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [product/roadmap](product/roadmap.md) — PRD phases vs as-built (refreshed 2026-06-01: Phases 1–3 largely shipped on the `create_sales_invoice` + 0014–0024 backbone); the remaining gap is offline-first / live-multi-counter; market-informed priority additions.
 - [product/market-research](product/market-research.md) — competitor matrix (Marg/GoFrugal/RetailGraph/eVitalRx/Tally), GST pharma rules, Schedule H/H1/X requirements, pain points, modern trends, competitive gaps Salt can fill.
 - [product/product-modules](product/product-modules.md) — full platform module map (21 modules across 4 tiers); dependency graph; recommended build sequence.
+- [product/ia-redesign-plan](product/ia-redesign-plan.md) — 🚧 **working** V2 IA-redesign plan: coverage audit (nothing dropped), workstreams + rough estimates, phased rollout, Varanasi real-shop validation; appendices for multi-platform packaging, inbound invoice interchange, and the Marg connector.
+
+## Design — V2 IA redesign (🚧 working)
+> A living V2-definition set, evolving from V1 testing & feedback — **not a finalized spec**.
+- [design/index](design/index.md) — catalog of the **11 interactive artifacts**: the V1 systems map, the 7 personas, the medicine lifecycle + build/market coverage, the 7 per-role IAs, and the unified capability-lens composer (with the Varanasi real-shop validation).
+- [architecture/ia-redesign](architecture/ia-redesign.md) — the durable **model**: one experience / many views; the three knobs (capabilities × altitude × context); the 15-atom registry; the no-V3 thesis.
 
 ## Architecture
 - [architecture/stack](architecture/stack.md) — monorepo, Vite/React/Tailwind, Supabase backend, deploy/CI, conventions.
@@ -43,7 +49,8 @@ Catalog of every page. Read this first when answering a question, then drill in.
 - [architecture/grn](architecture/grn.md) — GRN / purchase (inbound): `purchases`/`purchase_lines` + `receive_purchase`, scheme free goods + multi-rate GST + trade discount economics (`lib/grn.ts`), effective cost + ITC, new-item review, the `/purchases` screens.
 - [architecture/inventory](architecture/inventory.md) — stock ledger + read views (near-expiry, dead/slow, reorder, out-of-stock, turnover) on `lib/inventory.ts` over `stock_movements`/`batches.qty`; write paths (adjustments, physical count, expiry destruction + ITC reversal) via the `0028` `adjust_stock`/`finalize_physical_count` RPCs.
 - [architecture/returns](architecture/returns.md) — partial-return recomputation engine (`lib/returns.ts`, SALT-099): net value / GST / revised ITC on the **effective-cost** basis (taxable ÷ received units, so scheme free-goods + trade discount are honoured), cumulative-rounding so sequential returns leak no paise; one engine for purchase returns (debit note, ITC reversal) and sales returns (credit note, outward-tax reversal).
-- [architecture/information-architecture](architecture/information-architecture.md) — full navigation tree, screen inventory, keyboard shortcut system, 7 key user journeys, role-based access, URL structure.
+- [architecture/information-architecture](architecture/information-architecture.md) — full navigation tree, screen inventory, keyboard shortcut system, 7 key user journeys, role-based access, URL structure. *(This is the **V1** IA; the **V2** redesign is [architecture/ia-redesign](architecture/ia-redesign.md).)*
+- [architecture/ia-redesign](architecture/ia-redesign.md) — 🚧 **working** — the unified **capability-lens** model for V2: why V1≠V2, the three knobs, the 15 capability atoms, shared/absent/solo, the no-V3 thesis, and the V1 quality findings; companion to [design/index](design/index.md) and [product/ia-redesign-plan](product/ia-redesign-plan.md).
 - [architecture/ondc-b2b-pharma](architecture/ondc-b2b-pharma.md) — ONDC/Beckn deep dive for vendor ordering: roles, transaction flow, the OTC-only pharma gate, the two plays (buyer-app procurement vs seller-app retail), onboarding; why it's watch-and-prototype.
 - [architecture/payments](architecture/payments.md) — money in/out on the payments ledger: the `record_payment` RPC + tables contract, the as-built `/payments` UI (SALT-003), the allocation/back-dating gaps, and the module roadmap.
 - [architecture/parties](architecture/parties.md) — the as-built owner-facing CRM/ledger surface for every counterparty (customers, vendors, control accounts) over `components/parties/**` + `lib/`; complements the domain note [domain/parties](domain/parties.md).
