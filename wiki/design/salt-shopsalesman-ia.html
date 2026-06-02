@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Shop Salesman IA — Simplified &amp; Natural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px;height:46px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:var(--action-primary-text);display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:26px;box-shadow:var(--shadow-sm);}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);}
+
+  .persona{display:flex; gap:14px; align-items:center; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm); margin:16px 0 8px;}
+  .persona .av{width:48px;height:48px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:24px;}
+  .persona .nm{font-weight:600;} .persona .nm span{font-weight:400;color:var(--text-tertiary);font-size:var(--text-sm);}
+  .persona p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .intro{color:var(--text-secondary);font-size:var(--text-sm);max-width:940px;margin:14px 0 8px;line-height:1.6;}
+  .base-note{background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-lg);padding:11px 14px;font-size:var(--text-sm);color:var(--text-primary);line-height:1.55;margin:12px 0 0;}
+  .base-note b{color:var(--info);}
+  .section-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);font-weight:600;margin:30px 0 12px;}
+
+  .grid{display:grid;gap:13px;} .g3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:860px){.g3{grid-template-columns:1fr;}}
+  .card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 7px;font-size:var(--text-sm);font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .card p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .card .num{font-family:var(--font-mono);color:var(--text-tertiary);font-size:11px;font-weight:600;}
+  .ptag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid;}
+  .ptag.changed{color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);}
+  .ptag.new{color:var(--info);background:var(--info-bg);border-color:var(--info-border);}
+  .ptag.kept{color:var(--text-tertiary);background:var(--surface-2);border-color:var(--border);}
+  em.hi{font-style:normal;background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:0 3px;border-radius:3px;color:var(--text-primary);}
+
+  /* three lenses */
+  .lenses{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  @media (max-width:760px){.lenses{grid-template-columns:1fr;}}
+  .lens{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px 16px;box-shadow:var(--shadow-sm);}
+  .lens.me{border-color:var(--action-primary);border-width:2px;}
+  .lens .lstage{font-family:var(--font-mono);font-size:10px;font-weight:600;color:var(--text-inverse);background:var(--action-primary);border-radius:var(--radius-sm);padding:2px 7px;display:inline-block;margin-bottom:8px;}
+  .lens .lwho{font-weight:600;font-size:var(--text-sm);} .lens .lwho .av{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);font-family:var(--font-display);font-size:10px;margin-right:5px;vertical-align:middle;}
+  .lens p{margin:6px 0 0;color:var(--text-secondary);font-size:var(--text-xs);line-height:1.5;}
+  .lens .verb{font-weight:700;color:var(--text-primary);}
+
+  /* hero: explainer + selling counter */
+  .hero{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start;}
+  @media (max-width:860px){.hero{grid-template-columns:1fr;}}
+  .expl .card{margin-bottom:12px;}
+  .strip{display:flex;align-items:center;gap:10px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 13px;margin-bottom:9px;box-shadow:var(--shadow-sm);}
+  .strip .si{width:30px;height:30px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;font-size:15px;flex:none;}
+  .strip .st{font-weight:600;font-size:var(--text-sm);} .strip .sp{color:var(--text-secondary);font-size:var(--text-xs);line-height:1.45;margin-top:1px;}
+
+  .counter{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .ctop{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--divider);}
+  .ctop .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;}
+  .ctop .cust{margin-left:auto;font-size:var(--text-sm);}
+  .csearch{padding:12px 14px 6px;}
+  .sfield{display:flex;align-items:center;gap:8px;background:var(--surface);border:2px solid var(--action-primary);border-radius:var(--radius-lg);padding:9px 12px;font-size:var(--text-base);}
+  .sfield .typed{font-family:var(--font-mono);} .caret{display:inline-block;width:2px;height:16px;background:var(--action-primary);margin-left:1px;animation:blink 1s step-end infinite;vertical-align:middle;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .ucard{margin:8px 14px 4px;border:1px solid var(--border-strong);border-radius:var(--radius-lg);overflow:hidden;}
+  .ucard .uh{display:flex;align-items:baseline;gap:8px;padding:10px 13px;background:var(--surface-2);border-bottom:1px solid var(--border);}
+  .ucard .un{font-weight:600;} .ucard .usalt{font-size:11px;color:var(--text-tertiary);}
+  .urow{display:flex;align-items:center;gap:9px;padding:8px 13px;border-bottom:1px solid var(--divider);font-size:var(--text-sm);}
+  .urow:last-child{border-bottom:none;}
+  .ul{font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:700;min-width:72px;flex:none;}
+  .ustock{color:var(--success);font-weight:600;}
+  .uloc{font-family:var(--font-mono);background:var(--background);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:1px 7px;font-size:11px;}
+  .uprice{font-family:var(--font-mono);} .uprice b{color:var(--text-primary);}
+  .uscheme{color:var(--success);background:var(--success-bg);border:1px solid var(--success-border);border-radius:20px;padding:1px 9px;font-size:11px;font-weight:600;}
+  .usub{color:var(--info);} .uup{color:var(--text-secondary);}
+  .uadd{margin-left:auto;background:var(--action-primary);color:#fff;border-radius:var(--radius-sm);padding:3px 13px;font-size:12px;font-weight:600;flex:none;}
+
+  .regchip{display:flex;align-items:center;gap:8px;margin:8px 14px;padding:8px 11px;background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--text-primary);}
+  .regchip .load{margin-left:auto;font-size:11px;font-weight:600;color:var(--info);background:var(--background);border:1px solid var(--info-border);border-radius:var(--radius-sm);padding:2px 9px;}
+  .blines{padding:2px 14px;}
+  .bline{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--divider);}
+  .bline:last-child{border-bottom:none;} .bline .bn{font-weight:500;font-size:var(--text-sm);} .bline .bq{color:var(--text-tertiary);font-size:12px;} .bline .ba{margin-left:auto;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:var(--text-sm);}
+  .ctot{display:flex;align-items:baseline;padding:11px 14px;border-top:2px solid var(--border-strong);} .ctot span{color:var(--text-secondary);font-size:var(--text-sm);} .ctot b{margin-left:auto;font-size:var(--text-xl);font-weight:700;font-variant-numeric:tabular-nums;}
+  .chand{display:flex;gap:8px;padding:0 14px 14px;} .chb{flex:1;text-align:center;font-size:var(--text-sm);font-weight:600;padding:10px;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface);} .chb.primary{background:var(--action-primary);color:#fff;border-color:var(--action-primary);}
+
+  .walls{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  @media (max-width:760px){.walls{grid-template-columns:1fr;}}
+  .wall{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px 16px;box-shadow:var(--shadow-sm);}
+  .wall .wh{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .wall .wi{width:28px;height:28px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;font-size:14px;flex:none;}
+  .wall .wt{font-weight:600;font-size:var(--text-sm);}
+  .wall .wtag{margin-left:auto;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:var(--radius-sm);border:1px solid;}
+  .wtag.sig{color:var(--info);background:var(--info-bg);border-color:var(--info-border);}
+  .wtag.escalate{color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);}
+  .wtag.kept{color:var(--text-tertiary);background:var(--surface-2);border-color:var(--border);}
+  .wall p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);}
+  table.mx{width:100%;border-collapse:separate;border-spacing:0;background:var(--background);min-width:680px;}
+  table.mx th,table.mx td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--divider);border-right:1px solid var(--divider);font-size:var(--text-sm);vertical-align:top;}
+  table.mx thead th{background:var(--surface);font-weight:600;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);}
+  table.mx td.old{font-weight:500;white-space:nowrap;}
+  table.mx td .arrow{color:var(--text-disabled);}
+  table.mx th:last-child,table.mx td:last-child{border-right:none;} table.mx tr:last-child td{border-bottom:none;}
+  .newpill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-primary);}
+  .newpill.lock{background:var(--surface);border-style:dashed;color:var(--text-tertiary);}
+
+  .move{background:var(--background);border:1px solid var(--border);border-left:3px solid var(--info-border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-sm);}
+  .move h4{margin:0 0 4px;font-size:var(--text-sm);font-weight:600;}
+  .move p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .move .ba{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;display:block;}
+
+  footer.foot{margin-top:30px;color:var(--text-tertiary);font-size:var(--text-xs);text-align:center;border-top:1px solid var(--border);padding-top:18px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1><span class="wordmark">Salt</span> — Shop Salesman IA, simplified &amp; natural</h1>
+      <p>Closing the set — the <b>third lens on the one counter</b>: the cashier bills it, the pharmacist gates it, he sells at it.</p>
+    </div>
+  </header>
+
+  <div class="persona">
+    <div class="av">D</div>
+    <div>
+      <div class="nm">Deepak — Shop Salesman <span>· the product-knowledge &amp; relationship person at the counter</span></div>
+      <p>Knows the rack by heart, <b>grows the basket</b>, and <b>never says <em class="hi">nahi hai</em></b>. Greets the walk-in or reads the chemist's slip, finds the product, quotes price + scheme, offers a substitute when something's out, and upsells the add-on. Strong on brand names, quick mental math, weak UI English. No distinct login — he works the counter — and he aspires to run his own shop or become a company MR.</p>
+    </div>
+  </div>
+
+  <div class="base-note">
+    <b>Base = all six prior IAs.</b> He doesn't invent a new structure — he <b>recombines</b> two counter patterns and re-points them commercially. From the <b>cashier</b>: the counter <em>is</em> the app, escalate-don't-navigate, offline, stable. From the <b>pharmacist</b>: a persistent <b>Find</b> surface. His one new contribution is the <b>unified lookup</b> — stock + rack location + price + scheme + substitute + upsell in a <em>single</em> result — and a commercial lens (basket, schemes, the regular). He is the <b>selling</b> counter to the cashier's <b>billing</b> counter and the pharmacist's <b>clinical</b> counter.
+  </div>
+
+  <div class="section-label">Three lenses on one counter — the synthesis</div>
+  <div class="lenses" id="lenses"></div>
+  <p class="intro" style="margin-top:11px">One physical counter, three roles, three lifecycle stages. The IA gives each the <b>same surface with a different lens</b> — and they hand off to one another in sequence: sell → gate → bill.</p>
+
+  <div class="section-label">The shape — the selling counter, built around the unified lookup</div>
+  <div class="hero">
+    <div class="expl">
+      <div class="strip"><span class="si">🔎</span><div><div class="st">His signature: one lookup answers everything</div><div class="sp">Stock · <b>where on the rack</b> · price &amp; scheme · substitute · upsell — in one result. Never split across screens. The fix for telling a customer “hai” on stale memory, or guessing a price.</div></div></div>
+      <div class="strip"><span class="si">＋</span><div><div class="st">Inherited from the cashier</div><div class="sp">The counter is the whole app; he escalates (over-limit, H1) instead of navigating; offline; stable keystrokes.</div></div></div>
+      <div class="strip"><span class="si">↪</span><div><div class="st">He sells, then hands to billing</div><div class="sp">He builds the order and the relationship; the <b>cashier</b> bills it and the <b>pharmacist</b> clears any H1/X. He doesn't have to own the whole transaction.</div></div></div>
+    </div>
+    <div class="counter">
+      <div class="ctop"><span class="lbl">Counter — the selling lens</span><span class="cust">Walk-in</span></div>
+      <div class="csearch"><div class="sfield">⌕ <span class="typed">augmentin</span><span class="caret"></span></div></div>
+      <div class="ucard">
+        <div class="uh"><span class="un">Augmentin 625</span><span class="usalt">· Amoxicillin + Clavulanate</span></div>
+        <div class="urow"><span class="ul">In stock</span><span class="ustock">42 units</span><span class="ul" style="min-width:auto">· rack</span><span class="uloc">B-3</span><span class="uadd">＋ Add</span></div>
+        <div class="urow"><span class="ul">Price</span><span class="uprice">MRP <b>₹212</b> · PTR ₹168</span><span class="uscheme">scheme 10+1</span></div>
+        <div class="urow"><span class="ul">If out</span><span class="usub">→ Moxikind-CV 625 · same salt · 60 in stock · better margin</span></div>
+        <div class="urow"><span class="ul">Add too</span><span class="uup">often bought with: Shelcal · a probiotic</span></div>
+      </div>
+      <div class="regchip">⭐ Ramesh Medical is a regular <span class="load">load usual (18 items)</span></div>
+      <div class="blines">
+        <div class="bline"><span class="bn">Pan-D</span><span class="bq">× 10</span><span class="ba">₹985</span></div>
+        <div class="bline"><span class="bn">Azithral 500</span><span class="bq">× 5</span><span class="ba">₹355</span></div>
+      </div>
+      <div class="ctot"><span>Order</span><b>₹1,340</b></div>
+      <div class="chand"><span class="chb primary">Hand to billing →</span><span class="chb">Print quote</span></div>
+    </div>
+  </div>
+
+  <div class="section-label">What makes his counter a SELLING counter — and how each is handled</div>
+  <div class="walls" id="walls"></div>
+
+  <div class="section-label">Principles — recombined from the bases, with a commercial lens</div>
+  <div class="grid g3" id="principles"></div>
+
+  <div class="section-label">Coverage check — the counter is his app; everything else is read-through or a hand-off</div>
+  <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
+
+  <div class="section-label">The big moves — how the base recombined for this persona</div>
+  <div id="moves"></div>
+
+  <footer class="foot">
+    Built on all six prior IAs, reshaped from the shop-salesman persona (rack-by-heart · basket-grower · never “nahi hai” · relationship) and his place in the lifecycle (S7 — order capture; the front of the sale). Completes the seven. A design proposal, not a spec.
+  </footer>
+</div>
+
+<script>
+const LENSES = [
+  {me:false, stage:"S9 · bill", who:["V","Cashier"], verb:"bills", p:"Reads nothing, pure speed — turns the order into a printed invoice. The <span class='verb'>back</span> of the sale."},
+  {me:false, stage:"S8 · gate", who:["A","Pharmacist"], verb:"gates", p:"Clinical judgement — salt, schedule, the H1/X gate, FEFO/expiry. The <span class='verb'>middle</span> of the sale."},
+  {me:true, stage:"S7 · sell", who:["D","Shop salesman"], verb:"sells", p:"Finds the product, substitutes, upsells, quotes price &amp; scheme, knows the regular. The <span class='verb'>front</span> of the sale — where it begins."},
+];
+
+const WALLS = [
+  {ic:"🔎", t:"“Is it here, and where?”", tag:["sig","signature"], w:"One lookup shows stock + the rack location, in real time — so he answers instantly and never sends a customer away on a stale-memory “hai”. (His top failure, designed out.)"},
+  {ic:"₹", t:"“What's the price &amp; scheme?”", tag:["sig","signature"], w:"MRP, PTR and the active scheme are in the same result — he quotes without guessing or walking to ask the manager."},
+  {ic:"∅", t:"Out of stock", tag:["sig","never “nahi hai”"], w:"A same-salt / equivalent in-stock substitute is offered inline (the pharmacist's engine, commercial lens) — he keeps the sale instead of losing it to the shop next door."},
+  {ic:"＋", t:"Grow the basket", tag:["sig","upsell"], w:"Complementary items surface at the point of add (calcium with the antibiotic). Every line is a chance for one more — his job is the basket, not just the item."},
+  {ic:"⭐", t:"A regular walks in", tag:["sig","relationship"], w:"Recognise the returning customer and load their usual order/history fast. Relationship is his asset; the screen should remember what he remembers."},
+  {ic:"%", t:"Discount over his limit", tag:["escalate","→ manager"], w:"He applies a discount within his limit; over it, a one-tap request goes to the manager's Inbox — the same escalation pipe the cashier uses. He keeps selling."},
+  {ic:"℞", t:"A Schedule H1 / X item", tag:["escalate","→ pharmacist"], w:"He hands the customer to the pharmacist for the clinical gate — he sells, he doesn't dispense controlled drugs. The hand-off is built in."},
+  {ic:"↪", t:"Order is ready", tag:["kept","hand to billing"], w:"He passes a clean, priced order to the cashier to bill (or prints a quote). He owns the front of the sale, not the whole transaction."},
+];
+
+const PRINCIPLES = [
+  {h:"The selling counter, not the billing counter", tag:["changed","Changed"], p:"His Home is the counter — like the cashier's — but oriented to find / substitute / upsell / quote, not fast data-entry. Same surface, a commercial lens."},
+  {h:"One lookup answers everything", tag:["new","New"], p:"Stock + rack location + price + scheme + substitute + upsell in a single result. The explicit fix for his two failure modes — telling a customer “hai” on stale memory, and guessing the price."},
+  {h:"Never say “nahi hai”", tag:["new","New"], p:"On out-of-stock, a same-salt / equivalent in-stock substitute is offered inline — the commercial cousin of the pharmacist's clinical substitute. Keep the sale, don't lose the regular."},
+  {h:"Grow the basket", tag:["new","New"], p:"Complementary upsell at the point of add. His value isn't the line the customer asked for — it's the one more he adds."},
+  {h:"Know the regular", tag:["new","New"], p:"Pull a returning customer's usual order and history fast. The relationship is the asset; the screen should remember what he already does in his head."},
+  {h:"Escalate &amp; hand off, don't navigate", tag:["kept","Inherited"], p:"Discount within his limit; over it → the manager's Inbox. A Schedule H1/X item → hand to the pharmacist. Order ready → hand to the cashier. He never leaves the counter."},
+  {h:"Persistent Find, commercial", tag:["kept","Inherited"], p:"The unified lookup is one key away from anywhere — his constant action, the same structural slot as the pharmacist's salt search, pointed at price/stock/scheme instead of dose/schedule."},
+  {h:"Offline · stable · en-IN · Hinglish", tag:["kept","Inherited"], p:"The counter essentials carry straight over: billing/quoting never stops offline, the flow doesn't move between versions, Indian money format, Hinglish-friendly, recognition over reading."},
+];
+
+const COVERAGE = [
+  ["Counter","the selling counter — his app"],
+  ["Catalogue / Inventory","surfaced as the unified Find lookup (read: stock + location + price + scheme + substitute)"],
+  ["Approvals","over-limit discount → the manager's Inbox (escalation)"],
+  ["H1 / X","hand the customer to the pharmacist (her gate)"],
+  ["Sales (billing)","hands the finished order to the cashier"],
+  ["Activity","exists, but not his focus"],
+  ["Parties · Payments · Buy · GST · Reports · Salesmen · Settings","— not his view"],
+];
+
+const MOVES = [
+  {h:"A third lens on the one counter", p:"The cashier bills it (S9), the pharmacist gates it (S8), the shop salesman sells at it (S7). Same physical surface, three role-shaped views that hand off in sequence — the clearest case that the IA is a shared spine seen through different lenses.", ba:"one counter → three lenses (S7 · S8 · S9)"},
+  {h:"The unified lookup is his signature", p:"Stock + rack location + price + scheme + substitute + upsell in one result, in real time. This is the single thing built for him and no one else — and it designs out his two real failures (stale-memory “hai” and price guessing).", ba:"split screens → one lookup"},
+  {h:"Substitute + upsell + relationship — the commercial recombination", p:"He borrows the pharmacist's substitute engine but points it at keeping/growing the sale (not clinical equivalence), adds basket upsell, and adds regular-customer recognition. New behaviours, on borrowed machinery.", ba:"clinical substitute → commercial substitute + basket"},
+  {h:"Recombines, doesn't reinvent", p:"He inherits the cashier's counter-is-the-app + escalate-don't-navigate + offline + stable, and the pharmacist's persistent Find. His newness is the lens and the lookup, not a new structure — which is exactly why he needs no separate login.", ba:"cashier counter + pharmacist Find, commercial"},
+  {h:"He owns the front, not the whole", p:"He builds the order and the relationship, then hands to the cashier to bill and the pharmacist to gate. The design lets a role own one slice of the counter and pass the rest — no role has to do everything.", ba:"sell → hand off (gate / bill)"},
+];
+
+/* render */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+$("#lenses").innerHTML = LENSES.map(l=>`
+  <div class="lens ${l.me?'me':''}">
+    <span class="lstage">${l.stage}</span>
+    <div class="lwho"><span class="av">${l.who[0]}</span>${l.who[1]}</div>
+    <p>${l.p}</p>
+  </div>`).join("");
+
+$("#walls").innerHTML = WALLS.map(w=>`
+  <div class="wall">
+    <div class="wh"><span class="wi">${w.ic}</span><span class="wt">${w.t}</span><span class="wtag ${w.tag[0]}">${w.tag[1]}</span></div>
+    <p>${w.w}</p>
+  </div>`).join("");
+
+$("#principles").innerHTML = PRINCIPLES.map((p,i)=>`<div class="card"><h3><span class="num">${String(i+1).padStart(2,'0')}</span>${p.h} <span class="ptag ${p.tag[0]}">${p.tag[1]}</span></h3><p>${p.p}</p></div>`).join("");
+
+$("#coverage").innerHTML = `<thead><tr><th>Today's module</th><th></th><th>In his counter</th></tr></thead><tbody>` +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('—')?'lock':''}">${n}</span></td></tr>`).join("") +
+  `</tbody>`;
+
+$("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");
+</script>
+</body>
+</html>

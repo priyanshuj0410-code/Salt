@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Field Salesman IA — Simplified &amp; Natural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px;height:46px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:var(--action-primary-text);display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:26px;box-shadow:var(--shadow-sm);}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);}
+
+  .persona{display:flex; gap:14px; align-items:center; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm); margin:16px 0 8px;}
+  .persona .av{width:48px;height:48px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:24px;}
+  .persona .nm{font-weight:600;} .persona .nm span{font-weight:400;color:var(--text-tertiary);font-size:var(--text-sm);}
+  .persona p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .intro{color:var(--text-secondary);font-size:var(--text-sm);max-width:940px;margin:14px 0 8px;line-height:1.6;}
+  .base-note{background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-lg);padding:11px 14px;font-size:var(--text-sm);color:var(--text-primary);line-height:1.55;margin:12px 0 0;}
+  .base-note b{color:var(--info);}
+  .section-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);font-weight:600;margin:30px 0 12px;}
+
+  .grid{display:grid;gap:13px;} .g3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:860px){.g3{grid-template-columns:1fr;}}
+  .card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 7px;font-size:var(--text-sm);font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .card p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .card .num{font-family:var(--font-mono);color:var(--text-tertiary);font-size:11px;font-weight:600;}
+  .ptag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid;}
+  .ptag.changed{color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);}
+  .ptag.new{color:var(--info);background:var(--info-bg);border-color:var(--info-border);}
+  .ptag.kept{color:var(--text-tertiary);background:var(--surface-2);border-color:var(--border);}
+  .ptag.forked{color:var(--danger);background:var(--danger-bg);border-color:var(--danger-border);}
+  em.hi{font-style:normal;background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:0 3px;border-radius:3px;color:var(--text-primary);}
+
+  /* hero: phone + explanation */
+  .hero{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start;}
+  @media (max-width:820px){.hero{grid-template-columns:1fr;justify-items:center;}}
+  .phone{width:344px;border:11px solid #18181b;border-radius:38px;background:#18181b;box-shadow:var(--shadow-md);overflow:hidden;flex:none;}
+  .screen{background:var(--background);border-radius:27px;overflow:hidden;display:flex;flex-direction:column;height:632px;}
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:9px 18px 5px;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);}
+  .statusbar .sig{color:var(--warning);}
+  .syncstrip{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--surface-2);border-bottom:1px solid var(--border);font-size:11px;}
+  .syncstrip .sync{color:var(--warning);font-weight:600;display:flex;align-items:center;gap:5px;}
+  .syncstrip .cash{margin-left:auto;color:var(--text-primary);font-weight:600;}
+  .scrwrap{flex:1;overflow:hidden;position:relative;}
+  .scr{padding:13px 14px;display:none;height:100%;overflow:auto;}
+  .scr.on{display:block;}
+  .scrh{font-size:var(--text-sm);font-weight:600;margin-bottom:10px;display:flex;align-items:baseline;gap:8px;}
+  .scrh span{font-size:11px;color:var(--text-tertiary);font-weight:400;margin-left:auto;}
+
+  .stop{display:flex;align-items:center;gap:8px;padding:10px 11px;border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:8px;font-size:var(--text-sm);}
+  .stop.done{color:var(--text-tertiary);} .stop.done .nmn{text-decoration:none;}
+  .stop.next{border-color:var(--action-primary);border-width:2px;}
+  .stop .nmn{font-weight:600;} .stop .sd{margin-left:auto;font-size:11px;color:var(--text-tertiary);font-family:var(--font-mono);}
+  .stop .sok{margin-left:auto;font-size:11px;color:var(--success);}
+  .sflag{font-size:10px;color:var(--danger);font-weight:600;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:20px;padding:1px 7px;}
+  .nexttag{font-size:9px;font-weight:700;color:var(--action-primary);}
+
+  .chemhdr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:var(--text-base);margin-bottom:11px;}
+  .owe{font-size:10px;color:var(--danger);font-weight:600;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:20px;padding:2px 8px;}
+  .msearch{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px 12px;color:var(--text-tertiary);font-size:var(--text-sm);margin-bottom:10px;}
+  .oline{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--divider);font-size:var(--text-sm);}
+  .oline .on{font-weight:500;} .oline .osch{font-size:10px;color:var(--success);background:var(--success-bg);border:1px solid var(--success-border);border-radius:20px;padding:1px 7px;} .oline .oamt{margin-left:auto;font-family:var(--font-mono);}
+  .otot{display:flex;align-items:baseline;padding:11px 0;border-top:2px solid var(--border-strong);margin-top:4px;} .otot b{margin-left:auto;font-size:var(--text-xl);font-weight:700;}
+  .obtns{display:flex;gap:8px;margin-top:12px;} .ob{flex:1;text-align:center;font-size:var(--text-sm);font-weight:600;padding:11px;border-radius:var(--radius-lg);border:1px solid var(--border);background:var(--surface);} .ob.primary{background:var(--action-primary);color:#fff;border-color:var(--action-primary);}
+
+  .amt{font-size:2.2rem;font-weight:700;text-align:center;margin:8px 0 12px;font-variant-numeric:tabular-nums;}
+  .modes{display:flex;gap:7px;margin-bottom:12px;} .mode{flex:1;text-align:center;font-size:var(--text-sm);padding:9px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);} .mode.active{background:var(--action-primary);color:#fff;border-color:var(--action-primary);}
+  .attr,.cashupd{font-size:var(--text-sm);color:var(--text-secondary);padding:6px 0;} .cashupd b{color:var(--text-primary);} .attr b{color:var(--text-primary);}
+
+  .numgrid{display:flex;flex-direction:column;gap:8px;margin-bottom:14px;}
+  .numt{border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 13px;} .numt span{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;} .numt b{display:block;font-size:var(--text-xl);font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;} .numt .ns{font-size:11px;color:var(--text-tertiary);text-transform:none;letter-spacing:0;font-weight:400;}
+  .numt.hero{background:var(--action-primary);border-color:var(--action-primary);} .numt.hero span{color:#a1a1aa;} .numt.hero b{color:#fff;} .numt.hero .ns{color:#d4d4d8;}
+  .target .tlbl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;margin-bottom:5px;}
+  .tbar{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:20px;overflow:hidden;} .tfill{height:100%;background:var(--success);}
+  .target .tnum{font-size:11px;color:var(--text-secondary);margin-top:5px;font-variant-numeric:tabular-nums;}
+
+  .tabbar{display:flex;border-top:1px solid var(--border);background:var(--background);}
+  .tb{flex:1;text-align:center;padding:9px 3px 8px;font-size:9.5px;color:var(--text-tertiary);cursor:pointer;}
+  .tb .ic{font-size:18px;display:block;margin-bottom:2px;}
+  .tb.active{color:var(--action-primary);font-weight:700;}
+
+  .expl .card{margin-bottom:13px;}
+  .strip{display:flex;align-items:center;gap:10px;background:var(--background);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 13px;margin-bottom:9px;box-shadow:var(--shadow-sm);}
+  .strip .si{width:30px;height:30px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;font-size:15px;flex:none;}
+  .strip .st{font-weight:600;font-size:var(--text-sm);} .strip .sp{color:var(--text-secondary);font-size:var(--text-xs);line-height:1.45;margin-top:1px;}
+
+  .area{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px;}
+  .area .ah{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
+  .area .ak{width:30px;height:30px;border-radius:var(--radius-md);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-size:15px;}
+  .area .an{font-size:var(--text-lg);font-weight:600;} .area .ahi{color:var(--text-tertiary);font-size:var(--text-sm);}
+  .area .atag{color:var(--text-secondary);font-size:var(--text-sm);font-style:italic;margin:0 0 12px;}
+  .area .arow{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px;}
+  .area .arl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;min-width:70px;}
+  .chip{font-size:var(--text-xs);padding:3px 9px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);}
+  .chip.lc{font-family:var(--font-mono);}
+  .jtbd{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 11px;font-size:var(--text-sm);color:var(--text-primary);}
+  .plug{margin-top:10px;font-size:var(--text-xs);color:var(--text-tertiary);border-top:1px dashed var(--border);padding-top:9px;line-height:1.5;}
+  .plug b{color:var(--info);}
+
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);}
+  table.mx{width:100%;border-collapse:separate;border-spacing:0;background:var(--background);min-width:680px;}
+  table.mx th,table.mx td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--divider);border-right:1px solid var(--divider);font-size:var(--text-sm);vertical-align:top;}
+  table.mx thead th{background:var(--surface);font-weight:600;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);}
+  table.mx td.old{font-weight:500;white-space:nowrap;}
+  table.mx td .arrow{color:var(--text-disabled);}
+  table.mx th:last-child,table.mx td:last-child{border-right:none;} table.mx tr:last-child td{border-bottom:none;}
+  .newpill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-primary);}
+  .newpill.lock{background:var(--surface);border-style:dashed;color:var(--text-tertiary);}
+
+  .move{background:var(--background);border:1px solid var(--border);border-left:3px solid var(--info-border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-sm);}
+  .move.fork{border-left-color:var(--danger-border);}
+  .move h4{margin:0 0 4px;font-size:var(--text-sm);font-weight:600;}
+  .move p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .move .ba{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;display:block;}
+
+  footer.foot{margin-top:30px;color:var(--text-tertiary);font-size:var(--text-xs);text-align:center;border-top:1px solid var(--border);padding-top:18px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1><span class="wordmark">Salt</span> — Field Salesman IA, simplified &amp; natural</h1>
+      <p>The finale — where the base <b>forks</b>: not the desktop nav at all, but a separate offline-first mobile app.</p>
+    </div>
+  </header>
+
+  <div class="persona">
+    <div class="av">K</div>
+    <div>
+      <div class="nm">Karan — Field Salesman <span>· on a bike, on his beat; tracked today only as data</span></div>
+      <p>The one role <b>not at a counter, not on Marg, not on a keyboard</b>. He rides a beat of 15–40 chemists: pitches schemes, <b>takes orders, delivers, collects cash</b>. Today his system is a paper pad + WhatsApp + memory. Phone-native (UPI, Maps, WhatsApp) but ERP-illiterate. <b>Offline is his default state</b>, and his aspiration is a delivery-partner app — list, tap, done, signal or no signal.</p>
+    </div>
+  </div>
+
+  <div class="base-note">
+    <b>Base = the five desktop IAs (Owner → Cashier) — as reference, not inheritance.</b> The field salesman is where the spine <b>forks</b>. Everything the set assumed — a keyboard, Marg muscle memory, a counter, a left rail, <code>g</code>+letter, <code>⌘K</code> — is gone. So this is a <b>separate offline-first mobile app</b> modelled on a delivery-partner app (Swiggy / Udaan), not an ERP. What carries over is only abstract: numbers-first, Home answers his first question, one persistent surface, his-slice-only, en-IN &amp; WhatsApp. And he <b>plugs back into the other five</b> — his order becomes the shop's order, his collection hits the accountant's books and his own commission.
+  </div>
+
+  <div class="section-label">Principles — what survives the fork, what is new</div>
+  <div class="grid g3" id="principles"></div>
+
+  <div class="section-label">The shape — a phone, not a rail · tap the bottom tabs</div>
+  <div class="hero">
+    <div class="phone">
+      <div class="screen">
+        <div class="statusbar"><span>9:41</span><span><span class="sig">▮▮▯ weak</span> · 64%</span></div>
+        <div class="syncstrip"><span class="sync">⟳ 3 saved offline</span><span class="cash">Cash in hand ₹18,400</span></div>
+        <div class="scrwrap">
+          <!-- BEAT -->
+          <div class="scr on" data-scr="beat">
+            <div class="scrh">Beat · Today <span>12 / 28 · 9.2 km left</span></div>
+            <div class="stop done"><span class="nmn">✓ Sharma Medical</span><span class="sd">done · ₹4,200</span></div>
+            <div class="stop next"><span class="nmn">City Pharma</span><span class="sflag">owes ₹38,500 · 52d</span><span class="sd"><span class="nexttag">NEXT</span> · 0.4 km</span></div>
+            <div class="stop"><span class="nmn">○ Ramesh Chemist</span><span class="sok">₹0 · 1.2 km</span></div>
+            <div class="stop"><span class="nmn">○ Gupta Medico</span><span class="sd">2.1 km</span></div>
+            <div class="stop"><span class="nmn">○ Apollo (sub-dealer)</span><span class="sd">3.0 km</span></div>
+          </div>
+          <!-- ORDER -->
+          <div class="scr" data-scr="order">
+            <div class="chemhdr">City Pharma <span class="owe">⚠ owes ₹38,500 · 52d</span></div>
+            <div class="msearch">⌕ type or 📷 scan · 🎙 voice</div>
+            <div class="oline"><span class="on">Pan-D ×10</span><span class="osch">10+1</span><span class="oamt">₹985</span></div>
+            <div class="oline"><span class="on">Azithral 500 ×5</span><span class="oamt">₹355</span></div>
+            <div class="oline"><span class="on">Shelcal ×3</span><span class="oamt">₹318</span></div>
+            <div class="otot"><span>Order total</span><b>₹1,658</b></div>
+            <div class="obtns"><span class="ob primary">Save (offline)</span><span class="ob">WhatsApp</span></div>
+          </div>
+          <!-- COLLECT -->
+          <div class="scr" data-scr="collect">
+            <div class="chemhdr">City Pharma</div>
+            <div class="amt">₹20,000</div>
+            <div class="modes"><span class="mode active">Cash</span><span class="mode">UPI</span><span class="mode">Cheque</span></div>
+            <div class="attr">Attributed to: <b>Karan</b></div>
+            <div class="cashupd">Cash in hand → <b>₹38,400</b></div>
+            <div class="obtns"><span class="ob primary">Record + WhatsApp receipt</span></div>
+          </div>
+          <!-- MY NUMBER -->
+          <div class="scr" data-scr="num">
+            <div class="scrh">My number · Today</div>
+            <div class="numgrid">
+              <div class="numt"><span>Sales booked</span><b>₹46,800</b><span class="ns">9 orders</span></div>
+              <div class="numt"><span>Collected</span><b>₹62,000</b><span class="ns">7 chemists</span></div>
+              <div class="numt hero"><span>Commission</span><b>₹1,870</b><span class="ns">this month: ₹38,400</span></div>
+            </div>
+            <div class="target"><div class="tlbl">Month target</div><div class="tbar"><div class="tfill" style="width:80%"></div></div><div class="tnum">₹2.4L / ₹3L · 80%</div></div>
+          </div>
+        </div>
+        <div class="tabbar" id="tabbar">
+          <div class="tb active" data-tab="beat"><span class="ic">🗺</span>Beat</div>
+          <div class="tb" data-tab="order"><span class="ic">＋</span>Order</div>
+          <div class="tb" data-tab="collect"><span class="ic">₹</span>Collect</div>
+          <div class="tb" data-tab="num"><span class="ic">📊</span>My number</div>
+        </div>
+      </div>
+    </div>
+    <div class="expl">
+      <div class="card"><h3>Why a separate app, not a screen in the ERP</h3><p>He has no terminal, no keyboard and no Marg habit to build on. Bolting him onto the desktop nav would fail on day one. He needs a <b>thumb-driven, one-handed, offline-first</b> app he can use at a chemist's counter with one bar of signal — the form factor he already lives in (WhatsApp, Maps, UPI, the delivery-partner apps).</p></div>
+      <div class="strip"><span class="si">⟳</span><div><div class="st">His persistent surface: the sync + cash strip</div><div class="sp">Always on top. What's saved offline vs synced, and his cash-in-hand — because for him, "is it synced?" is a question about <b>his money at day-end</b>. (The manager had an Inbox; the accountant an Export; Karan has this trust strip.)</div></div></div>
+      <div class="strip"><span class="si">🗺</span><div><div class="st">Home = the Beat</div><div class="sp">His first question is "where am I and what's the next stop — and what do they owe?" The route list is his home, like a rider's order queue.</div></div></div>
+      <div class="strip"><span class="si">🔗</span><div><div class="st">It plugs into the shop</div><div class="sp">Order → syncs in as the shop's sales order. Collect → posts to the accountant's books + his commission. The owner's credit limit gates his booking; an over-limit booking pings the manager's Inbox.</div></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">The four tabs in detail — each with its lifecycle stage and how it plugs in</div>
+  <div id="areas"></div>
+
+  <div class="section-label">Coverage check — a mobile lens on the data; two writes (order, collect), the rest read or absent</div>
+  <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
+
+  <div class="section-label">The big moves — how the base forked for this persona</div>
+  <div id="moves"></div>
+
+  <footer class="foot">
+    Built by forking the five desktop IA bases, from the field-salesman persona (bike · beat · offline-default · paper-pad-today · delivery-partner aspiration) and his place in the lifecycle (S7 order · S10 deliver · S12 collect — the road, outside the shop walls). A design proposal, not a spec.
+  </footer>
+</div>
+
+<script>
+const PRINCIPLES = [
+  {h:"A mobile app, not the desktop nav", tag:["forked","Forked"], p:"No left rail, no g+letter, no ⌘K, no dense desktop screens. A bottom-tab, thumb-reachable phone app he uses one-handed at a chemist's counter. The form is entirely new."},
+  {h:"Offline-first is the substrate, and visible", tag:["changed","Changed"], p:"Everything works offline by default; the sync state is always on screen. This inverts the cashier's “offline invisible” — for Karan, “is it synced?” is a question about his cash at day-end, so it must be shown, never hidden."},
+  {h:"No keyboard — touch, voice, scan", tag:["new","New"], p:"The whole set's keyboard-first premise doesn't apply to the one person who never learned Marg. Big tap targets, scan a strip, voice-note an order, minimal typing."},
+  {h:"The model is a delivery-partner app", tag:["new","New"], p:"Beat / route → per-stop actions (order, deliver, collect) → an earnings screen. Swiggy / Zomato-rider / Udaan, not an ERP — the exact apps he already trusts and aspires to."},
+  {h:"Outstanding before booking", tag:["new","New"], p:"The owner's credit limit reaches him on the road: a chemist's balance is shown at the top of the order screen, and a defaulter is flagged before he books — so he never lands the shop a bad order that's on his number."},
+  {h:"Cash reconciliation, not interrogation", tag:["new","New"], p:"Cash-in-hand is always visible and day-end is a clean match/handover, not an accusation. His single biggest fear is a discrepancy that looks like theft — the design removes the ambiguity."},
+  {h:"His number, always one tap", tag:["new","New"], p:"Commission and target progress are a first-class tab, never buried — it's his motivation and his pay. (Persona rule: never hide his number.)"},
+  {h:"Plugs into the shop · en-IN · WhatsApp", tag:["kept","Inherited"], p:"The abstract spine survives: his slice only, numbers-first, Indian money format, Hinglish, and WhatsApp as the channel (order to the shop, receipt to the chemist). The data is the same — he's just its road-facing front end."},
+];
+
+const TABS = [
+  {id:"beat", ic:"🗺", n:"Beat", hi:"“Mera route” — home", tag:"Where am I, and what's the next stop?",
+   inside:["Today's route in order (done / next / pending)","Each stop's outstanding flag (overdue = red)","Distance + navigate (Maps)","Reorder / skip / add an unplanned stop","Call the chemist (one tap)"],
+   jtbd:"His Home — first question is <b>“what's my next stop, and what do they owe?”</b> A rider's order queue, for a medicine beat.",
+   life:["S7","S10","S12"], plug:"The stops are the owner/accountant's <b>parties</b> — he sees their outstanding read-only; he can't change a credit limit."},
+  {id:"order", ic:"＋", n:"Order", hi:"“Order lo” — book it", tag:"Book the order at the stop — offline, with the chemist's balance in view.",
+   inside:["Catalogue + price + scheme (offline copy)","The chemist's outstanding at the top — a gate before booking","Add by search, scan a strip, or voice","Save offline → syncs to the shop later","WhatsApp the order to the chemist / shop"],
+   jtbd:"Take the order on the phone <b>even with no signal</b> — never lose a booking to a dead zone or a paper pad.",
+   life:["S7"], plug:"His saved order <b>syncs in and becomes the shop's sales order</b> — the manager/cashier fulfil &amp; bill it; it decrements stock."},
+  {id:"collect", ic:"₹", n:"Collect", hi:"“Paisa lo” — take payment", tag:"Take the payment — attributed to him, reconciled cleanly.",
+   inside:["Pick the chemist · amount · mode (cash / UPI / cheque)","Attributed to Karan automatically","Running cash-in-hand for an honest day-end","WhatsApp the receipt","Offline; syncs later"],
+   jtbd:"Collect on the road and have it land on the chemist's account — now or on sync — <b>without a day-end fight</b>.",
+   life:["S12"], plug:"His collection <b>posts to the accountant's Books</b> (a receipt against the chemist's ledger) and to <b>his own commission</b>."},
+  {id:"num", ic:"📊", n:"My number", hi:"“Mera hisaab” — earnings", tag:"His sales, collections and commission — his motivation.",
+   inside:["Today's sales booked & collected","Commission earned (today / month)","Target progress","Top chemists by contribution"],
+   jtbd:"<b>Am I hitting my number?</b> Always one tap — the screen that keeps him on the bike.",
+   life:["S12"], plug:"This is the <b>Salesmen module's attribution</b>, finally given a front end the salesman himself can see."},
+];
+
+const COVERAGE = [
+  ["Counter / Sales","his Order → syncs in as the shop's sales order (he books, he doesn't bill)"],
+  ["Parties","the chemists on his Beat — outstanding shown, read-only"],
+  ["Payments","his Collect — attributed to him, posts to the books"],
+  ["Salesmen","My number — his commission, with a front end at last"],
+  ["Inventory / Catalogue","price + scheme in Order (offline read-only copy)"],
+  ["Approvals","book over a defaulter's limit → request to the manager's Inbox"],
+  ["GST · Reports · Stock ops · Settings","— not his app (he's the road, not the back office)"],
+];
+
+const MOVES = [
+  {fork:true, h:"The base forks: desktop nav → mobile app", p:"The first and only persona whose IA is a different application, not a trimmed version of the same nav. The five desktop IAs are a reference for the data and the principles — not a layout he inherits.", ba:"left rail / desktop → bottom-tab phone app"},
+  {fork:true, h:"No keyboard, no Marg, no counter", p:"Every foundational assumption of the whole persona set — keyboard-first, Marg muscle memory, the counter as home — simply doesn't hold for the one man who's never at a desk. Touch, voice and scan replace the keystroke.", ba:"keyboard-first → touch / voice / scan"},
+  {h:"Offline-first becomes visible, not invisible", p:"The cashier's offline was hidden so he wouldn't notice; Karan's is shown, because what's-synced is a question about his cash. Same substrate, opposite surfacing — driven by the persona, not the tech.", ba:"offline invisible → sync state on top"},
+  {h:"The delivery-partner mental model", p:"Beat → per-stop actions → earnings screen. He already trusts Swiggy/Udaan; meeting him there (not in an ERP) is the difference between adoption and a paper pad.", ba:"ERP screens → rider/route app"},
+  {h:"He plugs into the other five", p:"Order → the shop's order (manager/cashier fulfil); Collect → the accountant's books + his commission; the owner's credit limit gates his booking; an over-limit order pings the manager's Inbox. The road-facing front end of the very same data.", ba:"one app ⟷ five desktop roles"},
+  {h:"Trust is cash + sync, never accusation", p:"Cash-in-hand always visible, day-end a clean match, sync state never hidden, his number never buried. Every default tuned to a commission-paid man carrying the shop's cash on a bike.", ba:"+ cash strip · clean reconcile · his number"},
+];
+
+/* render */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+$("#principles").innerHTML = PRINCIPLES.map((p,i)=>`<div class="card"><h3><span class="num">${String(i+1).padStart(2,'0')}</span>${p.h} <span class="ptag ${p.tag[0]}">${p.tag[1]}</span></h3><p>${p.p}</p></div>`).join("");
+
+$("#areas").innerHTML = TABS.map(a=>`
+  <div class="area" id="area-${a.id}">
+    <div class="ah"><span class="ak">${a.ic}</span><span class="an">${a.n}</span><span class="ahi">${a.hi}</span></div>
+    <p class="atag">${a.tag}</p>
+    <div class="arow"><span class="arl">Inside</span>${a.inside.map(i=>`<span class="chip">${i}</span>`).join("")}</div>
+    <div class="jtbd">${a.jtbd}</div>
+    <div class="arow" style="margin-top:10px"><span class="arl">Lifecycle</span>${a.life.map(l=>`<span class="chip lc">${l}</span>`).join("")}</div>
+    <div class="plug">🔗 <b>Plugs in</b> — ${a.plug}</div>
+  </div>`).join("");
+
+$("#coverage").innerHTML = `<thead><tr><th>Today's module</th><th></th><th>In his mobile app</th></tr></thead><tbody>` +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('—')?'lock':''}">${n}</span></td></tr>`).join("") +
+  `</tbody>`;
+
+$("#moves").innerHTML = MOVES.map(m=>`<div class="move ${m.fork?'fork':''}"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");
+
+// phone tab switching
+$("#tabbar").addEventListener("click",e=>{
+  const t=e.target.closest(".tb"); if(!t) return;
+  const id=t.getAttribute("data-tab");
+  $$(".tb").forEach(x=>x.classList.toggle("active", x===t));
+  $$(".scr").forEach(s=>s.classList.toggle("on", s.getAttribute("data-scr")===id));
+});
+</script>
+</body>
+</html>

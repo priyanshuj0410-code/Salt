@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Manager IA — Simplified &amp; Natural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px;height:46px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:var(--action-primary-text);display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:26px;box-shadow:var(--shadow-sm);}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);}
+
+  .persona{display:flex; gap:14px; align-items:center; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm); margin:16px 0 8px;}
+  .persona .av{width:48px;height:48px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:24px;}
+  .persona .nm{font-weight:600;} .persona .nm span{font-weight:400;color:var(--text-tertiary);font-size:var(--text-sm);}
+  .persona p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .intro{color:var(--text-secondary);font-size:var(--text-sm);max-width:940px;margin:14px 0 8px;line-height:1.6;}
+  .base-note{background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-lg);padding:11px 14px;font-size:var(--text-sm);color:var(--text-primary);line-height:1.55;margin:12px 0 0;}
+  .base-note b{color:var(--info);}
+  .section-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);font-weight:600;margin:30px 0 12px;}
+
+  .grid{display:grid;gap:13px;} .g3{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:860px){.g3{grid-template-columns:1fr;}}
+  .card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 7px;font-size:var(--text-sm);font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .card p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .card .num{font-family:var(--font-mono);color:var(--text-tertiary);font-size:11px;font-weight:600;}
+  .ptag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid;}
+  .ptag.changed{color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);}
+  .ptag.new{color:var(--info);background:var(--info-bg);border-color:var(--info-border);}
+  .ptag.kept{color:var(--text-tertiary);background:var(--surface-2);border-color:var(--border);}
+  .ptag.up{color:var(--success);background:var(--success-bg);border-color:var(--success-border);}
+  em.hi{font-style:normal;background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:0 3px;border-radius:3px;color:var(--text-primary);}
+
+  .hero{display:grid;grid-template-columns:248px 1fr;gap:16px;align-items:start;}
+  @media (max-width:860px){.hero{grid-template-columns:1fr;}}
+  .rail{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:10px;box-shadow:var(--shadow-sm);}
+  .rail .rh{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;padding:6px 8px 8px;}
+  .railitem{display:flex;align-items:center;gap:10px;padding:9px 9px;border-radius:var(--radius-md);cursor:pointer;color:var(--text-primary);}
+  .railitem:hover{background:var(--surface);}
+  .railitem.active{background:var(--action-primary);color:#fff;}
+  .railitem.active .kbd{background:#fff;color:var(--action-primary);border-color:#fff;}
+  .railitem.disabled{opacity:.55;cursor:not-allowed;}
+  .railitem .kbd{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text-secondary);background:var(--surface-2);border:1px solid var(--border);border-bottom:2px solid var(--border-strong);border-radius:var(--radius-sm);flex:none;}
+  .railitem .rn{font-weight:600;font-size:var(--text-sm);} .railitem .rhi{color:var(--text-tertiary);font-size:11px;margin-left:auto;}
+  .railitem.active .rhi{color:#d4d4d8;}
+  .railitem .badge-n{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:0 6px;min-width:18px;text-align:center;}
+  .railitem.active .badge-n{background:#fff;color:var(--action-primary);}
+  .raildiv{height:1px;background:var(--divider);margin:8px 4px;}
+
+  .home{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 16px;box-shadow:var(--shadow-sm);}
+  .home .hwh{display:flex;align-items:center;gap:9px;margin-bottom:11px;}
+  .home .hwh .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;}
+  .searchmock{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:9px 12px;color:var(--text-tertiary);font-size:var(--text-sm);margin-bottom:12px;}
+  .searchmock .k{margin-left:auto;font-family:var(--font-mono);font-size:11px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1px 6px;}
+  .clabel{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;margin-bottom:7px;}
+  .counters{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px;}
+  @media (max-width:600px){.counters{grid-template-columns:1fr;}}
+  .counter{border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px 12px;background:var(--surface);}
+  .counter.busy{background:var(--action-primary);border-color:var(--action-primary);}
+  .counter .cn{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;display:flex;align-items:center;gap:5px;}
+  .counter.busy .cn{color:#a1a1aa;}
+  .counter .cu{font-weight:600;font-size:var(--text-sm);margin-top:3px;} .counter.busy .cu{color:#fff;}
+  .counter .ca{font-size:11px;color:var(--text-tertiary);margin-top:2px;} .counter.busy .ca{color:#d4d4d8;}
+  .live{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--success);}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+  @media (max-width:600px){.tiles{grid-template-columns:repeat(2,1fr);}}
+  .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 12px;}
+  .tile .tl{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);font-weight:600;display:flex;align-items:center;gap:6px;}
+  .tile .tv{font-size:var(--text-lg);font-weight:600;font-variant-numeric:tabular-nums;margin-top:3px;}
+  .tile .ts{font-size:11px;color:var(--text-tertiary);margin-top:1px;}
+  .tile.attn{background:var(--danger-bg);border-color:var(--danger-border);}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+  .dot.d{background:var(--danger);} .dot.w{background:var(--warning);} .dot.i{background:var(--info);}
+  .quick{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;}
+  .qbtn{font-size:var(--text-sm);font-weight:500;padding:7px 13px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);}
+  .qbtn.primary{background:var(--action-primary);color:#fff;border-color:var(--action-primary);}
+
+  .area{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px;scroll-margin-top:14px;}
+  .area.flash{animation:flash 1.2s ease;}
+  @keyframes flash{0%{box-shadow:0 0 0 3px var(--focus-ring-strong);}100%{box-shadow:var(--shadow-sm);}}
+  .area .ah{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
+  .area .ak{width:30px;height:30px;border-radius:var(--radius-md);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;font-size:14px;}
+  .area .an{font-size:var(--text-lg);font-weight:600;} .area .ahi{color:var(--text-tertiary);font-size:var(--text-sm);}
+  .area .ntag{margin-left:auto;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:var(--radius-sm);}
+  .ntag.new{color:var(--info);background:var(--info-bg);border:1px solid var(--info-border);}
+  .ntag.kept{color:var(--text-tertiary);background:var(--surface-2);border:1px solid var(--border);}
+  .ntag.changed{color:var(--warning);background:var(--warning-bg);border:1px solid var(--warning-border);}
+  .area .atag{color:var(--text-secondary);font-size:var(--text-sm);font-style:italic;margin:0 0 12px;}
+  .area .arow{display:flex;gap:8px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px;}
+  .area .arl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;min-width:70px;}
+  .chip{font-size:var(--text-xs);padding:3px 9px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);color:var(--text-secondary);}
+  .chip.lc{font-family:var(--font-mono);} .chip.ab{border-style:dashed;}
+  .jtbd{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px 11px;font-size:var(--text-sm);color:var(--text-primary);margin-bottom:0;}
+  .jtbd b{color:var(--text-primary);}
+  .delta{margin-top:10px;font-size:var(--text-xs);color:var(--text-tertiary);border-top:1px dashed var(--border);padding-top:9px;line-height:1.5;}
+  .delta b{color:var(--info);}
+
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);}
+  table.mx{width:100%;border-collapse:separate;border-spacing:0;background:var(--background);min-width:680px;}
+  table.mx th,table.mx td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--divider);border-right:1px solid var(--divider);font-size:var(--text-sm);vertical-align:top;}
+  table.mx thead th{background:var(--surface);font-weight:600;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);}
+  table.mx td.old{font-weight:500;white-space:nowrap;}
+  table.mx td .arrow{color:var(--text-disabled);}
+  table.mx th:last-child,table.mx td:last-child{border-right:none;} table.mx tr:last-child td{border-bottom:none;}
+  .newpill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-primary);}
+  .newpill.lock{background:var(--surface);border-style:dashed;color:var(--text-tertiary);}
+
+  .move{background:var(--background);border:1px solid var(--border);border-left:3px solid var(--info-border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-sm);}
+  .move h4{margin:0 0 4px;font-size:var(--text-sm);font-weight:600;}
+  .move p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .move .ba{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;display:block;}
+
+  footer.foot{margin-top:30px;color:var(--text-tertiary);font-size:var(--text-xs);text-align:center;border-top:1px solid var(--border);padding-top:18px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1><span class="wordmark">Salt</span> — Manager IA, simplified &amp; natural</h1>
+      <p>The same base, reshaped for the person who <b>runs the floor</b> instead of watching the money.</p>
+    </div>
+  </header>
+
+  <div class="persona">
+    <div class="av">R</div>
+    <div>
+      <div class="nm">Rohit — Manager <span>· the operational spine, and the would-be champion</span></div>
+      <p>Runs the floor and approves the exceptions; does the heavy entry himself (GRN, returns); the most fluent across the whole app. <b>Interrupted constantly</b> — needs to resume mid-task. Benchmarks the app against fintech apps. His killer view is seeing <b>all counters live</b>; his daily friction is approvals that should be faster than a phone call. Has <b>everything except Settings</b>.</p>
+    </div>
+  </div>
+
+  <div class="base-note">
+    <b>Base = the Owner IA.</b> Same spine — one Home, five work areas (Sell · Buy · Stock · Money · Comply), type-to-find, numbers-first, offline + WhatsApp + en-IN, Hinglish labels. This page only shows <b>what changes for the manager</b>: Home becomes the live floor, Approvals graduate to a first-class Inbox, Setup is removed, and the five areas turn from <em>observational</em> (owner watches) into <em>operational</em> (manager acts).
+  </div>
+
+  <div class="section-label">Principles — what carries over, what changes</div>
+  <div class="grid g3" id="principles"></div>
+
+  <div class="section-label">The shape — Floor + Inbox + the same five areas (no Setup)</div>
+  <div class="hero">
+    <div class="rail" id="rail"></div>
+    <div class="home">
+      <div class="hwh"><span class="lbl">Home · “Floor”</span><span style="margin-left:auto;font-size:var(--text-xs);color:var(--text-tertiary);font-weight:500">what he sees first — what’s happening &amp; what needs me</span></div>
+      <div class="searchmock">⌕ &nbsp;Find a bill, party, item, or counter…<span class="k">⌘K</span></div>
+      <div class="clabel">Counters — live</div>
+      <div class="counters" id="counters"></div>
+      <div class="tiles" id="hometiles"></div>
+      <div class="quick">
+        <span class="qbtn primary">✓ Approve (4)</span>
+        <span class="qbtn">📦 New GRN</span>
+        <span class="qbtn">↩ Resume draft</span>
+        <span class="qbtn">⌨ Open a counter</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">The areas in detail — manager’s lens, and the delta from the owner</div>
+  <div id="areas"></div>
+
+  <div class="section-label">Coverage check — what the manager sees (12 of 13 modules; Settings is owner-only)</div>
+  <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
+
+  <div class="section-label">The big moves — how the base changed for this persona</div>
+  <div id="moves"></div>
+
+  <footer class="foot">
+    Built on the Owner IA base, reshaped from the manager persona (operational spine · approver · interrupted · everything-except-Settings) and the multi-counter wedge. A design proposal, not a spec.
+  </footer>
+</div>
+
+<script>
+const PRINCIPLES = [
+  {h:"Home is the floor, not the money", tag:["changed","Changed"], p:"His first question isn’t “how’s my money” — it’s “what’s happening right now and what needs me”. Live counters are the hero; the money pulse moves to the Money area."},
+  {h:"Approvals are a first-class Inbox", tag:["up","Elevated"], p:"He approves many times a day, mid-task, from his phone. For the owner this was one Home tile; for the manager it’s a primary surface — and it must beat a phone call, or it collapses into “haan de do”."},
+  {h:"He operates, he doesn’t configure", tag:["changed","Changed"], p:"No Setup area — that’s owner-only. He works within the limits the owner sets and escalates the exceptions. His only lever is approve / deny."},
+  {h:"Resume anything", tag:["new","New"], p:"Interrupted constantly, so half-done GRNs and parked bills surface on Home with “resume”, and every flow survives a break. The owner never needed this."},
+  {h:"Multi-counter real-time is the spine", tag:["new","New"], p:"A unit sold on Counter 2 is gone on Counter 1 instantly. This is his killer view — and exactly what Marg can’t do. It’s the centre of his Home, not a feature buried elsewhere."},
+  {h:"Money is tasks, within limits", tag:["changed","Changed"], p:"For the owner, Money is the emotional khaata and the credit decision. For the manager it’s “who do I chase today / record this payment” — bounded by the owner’s credit limits."},
+  {h:"Type-to-find · offline · WhatsApp · en-IN", tag:["kept","Inherited"], p:"Unchanged from the base: ⌘K and g+letter, numbers-first screens, billing that never stops offline, WhatsApp share/remind, Indian money format, Hinglish labels."},
+  {h:"Built to teach", tag:["new","New"], p:"He trains new cashiers. Consistent flows and visible shortcuts so a hire reaches billing speed in 2–3 days — the same stability the cashier needs, seen from the trainer’s side."},
+];
+
+const COUNTERS = [
+  {n:"C1 · Vijay", busy:true, a:"Augmentin 625 ×5 · 11-item bill"},
+  {n:"C2 · Sonu", busy:true, a:"Held bill resumed · ₹3,240"},
+  {n:"C3", busy:false, a:"idle"},
+];
+const TILES = [
+  {l:"Needs you", v:"4", s:"2 discounts · 1 void · 1 credit", dot:"d", attn:true},
+  {l:"OOS at counter", v:"3", s:"asks with no stock", dot:"w"},
+  {l:"GRNs to verify", v:"2", s:"arrived, not checked", dot:"w"},
+  {l:"Returns pending", v:"5", s:"to process", dot:"w"},
+  {l:"Low / reorder", v:"14 items", s:"order due", dot:"w"},
+  {l:"Resume", v:"3 drafts", s:"1 GRN · 2 parked bills", dot:"i"},
+];
+
+const RAIL = [
+  {id:"floor", k:"F", n:"Floor", hi:"Counters", active:true},
+  {id:"inbox", k:"I", n:"Inbox", hi:"Manzoori", badge:"4"},
+  {id:"sell", k:"C", n:"Sell", hi:"Bikri"},
+  {id:"buy", k:"B", n:"Buy", hi:"Kharid"},
+  {id:"stock", k:"S", n:"Stock", hi:"Maal"},
+  {id:"money", k:"M", n:"Money", hi:"Paisa"},
+  {id:"comply", k:"T", n:"Comply", hi:"Hisaab"},
+  {div:true},
+  {id:"setup", k:"🔒", n:"Setup", hi:"owner only", disabled:true},
+];
+
+const AREAS = [
+  {id:"floor", k:"F", n:"Floor", hi:"“Counters” — the home", ntag:["changed","reshaped"],
+   tag:"What’s happening right now, and what needs me.",
+   inside:["Live counters (real-time — who’s billing what, throughput, held bills)","Needs you (approvals summary)","What’s stuck (OOS at counter, GRNs to verify, returns to process, low stock)","Today’s throughput (bills, sales, returns)","Resume (drafts I was pulled away from)","Type-to-find everything (⌘K)"],
+   jtbd:"His first question — <b>“what’s happening and what needs me?”</b> — answered before he takes a step onto the floor.",
+   life:["spans all"], absorbs:["Activity (live feed)","Reports → operational dashboard","Approvals (summary)"],
+   delta:"Owner’s Home is the <b>money pulse</b> (“who do I chase”). The manager’s Home is the <b>live floor</b> (“what’s running, what’s stuck, what needs my nod”). Counters are the hero, not receivables."},
+
+  {id:"inbox", k:"I", n:"Inbox", hi:"“Manzoori” — approvals", ntag:["new","new area"],
+   tag:"Clear what needs my nod — faster than a phone call.",
+   inside:["Over-limit discounts","Voids / cancellations","Credit beyond the customer’s limit","GRNs & returns to authorise","Approve / deny in one tap (from the phone)"],
+   jtbd:"He approves <b>many times a day, mid-task</b>. If the Inbox is slower than shouting “haan de do” across the shop, the control collapses and the limits become decorative.",
+   life:["S7","S9","S15"], absorbs:["Approvals (elevated from a single Home tile)"],
+   delta:"For the owner this was one “Needs you” tile on Home. For the manager it is a <b>standing surface with a live count</b> — the thing he opens dozens of times a day."},
+
+  {id:"sell", k:"C", n:"Sell", hi:"“Bikri” — the counter", ntag:["changed","operational"],
+   tag:"Oversee every counter’s bills — and train the cashiers.",
+   inside:["Bill (counter: keyboard, FEFO, H1/X gate, split tender, offline)","All counters’ bills (not just his own)","Sales returns — process & authorise","OOS → substitute by salt","Sale numbers"],
+   jtbd:"Operates <em>and</em> oversees the counter — handles the credit and over-limit bills, resolves OOS, and <b>trains new cashiers here</b>.",
+   life:["S7","S8","S9","S15"], absorbs:["Counter","Sales / bills","Credit notes","Reports → Sales"],
+   delta:"Owner <b>reviews</b> sales; the manager <b>runs the floor</b> and sees <b>all</b> counters, not just one biller’s history."},
+
+  {id:"buy", k:"B", n:"Buy", hi:"“Kharid” — purchasing", ntag:["changed","his heaviest area"],
+   tag:"His heaviest daily work — order, receive, verify, return.",
+   inside:["Order (purchase orders, reorder suggestions)","Receive & verify GRN (challan vs boxes — batch, expiry, qty)","Scan invoice / OCR","Vendor schemes (check it was applied)","Purchase returns (debit notes)","Purchase numbers"],
+   jtbd:"The hands-on owner of procurement — and the area where <b>“resume my half-done GRN”</b> matters most (he’s interrupted mid-entry).",
+   life:["S4","S5","S15"], absorbs:["Purchases","GRN","Purchase orders","Vendor schemes","Debit notes","Reports → Purchase"],
+   delta:"Owner decides <b>what to buy and on what terms</b>; the manager does the <b>actual ordering, receiving and verification</b>."},
+
+  {id:"stock", k:"S", n:"Stock", hi:"“Maal” — goods & risk", ntag:["changed","operational"],
+   tag:"Act on stock health — return it, reorder it, fix the count.",
+   inside:["What’s here (stock + value)","Expiring soon — initiate the return","Reorder / out of stock — place the order","Dead / slow","Catalogue (items, prices, salts, substitutes)","Adjust / count / destroy / transfer"],
+   jtbd:"Owner <b>watches</b> the risk; the manager <b>acts</b> on it — initiates the supplier return, places the reorder, runs the physical count.",
+   life:["S6","S14"], absorbs:["Inventory (all)","Catalogue","Reports → Inventory"],
+   delta:"Same area, flipped from <b>observe</b> to <b>do</b>: every risk tile is an action he takes, not just a number he reads."},
+
+  {id:"money", k:"M", n:"Money", hi:"“Paisa” — collections", ntag:["changed","bounded"],
+   tag:"Today’s collection tasks — within the owner’s limits.",
+   inside:["Who to chase today (overdue)","Record a payment","WhatsApp reminder + pay-link (one tap)","Parties (view; limits are set by the owner)","Salesmen collections"],
+   jtbd:"Follows up collections <b>day to day</b>. He <b>can’t set credit limits</b> (the owner does) — he works within them and pushes exceptions to the Inbox.",
+   life:["S12"], absorbs:["Parties (read/operate)","Payments","Salesmen","Reports → Financial"],
+   delta:"Owner’s Money is the emotional <b>khaata</b> + the credit <b>decision</b>; the manager’s is the daily <b>chase</b>, bounded by the owner’s rules. Setting limits lives in the owner’s Setup."},
+
+  {id:"comply", k:"T", n:"Comply", hi:"“Hisaab” — tax & law", ntag:["changed","keep it clean"],
+   tag:"Keep the floor compliant — registers kept, flags clear.",
+   inside:["H1 / X register actually filled during the rush","Licence-expiry flags","GST data clean & complete for the accountant","Inspector-ready at a moment’s notice"],
+   jtbd:"He makes sure the <b>register is filled at peak</b> (the gap that hurts at inspection) and the data is clean — the <b>accountant files</b>, the manager keeps the floor honest.",
+   life:["S13"], absorbs:["GST & compliance (monitor)","H1/X register","Drug licences"],
+   delta:"Owner carries the <b>liability</b>, the accountant <b>files</b> — the manager makes sure it’s actually <b>captured on the floor</b> in the first place."},
+];
+
+const COVERAGE = [
+  ["Counter / Sales","Sell"],["Activity","Floor"],["Approvals","Inbox (elevated)"],
+  ["Reports","Floor + each area"],
+  ["Parties / Payments / Salesmen","Money"],
+  ["Inventory / Catalogue","Stock"],
+  ["Purchases / GRN","Buy"],
+  ["GST & compliance + licences","Comply"],
+  ["Settings","— not accessible (owner-only)"],
+];
+
+const MOVES = [
+  {h:"Home flips: money-pulse → floor-command", p:"The owner opens to “how am I doing / who do I chase”. The manager opens to “what’s running and what needs me”, with the live multi-counter view as the hero — the one screen Marg structurally can’t produce.", ba:"landing: money pulse → live floor"},
+  {h:"Approvals graduate to a first-class Inbox", p:"From a single “Needs you” tile (owner) to a standing surface with a live count (manager). It must be faster than a phone call, or cashiers route around it and the discount limits stop meaning anything.", ba:"Home tile → Inbox (g i), live badge"},
+  {h:"Setup disappears", p:"He has no settings access — he operates inside the owner’s configuration. The boundary is visible: he approves exceptions but cannot change the limits, roles or print/format that produced them.", ba:"7 areas → 6 (Setup removed, shown locked)"},
+  {h:"The five areas turn operational", p:"Sell, Buy, Stock, Money and Comply keep the same buckets but flip from <em>observe</em> (owner) to <em>do</em> (manager): he runs all counters, owns GRN, initiates returns, chases collections, and keeps the registers — Buy being his heaviest daily work.", ba:"observational → operational"},
+  {h:"Resume-anything becomes first-class", p:"Because he’s interrupted constantly, drafts (half-done GRN, parked bills) surface on Home with one-tap resume, and every flow is built to survive a break. New need the owner didn’t have.", ba:"+ resumable drafts on Home"},
+  {h:"Money is bounded, not owned", p:"He chases and records, but the credit decision and the limits stay with the owner. The area shows balances and collection tasks; changing the rules routes to the owner.", ba:"khaata + decision → chase within limits"},
+];
+
+/* render */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+$("#principles").innerHTML = PRINCIPLES.map((p,i)=>`<div class="card"><h3><span class="num">${String(i+1).padStart(2,'0')}</span>${p.h} <span class="ptag ${p.tag[0]}">${p.tag[1]}</span></h3><p>${p.p}</p></div>`).join("");
+
+$("#counters").innerHTML = COUNTERS.map(c=>`
+  <div class="counter ${c.busy?'busy':''}">
+    <div class="cn">${c.busy?'<span class="live"></span>':''}${c.n}</div>
+    <div class="cu">${c.busy?'billing':'idle'}</div>
+    <div class="ca">${c.a}</div>
+  </div>`).join("");
+
+$("#hometiles").innerHTML = TILES.map(t=>`
+  <div class="tile ${t.attn?'attn':''}">
+    <div class="tl">${t.dot?`<span class="dot ${t.dot}"></span>`:''}${t.l}</div>
+    <div class="tv">${t.v}</div><div class="ts">${t.s}</div>
+  </div>`).join("");
+
+$("#rail").innerHTML = `<div class="rh">Navigation (g + letter)</div>` + RAIL.map(r=>{
+  if(r.div) return `<div class="raildiv"></div>`;
+  const right = r.badge ? `<span class="badge-n">${r.badge}</span>` : `<span class="rhi">${r.hi}</span>`;
+  return `<div class="railitem ${r.active?'active':''} ${r.disabled?'disabled':''}" data-go="${r.id}"><span class="kbd">${r.k}</span><span class="rn">${r.n}</span>${right}</div>`;
+}).join("");
+
+$("#areas").innerHTML = AREAS.map(a=>`
+  <div class="area" id="area-${a.id}">
+    <div class="ah"><span class="ak">${a.k}</span><span class="an">${a.n}</span><span class="ahi">${a.hi}</span><span class="ntag ${a.ntag[0]}">${a.ntag[1]}</span></div>
+    <p class="atag">${a.tag}</p>
+    <div class="arow"><span class="arl">Inside</span>${a.inside.map(i=>`<span class="chip">${i}</span>`).join("")}</div>
+    <div class="jtbd">${a.jtbd}</div>
+    <div class="arow" style="margin-top:10px"><span class="arl">Lifecycle</span>${a.life.map(l=>`<span class="chip lc">${l}</span>`).join("")}<span class="arl" style="margin-left:8px">Absorbs</span>${a.absorbs.map(x=>`<span class="chip ab">${x}</span>`).join("")}</div>
+    <div class="delta">↔ <b>vs owner</b> — ${a.delta}</div>
+  </div>`).join("");
+
+$("#coverage").innerHTML = `<thead><tr><th>Today’s module</th><th></th><th>Manager’s home for it</th></tr></thead><tbody>` +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('—')?'lock':''}">${n}</span></td></tr>`).join("") +
+  `</tbody>`;
+
+$("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");
+
+$("#rail").addEventListener("click",e=>{
+  const it=e.target.closest(".railitem"); if(!it||it.classList.contains("disabled")) return;
+  const id=it.getAttribute("data-go"); const el=$("#area-"+id); if(!el) return;
+  $$(".railitem").forEach(r=>r.classList.toggle("active", r===it));
+  el.scrollIntoView({behavior:"smooth",block:"start"});
+  el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+});
+</script>
+</body>
+</html>

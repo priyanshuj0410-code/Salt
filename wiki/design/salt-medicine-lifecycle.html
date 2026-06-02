@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Medicine Lifecycle — Build &amp; Market Coverage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px; height:46px; border-radius:var(--radius-lg); flex:none; background:var(--action-primary); color:var(--action-primary-text); display:grid; place-items:center; font-family:var(--font-display); font-weight:600; font-size:24px; box-shadow:var(--shadow-sm);}
+  header h1{margin:0; font-size:21px; font-weight:600; letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0; color:var(--text-secondary); font-size:var(--text-sm);}
+  .intro{color:var(--text-secondary); font-size:var(--text-sm); max-width:940px; margin:14px 0 18px; line-height:1.6;}
+
+  .legend{background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm); margin-bottom:16px;}
+  .legend .lh{font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--text-tertiary); font-weight:600; margin-bottom:10px;}
+  .pchips{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .pchip{display:inline-flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--border); border-radius:30px; padding:5px 12px 5px 5px; cursor:pointer; font-size:var(--text-sm); color:var(--text-primary);}
+  .pchip:hover{border-color:var(--border-strong);}
+  .pchip.active{background:var(--action-primary); border-color:var(--action-primary); color:var(--action-primary-text);}
+  .pchip.active .av{background:var(--background); color:var(--action-primary);}
+  .pchip .av{width:24px; height:24px; border-radius:50%; background:var(--action-primary); color:#fff; display:grid; place-items:center; font-family:var(--font-display); font-size:12px; flex:none;}
+  .pchip .pall{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:13px;background:var(--surface-2);border:1px solid var(--border);}
+  .cov-toggle{display:inline-flex; align-items:center; gap:8px; cursor:pointer; user-select:none; font-size:var(--text-sm); color:var(--text-secondary); margin-left:auto; white-space:nowrap;}
+  .cov-toggle input{accent-color:var(--action-primary); width:15px; height:15px;}
+  .keyrow{display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; padding-top:11px; border-top:1px solid var(--divider); align-items:center;}
+  .keyrow .kl{font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-tertiary); font-weight:600;}
+
+  .badge{font-size:10px; font-weight:600; padding:2px 8px; border-radius:var(--radius-sm); text-transform:uppercase; letter-spacing:.3px; border:1px solid; white-space:nowrap; display:inline-block;}
+  .b-built{color:var(--success); background:var(--success-bg); border-color:var(--success-border);}
+  .b-partial{color:var(--warning); background:var(--warning-bg); border-color:var(--warning-border);}
+  .b-planned{color:var(--info); background:var(--info-bg); border-color:var(--info-border);}
+  .b-none{color:var(--text-tertiary); background:var(--surface-2); border-color:var(--border);}
+  .b-ahead{color:var(--success); background:var(--success-bg); border-color:var(--success-border);}
+  .b-atpar{color:var(--text-secondary); background:var(--surface-2); border-color:var(--border);}
+  .b-behind{color:var(--danger); background:var(--danger-bg); border-color:var(--danger-border);}
+  .b-gap{color:var(--info); background:var(--info-bg); border-color:var(--info-border);}
+
+  .section-label{font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.6px; color:var(--text-tertiary); font-weight:600; margin:26px 0 12px;}
+
+  /* cross-cutting */
+  .xcard{background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm); overflow:hidden;}
+  .xrow{display:grid; grid-template-columns:200px 110px 1fr; gap:14px; padding:12px 16px; border-bottom:1px solid var(--divider); align-items:start;}
+  .xrow:last-child{border-bottom:none;}
+  .xrow .xn{font-weight:600; font-size:var(--text-sm);}
+  .xrow .xbadges{display:flex; gap:5px; flex-wrap:wrap;}
+  .xrow .xnote{color:var(--text-secondary); font-size:var(--text-sm); line-height:1.5;}
+  @media (max-width:740px){.xrow{grid-template-columns:1fr;}}
+
+  /* phases + stages */
+  .phase-h{display:flex; align-items:baseline; gap:11px; margin:26px 0 12px; flex-wrap:wrap;}
+  .phase-h .pn{font-family:var(--font-mono); font-size:var(--text-xs); color:var(--text-inverse); background:var(--action-primary); border-radius:var(--radius-sm); padding:2px 8px;}
+  .phase-h h2{margin:0; font-size:var(--text-lg); font-weight:600;}
+  .phase-h .cap{color:var(--text-tertiary); font-size:var(--text-xs);}
+  .phase-h .tag{font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; padding:2px 8px; border-radius:var(--radius-sm); border:1px solid;}
+  .tag.parallel{color:var(--info); background:var(--info-bg); border-color:var(--info-border);}
+  .tag.reverse{color:var(--warning); background:var(--warning-bg); border-color:var(--warning-border);}
+
+  .conn{text-align:center; color:var(--border-strong); font-size:15px; margin:3px 0;}
+  .stage{background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:15px 17px; box-shadow:var(--shadow-sm); transition:opacity .15s;}
+  .stage.ext{background:var(--surface); border-style:dashed; border-color:var(--border-strong);}
+  .stage.dim{opacity:.32;}
+  .stage .sh{display:flex; align-items:flex-start; gap:13px;}
+  .snum{width:30px; height:30px; border-radius:var(--radius-md); flex:none; background:var(--action-primary); color:#fff; display:grid; place-items:center; font-family:var(--font-mono); font-size:13px;}
+  .stage.ext .snum{background:var(--surface-2); color:var(--text-tertiary); border:1px solid var(--border);}
+  .stage .stitle{font-size:var(--text-base); font-weight:600; line-height:1.3; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .stage .upstream{font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; color:var(--text-disabled);}
+  .covbadges{display:none; gap:5px; margin-left:auto;}
+  .show-cov .covbadges{display:inline-flex;}
+  .objective{margin:4px 0 0; color:var(--text-secondary); font-size:var(--text-sm); line-height:1.55;}
+  .objective .ol{font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-tertiary); font-weight:600; margin-right:6px;}
+  .actors{margin-top:12px; padding-left:43px;}
+  .actors .albl{font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-tertiary); font-weight:600; margin-bottom:7px;}
+  .ext-actors{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:11px;}
+  .ext-chip{font-size:var(--text-xs); padding:3px 9px; border-radius:30px; background:var(--surface); border:1px dashed var(--border-strong); color:var(--text-tertiary);}
+  .lanes{display:flex; flex-direction:column; gap:7px;}
+  .lane{display:flex; align-items:baseline; gap:10px; padding:6px 8px; border-radius:var(--radius-md); border:1px solid transparent;}
+  .lane .av{width:22px; height:22px; border-radius:50%; background:var(--action-primary); color:#fff; display:grid; place-items:center; font-family:var(--font-display); font-size:11px; flex:none; align-self:flex-start;}
+  .lane .lrole{font-weight:600; font-size:var(--text-sm); white-space:nowrap; min-width:104px;}
+  .lane .lcap{color:var(--text-secondary); font-size:var(--text-sm); line-height:1.5;}
+  .lane.hl{background:var(--surface-2); border-color:var(--border);}
+  .lane.fade{opacity:.4;}
+  .patient-chip{font-size:var(--text-sm); color:var(--text-secondary);}
+
+  /* coverage blocks */
+  .cov{display:none; grid-template-columns:1fr 1fr; gap:11px; margin-top:13px; padding-left:43px;}
+  .show-cov .cov{display:grid;}
+  @media (max-width:740px){.cov{grid-template-columns:1fr; padding-left:0;} .actors{padding-left:0;} .lane .lrole{min-width:0;}}
+  .covbox{border:1px solid var(--border); border-radius:var(--radius-lg); padding:11px 13px; background:var(--surface);}
+  .covbox .cvh{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .covbox .cvl{font-size:10px; text-transform:uppercase; letter-spacing:.5px; color:var(--text-tertiary); font-weight:600;}
+  .covbox ul{margin:0; padding:0; list-style:none;}
+  .covbox li{position:relative; padding:4px 0 4px 16px; color:var(--text-secondary); font-size:var(--text-sm); line-height:1.5;}
+  .covbox li::before{content:""; position:absolute; left:3px; top:11px; width:4px; height:4px; border-radius:50%; background:var(--border-strong);}
+  .covbox .note{margin:0; color:var(--text-secondary); font-size:var(--text-sm); line-height:1.55;}
+  .covbox b{color:var(--text-primary); font-weight:600;}
+
+  /* matrix */
+  .matrix-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius-xl); box-shadow:var(--shadow-sm);}
+  table.mx{width:100%; border-collapse:separate; border-spacing:0; background:var(--background); min-width:820px;}
+  table.mx th, table.mx td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--divider); border-right:1px solid var(--divider); font-size:var(--text-xs); vertical-align:top; line-height:1.45;}
+  table.mx thead th{background:var(--surface); font-weight:600; color:var(--text-primary); font-size:var(--text-sm); position:sticky; top:0;}
+  table.mx td.st{font-weight:600; color:var(--text-primary); white-space:nowrap;}
+  table.mx td .sn{font-family:var(--font-mono); color:var(--text-tertiary); margin-right:6px;}
+  table.mx th:last-child, table.mx td:last-child{border-right:none;}
+  table.mx tr:last-child td{border-bottom:none;}
+  table.mx .gapcell{color:var(--text-secondary);}
+
+  /* persona summary */
+  .sum{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:12px;}
+  .scard{background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm);}
+  .scard .shd{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .scard .av{width:30px;height:30px;border-radius:50%;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:15px;flex:none;}
+  .scard .nm{font-weight:600;} .scard .rl{font-size:var(--text-xs); color:var(--text-tertiary);}
+  .scard p{margin:0 0 10px; color:var(--text-secondary); font-size:var(--text-sm); line-height:1.55;}
+  .stagechips{display:flex; gap:5px; flex-wrap:wrap;}
+  .stagechips .sc{font-family:var(--font-mono); font-size:10px; padding:2px 7px; border-radius:var(--radius-sm); background:var(--surface-2); border:1px solid var(--border); color:var(--text-secondary);}
+
+  footer.foot{margin-top:32px; color:var(--text-tertiary); font-size:var(--text-xs); text-align:center; border-top:1px solid var(--border); padding-top:18px; line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">℞</div>
+    <div>
+      <h1>Medicine Lifecycle — <span class="wordmark">Build &amp; Market Coverage</span></h1>
+      <p>The manufacture→consumption journey, now overlaid with <b>what Salt has built</b> and <b>how the incumbents compare</b>.</p>
+    </div>
+  </header>
+
+  <p class="intro">
+    Same 15-stage lifecycle as before, with two layers added per stage: <b>Salt — built</b> (the as-built capability + status) and <b>Market — incumbents</b> (how Marg / GoFrugal / RetailGraph / eVitalRx / Tally handle it, and Salt's stance). Read the spine as the medicine's journey; read the coverage to see <b>where Salt leads, lags, or sits on an open gap</b>. Toggle the overlay off to return to the clean lifecycle.
+  </p>
+
+  <div class="legend">
+    <div class="pchips" id="pchips"></div>
+    <div class="keyrow">
+      <span class="kl">Salt status</span>
+      <span class="badge b-built">Built</span><span class="badge b-partial">Partial</span><span class="badge b-planned">Planned</span><span class="badge b-none">Not built</span>
+      <span class="kl" style="margin-left:10px">Market stance</span>
+      <span class="badge b-ahead">Ahead</span><span class="badge b-atpar">At par</span><span class="badge b-behind">Behind</span><span class="badge b-gap">Open gap (nobody)</span>
+      <label class="cov-toggle"><input type="checkbox" id="covToggle" checked> Show build + market coverage</label>
+    </div>
+  </div>
+
+  <div class="section-label">Cross-cutting — capabilities that span the whole lifecycle (where the war is actually won)</div>
+  <div class="xcard" id="xcutting"></div>
+
+  <div id="lifecycle"></div>
+
+  <div class="section-label">Coverage at a glance — Salt status, market stance, and the gap per stage</div>
+  <div class="matrix-wrap"><table class="mx" id="mx"></table></div>
+
+  <div class="section-label">Persona involvement — each one's through-line (click to trace)</div>
+  <div class="sum" id="summary"></div>
+
+  <footer class="foot">
+    Salt capability grounded in the live repo (modules, RPCs, migrations 0001–0057); market positioning from the competitive research (Marg · GoFrugal · RetailGraph/SwilERP · eVitalRx · Tally+TDL).<br/>
+    Styled with the Salt design system. Pairs with the IA systems map and the persona deck.
+  </footer>
+</div>
+
+<script>
+/* ============================================================ DATA ============================================================ */
+const PERSONAS = [
+  {id:"owner", ini:"S", name:"Santosh", role:"Owner", line:"Capital, credit & risk owner — decides what to buy, underwrites every credit call, carries compliance liability and the expiry loss."},
+  {id:"manager", ini:"R", name:"Rohit", role:"Manager", line:"The operational spine — ordering, receiving, approvals, collection follow-up, returns. Touches the most stages."},
+  {id:"accountant", ini:"B", name:"Banwari", role:"Accountant", line:"The money truth — receivables, payables, GST and tax on every reversal."},
+  {id:"pharmacist", ini:"A", name:"Anjali", role:"Pharmacist", line:"The legal & clinical conscience — storage, the dispensing gate, counsel, the H1/X register, expiry/recall."},
+  {id:"cashier", ini:"V", name:"Vijay", role:"Cashier", line:"The billing moment — one stage, highest frequency: a correct, compliant invoice and payment capture."},
+  {id:"shopsales", ini:"D", name:"Deepak", role:"Shop salesman", line:"Product & relationship — shelving, order-taking, substitution/upsell, near-expiry push at the counter."},
+  {id:"fieldsales", ini:"K", name:"Karan", role:"Field salesman", line:"The road — books orders, delivers, collects cash, carries returns. The shop's reach beyond its walls."},
+];
+
+const XCUT = [
+  {n:"Offline-first + cloud sync", status:["planned","Planned"], stance:["gap","Open gap"],
+   note:"<b>The #1 structural gap in the market.</b> Desktop tools (Marg, RetailGraph, Tally) are offline; cloud tools (eVitalRx) halt when the internet drops; <b>nobody does offline-first + sync</b>. Salt has the design (IndexedDB read-cache + RPC write-outbox) but not the shipped substrate. This is the strategic wedge."},
+  {n:"Multi-counter real-time", status:["partial","Partial"], stance:["ahead","Ahead (in progress)"],
+   note:"Marg is single-machine; LAN sync is fragile (dealers run two un-synced installs). Salt has live stock, an activity feed and presence built; full live sync / counter handoff is still to come. The moat incumbents can't easily copy."},
+  {n:"Modern keyboard-first UI + density", status:["built","Built"], stance:["ahead","Ahead"],
+   note:"Marg's most-criticised weakness (Windows-XP-era UI, English-only). Salt's clearest present-day edge — a fast, keyboard-first, two-density design system that tier-2/3 staff can learn in days."},
+  {n:"WhatsApp sharing", status:["built","Built"], stance:["atpar","At par"],
+   note:"Invoice / statement / reminder over WhatsApp is table stakes now (eVitalRx, GoFrugal, newer Marg). Salt has the send seam built; parity, not edge."},
+  {n:"Multi-store / chain", status:["partial","Partial"], stance:["atpar","At par"],
+   note:"shops + members + inter-shop transfers exist but are thinly surfaced (most screens are org-level). GoFrugal / RetailGraph are strong here and charge per store — Salt's flat price is the angle once it's surfaced."},
+];
+
+const PHASES = [
+  {n:"1", name:"Manufacture & release", cap:"Upstream — before it reaches the trade.", tag:null},
+  {n:"2", name:"Procurement into the shop", cap:"Our shop buys and takes stock in.", tag:null},
+  {n:"3", name:"The sale", cap:"Wholesale to a chemist, or retail to a patient.", tag:null},
+  {n:"4", name:"Consumption", cap:"The reason the chain exists.", tag:null},
+  {n:"5", name:"Settle & comply", cap:"Runs in parallel with every sale.", tag:"parallel"},
+  {n:"6", name:"Reverse flows", cap:"Goods and value loop back up the chain.", tag:"reverse"},
+];
+
+const STAGES = [
+  { n:1, phase:0, ours:false, title:"Manufacturing & batch creation",
+    obj:"Produce a safe batch at scale and stamp the identity that follows it for life — batch number, mfg & expiry dates, MRP (GST-inclusive) on the pack.",
+    ext:["Manufacturer","Production & QA"], roles:[],
+    salt:["partial", ["Catalogue + crowd-sourced master catalogue: master_items, brand_aliases, master_price_stats (the data moat)","No large pre-seeded drug DB — built up from real GRN data instead"]],
+    market:["behind","eVitalRx ships 4 lakh+ drugs (salt, generics, images); GoFrugal 50k+ (HSN/GST/pack); Marg proprietary. Salt's crowd-sourced approach is more defensible long-term but small today."] },
+  { n:2, phase:0, ours:false, title:"Quality release & statutory labelling",
+    obj:"Certify the batch and apply the labelling the chain depends on — molecule/salt, schedule (H/H1/X/OTC), HSN, batch, mfg/exp, MRP, licence.",
+    ext:["Manufacturer QA","CDSCO / state FDA"], roles:[],
+    salt:["built", ["items.salt / hsn / gst_rate / schedule (OTC/H/H1/X) captured","gst_rate_schedule — GST rate by HSN, effective-dated"]],
+    market:["atpar","Every major tool captures schedule + HSN + GST rate. Table stakes — neither edge nor gap."] },
+  { n:3, phase:0, ours:false, title:"Primary distribution (Company → C&F → stockist)",
+    obj:"Position stock regionally and pass custody down the chain; raise the primary invoice; preserve the cold chain. This is who our shop buys from.",
+    ext:["C&F agent","Distributor / stockist","Transporter"], roles:[],
+    salt:["planned", ["Vendor master (ledgers) + ~70 seeded known_vendors","Electronic B2B ordering: b2b_connections + ondc_listings are stubs (ADR: watch-and-prototype)"]],
+    market:["behind","Marg ERP-to-ERP ordering; RetailGraph ↔ Pharmarack/iOrder; eVitalRx eVitalSupply + first on ONDC. Ordering is distributor-mediated; ONDC pharma is nascent."] },
+
+  { n:4, phase:1, ours:true, title:"Demand planning & procurement",
+    obj:"Buy the right items in the right quantity on the right terms — avoid stockout and dead stock, capture schemes, plan cash against credit terms.",
+    ext:["Distributor / stockist"], roles:[
+      {id:"owner", cap:"Decides what and how much to buy, negotiates schemes & credit terms, commits the capital."},
+      {id:"manager", cap:"Runs the ordering and vendor relationships; reorders on what is moving or short."}],
+    salt:["built", ["Purchase orders, Reorder suggestions (auto-PO), Vendor schemes","No AI demand forecasting yet"]],
+    market:["atpar","GoFrugal / RetailGraph are strong on PO. AI forecasting / auto-replenishment (GoFrugal, eVitalRx Sahaai) is ahead of Salt."] },
+  { n:5, phase:1, ours:true, title:"Goods receipt & inward verification",
+    obj:"Confirm goods match the invoice — qty, batch, expiry, scheme free-goods, price — accept into stock, and flag short/damaged supply immediately.",
+    ext:["Transporter","Warehouse hands"], roles:[
+      {id:"manager", cap:"Checks the challan against the boxes — batch, expiry, qty — records the inward."},
+      {id:"owner", cap:"Spot-checks high-value lines and resolves discrepancies."}],
+    salt:["built", ["receive_purchase: scheme free-goods, multi-rate GST, trade discount → effective cost + ITC","OCR invoice scan (purchase_ocr_jobs) + new-item review"]],
+    market:["ahead","Marg's AI purchase-invoice OCR is the benchmark and most others lack it — Salt matches it, and models scheme/effective-cost economics few get right."] },
+  { n:6, phase:1, ours:true, title:"Storage, shelving & cold chain",
+    obj:"Store so every item is findable and FEFO can be enforced — refrigerate cold-chain items and segregate controlled (Schedule X) stock under lock.",
+    ext:["Warehouse hands"], roles:[
+      {id:"shopsales", cap:"Places and remembers stock on the rack — the physical index of the shop."},
+      {id:"pharmacist", cap:"Oversees cold-chain and controlled-drug storage."}],
+    salt:["partial", ["batches + cold_chain flag (0033); stock_movements ledger","Rack/bin location only kept in source jsonb; no IoT temperature log"]],
+    market:["gap","Rack no. exists in Marg; IoT cold-chain temperature monitoring is missing from every mainstream Indian pharma ERP — an open gap."] },
+
+  { n:7, phase:2, ours:true, title:"Order capture (demand taken)",
+    obj:"Capture demand accurately and commit only what's safe — check the customer's outstanding/credit before booking, apply the right price and scheme.",
+    ext:["Retail chemist","Doctor (Rx)","Patient"], roles:[
+      {id:"fieldsales", cap:"Books orders on the beat, pitches schemes, checks the chemist is within credit limit."},
+      {id:"shopsales", cap:"Takes counter / phone / WhatsApp orders, finds stock, offers a substitute to keep the sale."},
+      {id:"manager", cap:"Approves large orders or credit beyond the set limit."}],
+    salt:["built", ["Counter: create_sales_invoice, salt search, ranked substitutes, parked bills, credit check (party_credit)","Field order capture (the field salesman) — not built; no mobile app"]],
+    market:["ahead","Modern keyboard POS beats Marg; eVitalRx is modern but cloud-only. Field/B2B order capture for the wholesaler's salesman is an open gap everywhere."] },
+  { n:8, phase:2, ours:true, title:"Clinical & regulatory dispensing gate",
+    obj:"Ensure the dispense is lawful and correct — validate the Rx for H/H1, record the H1/X register, confirm molecule & dose, substitute by salt when needed, never let expired/wrong stock out.",
+    ext:["Doctor (Rx)"], roles:[
+      {id:"pharmacist", cap:"The legal gatekeeper: Rx validation, schedule compliance, register entry, substitution, FEFO/expiry check. Her defining stage."}],
+    salt:["built", ["enforce_h1_gate (hard block) + record_h1_entry + h1_register","Schedule flags, doctors/patients masters, inspector-ready PDF"]],
+    market:["ahead","GoFrugal is the only incumbent that blocks the sale on missing H1 fields; others rely on memory. Salt enforces at the flow level — matches the benchmark, beats the rest."] },
+  { n:9, phase:2, ours:true, title:"Pricing, billing & payment",
+    obj:"Produce a compliant tax invoice (batch, expiry, GST, GSTIN/licence), pick the right batch (FEFO), apply discount within authority, settle cash/credit/UPI, update the ledger.",
+    ext:["Retail chemist","Patient"], roles:[
+      {id:"cashier", cap:"Fast, accurate billing; picks the batch; prints."},
+      {id:"shopsales", cap:"Quotes price & scheme; applies discount within his limit."},
+      {id:"manager", cap:"Authorises over-limit discount or a credit sale."},
+      {id:"accountant", cap:"Just after: records the receivable and reconciles takings."}],
+    salt:["built", ["Billing + FEFO + MRP-inclusive GST back-calc, sale_tenders (split), invoice_series, print templates, discount limits + approvals","Offline billing — designed, not shipped (see cross-cutting)"]],
+    market:["ahead","All do batch+FEFO+MRP-inclusive billing. Salt's edge is UX + the discount-approval flow; the decisive axis here is offline (the wedge, above)."] },
+  { n:10, phase:2, ours:true, title:"Fulfilment & delivery",
+    obj:"Get the right goods to the right customer and close the exchange — deliver, collect payment or record credit with a due date, get acknowledgement.",
+    ext:["Retail chemist","Delivery hands","Patient"], roles:[
+      {id:"fieldsales", cap:"Delivers on the beat and collects cash/cheque/UPI — the face of the receivable."},
+      {id:"shopsales", cap:"Hands over counter pickups and packs the order."}],
+    salt:["none", ["Invoice print + WhatsApp share only","No dispatch / delivery management or delivery app"]],
+    market:["gap","Delivery / dispatch management is light across pharma ERPs — an opening, not a deficit against a strong incumbent."] },
+
+  { n:11, phase:3, ours:true, title:"Dispensed to the consumer & consumed",
+    obj:"The consumer gets the correct medicine with guidance and takes it as intended. For a wholesaler this happens at the retail chemist — itself a shop with these same seven roles.",
+    ext:["Patient / consumer","Retail chemist"], roles:[
+      {id:"pharmacist", cap:"Counsels on dosage, usage and interactions at the retail tier."}], patient:true,
+    salt:["partial", ["Print + WhatsApp invoice share","No sales-side Rx image capture; no ABHA / ABDM linkage"]],
+    market:["behind","eVitalRx is ABHA + NHA-approved; Marg supports ABHA. Linking dispensing to ABHA drives hospital-adjacent referral traffic — Salt has none yet."] },
+
+  { n:12, phase:4, ours:true, title:"Collections & financial settlement",
+    obj:"Convert credit sales to cash within terms, pay vendors on time, keep the ledger the single truth — manage the cash cycle the business runs on.",
+    ext:["Retail chemist","Distributor / stockist"], roles:[
+      {id:"fieldsales", cap:"Collects from chemists on the beat."},
+      {id:"owner", cap:"Sets credit, chases big overdues, manages cash flow & vendor payments."},
+      {id:"accountant", cap:"Records receipts/payments, allocates against bills, reconciles."},
+      {id:"manager", cap:"Follows up collections day to day."}],
+    salt:["built", ["Payments: record_payment + allocations, receivables/payables aging, salesman attribution, cash_drawer","Razorpay links + WhatsApp reminders; bank reconciliation planned"]],
+    market:["atpar","Payments + WhatsApp reminders are common. Salt's integrated aging + Razorpay link + salesman attribution is competitive, not unique."] },
+  { n:13, phase:4, ours:true, title:"Statutory compliance & filing",
+    obj:"Stay legal and inspection-ready — file GST (outward, inward, ITC), keep the H1/X register and licences current, reconcile input credit against suppliers' filings.",
+    ext:["Drug inspector","GST / tax dept"], roles:[
+      {id:"accountant", cap:"GST returns, ITC reconciliation, books ready for audit."},
+      {id:"pharmacist", cap:"H1/X register upkeep and drug-law compliance."},
+      {id:"owner", cap:"Licence currency and overall liability — the inspector's questions land on him."},
+      {id:"manager", cap:"Ensures the registers are actually kept during the rush."}],
+    salt:["built", ["GSTR-1/3B, liability, ITC register, Tally XML, HSN summary, H1/X register, invoice series, drug_licenses","GSTR-2B auto-reconciliation — tables exist, matching UI planned"]],
+    market:["gap","GSTR-1/3B is everywhere, but GSTR-2B reconciliation, ITC-reversal-on-expiry and drug-licence alerts are gaps across ALL competitors. Salt already has licence alerts + ITC reversal and is positioned to be first on GSTR-2B."] },
+
+  { n:14, phase:5, ours:true, title:"Near-expiry & expiry handling",
+    obj:"Turn a looming loss into a recovery — surface near-expiry early to push or return it; for expired stock, segregate, destroy safely, reverse the input tax, keep it away from patients.",
+    ext:["Distributor / stockist"], roles:[
+      {id:"owner", cap:"It is his money — pushes a scheme or a return to avoid the write-off."},
+      {id:"pharmacist", cap:"Pulls expired stock, segregates it, oversees safe destruction."},
+      {id:"manager", cap:"Initiates supplier returns within the return window."},
+      {id:"shopsales", cap:"Prioritises near-expiry batches at the point of sale."}],
+    salt:["built", ["v_near_expiry, dead-stock, turnover views","Expiry destruction + ITC reversal (§17(5)); near-expiry → debit-note return"]],
+    market:["ahead","Near-expiry alerts exist (Marg/GoFrugal 6m/3m, eVitalRx). ITC-reversal automation on expired stock is a gap everywhere — Salt does it. (Proactive surfacing at billing is still partial.)"] },
+  { n:15, phase:5, ours:true, title:"Returns & recalls (reverse logistics)",
+    obj:"Move goods back up the chain correctly — customer returns (credit notes), supplier returns (debit notes), re-stock or claim, batch recalls with full traceability, tax reversed correctly.",
+    ext:["Manufacturer (recall)","Distributor / stockist","Retail chemist"], roles:[
+      {id:"manager", cap:"Raises debit notes to vendors, processes credit notes to customers."},
+      {id:"pharmacist", cap:"Identifies recalled batches and traces where they went."},
+      {id:"accountant", cap:"Credit/debit-note accounting and the tax reversal."},
+      {id:"fieldsales", cap:"Carries returns back from chemists on the beat."}],
+    salt:["built", ["Returns engine: credit/debit notes, partial-return recomputation on effective-cost, cumulative rounding","No dedicated recall workflow (batch traceability via stock_movements)"]],
+    market:["ahead","Partial-return scheme recomputation is weak across the market — Salt is ahead. A first-class batch-recall workflow is an open gap everywhere."] },
+];
+
+/* ============================================================ RENDER ============================================================ */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const P = Object.fromEntries(PERSONAS.map(p=>[p.id,p]));
+const SCLASS={built:"b-built",partial:"b-partial",planned:"b-planned",none:"b-none"};
+const MCLASS={ahead:"b-ahead",atpar:"b-atpar",behind:"b-behind",gap:"b-gap"};
+const SLABEL={built:"Built",partial:"Partial",planned:"Planned",none:"Not built"};
+const MLABEL={ahead:"Ahead",atpar:"At par",behind:"Behind",gap:"Open gap"};
+let activeRole=null;
+
+function renderLegend(){
+  $("#pchips").innerHTML =
+    `<button class="pchip" data-role="__all"><span class="pall">⟲</span>All actors</button>` +
+    PERSONAS.map(p=>`<button class="pchip" data-role="${p.id}"><span class="av">${p.ini}</span>${p.role}</button>`).join("");
+}
+
+function renderXcut(){
+  $("#xcutting").innerHTML = XCUT.map(x=>`
+    <div class="xrow">
+      <div class="xn">${x.n}</div>
+      <div class="xbadges"><span class="badge ${SCLASS[x.status[0]]}">${x.status[1]}</span><span class="badge ${MCLASS[x.stance[0]]}">${x.stance[1]}</span></div>
+      <div class="xnote">${x.note}</div>
+    </div>`).join("");
+}
+
+function laneHTML(r){ const p=P[r.id];
+  return `<div class="lane" data-role="${r.id}"><span class="av">${p.ini}</span><span class="lrole">${p.role}</span><span class="lcap">${r.cap}</span></div>`; }
+
+function stageHTML(s){
+  const ext = s.ext.map(a=>`<span class="ext-chip">${a}</span>`).join("");
+  const lanes = s.roles.map(laneHTML).join("");
+  const patient = s.patient ? `<div class="lane"><span class="patient-chip">🧍 <b>Patient / consumer</b> (external) — receives and consumes.</span></div>` : "";
+  const roleIds = s.roles.map(r=>r.id).join(" ");
+  const actorsBlock = (s.roles.length || s.patient)
+    ? `<div class="actors">${ext?`<div class="albl">Also in the room</div><div class="ext-actors">${ext}</div>`:""}<div class="albl">Our personas — and in what capacity</div><div class="lanes">${lanes}${patient}</div></div>`
+    : `<div class="actors"><div class="albl">Actors (all external — no shop personas)</div><div class="ext-actors">${ext}</div></div>`;
+  const cov = `
+    <div class="cov">
+      <div class="covbox"><div class="cvh"><span class="cvl">Salt — built</span><span class="badge ${SCLASS[s.salt[0]]}">${SLABEL[s.salt[0]]}</span></div><ul>${s.salt[1].map(i=>`<li>${i}</li>`).join("")}</ul></div>
+      <div class="covbox"><div class="cvh"><span class="cvl">Market — incumbents</span><span class="badge ${MCLASS[s.market[0]]}">${MLABEL[s.market[0]]}</span></div><p class="note">${s.market[1]}</p></div>
+    </div>`;
+  return `
+    <div class="stage ${s.ours?'':'ext'}" data-roles="${roleIds}" data-stage="${s.n}">
+      <div class="sh">
+        <div class="snum">${s.n}</div>
+        <div style="flex:1; min-width:0">
+          <div class="stitle">${s.title}${s.ours?'':'<span class="upstream">upstream · external</span>'}
+            <span class="covbadges"><span class="badge ${SCLASS[s.salt[0]]}">Salt: ${SLABEL[s.salt[0]]}</span><span class="badge ${MCLASS[s.market[0]]}">${MLABEL[s.market[0]]}</span></span>
+          </div>
+          <p class="objective"><span class="ol">Objective</span>${s.obj}</p>
+        </div>
+      </div>
+      ${actorsBlock}
+      ${cov}
+    </div>`;
+}
+
+function renderLifecycle(){
+  let html="";
+  PHASES.forEach((ph,pi)=>{
+    const tag = ph.tag ? `<span class="tag ${ph.tag}">${ph.tag==='parallel'?'runs in parallel':'loops back up'}</span>` : "";
+    html += `<div class="phase-h"><span class="pn">Phase ${ph.n}</span><h2>${ph.name}</h2>${tag}<span class="cap">${ph.cap}</span></div>`;
+    const stages = STAGES.filter(s=>s.phase===pi);
+    stages.forEach((s,i)=>{ html += stageHTML(s); if(i<stages.length-1) html += `<div class="conn">${ph.tag==='reverse'?'▲':'▼'}</div>`; });
+  });
+  $("#lifecycle").innerHTML = html;
+}
+
+function renderMatrix(){
+  const head = `<thead><tr><th>Stage</th><th>Salt</th><th>Market</th><th>The gap / opportunity</th></tr></thead>`;
+  const gaps = {
+    1:"Seed a real drug master (crowd-source from GRN — already the chosen path).",
+    2:"—",
+    3:"B2B / ONDC ordering — prototype when the network matures.",
+    4:"AI demand forecasting / auto-replenishment.",
+    5:"Already a strength — OCR + scheme economics.",
+    6:"Bin/location + IoT cold-chain temperature log (open across the market).",
+    7:"A field-salesman mobile order app (open across the market).",
+    8:"Already at the benchmark — keep the gate fast so it isn't bypassed.",
+    9:"Offline-first billing — the decisive wedge (cross-cutting).",
+    10:"Delivery / dispatch management (light everywhere).",
+    11:"ABHA / ABDM linkage for referral traffic.",
+    12:"Bank reconciliation; otherwise competitive.",
+    13:"Ship GSTR-2B reconciliation — be first to automate it.",
+    14:"Surface near-expiry proactively at billing (not just a report).",
+    15:"A first-class batch-recall workflow (open everywhere).",
+  };
+  const rows = STAGES.map(s=>`<tr>
+    <td class="st"><span class="sn">S${s.n}</span>${s.title}</td>
+    <td><span class="badge ${SCLASS[s.salt[0]]}">${SLABEL[s.salt[0]]}</span></td>
+    <td><span class="badge ${MCLASS[s.market[0]]}">${MLABEL[s.market[0]]}</span></td>
+    <td class="gapcell">${gaps[s.n]||"—"}</td></tr>`).join("");
+  $("#mx").innerHTML = head + `<tbody>${rows}</tbody>`;
+}
+
+function renderSummary(){
+  $("#summary").innerHTML = PERSONAS.map(p=>{
+    const stages = STAGES.filter(s=>s.roles.some(r=>r.id===p.id)).map(s=>s.n);
+    const chips = stages.map(n=>`<span class="sc">S${n}</span>`).join("");
+    return `<div class="scard" data-pid="${p.id}"><div class="shd"><span class="av">${p.ini}</span><div><div class="nm">${p.name}</div><div class="rl">${p.role}</div></div></div><p>${p.line}</p><div class="stagechips">${chips}</div></div>`;
+  }).join("");
+}
+
+function applyFilter(){
+  $$(".stage").forEach(st=>{
+    const roles=(st.getAttribute("data-roles")||"").split(" ").filter(Boolean);
+    if(!activeRole){ st.classList.remove("dim"); $$(".lane",st).forEach(l=>l.classList.remove("hl","fade")); return; }
+    const has=roles.includes(activeRole);
+    st.classList.toggle("dim",!has);
+    $$(".lane",st).forEach(l=>{ const r=l.getAttribute("data-role"); l.classList.toggle("hl",r===activeRole); l.classList.toggle("fade",!!r&&r!==activeRole); });
+  });
+  $$(".pchip").forEach(c=>c.classList.toggle("active", c.getAttribute("data-role")===activeRole));
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  renderLegend(); renderXcut(); renderLifecycle(); renderMatrix(); renderSummary();
+  document.body.classList.add("show-cov");
+  $("#pchips").addEventListener("click",e=>{ const b=e.target.closest(".pchip"); if(!b) return;
+    const r=b.getAttribute("data-role"); activeRole=(r==="__all"||r===activeRole)?null:r; applyFilter(); });
+  $("#covToggle").addEventListener("change",e=>{ document.body.classList.toggle("show-cov", e.target.checked); });
+  $("#summary").addEventListener("click",e=>{ const c=e.target.closest(".scard"); if(!c) return;
+    const id=c.getAttribute("data-pid"); activeRole=(activeRole===id)?null:id; applyFilter(); window.scrollTo({top:0,behavior:"smooth"}); });
+});
+</script>
+</body>
+</html>

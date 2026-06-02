@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cashier IA — Simplified &amp; Natural</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --background:#ffffff; --surface:#fafafa; --surface-2:#f4f4f5; --border:#e4e4e7; --border-strong:#d4d4d8; --divider:#f4f4f5;
+    --text-primary:#18181b; --text-secondary:#52525b; --text-tertiary:#676770; --text-disabled:#a1a1aa; --text-inverse:#fafafa;
+    --action-primary:#18181b; --action-primary-text:#ffffff;
+    --success:#166534; --success-bg:#f0fdf4; --success-border:#bbf7d0;
+    --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
+    --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
+    --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
+    --focus-ring-strong:rgba(24,24,27,.30);
+    --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
+    --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
+    --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --font-display:"Fraunces",Georgia,serif;
+    --text-xs:.6875rem; --text-sm:.8125rem; --text-base:.9375rem; --text-lg:1.0625rem; --text-xl:1.375rem; --text-2xl:1.75rem;
+    --shadow-sm:0 1px 2px rgba(24,24,27,.06);
+    --shadow-md:0 4px 14px rgba(24,24,27,.08),0 1px 3px rgba(24,24,27,.06);
+  }
+  *{box-sizing:border-box;} html,body{margin:0;padding:0;}
+  body{background:var(--surface); color:var(--text-primary); font-family:var(--font-sans); font-size:var(--text-base); line-height:1.45; -webkit-font-smoothing:antialiased;}
+  code{background:var(--surface-2); border:1px solid var(--border); padding:0 5px; border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:.85em;}
+  :focus-visible{outline:2px solid var(--focus-ring-strong); outline-offset:2px; border-radius:3px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:26px 28px 90px;}
+
+  header.top{display:flex; align-items:center; gap:15px; margin-bottom:14px;}
+  .logo{width:46px;height:46px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:var(--action-primary-text);display:grid;place-items:center;font-family:var(--font-display);font-weight:600;font-size:26px;box-shadow:var(--shadow-sm);}
+  header h1{margin:0;font-size:21px;font-weight:600;letter-spacing:-.01em;}
+  header h1 .wordmark{font-family:var(--font-display);}
+  header p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);}
+
+  .persona{display:flex; gap:14px; align-items:center; background:var(--background); border:1px solid var(--border); border-radius:var(--radius-xl); padding:14px 16px; box-shadow:var(--shadow-sm); margin:16px 0 8px;}
+  .persona .av{width:48px;height:48px;border-radius:var(--radius-lg);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-display);font-size:24px;}
+  .persona .nm{font-weight:600;} .persona .nm span{font-weight:400;color:var(--text-tertiary);font-size:var(--text-sm);}
+  .persona p{margin:3px 0 0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .intro{color:var(--text-secondary);font-size:var(--text-sm);max-width:940px;margin:14px 0 8px;line-height:1.6;}
+  .base-note{background:var(--info-bg);border:1px solid var(--info-border);border-radius:var(--radius-lg);padding:11px 14px;font-size:var(--text-sm);color:var(--text-primary);line-height:1.55;margin:12px 0 0;}
+  .base-note b{color:var(--info);}
+  .section-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.6px;color:var(--text-tertiary);font-weight:600;margin:30px 0 12px;}
+
+  .grid{display:grid;gap:13px;} .g3{grid-template-columns:repeat(3,1fr);} .g2{grid-template-columns:1fr 1fr;}
+  @media (max-width:860px){.g3,.g2{grid-template-columns:1fr;}}
+  .card{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .card h3{margin:0 0 7px;font-size:var(--text-sm);font-weight:600;display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .card p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .card .num{font-family:var(--font-mono);color:var(--text-tertiary);font-size:11px;font-weight:600;}
+  .ptag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:1px 6px;border-radius:var(--radius-sm);border:1px solid;}
+  .ptag.changed{color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);}
+  .ptag.new{color:var(--info);background:var(--info-bg);border-color:var(--info-border);}
+  .ptag.kept{color:var(--text-tertiary);background:var(--surface-2);border-color:var(--border);}
+  em.hi{font-style:normal;background:var(--surface-2);border-bottom:1px solid var(--border-strong);padding:0 3px;border-radius:3px;color:var(--text-primary);}
+
+  .hero{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start;}
+  @media (max-width:860px){.hero{grid-template-columns:1fr;}}
+  .contract{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:13px;box-shadow:var(--shadow-sm);}
+  .contract .ch{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;padding:4px 6px 10px;}
+  .contract .csub{font-size:11px;color:var(--text-secondary);padding:0 6px 10px;line-height:1.5;}
+  .kstep{display:flex;align-items:baseline;gap:10px;padding:7px 6px;border-bottom:1px solid var(--divider);}
+  .kstep:last-child{border-bottom:none;}
+  .kkeys{display:flex;gap:3px;flex:none;align-items:center;min-width:78px;}
+  .kkeys .plus{color:var(--text-disabled);font-size:10px;}
+  .kbd{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text-secondary);background:var(--surface-2);border:1px solid var(--border);border-bottom:2px solid var(--border-strong);border-radius:var(--radius-sm);}
+  .kstep .kact{font-size:var(--text-sm);color:var(--text-secondary);}
+  .nonav{margin-top:11px;padding:9px 10px;background:var(--surface);border:1px dashed var(--border-strong);border-radius:var(--radius-md);font-size:11px;color:var(--text-tertiary);line-height:1.5;}
+  .nonav b{color:var(--text-secondary);}
+
+  /* billing mock */
+  .bill{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);overflow:hidden;}
+  .billtop{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--divider);}
+  .billtop .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:600;}
+  .billtop .cust{margin-left:auto;font-size:var(--text-sm);color:var(--text-primary);} .billtop .cust .muted{color:var(--text-tertiary);font-size:11px;}
+  .billsearch{padding:12px 14px;}
+  .sfield{display:flex;align-items:center;gap:8px;background:var(--surface);border:2px solid var(--action-primary);border-radius:var(--radius-lg);padding:9px 12px;font-size:var(--text-base);}
+  .sfield .typed{font-family:var(--font-mono);} .caret{display:inline-block;width:2px;height:16px;background:var(--action-primary);margin-left:1px;animation:blink 1s step-end infinite;vertical-align:middle;}
+  @keyframes blink{50%{opacity:0;}}
+  .results{margin-top:7px;border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;}
+  .resrow{display:flex;align-items:baseline;gap:8px;padding:8px 11px;border-bottom:1px solid var(--divider);font-size:var(--text-sm);}
+  .resrow:last-child{border-bottom:none;}
+  .resrow.active{background:var(--surface-2);} .resrow .rb{font-weight:600;} .resrow .rs{color:var(--text-tertiary);font-size:11px;} .resrow .rk{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);}
+  .blines{padding:4px 14px;}
+  .bline{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--divider);}
+  .bline:last-child{border-bottom:none;} .bline .bn{font-weight:500;font-size:var(--text-sm);} .bline .bq{color:var(--text-tertiary);font-size:12px;} .bline .ba{margin-left:auto;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:var(--text-sm);}
+  .btotal{display:flex;align-items:baseline;padding:12px 14px;border-top:2px solid var(--border-strong);}
+  .btotal span{font-size:var(--text-sm);color:var(--text-secondary);} .btotal b{margin-left:auto;font-size:var(--text-2xl);font-weight:700;font-variant-numeric:tabular-nums;}
+  .donestrip{display:flex;align-items:center;gap:9px;margin:0 14px 14px;padding:11px 13px;background:var(--success-bg);border:1px solid var(--success-border);border-radius:var(--radius-lg);color:var(--success);font-weight:600;font-size:var(--text-sm);}
+  .donestrip .chk{width:22px;height:22px;border-radius:50%;background:var(--success);color:#fff;display:grid;place-items:center;font-size:13px;}
+  .donestrip .snd{margin-left:auto;opacity:.7;}
+  .billkeys{display:flex;gap:7px;flex-wrap:wrap;padding:0 14px 14px;}
+  .billkeys .bk{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);}
+
+  /* walls */
+  .walls{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  @media (max-width:760px){.walls{grid-template-columns:1fr;}}
+  .wall{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:14px 16px;box-shadow:var(--shadow-sm);}
+  .wall .wh{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .wall .wi{width:28px;height:28px;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);display:grid;place-items:center;font-size:14px;flex:none;}
+  .wall .wt{font-weight:600;font-size:var(--text-sm);}
+  .wall .wtag{margin-left:auto;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:2px 7px;border-radius:var(--radius-sm);border:1px solid;}
+  .wtag.escalate{color:var(--info);background:var(--info-bg);border-color:var(--info-border);}
+  .wtag.handoff{color:var(--warning);background:var(--warning-bg);border-color:var(--warning-border);}
+  .wtag.inline{color:var(--text-secondary);background:var(--surface-2);border-color:var(--border);}
+  .wtag.done{color:var(--success);background:var(--success-bg);border-color:var(--success-border);}
+  .wall p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+
+  .matrix-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);}
+  table.mx{width:100%;border-collapse:separate;border-spacing:0;background:var(--background);min-width:680px;}
+  table.mx th,table.mx td{padding:10px 13px;text-align:left;border-bottom:1px solid var(--divider);border-right:1px solid var(--divider);font-size:var(--text-sm);vertical-align:top;}
+  table.mx thead th{background:var(--surface);font-weight:600;font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.4px;color:var(--text-tertiary);}
+  table.mx td.old{font-weight:500;white-space:nowrap;}
+  table.mx td .arrow{color:var(--text-disabled);}
+  table.mx th:last-child,table.mx td:last-child{border-right:none;} table.mx tr:last-child td{border-bottom:none;}
+  .newpill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--radius-sm);background:var(--surface-2);border:1px solid var(--border-strong);color:var(--text-primary);}
+  .newpill.lock{background:var(--surface);border-style:dashed;color:var(--text-tertiary);}
+
+  .move{background:var(--background);border:1px solid var(--border);border-left:3px solid var(--info-border);border-radius:var(--radius-lg);padding:13px 15px;margin-bottom:10px;box-shadow:var(--shadow-sm);}
+  .move h4{margin:0 0 4px;font-size:var(--text-sm);font-weight:600;}
+  .move p{margin:0;color:var(--text-secondary);font-size:var(--text-sm);line-height:1.55;}
+  .move .ba{font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;display:block;}
+
+  footer.foot{margin-top:30px;color:var(--text-tertiary);font-size:var(--text-xs);text-align:center;border-top:1px solid var(--border);padding-top:18px;line-height:1.7;}
+  @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">S</div>
+    <div>
+      <h1><span class="wordmark">Salt</span> — Cashier IA, simplified &amp; natural</h1>
+      <p>The limit case — where the information architecture all but disappears.</p>
+    </div>
+  </header>
+
+  <div class="persona">
+    <div class="av">V</div>
+    <div>
+      <div class="nm">Vijay — Cashier <span>· the fast biller; trained in 3 days, high turnover</span></div>
+      <p>Pure muscle memory and speed. <b>Reads almost nothing</b> — navigates by position, rhythm, colour and sound. An English dialog freezes him; a moved field costs days. The <b>printed bill is “done”</b>. His apps are Reels, BGMI and UPI — he learns combos by repetition, and his bar for “completed” is the <b>UPI green tick + sound</b>. He doesn’t understand GST or stock. He bills.</p>
+    </div>
+  </div>
+
+  <div class="base-note">
+    <b>Base = Owner + Manager + Accountant + Pharmacist.</b> The pharmacist already made the Home a working screen; the cashier takes it to the limit. There is <b>no navigation, no dashboard, no areas</b> — the counter is the entire app. The series’ “one persistent surface per role” degenerates, because the whole app <em>is</em> the one action. His “IA” isn’t a tree of places — it’s a <b>keystroke sequence</b>; and the only thing reaching beyond his screen is an <b>escalation to the manager</b>, which never navigates him away.
+  </div>
+
+  <div class="section-label">Principles — what carries over from the four bases, what changes</div>
+  <div class="grid g3" id="principles"></div>
+
+  <div class="section-label">The shape — there is no rail; his navigation is a keystroke sequence</div>
+  <div class="hero">
+    <div class="contract">
+      <div class="ch">His “navigation” = this sequence</div>
+      <div class="csub">It is temporal, not spatial — and it must <b>never change</b>. Move a field or a shortcut and you cost him days.</div>
+      <div id="contract"></div>
+      <div class="nonav"><b>No Home dashboard · no areas · no Setup · no reports · no money.</b> There is nowhere else to go — so there is no rail to go there with.</div>
+    </div>
+    <div class="bill">
+      <div class="billtop"><span class="lbl">Counter — the whole app</span><span class="cust">Walk-in <span class="muted">· Ctrl+K to change</span></span></div>
+      <div class="billsearch">
+        <div class="sfield">⌕ <span class="typed">aug</span><span class="caret"></span></div>
+        <div class="results">
+          <div class="resrow active"><span class="rb">Augmentin 625</span><span class="rs">Amoxicillin + Clavulanate · 42 in stock</span><span class="rk">Enter</span></div>
+          <div class="resrow"><span class="rb">Augmentin DDS</span><span class="rs">· 18 in stock</span></div>
+        </div>
+      </div>
+      <div class="blines">
+        <div class="bline"><span class="bn">Pan-D</span><span class="bq">× 10</span><span class="ba">₹98.50</span></div>
+        <div class="bline"><span class="bn">Azithral 500</span><span class="bq">× 3</span><span class="ba">₹71.00</span></div>
+        <div class="bline"><span class="bn">Augmentin 625</span><span class="bq">× 5</span><span class="ba">₹212.00</span></div>
+      </div>
+      <div class="btotal"><span>Total</span><b>₹381.50</b></div>
+      <div class="donestrip"><span class="chk">✓</span> Saved · printing… <span class="snd">🔊</span></div>
+      <div class="billkeys">
+        <span class="bk"><span class="kbd">F9</span> save</span>
+        <span class="bk"><span class="kbd">Ctrl</span><span class="kbd">P</span> print</span>
+        <span class="bk"><span class="kbd">type</span> to add a line</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">When he hits a wall — handled by escalation or an inline prompt, never by navigation</div>
+  <div class="walls" id="walls"></div>
+
+  <div class="section-label">Coverage check — one screen actively; two pipes to elsewhere; the rest invisible</div>
+  <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
+  <p class="intro" style="margin-top:10px">The cashier &amp; manager IAs are <b>two ends of one pipe</b>: he raises a request, the manager’s Inbox clears it. The H1/X gate and the substitute prompt are <b>shared with the pharmacist</b>, surfaced inline. He never <em>navigates</em> to any of it.</p>
+
+  <div class="section-label">The big moves — how the base changed for this persona</div>
+  <div id="moves"></div>
+
+  <footer class="foot">
+    Built on the Owner + Manager + Accountant + Pharmacist IA bases, reshaped from the cashier persona (muscle memory · non-reading · escalate-don’t-navigate · UPI-as-“done”) and his place in the lifecycle (S9 — billing &amp; payment; the narrowest footprint of all). A design proposal, not a spec.
+  </footer>
+</div>
+
+<script>
+const PRINCIPLES = [
+  {h:"The counter is the whole app", tag:["changed","Changed"], p:"No rail, no dashboard, no areas — there is nowhere else to go. The pharmacist’s working-screen Home, taken to its absolute limit: now it’s the only screen."},
+  {h:"His IA is a keystroke sequence", tag:["new","New"], p:"Navigation is temporal, not spatial: type → ↓ → Enter → Tab → qty → Enter → F9 → print. The sequence IS the product — and changing the order or a shortcut between versions is the single most expensive thing you can do to him."},
+  {h:"Escalate, don’t navigate", tag:["new","New"], p:"When he hits a wall (over-limit discount, void), he doesn’t go anywhere. A one-tap request flies to the manager’s Inbox and he keeps billing. He never opens an “Approvals” screen — that’s the manager’s end of the pipe."},
+  {h:"Recognition, not reading", tag:["changed","Changed"], p:"Icons, colour, position and sound — never a block of English. An English error is a dead end that makes him freeze and call the manager, so errors are quiet inline hints, not blocking modals."},
+  {h:"“Done” feels like UPI", tag:["new","New"], p:"Save + print = a big green check and a sound — the exact signal he trusts from PhonePe. The printed bill is the physical receipt of “done”. Nothing ambiguous about completion."},
+  {h:"Offline is invisible", tag:["kept","Inherited"], p:"Billing never stops and there’s no banner to react to — he doesn’t even know the internet dropped. The bill saves locally and syncs later. (Inherited straight from the owner’s non-negotiable.)"},
+  {h:"Forgiving &amp; fuzzy", tag:["new","New"], p:"Typo-tolerant, fuzzy search and big legible numbers, so speed survives sloppy input. He types fast and rough — the search has to keep up, not punish him."},
+  {h:"Stable forever, learnable in days", tag:["kept","Inherited"], p:"The same sequence every release; a new hire reaches speed in 2–3 days. The manager trains him on this screen; it’s the stability the pharmacist needs too, with the volume dialled to maximum."},
+];
+
+const CONTRACT = [
+  {keys:["a","u","g"], action:"type 3–4 letters → results"},
+  {keys:["↓"], action:"pick the right item"},
+  {keys:["Enter"], action:"add it (FEFO batch, auto)"},
+  {keys:["Tab"], action:"jump to quantity"},
+  {keys:["5","Enter"], action:"type qty → next line"},
+  {keys:["…"], action:"repeat for every line"},
+  {keys:["Ctrl","K"], action:"customer (default: Walk-in)"},
+  {keys:["F9"], action:"save the bill"},
+  {keys:["Ctrl","P"], action:"print — “done”"},
+];
+
+const WALLS = [
+  {ic:"%", t:"Discount over his limit", tag:["escalate","→ manager"], w:"A one-tap request flies to the manager’s Inbox. He keeps billing the rest of the lines; the green light clears it. Never a dead stop, never a screen he opens."},
+  {ic:"⊘", t:"Void / cancel a line or bill", tag:["escalate","→ manager"], w:"Same pipe — a request to the manager, not a place he navigates to. He carries on; the reversal lands when approved."},
+  {ic:"℞", t:"Schedule H1 / X item", tag:["handoff","inline · pharmacist"], w:"The H1 gate appears inline (the pharmacist’s gate), or he hands the customer to the pharmacist. He never fills clinical fields he doesn’t understand."},
+  {ic:"∅", t:"Out of stock", tag:["inline","inline"], w:"A same-salt substitute is offered inline (the pharmacist’s engine) — pick it or skip it. The rhythm holds; the sale isn’t lost to the shop next door."},
+  {ic:"☺", t:"Named / credit customer", tag:["inline","Ctrl+K"], w:"Ctrl+K opens the customer picker; the default is Walk-in. He binds a name to the bill — he doesn’t manage the party or its credit."},
+  {ic:"⚡", t:"Internet drops", tag:["done","invisible"], w:"Nothing visible happens. The bill saves locally and syncs later — he doesn’t even know the net went. No banner, no error, no interruption."},
+  {ic:"₹", t:"Payment — cash / UPI", tag:["done","done"], w:"Cash, or UPI with the same green tick + sound he trusts from PhonePe. Then print. The completion signal is one he already knows by heart."},
+  {ic:"?", t:"Anything genuinely new", tag:["escalate","→ manager"], w:"If the screen ever does something he doesn’t recognise, the safe path is one button: “call manager”. Better a deliberate lifeline than a frozen cashier mashing Esc."},
+];
+
+const COVERAGE = [
+  ["Counter","The one screen — the entire app"],
+  ["Approvals","he RAISES a request → the manager’s Inbox clears it (he never opens it)"],
+  ["Activity","exists, but not his job — a feed he ignores"],
+  ["H1/X gate · substitute","appear inline at the counter (shared with the pharmacist)"],
+  ["Sales · Parties · Payments · Stock · Buy · GST · Reports · Salesmen · Settings","— not his view · no navigation to them at all"],
+];
+
+const MOVES = [
+  {h:"The IA collapses to one screen", p:"The end state of the whole series’ shrink: Owner 7 surfaces → Manager 7 → Accountant 4 → Pharmacist 4 → Cashier ONE. No rail, no dashboard, no areas. The counter is everything.", ba:"7 surfaces → 1 screen"},
+  {h:"Navigation becomes a keystroke sequence", p:"His architecture is temporal, not spatial — a fixed rhythm (type · ↓ · Enter · Tab · qty · Enter · F9 · print). The product IS the sequence, and its #1 rule is: never move a field or a shortcut.", ba:"nav tree → keystroke rhythm"},
+  {h:"Walls are escalations, not destinations", p:"Over-limit, void and “something new” send a one-tap request to the manager’s Inbox; he keeps billing. The cashier and manager IAs are two ends of one pipe — he raises, the manager clears — so he never navigates to Approvals.", ba:"cashier raises ⟷ manager Inbox clears"},
+  {h:"The clinical bits surface inline, shared", p:"The H1/X gate and the out-of-stock substitute come from the pharmacist’s design, surfaced inline on his counter. He doesn’t go to a “compliance” or “catalogue” area — the rare exceptions come to him.", ba:"shared with pharmacist · inline"},
+  {h:"“Done” = UPI; reading → recognition", p:"Save/print is a green check + a sound (his PhonePe mental model), errors are quiet inline hints not English modals, search is fuzzy and forgiving, and offline is invisible. Every default tuned to a non-reading, speed-obsessed, bad-net user.", ba:"+ UPI-done · recognition · offline-invisible"},
+];
+
+/* render */
+const $=(s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+$("#principles").innerHTML = PRINCIPLES.map((p,i)=>`<div class="card"><h3><span class="num">${String(i+1).padStart(2,'0')}</span>${p.h} <span class="ptag ${p.tag[0]}">${p.tag[1]}</span></h3><p>${p.p}</p></div>`).join("");
+
+$("#contract").innerHTML = CONTRACT.map(s=>{
+  const keys = s.keys.map((k,i)=>`${i>0?'<span class="plus">+</span>':''}<span class="kbd">${k}</span>`).join("");
+  return `<div class="kstep"><span class="kkeys">${keys}</span><span class="kact">${s.action}</span></div>`;
+}).join("");
+
+$("#walls").innerHTML = WALLS.map(w=>`
+  <div class="wall">
+    <div class="wh"><span class="wi">${w.ic}</span><span class="wt">${w.t}</span><span class="wtag ${w.tag[0]}">${w.tag[1]}</span></div>
+    <p>${w.w}</p>
+  </div>`).join("");
+
+$("#coverage").innerHTML = `<thead><tr><th>Today’s module</th><th></th><th>Cashier’s home for it</th></tr></thead><tbody>` +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('—')?'lock':''}">${n}</span></td></tr>`).join("") +
+  `</tbody>`;
+
+$("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");
+</script>
+</body>
+</html>
