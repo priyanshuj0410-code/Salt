@@ -1,19 +1,20 @@
 ---
 type: architecture
-updated: 2026-06-01
+updated: 2026-06-02
 tags: [gst, compliance, sales]
 ---
 
 # GST & compliance — returns, liability, ITC, exports
 
-The **GST & compliance** module's eight screens (SALT-002/063/064/065/067/068/069/070/170; product-modules §9):
-read-only views that aggregate one shop's documents into the GSTN sections, a live tax position,
-the ITC ledger, accountant exports, and the Schedule H1/X dispensing register — with portal-ready
-JSON / CSV / Tally XML / inspector PDF. Screens under `/gst` (`Gstr1Page`, `Gstr3bPage`,
-`GstLiabilityPage`, `ItcRegisterPage`, `TallyExportPage`, `HsnReportPage`, `H1RegisterPage`, `InvoiceSeriesPage` in
-`components/gst/`); the returns aggregation lives in `lib/gst.ts` and the register in `lib/h1.ts`,
-both **pure** (no
-Supabase) and unit-smoke-tested.
+The **GST & compliance** module's eight screens (SALT-002/063/064/065/067/068/069/070/170/196; product-modules §9):
+read-only views that aggregate one shop's documents into the GSTN sections (incl. sales-return
+**credit notes** — CDNR/CDNUR), a live tax position, the ITC ledger, accountant exports, and the
+Schedule H1/X dispensing register — with portal-ready JSON / CSV / Tally XML / inspector PDF.
+Screens under `/gst` (`Gstr1Page`, `Gstr3bPage`, `GstLiabilityPage`, `ItcRegisterPage`,
+`TallyExportPage`, `HsnReportPage`, `H1RegisterPage`, `InvoiceSeriesPage` in `components/gst/`). The
+pure, unit-smoke-tested helpers: returns aggregation in `lib/gst.ts`, the H1/X register in
+`lib/h1.ts`, invoice-series numbering in `lib/series.ts`, and the date-effective rate resolver in
+`lib/gstSchedule.ts` (none touch Supabase).
 
 ## Read contract (as-built)
 
@@ -145,6 +146,22 @@ the shop's default active series (so changing the default re-routes new bills im
 helpers (`currentIndianFy`, `seriesPreview`, `normalizeSeriesCode`) in **`lib/series.ts`**
 (smoke-tested). The per-bill series **picker at the counter** is the billing lane's half — filed
 as **SALT-209**.
+
+## Date-effective GST rates (`gst_rate_for` / `lib/gstSchedule.ts`)
+
+Medicine GST is **date-dependent**: the 56th GST Council cut HSN 3004 from 12% → 5% **effective
+22 Sep 2025**, so the correct rate for a line depends on the **invoice date**, not just the item's
+flat `gst_rate`. The schedule lives in **`gst_rate_schedule`** (rate class → `effective_from /
+effective_to / rate`); SQL **`gst_rate_for(p_class, p_on)`** (migration `0046`, SALT-081) returns
+the in-force row for a class on a date. The counter mirrors this client-side via
+**`lib/gstSchedule.ts`** — `gstRateForClass(rateClass, on, rows)` (same rule: the latest
+`effective_from` whose range contains `on`) + `todayIso()` — loading the schedule once (SALT-211).
+
+Crucially, every `sale_lines` / `purchase_lines` row **snapshots the resolved CGST/SGST/IGST at
+write time**, so every return here aggregates the rate that actually applied on the bill — never a
+re-derivation. A rate change is thus retroactive-safe: historical filings keep their original rate,
+new bills pick up the new one automatically. This is why the [read contract](#read-contract-as-built)
+can treat the stored splits as ground truth.
 
 ## Status & next
 

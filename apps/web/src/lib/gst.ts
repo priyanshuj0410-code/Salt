@@ -11,8 +11,8 @@
  * All money is integer **paise**. The GSTN JSON the portal ingests wants rupee
  * amounts (2 decimals), so {@link buildGstr1Json} converts paise → rupees.
  *
- * Scope (SALT-002): B2B, B2CL/B2CS, and HSN summary for one shop's GSTIN and one
- * month. Credit notes (CDNR) are deferred until the Returns module exists.
+ * Scope: B2B, B2CL/B2CS, HSN summary, and sales-return credit notes (CDNR/CDNUR,
+ * SALT-196) for one shop's GSTIN and one month — see buildCreditNoteSections.
  */
 
 /** A B2C inter-state invoice above ₹2.5 lakh is itemised in B2CL; the rest fall into B2CS. */
