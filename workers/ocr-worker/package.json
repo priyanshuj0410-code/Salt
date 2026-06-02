@@ -1,0 +1,23 @@
+{
+  "name": "@salt/ocr-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local Gemma (Ollama) OCR worker that drains the Salt invoice queue into draft GRNs.",
+  "engines": {
+    "node": ">=23.6"
+  },
+  "scripts": {
+    "start": "node --env-file=.env src/index.ts",
+    "once": "node --env-file=.env src/index.ts --once",
+    "reclaim": "node --env-file=.env src/index.ts --reclaim",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  }
+}
