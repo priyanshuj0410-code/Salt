@@ -236,6 +236,38 @@ export async function kickoffProcessScans(batchId?: string | null): Promise<void
   void supabase.functions.invoke("process-scans", { body: batchId ? { batch_id: batchId } : {} });
 }
 
+export interface ProcessScansResult {
+  ok: boolean;
+  error?: string;
+  total?: number;
+  extracted?: number;
+  duplicate?: number;
+  failed?: number;
+}
+
+/** Run the extraction worker and WAIT for its summary — used by the manual "Process
+ *  queued" action so the outcome (or a real error, e.g. the function not being deployed)
+ *  is surfaced instead of swallowed. Bounded by the worker's MAX_PER_RUN per call. */
+export async function runProcessScans(batchId?: string | null): Promise<ProcessScansResult> {
+  if (!supabase) return { ok: false, error: "Not connected." };
+  const { data, error } = await supabase.functions.invoke("process-scans", { body: batchId ? { batch_id: batchId } : {} });
+  if (error) {
+    // supabase-js leaves the real body error in `context`, not error.message.
+    const ctx = (error as { context?: Response }).context;
+    let bodyError: string | null = null;
+    try {
+      const j = await ctx?.clone().json();
+      bodyError = j?.error ?? null;
+    } catch {
+      // body wasn't JSON
+    }
+    return { ok: false, error: bodyError ?? error.message };
+  }
+  const d = (data ?? {}) as ProcessScansResult & { error?: string };
+  if (d.error) return { ok: false, error: d.error };
+  return { ok: true, total: d.total, extracted: d.extracted, duplicate: d.duplicate, failed: d.failed };
+}
+
 /** Patch a scan row (status + the extracted json / invoice no / error / posted GRN). */
 export async function updateScan(
   id: string,

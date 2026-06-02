@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { FileText, RotateCcw, ScanLine, Trash2 } from "lucide-react";
+import { FileText, Loader2, RefreshCw, RotateCcw, ScanLine, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import {
   downloadScanBase64,
   invokeExtract,
+  runProcessScans,
   updateScan,
   vendorGuess,
   scanInvoiceNo,
@@ -44,6 +45,9 @@ export function InvoiceScansPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [delErr, setDelErr] = useState<string | null>(null);
+  // Manual "Process queued" — runs the worker and surfaces its result.
+  const [processing, setProcessing] = useState(false);
+  const [procMsg, setProcMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
@@ -69,6 +73,15 @@ export function InvoiceScansPage() {
       active = false;
     };
   }, [orgId, reloadKey]);
+
+  // Auto-refresh while anything is in flight, so background extraction is visible as it
+  // happens (the worker updates rows server-side; without this the list looks frozen).
+  const inFlight = rows.some((r) => r.status === "pending" || r.status === "processing");
+  useEffect(() => {
+    if (!inFlight) return;
+    const t = setInterval(() => setReloadKey((k) => k + 1), 4000);
+    return () => clearInterval(t);
+  }, [inFlight]);
 
   async function openFile(r: InvoiceScanRow) {
     const url = await signedScanUrl(r.storage_path);
@@ -106,6 +119,30 @@ export function InvoiceScansPage() {
     }
   }
 
+  // Run the background worker now and report what it did. Awaits the call (unlike the
+  // fire-and-forget kickoff at upload) so a stuck queue gets a real answer — it either
+  // drains here, or surfaces why (e.g. the process-scans function isn't deployed).
+  async function processNow() {
+    setProcessing(true);
+    setProcMsg(null);
+    try {
+      const res = await runProcessScans();
+      if (!res.ok) {
+        setProcMsg(`Could not run extraction: ${res.error}`);
+      } else if ((res.total ?? 0) === 0) {
+        setProcMsg("Worker ran but found nothing pending to extract.");
+      } else {
+        const parts = [`extracted ${res.extracted ?? 0}`];
+        if (res.duplicate) parts.push(`${res.duplicate} duplicate`);
+        if (res.failed) parts.push(`${res.failed} failed`);
+        setProcMsg(`Processed ${res.total} — ${parts.join(", ")}.`);
+      }
+      setReloadKey((k) => k + 1);
+    } finally {
+      setProcessing(false);
+    }
+  }
+
   // Remove the scan + its file; for a posted scan, also reverse + delete its GRN.
   async function doDelete(r: InvoiceScanRow) {
     setDeleting(r.id);
@@ -122,6 +159,13 @@ export function InvoiceScansPage() {
       setConfirmId(null);
     }
   }
+
+  const pending = rows.filter((r) => r.status === "pending").length;
+  const extractingCount = rows.filter((r) => r.status === "processing").length;
+  const extractedCount = rows.filter((r) => r.status === "extracted").length;
+  const postedCount = rows.filter((r) => r.status === "posted").length;
+  const dupCount = rows.filter((r) => r.status === "duplicate").length;
+  const failedCount = rows.filter((r) => r.status === "failed").length;
 
   if (unavailable) {
     return (
@@ -142,18 +186,43 @@ export function InvoiceScansPage() {
         title="Scan history"
         subtitle={rows.length > 0 ? `${rows.length} scanned invoices` : "Audit trail of OCR-scanned invoices"}
         actions={
-          <Button onClick={() => navigate("/purchases/scan")}>
-            <ScanLine /> Scan invoice
-          </Button>
+          <div className="flex items-center gap-2">
+            {pending > 0 && (
+              <Button variant="outline" onClick={processNow} disabled={processing}>
+                {processing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+                {processing ? "Processing…" : `Process queued (${pending})`}
+              </Button>
+            )}
+            <Button onClick={() => navigate("/purchases/scan")}>
+              <ScanLine /> Scan invoice
+            </Button>
+          </div>
         }
       />
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Scans" value={rows.length} />
-        <StatCard label="Posted" value={rows.filter((r) => r.status === "posted").length} />
-        <StatCard label="Extracted" value={rows.filter((r) => r.status === "extracted").length} />
-        <StatCard label="Failed" value={rows.filter((r) => r.status === "failed").length} />
+        <StatCard label="Queued" value={pending} />
+        <StatCard label="Extracting" value={extractingCount} />
+        <StatCard label="Extracted" value={extractedCount} />
+        <StatCard label="Posted" value={postedCount} />
       </div>
+
+      {(pending > 0 || extractingCount > 0) && (
+        <p className="mb-3 flex items-center gap-1.5 text-xs text-text-tertiary">
+          {extractingCount > 0 && <Loader2 className="size-3 animate-spin" />}
+          {extractingCount > 0
+            ? "Extracting in the background — this list refreshes automatically."
+            : "Queued invoices are waiting for the background worker. The list auto-refreshes; if they do not move, click Process queued."}
+        </p>
+      )}
+      {(dupCount > 0 || failedCount > 0) && (
+        <p className="mb-3 text-xs text-text-tertiary">
+          {[dupCount > 0 ? `${dupCount} duplicate` : null, failedCount > 0 ? `${failedCount} failed` : null]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      )}
+      {procMsg && <p className="mb-3 text-sm text-text-secondary">{procMsg}</p>}
 
       <DataTable<InvoiceScanRow>
         rows={rows}

@@ -104,14 +104,17 @@ Deno.serve(async (req: Request) => {
         }
       }
 
+      // Primary update — no invoice_no here, so the row always advances out of
+      // 'processing' even if migration 0061 hasn't been applied yet.
       await svc.from("invoice_scans").update({
         status: dup ? "duplicate" : "extracted",
         extracted_json: out,
-        invoice_no: invoiceNo || null,
         vendor_guess: vendor,
         error: dup ? "already imported" : null,
         updated_at: stamp(),
       }).eq("id", s.id);
+      // Best-effort dedup column (migration 0061); ignore the error if it is absent.
+      if (invoiceNo) await svc.from("invoice_scans").update({ invoice_no: invoiceNo }).eq("id", s.id);
       if (dup) duplicate++; else extracted++;
     } catch (e) {
       await svc.from("invoice_scans").update({
