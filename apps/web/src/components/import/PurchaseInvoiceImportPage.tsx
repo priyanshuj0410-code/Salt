@@ -25,6 +25,7 @@ import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { invokeExtract } from "@/lib/invoiceScans";
 import { ocrInvoiceToRows } from "@/lib/ocrInvoice";
+import { findExistingInvoice } from "@/lib/purchaseDedup";
 
 interface VendorRow { id: string; name: string; gstin: string | null }
 interface ItemRow { id: string; name: string; item_code: string | null; barcode: string | null }
@@ -108,6 +109,8 @@ export function PurchaseInvoiceImportPage() {
   // normalises the layout. aiBusy gates the file picker; aiNote flags the result.
   const [aiBusy, setAiBusy] = useState(false);
   const [aiNote, setAiNote] = useState<string | null>(null);
+  // Invoice keys already posted for this org → existing GRN ref (dedup).
+  const [dupes, setDupes] = useState<Map<string, string>>(new Map());
 
   // Load the masters once so the dry-run preview can mark each vendor/item as
   // existing vs "will create". setState only in the async .then (lint rule).
@@ -126,6 +129,25 @@ export function PurchaseInvoiceImportPage() {
 
   const vendorMap = useMemo(() => buildVendorMap(vendors), [vendors]);
   const itemMap = useMemo(() => buildItemMap(items), [items]);
+
+  // Flag invoices already posted for this org (dedup). Badged in review + excluded
+  // from the post count.
+  useEffect(() => {
+    if (!orgId || !result) return;
+    let active = true;
+    (async () => {
+      const m = new Map<string, string>();
+      for (const inv of result.invoices) {
+        if (!inv.invoiceNo) continue;
+        const ex = await findExistingInvoice(orgId, inv.invoiceNo, inv.vendorName);
+        if (ex) m.set(inv.key, ex.ref);
+      }
+      if (active) setDupes(m);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [orgId, result]);
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -182,7 +204,7 @@ export function PurchaseInvoiceImportPage() {
     setImporting(true);
     setError(null);
     try {
-      const valid = result.invoices.filter((i) => i.valid && i.lines.length > 0);
+      const valid = result.invoices.filter((i) => i.valid && i.lines.length > 0 && !dupes.has(i.key));
       if (!valid.length) {
         setError("No valid invoices to import — fix the errors and re-upload.");
         return;
@@ -401,6 +423,7 @@ export function PurchaseInvoiceImportPage() {
                       {vendorExists ? "vendor on file" : "new vendor"}
                     </Badge>
                     {!inv.valid && <Badge variant="destructive">has errors</Badge>}
+                    {dupes.has(inv.key) && <Badge variant="warning">duplicate · {dupes.get(inv.key)}</Badge>}
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-tertiary">
                     <span>{inv.date ?? "no date"}</span>
@@ -431,9 +454,9 @@ export function PurchaseInvoiceImportPage() {
             <p className="text-xs text-text-tertiary">
               Each invoice posts on its own. Re-running re-posts — fix errors and re-import only what failed.
             </p>
-            <Button onClick={doImport} disabled={importing || result.invoices.filter((i) => i.valid).length === 0}>
+            <Button onClick={doImport} disabled={importing || result.invoices.filter((i) => i.valid && !dupes.has(i.key)).length === 0}>
               <Upload />
-              {importing ? "Posting…" : `Post ${result.invoices.filter((i) => i.valid).length} invoices`}
+              {importing ? "Posting…" : `Post ${result.invoices.filter((i) => i.valid && !dupes.has(i.key)).length} invoices`}
             </Button>
           </div>
         </div>
