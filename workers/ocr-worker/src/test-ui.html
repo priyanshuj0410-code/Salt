@@ -72,6 +72,10 @@
   .spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--border-strong); border-top-color:var(--text); border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; }
   @keyframes spin { to { transform:rotate(360deg); } }
   .hidden { display:none; }
+  .statushead { margin-bottom:6px; font-size:13px; }
+  .loglines { font-family:var(--mono); font-size:11.5px; color:var(--text-2); background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:8px 10px; max-height:220px; overflow:auto; }
+  .loglines div { white-space:pre-wrap; padding:1px 0; }
+  .loglines div:last-child { color:var(--text); }
   .err { color:var(--danger); background:var(--danger-bg); border:1px solid var(--danger-border); border-radius:var(--radius); padding:10px 12px; font-size:13px; }
   .section-title { margin:26px 0 10px; font-weight:600; }
 </style>
@@ -141,7 +145,23 @@ function readBase64(file) {
 async function handle(file) {
   resultsEl.innerHTML = "";
   statusEl.className = "";
-  statusEl.innerHTML = '<span class="spinner"></span> Extracting <b>' + escapeHtml(file.name) + '</b> … (a cold model load can take a minute)';
+  const start = Date.now();
+  const logs = [];
+  let state = "working"; // working | done | fail
+  let timer = setInterval(paint, 250);
+
+  function paint() {
+    const secs = ((Date.now() - start) / 1000).toFixed(0);
+    const head = state === "fail" ? '<span style="color:var(--danger)">✗ failed</span>'
+      : state === "done" ? '<span style="color:var(--success)">✓ done</span>'
+      : '<span class="spinner"></span> working';
+    statusEl.innerHTML = '<div class="statushead">' + head + ' · <b>' + escapeHtml(file.name) + '</b> · ' + secs + 's</div>'
+      + '<div class="loglines">' + logs.map(l => '<div>' + escapeHtml(l) + '</div>').join('') + '</div>';
+    const ll = statusEl.querySelector('.loglines');
+    if (ll) ll.scrollTop = ll.scrollHeight;
+  }
+  paint();
+
   try {
     const base64 = await readBase64(file);
     const mime = file.type || (file.name.toLowerCase().endsWith(".csv") ? "text/csv" : "application/octet-stream");
@@ -150,13 +170,41 @@ async function handle(file) {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ filename: file.name, mime, base64, runFlash: flashChk.checked && hasFlash, model: modelSel.value || undefined }),
     });
-    const out = await res.json();
-    if (!res.ok || out.error) throw new Error(out.error || ("HTTP " + res.status));
-    statusEl.className = "hidden";
-    render(file, out);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    // Read the NDJSON stream: {"stage":…} lines, then a final {"result":…}.
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "", finalOut = null;
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
+        if (!line) continue;
+        let obj; try { obj = JSON.parse(line); } catch { continue; }
+        if (obj.stage) { logs.push(obj.stage); paint(); }
+        else if (obj.result) { finalOut = obj.result; }
+      }
+    }
+    clearInterval(timer); timer = null;
+
+    if (!finalOut || finalOut.error) {
+      state = "fail";
+      if (finalOut && finalOut.error) logs.push("ERROR: " + finalOut.error);
+      paint();
+      return;
+    }
+    state = "done";
+    paint();
+    render(file, finalOut);
   } catch (e) {
-    statusEl.className = "";
-    statusEl.innerHTML = '<div class="err">' + escapeHtml(e.message) + '</div>';
+    if (timer) clearInterval(timer);
+    state = "fail";
+    logs.push("ERROR: " + e.message);
+    paint();
   }
 }
 

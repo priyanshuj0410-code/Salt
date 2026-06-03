@@ -3,14 +3,11 @@
 // shape matches. Ollama serves on the SAME laptop as this worker — no tunnel.
 //
 // Uses node:http (not global fetch): undici caps headers at ~300s, but cold-loading a
-// large model + a vision pass on a laptop routinely runs longer. node:http lets us set
-// a generous idle timeout (OLLAMA_TIMEOUT_MS) instead of failing spuriously.
-//
-// `model` is overridable per call (the test harness compares models); it defaults to
-// config.model (what the worker runs). We send think:false so a *thinking* model (gemma4,
-// qwen3) emits the JSON directly instead of burning its token budget on a prose reasoning
-// summary (that was returning "Based on the data provided…" instead of JSON). A model that
-// rejects the flag (a non-thinking model like qwen2.5) is retried without it.
+// large model + a vision pass on a laptop routinely runs longer. We STREAM the response
+// (stream:true) so we can report live progress (token count) AND keep the socket active
+// during long generations (no spurious idle timeout). `model` and `onProgress` are
+// per-call; `think:false` makes thinking models emit JSON directly (retried off if a
+// non-thinking model rejects it).
 import http from "node:http";
 import https from "node:https";
 import { config } from "./config.ts";
@@ -21,11 +18,14 @@ interface ChatMessage {
   images?: string[];
 }
 
-function requestOnce(messages: ChatMessage[], model: string, think: boolean | undefined): Promise<string> {
+/** Live progress while the model generates (tokens streamed so far). */
+export type ProgressFn = (info: { tokens: number }) => void;
+
+function requestOnce(messages: ChatMessage[], model: string, think: boolean | undefined, onProgress?: ProgressFn): Promise<string> {
   const url = new URL("/api/chat", config.ollamaHost);
   const body = JSON.stringify({
     model,
-    stream: false,
+    stream: true,
     format: "json",
     ...(think === undefined ? {} : { think }),
     options: { temperature: 0, num_ctx: config.numCtx, num_predict: config.numPredict },
@@ -42,25 +42,52 @@ function requestOnce(messages: ChatMessage[], model: string, think: boolean | un
         timeout: config.ollamaTimeoutMs,
       },
       (res) => {
-        const chunks: Buffer[] = [];
-        res.on("data", (c: Buffer) => chunks.push(c));
-        res.on("end", () => {
-          const raw = Buffer.concat(chunks).toString("utf8");
-          const status = res.statusCode ?? 0;
-          if (status >= 400) {
+        const status = res.statusCode ?? 0;
+        if (status >= 400) {
+          const errChunks: Buffer[] = [];
+          res.on("data", (c: Buffer) => errChunks.push(c));
+          res.on("end", () => {
+            const raw = Buffer.concat(errChunks).toString("utf8");
             if (status === 404) {
               return reject(new Error(`Ollama 404: model "${model}" not pulled? run \`ollama pull ${model}\` — ${raw.slice(0, 300)}`));
             }
-            return reject(new Error(`Ollama ${status}: ${raw.slice(0, 300)}`));
+            reject(new Error(`Ollama ${status}: ${raw.slice(0, 300)}`));
+          });
+          return;
+        }
+        // Stream of NDJSON lines: {"message":{"content":"…"},"done":false} … {"done":true}
+        let content = "";
+        let tokens = 0;
+        let buf = "";
+        res.on("data", (chunk: Buffer) => {
+          buf += chunk.toString("utf8");
+          let nl: number;
+          while ((nl = buf.indexOf("\n")) >= 0) {
+            const line = buf.slice(0, nl).trim();
+            buf = buf.slice(nl + 1);
+            if (!line) continue;
+            let obj: { message?: { content?: string }; error?: string; done?: boolean };
+            try {
+              obj = JSON.parse(line);
+            } catch {
+              continue;
+            }
+            if (obj.error) {
+              req.destroy();
+              return reject(new Error(`Ollama (${model}): ${obj.error}`));
+            }
+            const piece = obj.message?.content ?? "";
+            if (piece) {
+              content += piece;
+              tokens++;
+              if (onProgress && tokens % 16 === 0) onProgress({ tokens });
+            }
           }
-          try {
-            const data = JSON.parse(raw) as { message?: { content?: string } };
-            const content = data?.message?.content ?? "";
-            if (!content) return reject(new Error(`Ollama (${model}) returned no content`));
-            resolve(content);
-          } catch {
-            reject(new Error(`Ollama (${model}) unexpected response envelope: ${raw.slice(0, 200)}`));
-          }
+        });
+        res.on("end", () => {
+          if (onProgress && tokens > 0) onProgress({ tokens });
+          if (!content) return reject(new Error(`Ollama (${model}) returned no content`));
+          resolve(content);
         });
       },
     );
@@ -71,12 +98,12 @@ function requestOnce(messages: ChatMessage[], model: string, think: boolean | un
   });
 }
 
-async function postChat(messages: ChatMessage[], model: string = config.model): Promise<string> {
+async function postChat(messages: ChatMessage[], model: string = config.model, onProgress?: ProgressFn): Promise<string> {
   let think: boolean | undefined = false; // gemma4/qwen3 emit JSON directly with this off
   let crashRetried = false;
   for (;;) {
     try {
-      return await requestOnce(messages, model, think);
+      return await requestOnce(messages, model, think, onProgress);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       // A non-thinking model (qwen2.5) rejects `think` → drop it and retry.
@@ -96,13 +123,13 @@ async function postChat(messages: ChatMessage[], model: string = config.model): 
 }
 
 /** Vision: invoice page images ride on the user message as base64 (no data: prefix). */
-export function callOllamaVision(images: string[], prompt: string, model?: string): Promise<string> {
-  return postChat([{ role: "user", content: prompt, images }], model);
+export function callOllamaVision(images: string[], prompt: string, model?: string, onProgress?: ProgressFn): Promise<string> {
+  return postChat([{ role: "user", content: prompt, images }], model, onProgress);
 }
 
 /** Text: e.g. a digital PDF's text layer or a CSV export pasted into the prompt. */
-export function callOllamaText(prompt: string, model?: string): Promise<string> {
-  return postChat([{ role: "user", content: prompt }], model);
+export function callOllamaText(prompt: string, model?: string, onProgress?: ProgressFn): Promise<string> {
+  return postChat([{ role: "user", content: prompt }], model, onProgress);
 }
 
 export interface OllamaModel {

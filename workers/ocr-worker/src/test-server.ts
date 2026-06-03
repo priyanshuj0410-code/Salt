@@ -66,7 +66,13 @@ interface EngineResult {
   error?: string;
 }
 
-async function extract(body: ExtractBody): Promise<Record<string, unknown>> {
+function lineCount(json: unknown): number | string {
+  return json && typeof json === "object" && Array.isArray((json as { lines?: unknown }).lines)
+    ? (json as { lines: unknown[] }).lines.length
+    : "?";
+}
+
+async function extract(body: ExtractBody, onStage: (msg: string) => void): Promise<Record<string, unknown>> {
   const mime = body.mime ?? "application/octet-stream";
   const filename = body.filename ?? "";
   const base64 = body.base64 ?? "";
@@ -75,27 +81,34 @@ async function extract(body: ExtractBody): Promise<Record<string, unknown>> {
 
   const model = body.model || config.model;
   const out: Record<string, unknown> = { model };
+  onStage(`Received ${filename || "file"} — ${(bytes.length / 1024).toFixed(0)} KB, ${mime}`);
 
   // --- Gemma / chosen local model (the real worker path: pdf-text / pdf-vision / image / csv-text) ---
   const t0 = Date.now();
   try {
-    const ex = await extractInvoice(bytes, mime, filename, model);
+    const ex = await extractInvoice(bytes, mime, filename, model, onStage);
     out.gemma = { json: ex.json, ms: Date.now() - t0, mode: ex.mode } satisfies EngineResult;
     out.images = ex.images;
     out.text = ex.text ? ex.text.slice(0, 8000) : null;
+    onStage(`✓ ${model} done in ${((Date.now() - t0) / 1000).toFixed(1)}s — mode ${ex.mode}, ${lineCount(ex.json)} line(s)`);
   } catch (e) {
-    out.gemma = { error: e instanceof Error ? e.message : String(e), ms: Date.now() - t0 } satisfies EngineResult;
+    const msg = e instanceof Error ? e.message : String(e);
+    out.gemma = { error: msg, ms: Date.now() - t0 } satisfies EngineResult;
     out.images = [];
     out.text = null;
+    onStage(`✗ ${model} failed: ${msg}`);
   }
 
   // --- Flash (optional comparison) ---
   if (body.runFlash && GEMINI_KEY) {
+    onStage("Running Gemini Flash…");
     const f0 = Date.now();
     try {
       out.flash = { json: await callFlash(base64, mime, filename), ms: Date.now() - f0 } satisfies EngineResult;
+      onStage(`✓ Flash done in ${((Date.now() - f0) / 1000).toFixed(1)}s`);
     } catch (e) {
       out.flash = { error: e instanceof Error ? e.message : String(e), ms: Date.now() - f0 } satisfies EngineResult;
+      onStage("✗ Flash failed");
     }
   }
   return out;
@@ -140,12 +153,26 @@ const server = http.createServer((req, res) => {
     });
     req.on("end", () => {
       void (async () => {
+        let body: ExtractBody;
         try {
-          const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as ExtractBody;
-          json(res, 200, await extract(body));
-        } catch (e) {
-          json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+          body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as ExtractBody;
+        } catch {
+          return json(res, 400, { error: "invalid JSON body" });
         }
+        // Stream NDJSON: one {"stage":…} per progress event, then a final {"result":…}.
+        res.writeHead(200, { "content-type": "application/x-ndjson", "cache-control": "no-cache" });
+        const ts = () => new Date().toISOString().slice(11, 19);
+        const send = (obj: unknown) => res.write(`${JSON.stringify(obj)}\n`);
+        const onStage = (msg: string) => {
+          console.log(`${ts()}  ${msg}`);
+          send({ stage: msg });
+        };
+        try {
+          send({ result: await extract(body, onStage) });
+        } catch (e) {
+          send({ result: { error: e instanceof Error ? e.message : String(e) } });
+        }
+        res.end();
       })();
     });
     return;
