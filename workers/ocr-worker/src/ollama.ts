@@ -7,8 +7,10 @@
 // a generous idle timeout (OLLAMA_TIMEOUT_MS) instead of failing spuriously.
 //
 // `model` is overridable per call (the test harness compares models); it defaults to
-// config.model (what the worker runs). We do NOT send `think` — it errors on models that
-// do not support thinking; format:"json" + parseModelJson handle reasoning models fine.
+// config.model (what the worker runs). We send think:false so a *thinking* model (gemma4,
+// qwen3) emits the JSON directly instead of burning its token budget on a prose reasoning
+// summary (that was returning "Based on the data provided…" instead of JSON). A model that
+// rejects the flag (a non-thinking model like qwen2.5) is retried without it.
 import http from "node:http";
 import https from "node:https";
 import { config } from "./config.ts";
@@ -19,12 +21,13 @@ interface ChatMessage {
   images?: string[];
 }
 
-function postChat(messages: ChatMessage[], model: string = config.model): Promise<string> {
+function requestOnce(messages: ChatMessage[], model: string, think: boolean | undefined): Promise<string> {
   const url = new URL("/api/chat", config.ollamaHost);
   const body = JSON.stringify({
     model,
     stream: false,
     format: "json",
+    ...(think === undefined ? {} : { think }),
     options: { temperature: 0, num_predict: config.numPredict },
     messages,
   });
@@ -66,6 +69,18 @@ function postChat(messages: ChatMessage[], model: string = config.model): Promis
     req.write(body);
     req.end();
   });
+}
+
+async function postChat(messages: ChatMessage[], model: string = config.model): Promise<string> {
+  try {
+    return await requestOnce(messages, model, false);
+  } catch (e) {
+    // A non-thinking model rejects `think` → retry without it.
+    if (/think/i.test(e instanceof Error ? e.message : String(e))) {
+      return requestOnce(messages, model, undefined);
+    }
+    throw e;
+  }
 }
 
 /** Vision: invoice page images ride on the user message as base64 (no data: prefix). */
