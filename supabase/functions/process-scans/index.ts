@@ -3,8 +3,8 @@
 // The client uploads several invoice files to the `invoice-scans` bucket as `pending`
 // invoice_scans rows (a shared batch_id), then fires this once. It drains the org's
 // pending scans SEQUENTIALLY, server-side, so the work survives the user navigating
-// away: for each it downloads the file, calls `extract-invoice` (reusing its Gemini
-// model-chain — no duplication), dedups against posted GRNs, and updates the scan to
+// away: for each it downloads the file, calls `extract-invoice` (reusing its Ollama
+// model — no duplication), dedups against posted GRNs, and updates the scan to
 // `extracted` / `duplicate` / `failed`. It NEVER posts a GRN — the user reviews + posts
 // from scan history (extracting blindly is unsafe given OCR can misread).
 //
@@ -14,7 +14,7 @@
 //
 // DEPLOY (user/infra — the agent cannot do this):
 //   supabase functions deploy process-scans
-//   (GEMINI_API_KEY already set for extract-invoice; SUPABASE_* are auto-injected.)
+//   (OLLAMA_API_KEY already set for extract-invoice; SUPABASE_* are auto-injected.)
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
