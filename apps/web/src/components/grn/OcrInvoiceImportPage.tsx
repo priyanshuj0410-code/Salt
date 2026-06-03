@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Papa from "papaparse";
-import { Download, ScanLine, Upload } from "lucide-react";
+import { Download, FileText, Loader2, ScanLine, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
@@ -80,29 +80,37 @@ async function persistCsvFile(
   shopId: string | null,
   file: File,
   batchId: string,
-): Promise<{ rowCount: number; written: number; usedAi: boolean; issues: string[] }> {
-  const issues: string[] = [];
+): Promise<{ rowCount: number; written: number; dupes: number; usedAi: boolean; error?: string }> {
   const { rows, usedAi } = await parseCsvFileToRows(file);
   let written = 0;
-  if (rows.length === 0) return { rowCount: 0, written, usedAi, issues };
+  let dupes = 0;
+  if (rows.length === 0) return { rowCount: 0, written, dupes, usedAi };
   const jsons = rowsToOcrInvoices(rows);
-  if (jsons.length === 0) return { rowCount: rows.length, written, usedAi, issues };
+  if (jsons.length === 0) return { rowCount: rows.length, written, dupes, usedAi };
   const invoices = parsePurchaseInvoices(rows).invoices;
   const b64 = await readAsBase64(file);
   const up = await uploadScanFile(orgId, file, b64);
-  if (up.error) {
-    issues.push(`Could not save ${file.name}: ${up.error}`);
-    return { rowCount: rows.length, written, usedAi, issues };
-  }
+  if (up.error) return { rowCount: rows.length, written, dupes, usedAi, error: up.error };
   const fileMeta = { path: up.path, filename: file.name, mime: file.type || null };
   for (const { key, json } of jsons) {
     const inv = invoices.find((i) => i.key === key);
     if (!inv || !inv.valid) continue; // only postable invoices enter the queue
     const ex = await findExistingInvoice(orgId, inv.invoiceNo, inv.vendorName);
     const created = await insertExtractedScan(orgId, shopId, fileMeta, json, ex?.ref, batchId);
-    if (created.id && !created.error) written += 1;
+    if (created.id && !created.error) {
+      written += 1;
+      if (ex) dupes += 1;
+    }
   }
-  return { rowCount: rows.length, written, usedAi, issues };
+  return { rowCount: rows.length, written, dupes, usedAi };
+}
+
+type UploadStatus = "uploading" | "queued" | "duplicate" | "failed";
+interface UploadItem {
+  id: string;
+  name: string;
+  status: UploadStatus;
+  detail?: string;
 }
 
 function downloadTemplate() {
@@ -137,45 +145,56 @@ function ImportSurface() {
   const [tab, setTab] = useState<"batch" | "history">("history");
   const [batchId, setBatchId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState<string | null>(null);
-  const [issues, setIssues] = useState<string[]>([]);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [reloadSignal, setReloadSignal] = useState(0);
 
+  // Per-file ingest: each dropped file gets its own live row (uploading → queued /
+  // duplicate / failed-with-reason) so nothing is silently dropped. Successfully-queued
+  // files then track their extraction status in the "This upload" queue below.
   async function ingest(files: File[]) {
     if (!supabase || !orgId || files.length === 0) return;
+    const newBatch = crypto.randomUUID();
+    setUploads(files.map((f) => ({ id: crypto.randomUUID(), name: f.name, status: "uploading" as UploadStatus })));
     setBusy(true);
-    setNote(null);
-    setIssues([]);
+    const patch = (i: number, p: Partial<UploadItem>) =>
+      setUploads((cur) => cur.map((it, idx) => (idx === i ? { ...it, ...p } : it)));
     try {
-      const newBatch = crypto.randomUUID();
       let queued = 0;
-      let usedAi = false;
-      const probs: string[] = [];
-      for (const file of files) {
-        if (isCsv(file)) {
-          const r = await persistCsvFile(orgId, shopId ?? null, file, newBatch);
-          queued += r.written;
-          if (r.usedAi) usedAi = true;
-          if (r.written === 0) probs.push(`Could not read ${file.name}.`);
-          probs.push(...r.issues);
-        } else {
-          const b64 = await readAsBase64(file);
-          const created = await createScan(orgId, shopId ?? null, file, b64, newBatch);
-          if (!created.error) queued += 1;
-          else probs.push(`Could not upload ${file.name}: ${created.error}`);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        try {
+          if (isCsv(file)) {
+            const r = await persistCsvFile(orgId, shopId ?? null, file, newBatch);
+            if (r.error) {
+              patch(i, { status: "failed", detail: r.error });
+            } else if (r.written === 0) {
+              patch(i, { status: "failed", detail: r.rowCount === 0 ? "couldn't read this CSV" : "no postable invoices" });
+            } else {
+              queued += r.written;
+              const bits = [`${r.written} invoice${r.written === 1 ? "" : "s"}`];
+              if (r.dupes) bits.push(`${r.dupes} duplicate`);
+              if (r.usedAi) bits.push("AI-normalised");
+              patch(i, { status: r.dupes === r.written ? "duplicate" : "queued", detail: bits.join(" · ") });
+            }
+          } else {
+            const b64 = await readAsBase64(file);
+            const created = await createScan(orgId, shopId ?? null, file, b64, newBatch);
+            if (created.error) patch(i, { status: "failed", detail: created.error });
+            else {
+              queued += 1;
+              patch(i, { status: "queued", detail: "queued for extraction" });
+            }
+          }
+        } catch (e) {
+          patch(i, { status: "failed", detail: e instanceof Error ? e.message : "upload failed" });
         }
       }
-      setIssues(probs);
-      if (queued === 0) {
-        setNote(null);
-        if (probs.length === 0) setIssues(["Nothing could be queued. Is scan history set up (migration 0049)?"]);
-        return;
+      if (queued > 0) {
+        await kickoffProcessScans(newBatch);
+        setBatchId(newBatch);
+        setTab("batch");
+        setReloadSignal((s) => s + 1);
       }
-      await kickoffProcessScans(newBatch);
-      setBatchId(newBatch);
-      setTab("batch");
-      setReloadSignal((s) => s + 1);
-      setNote(`Added ${queued} file${queued === 1 ? "" : "s"}${usedAi ? " (some CSV columns normalised with AI)" : ""} — extracting now. You can leave; this keeps running.`);
     } finally {
       setBusy(false);
     }
@@ -199,11 +218,37 @@ function ImportSurface() {
 
       <Dropzone onFiles={ingest} busy={busy} busyLabel="Uploading…" />
 
-      {note && <div className="mt-4 rounded-lg border border-border bg-surface p-3 text-sm">{note}</div>}
-      {issues.length > 0 && (
-        <ul className="mt-3 space-y-1 rounded-md border border-warning-border bg-warning-bg p-3 text-xs text-warning">
-          {issues.map((m, i) => <li key={i}>• {m}</li>)}
-        </ul>
+      {uploads.length > 0 && (
+        <div className="mt-4 overflow-hidden rounded-lg border border-border">
+          <div className="flex items-center justify-between border-b border-border bg-surface px-3 py-2 text-xs">
+            <span className="font-medium text-text-secondary">Upload</span>
+            <span className="text-text-tertiary">
+              {uploads.filter((u) => u.status !== "uploading").length}/{uploads.length} done
+            </span>
+          </div>
+          <ul className="max-h-72 divide-y divide-divider overflow-auto">
+            {uploads.map((u) => (
+              <li key={u.id} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                <span className="flex min-w-0 items-center gap-2">
+                  <FileText className="size-3.5 shrink-0 text-text-tertiary" />
+                  <span className="truncate">{u.name}</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2 text-xs">
+                  {u.detail && <span className="text-text-tertiary">{u.detail}</span>}
+                  {u.status === "uploading" ? (
+                    <span className="inline-flex items-center gap-1 text-text-tertiary">
+                      <Loader2 className="size-3 animate-spin" /> Uploading…
+                    </span>
+                  ) : (
+                    <Badge variant={u.status === "queued" ? "info" : u.status === "duplicate" ? "warning" : "danger"}>
+                      {u.status === "queued" ? "Queued" : u.status === "duplicate" ? "Duplicate" : "Failed"}
+                    </Badge>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <div className="mt-7">
