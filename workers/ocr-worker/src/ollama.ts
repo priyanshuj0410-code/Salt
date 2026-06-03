@@ -28,7 +28,7 @@ function requestOnce(messages: ChatMessage[], model: string, think: boolean | un
     stream: false,
     format: "json",
     ...(think === undefined ? {} : { think }),
-    options: { temperature: 0, num_predict: config.numPredict },
+    options: { temperature: 0, num_ctx: config.numCtx, num_predict: config.numPredict },
     messages,
   });
   const lib = url.protocol === "https:" ? https : http;
@@ -72,14 +72,26 @@ function requestOnce(messages: ChatMessage[], model: string, think: boolean | un
 }
 
 async function postChat(messages: ChatMessage[], model: string = config.model): Promise<string> {
-  try {
-    return await requestOnce(messages, model, false);
-  } catch (e) {
-    // A non-thinking model rejects `think` → retry without it.
-    if (/think/i.test(e instanceof Error ? e.message : String(e))) {
-      return requestOnce(messages, model, undefined);
+  let think: boolean | undefined = false; // gemma4/qwen3 emit JSON directly with this off
+  let crashRetried = false;
+  for (;;) {
+    try {
+      return await requestOnce(messages, model, think);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // A non-thinking model (qwen2.5) rejects `think` → drop it and retry.
+      if (think === false && /think/i.test(msg)) {
+        think = undefined;
+        continue;
+      }
+      // The runner can die transiently (Ollama restarts it) — retry once after a beat.
+      if (!crashRetried && /runner|terminated|unexpectedly stopped|\bEOF\b|\b50[0-9]\b/i.test(msg)) {
+        crashRetried = true;
+        await new Promise((r) => setTimeout(r, 2500));
+        continue;
+      }
+      throw e;
     }
-    throw e;
   }
 }
 

@@ -142,7 +142,8 @@ pnpm reclaim          # one-shot; e.g. wire to cron/launchd every 15 min
 | `OCR_BUCKET` | `invoice-scans` | private Storage bucket |
 | `MAX_IMAGE_PX` | `1500` | PDF rasterize downscale (longest side) |
 | `OLLAMA_TIMEOUT_MS` | `600000` | idle ceiling for the Ollama call (cold loads run minutes) |
-| `OLLAMA_NUM_PREDICT` | `8192` | max generated tokens — stops runaway models hanging (gemma4 stops on its own) |
+| `OLLAMA_NUM_CTX` | `8192` | context window — keep **> num_predict + input** or Ollama shifts the KV cache and crashes the runner |
+| `OLLAMA_NUM_PREDICT` | `4096` | max generated tokens — stops runaway models hanging (gemma4 stops on its own) |
 
 ---
 
