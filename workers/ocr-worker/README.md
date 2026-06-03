@@ -22,15 +22,22 @@ It depends on migration **`0062_ocr_queue.sql`** (M0) being applied.
 ## How it works
 
 ```
-ocr_lease_next(queue)  ──►  download file (private bucket)  ──►  rasterize PDF→PNG (poppler)
-       ▲                                                              │
-       │                                                     Ollama vision (Gemma, JSON)
-   ocr_fail (retry/backoff)                                          │
-       │                                                     parseModelJson
-       └────────────  ocr_complete(json) ◄───────────────────────────┘
+ocr_lease_next(queue) ─► download file ─► route by type (extract.ts):
+       ▲                                    • CSV / digital PDF (text layer) → text  → Ollama (text)
+       │                                    • scanned PDF → rasterize per page (poppler) ┐
+   ocr_fail (retry)                         • image → downscale (sips) ─────────────────┤→ Ollama (vision)
+       │                                                                  parseModelJson ┘ (+merge pages)
+       └──────────────────  ocr_complete(json) ◄───────────────────────────────┘
                               │
               invoice_scans.status='extracted'  ──►  Salt: parse → draft GRN → review → receive_purchase
 ```
+
+**PDF handling.** Ollama/Gemma cannot read PDFs (only raster images), unlike cloud
+Gemini which ingests PDFs directly. So: a **digital PDF** (has a text layer) is read with
+`pdftotext` and sent as **text** — no rasterize, no OCR error, fastest + most accurate. A
+**scanned PDF** (no text) is rasterized per page (`pdftoppm`, downscaled) and sent to the
+vision model, one page per call (an oversized multi-image batch crashes ggml), then the
+pages are merged. Photos/images are downscaled with `sips` before vision.
 
 The **server owns durability** (queue rows + files). The worker is stateless and
 disposable — if the laptop sleeps or crashes mid-job, the lease expires and the job
@@ -48,7 +55,8 @@ that prompt ever changes, update both.
 - **Node ≥ 23.6** (this repo runs `.ts` directly via Node's type-stripping — no build
   step). `node --version`.
 - **[Ollama](https://ollama.com/download)** (macOS app or `brew install ollama`).
-- **poppler** for PDF rasterization: `brew install poppler` (provides `pdftoppm`).
+- **poppler** for PDFs: `brew install poppler` (provides `pdftotext` for digital PDFs +
+  `pdftoppm` to rasterize scanned ones). Image downscaling uses `sips` (ships with macOS).
 
 ### Pull a Gemma vision model
 

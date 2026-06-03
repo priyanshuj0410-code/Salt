@@ -23,9 +23,8 @@ process.env.SUPABASE_SERVICE_KEY ||= "unused"; // unused; only satisfies config.
 
 // Import AFTER env is set so config.ts validates against it.
 const { config } = await import("./config.ts");
-const { PROMPT, parseModelJson } = await import("./contract.ts");
-const { fileToImages } = await import("./files.ts");
-const { callOllamaVision, callOllamaText } = await import("./ollama.ts");
+const { PROMPT, parseModelJson } = await import("./contract.ts"); // used by the Flash comparison
+const { extractInvoice } = await import("./extract.ts");
 
 const PORT = Number(process.env.TEST_UI_PORT ?? 5599);
 const GEMINI_KEY = process.env.GEMINI_API_KEY ?? "";
@@ -61,6 +60,7 @@ async function callFlash(base64: string, mime: string, filename: string): Promis
 interface EngineResult {
   json?: unknown;
   ms?: number;
+  mode?: string;
   error?: string;
 }
 
@@ -69,30 +69,22 @@ async function extract(body: ExtractBody): Promise<Record<string, unknown>> {
   const filename = body.filename ?? "";
   const base64 = body.base64 ?? "";
   if (!base64) throw new Error("no file data");
-  const csv = isCsv(mime, filename);
+  const bytes = new Uint8Array(Buffer.from(base64, "base64"));
 
   const out: Record<string, unknown> = { model: config.model };
-  let images: string[] = [];
 
-  // --- Gemma (the real worker path) ---
+  // --- Gemma (the real worker path: pdf-text / pdf-vision / image / csv-text) ---
   const t0 = Date.now();
-  let gemma: EngineResult;
   try {
-    let raw: string;
-    if (csv) {
-      const text = Buffer.from(base64, "base64").toString("utf8");
-      raw = await callOllamaText(`${PROMPT}\n\nCSV / tabular export to map into the schema above:\n\n${text}`);
-    } else {
-      images = fileToImages(new Uint8Array(Buffer.from(base64, "base64")), mime);
-      raw = await callOllamaVision(images, PROMPT);
-    }
-    gemma = { json: parseModelJson(raw), ms: Date.now() - t0 };
+    const ex = await extractInvoice(bytes, mime, filename);
+    out.gemma = { json: ex.json, ms: Date.now() - t0, mode: ex.mode } satisfies EngineResult;
+    out.images = ex.images;
+    out.text = ex.text ? ex.text.slice(0, 8000) : null;
   } catch (e) {
-    gemma = { error: e instanceof Error ? e.message : String(e), ms: Date.now() - t0 };
+    out.gemma = { error: e instanceof Error ? e.message : String(e), ms: Date.now() - t0 } satisfies EngineResult;
+    out.images = [];
+    out.text = null;
   }
-  out.gemma = gemma;
-  out.images = images;
-  out.csvText = csv ? Buffer.from(base64, "base64").toString("utf8").slice(0, 8000) : null;
 
   // --- Flash (optional comparison) ---
   if (body.runFlash && GEMINI_KEY) {

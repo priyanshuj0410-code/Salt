@@ -11,9 +11,7 @@
 //   pnpm once       lease + process exactly one job, then exit (smoke test)
 //   pnpm reclaim    one-shot ocr_reclaim_expired() (if not using pg_cron, §M4)
 import { config } from "./config.ts";
-import { PROMPT, parseModelJson } from "./contract.ts";
-import { callOllamaVision } from "./ollama.ts";
-import { fileToImages } from "./files.ts";
+import { extractInvoice, type Extraction } from "./extract.ts";
 import * as db from "./db.ts";
 
 function log(...args: unknown[]): void {
@@ -26,28 +24,27 @@ function sleep(ms: number): Promise<void> {
 async function processJob(job: db.Job): Promise<void> {
   log(`lease ${job.id} org=${job.org_id} attempt=${job.attempts}`);
   const { bytes, mime } = await db.downloadFile(job.storage_path);
-  const images = fileToImages(bytes, job.mime ?? mime);
 
-  // A laptop vision pass can outlive the lease; renew at half the lease window.
+  // A laptop extraction can outlive the lease; renew at half the lease window.
   const renewMs = Math.max(30_000, (config.leaseSeconds * 1000) / 2);
   const renewTimer = setInterval(() => {
     db.renew(job.id).catch((e) => log(`renew ${job.id} failed: ${e instanceof Error ? e.message : e}`));
   }, renewMs);
 
-  let raw: string;
+  let extraction: Extraction;
   try {
-    raw = await callOllamaVision(images, PROMPT);
+    extraction = await extractInvoice(bytes, job.mime ?? mime, job.storage_path);
   } finally {
     clearInterval(renewTimer);
   }
 
-  const json = parseModelJson(raw);
+  const json = extraction.json;
   const invoiceNo =
     typeof (json as { invoice_no?: unknown })?.invoice_no === "string"
       ? (json as { invoice_no: string }).invoice_no.trim()
       : "";
   await db.complete(job.id, json, invoiceNo || null);
-  log(`done ${job.id} invoice=${invoiceNo || "?"} pages=${images.length}`);
+  log(`done ${job.id} invoice=${invoiceNo || "?"} via ${extraction.mode}`);
 }
 
 /** Lease + process one job. Returns false when the queue is empty. */

@@ -153,10 +153,11 @@ function render(file, out) {
   parts.push('<div class="section-title">Source</div>');
   parts.push('<div class="card"><div class="card-b preview">');
   if (out.images && out.images.length) {
-    parts.push('<div class="muted" style="margin-bottom:8px">' + out.images.length + ' page image(s) sent to the model</div>');
+    parts.push('<div class="muted" style="margin-bottom:8px">' + out.images.length + ' page image(s) rasterized + sent to the vision model</div>');
     out.images.forEach(b => parts.push('<img src="data:image/png;base64,' + b + '" />'));
-  } else if (out.csvText != null) {
-    parts.push('<pre>' + escapeHtml(out.csvText) + '</pre>');
+  } else if (out.text != null) {
+    parts.push('<div class="muted" style="margin-bottom:8px">text layer sent to the model (no rasterize, no OCR)</div>');
+    parts.push('<pre>' + escapeHtml(out.text) + '</pre>');
   } else {
     parts.push('<div class="muted">' + escapeHtml(file.name) + '</div>');
   }
@@ -182,7 +183,8 @@ function engineCard(title, model, r) {
     const j = r.json || {};
     const lines = Array.isArray(j.lines) ? j.lines : [];
     badge = '<span class="badge b-info">' + (r.ms != null ? (r.ms/1000).toFixed(1) + "s" : "") + '</span>'
-          + ' <span class="badge b-neutral">' + lines.length + ' lines</span>';
+          + ' <span class="badge b-neutral">' + lines.length + ' lines</span>'
+          + (r.mode ? ' <span class="badge b-neutral">' + escapeHtml(r.mode) + '</span>' : '');
     body = headerKv(j) + lineTable(lines) + rawJson(j);
   }
   return '<div class="card"><div class="card-h"><span class="name">' + escapeHtml(title) + '</span>'

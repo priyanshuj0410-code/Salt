@@ -71,3 +71,21 @@ export function parseModelJson(raw: string): unknown {
   }
   throw new Error("model returned incomplete JSON"); // never closed → truncated output
 }
+
+/** Merge per-page extractions of ONE invoice into a single OcrInvoiceJson: header from
+ *  the first page that has an invoice no / vendor; line items concatenated in order.
+ *  Used by the vision path for multi-page PDFs (PRD §14.7). */
+export function mergeInvoiceJson(parts: unknown[]): unknown {
+  const objs = parts.filter((p): p is Record<string, unknown> => !!p && typeof p === "object" && !Array.isArray(p));
+  const str = (o: Record<string, unknown>, k: string): string => (typeof o[k] === "string" ? (o[k] as string).trim() : "");
+  if (objs.length === 0) return { invoice_no: "", date: "", vendor: "", vendor_gstin: "", lines: [] };
+  const header = objs.find((o) => str(o, "invoice_no") || str(o, "vendor")) ?? objs[0];
+  const lines = objs.flatMap((o) => (Array.isArray(o.lines) ? o.lines : []));
+  return {
+    invoice_no: str(header, "invoice_no"),
+    date: str(header, "date"),
+    vendor: str(header, "vendor"),
+    vendor_gstin: str(header, "vendor_gstin"),
+    lines,
+  };
+}
