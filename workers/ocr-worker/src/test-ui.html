@@ -122,7 +122,7 @@ fetch("/models").then(r => r.json()).then(m => {
   const list = m.models || [];
   modelSel.innerHTML = list.map(x =>
     '<option value="' + escapeHtml(x.name) + '"' + (x.name === m.default ? ' selected' : '') + '>'
-    + escapeHtml(x.name) + (x.vision ? ' · vision' : '') + '</option>'
+    + escapeHtml(x.name) + (x.cloud ? ' · cloud' : (x.vision ? ' · vision' : '')) + '</option>'
   ).join("") || '<option>' + escapeHtml(m.default || "(no models)") + '</option>';
   updateChip();
 }).catch(() => { updateChip(); });

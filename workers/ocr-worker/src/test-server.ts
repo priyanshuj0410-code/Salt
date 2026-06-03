@@ -29,6 +29,10 @@ const { listOllamaModels } = await import("./ollama.ts");
 
 const PORT = Number(process.env.TEST_UI_PORT ?? 5599);
 const GEMINI_KEY = process.env.GEMINI_API_KEY ?? "";
+// Ollama Cloud models run on Ollama's servers (you must be signed in: `ollama signin`).
+// They don't appear in /api/tags, so list them explicitly here for the picker.
+const CLOUD_MODELS = (process.env.OCR_CLOUD_MODELS ?? "gemma4:31b-cloud,qwen3-vl:235b-cloud")
+  .split(",").map((s) => s.trim()).filter(Boolean);
 const PAGE = readFileSync(new URL("./test-ui.html", import.meta.url), "utf8");
 
 interface ExtractBody {
@@ -132,7 +136,9 @@ const server = http.createServer((req, res) => {
   if (req.method === "GET" && req.url === "/models") {
     void (async () => {
       try {
-        json(res, 200, { models: await listOllamaModels(), default: config.model });
+        const local = await listOllamaModels();
+        const cloud = CLOUD_MODELS.map((name) => ({ name, vision: true, cloud: true }));
+        json(res, 200, { models: [...cloud, ...local], default: config.model });
       } catch (e) {
         json(res, 500, { error: e instanceof Error ? e.message : String(e) });
       }
