@@ -115,9 +115,14 @@ export function DataTable<T>({
       )}
     >
       {columns.map((c) => (
-        <div key={c.key} className={cn("flex items-center justify-between gap-2 md:block", c.numeric && "md:text-right")}>
+        // `min-w-0` lets the grid track shrink below its content — a long unbreakable
+        // string (file name, GSTIN) otherwise forces the track wide and overflows the
+        // card. The inner block then truncates with an ellipsis. Cells that render
+        // interactive content (a button/link) must wrap their long text in its own
+        // `truncate` span — see the "File" column in ScanQueue.
+        <div key={c.key} className={cn("flex min-w-0 items-center justify-between gap-2 md:block", c.numeric && "md:text-right")}>
           <span className="text-xs text-text-tertiary md:hidden">{c.header}</span>
-          <span className={cn("min-w-0 truncate", c.numeric && "tabular-nums")}>{c.cell(row)}</span>
+          <span className={cn("block min-w-0 truncate", c.numeric && "tabular-nums")}>{c.cell(row)}</span>
         </div>
       ))}
     </RowTag>
@@ -131,7 +136,7 @@ export function DataTable<T>({
         className="hidden gap-2 border-b border-border bg-surface px-3 py-2 text-[0.6875rem] font-medium tracking-wide text-text-tertiary uppercase md:grid"
       >
         {columns.map((c) => (
-          <span key={c.key} className={cn("truncate", c.numeric && "text-right")}>
+          <span key={c.key} className={cn("block min-w-0 truncate", c.numeric && "text-right")}>
             {c.header}
           </span>
         ))}
