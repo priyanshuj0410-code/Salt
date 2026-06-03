@@ -25,6 +25,7 @@ process.env.SUPABASE_SERVICE_KEY ||= "unused"; // unused; only satisfies config.
 const { config } = await import("./config.ts");
 const { PROMPT, parseModelJson } = await import("./contract.ts"); // used by the Flash comparison
 const { extractInvoice } = await import("./extract.ts");
+const { listOllamaModels } = await import("./ollama.ts");
 
 const PORT = Number(process.env.TEST_UI_PORT ?? 5599);
 const GEMINI_KEY = process.env.GEMINI_API_KEY ?? "";
@@ -35,6 +36,7 @@ interface ExtractBody {
   mime?: string;
   base64?: string;
   runFlash?: boolean;
+  model?: string;
 }
 
 function isCsv(mime: string, filename: string): boolean {
@@ -71,12 +73,13 @@ async function extract(body: ExtractBody): Promise<Record<string, unknown>> {
   if (!base64) throw new Error("no file data");
   const bytes = new Uint8Array(Buffer.from(base64, "base64"));
 
-  const out: Record<string, unknown> = { model: config.model };
+  const model = body.model || config.model;
+  const out: Record<string, unknown> = { model };
 
-  // --- Gemma (the real worker path: pdf-text / pdf-vision / image / csv-text) ---
+  // --- Gemma / chosen local model (the real worker path: pdf-text / pdf-vision / image / csv-text) ---
   const t0 = Date.now();
   try {
-    const ex = await extractInvoice(bytes, mime, filename);
+    const ex = await extractInvoice(bytes, mime, filename, model);
     out.gemma = { json: ex.json, ms: Date.now() - t0, mode: ex.mode } satisfies EngineResult;
     out.images = ex.images;
     out.text = ex.text ? ex.text.slice(0, 8000) : null;
@@ -111,6 +114,16 @@ const server = http.createServer((req, res) => {
   }
   if (req.method === "GET" && req.url === "/config") {
     json(res, 200, { model: config.model, flash: Boolean(GEMINI_KEY) });
+    return;
+  }
+  if (req.method === "GET" && req.url === "/models") {
+    void (async () => {
+      try {
+        json(res, 200, { models: await listOllamaModels(), default: config.model });
+      } catch (e) {
+        json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+      }
+    })();
     return;
   }
   if (req.method === "POST" && req.url === "/extract") {

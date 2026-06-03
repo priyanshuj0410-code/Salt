@@ -42,6 +42,9 @@ export const config = {
   // Ollama can take minutes to cold-load a large model + run vision on a laptop;
   // node:http has no undici 300s cap, so give it a generous idle ceiling.
   ollamaTimeoutMs: num("OLLAMA_TIMEOUT_MS", 600000),
+  // Cap generated tokens. gemma4 stops cleanly; some models (e.g. qwen) run away under
+  // JSON mode and would hang. 8192 ≈ a ~50-line invoice; raise for huge bills.
+  numPredict: num("OLLAMA_NUM_PREDICT", 8192),
   concurrency: num("CONCURRENCY", 1),
   bucket: opt("OCR_BUCKET", "invoice-scans"),
   maxImagePx: num("MAX_IMAGE_PX", 1500),

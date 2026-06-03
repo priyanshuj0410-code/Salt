@@ -39,6 +39,7 @@
   .btn.primary { background:var(--primary); color:var(--primary-text); border-color:var(--primary); }
   .btn.primary:hover { background:var(--primary-hover); }
   .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .sel { font:inherit; color:var(--text); background:var(--bg); border:1px solid var(--border-strong); border-radius:6px; padding:4px 8px; }
 
   .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
   @media (max-width:820px){ .grid2 { grid-template-columns:1fr; } }
@@ -89,7 +90,8 @@
     <input type="file" id="file" class="hidden" accept="application/pdf,image/*,.csv,text/csv" />
   </div>
   <div class="opts">
-    <label><input type="checkbox" id="flashChk" /> <span>also run Gemini Flash (paid) — side by side</span></label>
+    <label>Model: <select id="modelSel" class="sel"></select></label>
+    <label><input type="checkbox" id="flashChk" /> <span>also run Gemini Flash (paid)</span></label>
     <span class="muted" id="flashNote"></span>
   </div>
 
@@ -100,15 +102,26 @@
 <script>
 const $ = (s) => document.querySelector(s);
 const drop = $("#drop"), fileInput = $("#file"), statusEl = $("#status"), resultsEl = $("#results");
-const flashChk = $("#flashChk"), flashNote = $("#flashNote");
+const flashChk = $("#flashChk"), flashNote = $("#flashNote"), modelSel = $("#modelSel");
 let hasFlash = false;
 
+function updateChip() { $("#modelChip").textContent = "model: " + (modelSel.value || "?"); }
+modelSel.addEventListener("change", updateChip);
+
 fetch("/config").then(r => r.json()).then(c => {
-  $("#modelChip").textContent = "model: " + c.model;
   hasFlash = !!c.flash;
   flashChk.disabled = !hasFlash;
   flashNote.textContent = hasFlash ? "" : "(set GEMINI_API_KEY in .env to enable)";
 });
+
+fetch("/models").then(r => r.json()).then(m => {
+  const list = m.models || [];
+  modelSel.innerHTML = list.map(x =>
+    '<option value="' + escapeHtml(x.name) + '"' + (x.name === m.default ? ' selected' : '') + '>'
+    + escapeHtml(x.name) + (x.vision ? ' · vision' : '') + '</option>'
+  ).join("") || '<option>' + escapeHtml(m.default || "(no models)") + '</option>';
+  updateChip();
+}).catch(() => { updateChip(); });
 
 drop.addEventListener("click", () => fileInput.click());
 ["dragover","dragenter"].forEach(e => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.add("over"); }));
@@ -135,7 +148,7 @@ async function handle(file) {
     const res = await fetch("/extract", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ filename: file.name, mime, base64, runFlash: flashChk.checked && hasFlash }),
+      body: JSON.stringify({ filename: file.name, mime, base64, runFlash: flashChk.checked && hasFlash, model: modelSel.value || undefined }),
     });
     const out = await res.json();
     if (!res.ok || out.error) throw new Error(out.error || ("HTTP " + res.status));
