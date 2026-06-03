@@ -36,10 +36,13 @@ const MODELS = (Deno.env.get("OCR_MODEL") ?? "gemma4:31b-cloud")
   .split(",")
   .map((m) => m.trim())
   .filter(Boolean);
-// numCtx MUST exceed (input + numPredict): if generation overflows it, Ollama shifts the
-// KV cache mid-stream and CRASHES the gemma4 runner (learned by the local worker).
-const NUM_CTX = Number(Deno.env.get("OLLAMA_NUM_CTX")) || 8192;
-const NUM_PREDICT = Number(Deno.env.get("OLLAMA_NUM_PREDICT")) || 4096;
+// numPredict caps generated tokens — a big GST-ERP invoice's JSON exceeds 4096 and gets
+// cut off mid-output ("model returned incomplete JSON"), so the cap is generous here. It's
+// only a ceiling: small invoices still stop as soon as the JSON closes, so this costs them
+// nothing. numCtx MUST stay > numPredict + the input (else Ollama shifts the KV cache mid-
+// stream and the gemma4 runner can crash). Both env-overridable for huge bills.
+const NUM_CTX = Number(Deno.env.get("OLLAMA_NUM_CTX")) || 32768;
+const NUM_PREDICT = Number(Deno.env.get("OLLAMA_NUM_PREDICT")) || 16384;
 const MIN_TEXT_CHARS = 60; // below this many non-whitespace chars, treat a PDF as scanned → vision
 const RASTER_MAX_SIDE = 1600; // downscale rasterized pages so the vision encoder isn't flooded
 const RASTER_MAX_PAGES = 5;
@@ -261,7 +264,7 @@ function parseModelJson(raw: string): unknown {
       if (depth === 0) return JSON.parse(fence.slice(start, i + 1));
     }
   }
-  throw new Error("model returned incomplete JSON"); // never closed → truncated output
+  throw new Error("model returned incomplete JSON — output was cut off; raise OLLAMA_NUM_PREDICT for a very large invoice"); // never closed → truncated
 }
 
 Deno.serve(async (req: Request) => {
