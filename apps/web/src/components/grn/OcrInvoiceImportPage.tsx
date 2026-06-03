@@ -126,8 +126,10 @@ function downloadTemplate() {
 async function loadMasters(orgId: string) {
   if (!supabase) return { vendors: [] as VendorRow[], items: [] as ItemRow[] };
   const [v, it] = await Promise.all([
-    supabase.from("ledgers").select("id,name,gstin").eq("org_id", orgId),
-    supabase.from("items").select("id,name,item_code,barcode").eq("org_id", orgId),
+    // High limit: a migrated catalogue can exceed PostgREST's default page, and a partial
+    // load makes resolve*() miss existing rows → duplicate-key inserts on re-create.
+    supabase.from("ledgers").select("id,name,gstin").eq("org_id", orgId).limit(50000),
+    supabase.from("items").select("id,name,item_code,barcode").eq("org_id", orgId).limit(50000),
   ]);
   return { vendors: (v.data as VendorRow[]) ?? [], items: (it.data as ItemRow[]) ?? [] };
 }
@@ -402,7 +404,14 @@ function ScanReview({ scanId }: { scanId: string }) {
           org_id: orgId, name: it.name, item_code: it.code || null, barcode: it.barcode || null,
           hsn: it.hsn || null, gst_rate: it.gst, schedule: "OTC",
         }));
-        const { data, error: e } = await supabase.from("items").insert(payload).select("id,name,item_code,barcode");
+        // Upsert (not insert) on the (org_id, item_code) unique index: a code that already
+        // exists — created earlier, by the migrator, or by a concurrent post — is skipped,
+        // not errored. ignoreDuplicates ⇒ ON CONFLICT DO NOTHING; the select returns only
+        // the newly-created rows (existing ones are already in iMap from loadMasters).
+        const { data, error: e } = await supabase
+          .from("items")
+          .upsert(payload, { onConflict: "org_id,item_code", ignoreDuplicates: true })
+          .select("id,name,item_code,barcode");
         if (e) { setError(`Could not create items: ${e.message}`); return; }
         for (const row of (data as ItemRow[]) ?? []) {
           if (row.item_code) iMap.set(`code:${row.item_code.toLowerCase()}`, row.id);
