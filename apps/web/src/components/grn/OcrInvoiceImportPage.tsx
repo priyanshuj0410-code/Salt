@@ -124,14 +124,28 @@ function downloadTemplate() {
 }
 
 async function loadMasters(orgId: string) {
-  if (!supabase) return { vendors: [] as VendorRow[], items: [] as ItemRow[] };
-  const [v, it] = await Promise.all([
-    // High limit: a migrated catalogue can exceed PostgREST's default page, and a partial
-    // load makes resolve*() miss existing rows → duplicate-key inserts on re-create.
-    supabase.from("ledgers").select("id,name,gstin").eq("org_id", orgId).limit(50000),
-    supabase.from("items").select("id,name,item_code,barcode").eq("org_id", orgId).limit(50000),
+  const sb = supabase;
+  if (!sb) return { vendors: [] as VendorRow[], items: [] as ItemRow[] };
+  // Supabase caps a single SELECT at 1000 rows, so a migrated catalogue (thousands of
+  // SKUs) came back partial — resolve*() then missed existing rows, which caused both
+  // duplicate-key inserts AND "an item could not be resolved" on post. Page through with
+  // .range() (1000-row pages) to load the FULL set; `.limit()` can't beat the server cap.
+  async function all<T>(table: string, cols: string): Promise<T[]> {
+    const PAGE = 1000;
+    const rows: T[] = [];
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await sb!.from(table).select(cols).eq("org_id", orgId).range(from, from + PAGE - 1);
+      const page = (data as T[] | null) ?? [];
+      rows.push(...page);
+      if (error || page.length < PAGE) break;
+    }
+    return rows;
+  }
+  const [vendors, items] = await Promise.all([
+    all<VendorRow>("ledgers", "id,name,gstin"),
+    all<ItemRow>("items", "id,name,item_code,barcode"),
   ]);
-  return { vendors: (v.data as VendorRow[]) ?? [], items: (it.data as ItemRow[]) ?? [] };
+  return { vendors, items };
 }
 
 /**
