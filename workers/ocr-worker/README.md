@@ -139,11 +139,22 @@ pnpm reclaim          # one-shot; e.g. wire to cron/launchd every 15 min
 
 ## Security (PRD §7)
 
-- **v1 (this):** the laptop holds the **service-role key** and calls the RPCs
-  directly. Acceptable for a trusted local worker. The key never reaches a browser.
-- **Hardening (M6, recommended next):** the laptop holds only a `WORKER_SECRET`;
-  lease/complete/fail go through thin Edge Functions that verify the secret and use
-  the service role *server-side*, so the powerful key never leaves Supabase.
+Two modes, chosen by which env you set:
+
+- **v1 (simple):** set `SUPABASE_SERVICE_KEY`. The laptop holds the service-role key and
+  calls the RPCs + Storage directly. Acceptable for a trusted local worker; the key never
+  reaches a browser.
+- **Hardened (M6):** leave `SUPABASE_SERVICE_KEY` blank and set `WORKER_SECRET` instead.
+  Every privileged op (lease/renew/complete/fail/reclaim, registry, file URLs) routes
+  through the `ocr-proxy` Edge Function, which holds the service role *server-side* — so
+  the powerful key never leaves Supabase. One-time setup on the project:
+
+  ```bash
+  supabase functions deploy ocr-proxy --no-verify-jwt   # the worker auths via the secret header, not a JWT
+  supabase secrets set WORKER_SECRET=<long-random-string>
+  ```
+
+  Then on each laptop: `WORKER_SECRET=<same value>` in `.env`, `SUPABASE_SERVICE_KEY` empty.
 
 ## Troubleshooting
 

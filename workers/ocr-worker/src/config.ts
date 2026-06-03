@@ -17,9 +17,19 @@ function num(name: string, dflt: number): number {
   return Number.isFinite(v) && v > 0 ? v : dflt;
 }
 
+// Auth: v1 holds the service-role key on the laptop; the hardened path (M6) holds only
+// WORKER_SECRET and routes every privileged op through the ocr-proxy Edge Function.
+const serviceKey = opt("SUPABASE_SERVICE_KEY", "");
+const workerSecret = opt("WORKER_SECRET", "");
+if (!serviceKey && !workerSecret) {
+  throw new Error("Set SUPABASE_SERVICE_KEY (v1) or WORKER_SECRET (hardened proxy) in .env — see .env.example");
+}
+
 export const config = {
   supabaseUrl: req("SUPABASE_URL"),
-  serviceKey: req("SUPABASE_SERVICE_KEY"),
+  serviceKey,
+  workerSecret,
+  mode: workerSecret ? ("proxy" as const) : ("direct" as const),
   ollamaHost: opt("OLLAMA_HOST", "http://localhost:11434"),
   model: req("OCR_MODEL"),
   workerId: opt("WORKER_ID", `${os.hostname()}-${process.pid}`),
