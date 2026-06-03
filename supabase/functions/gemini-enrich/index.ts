@@ -1,21 +1,21 @@
-// Edge Function: gemini-enrich (SALT — AI item enrichment)
+// Edge Function: gemini-enrich (SALT — AI item enrichment) — Ollama Cloud (Gemma) provider.
 //
-// Given a brand name + manufacturer, ask Google Gemini for the drug's identity
-// (salt/composition, therapeutic category, HSN, GST rate, schedule) as STRICT JSON.
-// The item edit page (ItemDetailPage) calls this to fill EMPTY / placeholder fields
+// Given a brand name + manufacturer, ask an Ollama-hosted Gemma model for the drug's
+// identity (salt/composition, therapeutic category, HSN, GST rate, schedule) as STRICT
+// JSON. The item edit page (ItemDetailPage) calls this to fill EMPTY / placeholder fields
 // for the user to review before saving — it never writes to the DB itself.
 //
-// This is the AI fallback for items the free, deterministic paths (brand_aliases +
-// master_items via "Fill from master") cannot resolve. Reuses the same GEMINI_API_KEY
-// secret as extract-invoice, and the same model-chain + retry pattern.
+// The function name stays "gemini-enrich" (so the client invoke + the deployed function are
+// unchanged), but it now calls Ollama, not Gemini — same OLLAMA_API_KEY as extract-invoice.
 //
 // DEPLOY (user/infra — the agent cannot do this):
 //   supabase functions deploy gemini-enrich
-//   supabase secrets set GEMINI_API_KEY=AIza...   # already set for extract-invoice — reused
+//   supabase secrets set OLLAMA_API_KEY=...     # Ollama Cloud key — already set for extract-invoice
+// Optional: ENRICH_MODEL (default "gemma4:31b-cloud"), OLLAMA_HOST (default https://ollama.com).
 //
-// Auth: requires the caller's Supabase JWT (verify_jwt defaults on). The key never
-// leaves the server. Compliance note: HSN / GST / schedule are AI suggestions — the
-// page surfaces them for review; a pharmacist should confirm schedule before relying on it.
+// Auth: requires the caller's Supabase JWT (verify_jwt defaults on — the authenticated item
+// page calls it). The key never leaves the server. Compliance note: HSN / GST / schedule are
+// AI suggestions — the page surfaces them for review; a pharmacist should confirm schedule.
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -23,11 +23,13 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Model fallback chain (independent capacity) — overridable via ENRICH_MODEL.
-const MODELS = (Deno.env.get("ENRICH_MODEL") ?? "gemini-flash-latest,gemini-2.5-flash,gemini-2.5-flash-lite")
+const OLLAMA_HOST = (Deno.env.get("OLLAMA_HOST") ?? "https://ollama.com").replace(/\/+$/, "");
+const MODELS = (Deno.env.get("ENRICH_MODEL") ?? "gemma4:31b-cloud")
   .split(",")
   .map((m) => m.trim())
   .filter(Boolean);
+const NUM_CTX = Number(Deno.env.get("OLLAMA_NUM_CTX")) || 8192;
+const NUM_PREDICT = Number(Deno.env.get("OLLAMA_NUM_PREDICT")) || 2048;
 
 const PROMPT = `You are a reference for Indian pharmaceutical and medical-retail products.
 Given a product BRAND name and its MANUFACTURER, identify the product and return ONLY
@@ -44,18 +46,25 @@ Rules: use the manufacturer to disambiguate same-named brands across companies. 
 invent a molecule you are unsure of — set "salt":"" and "confidence":"low" instead.
 Numbers are plain (no % sign). Use Indian market context (NLEM, common Indian brands).`;
 
-const RETRYABLE = new Set([429, 503]);
+const RETRYABLE = new Set([429, 502, 503, 504]);
 const MAX_ATTEMPTS = 3;
 
+/** Thrown when a model exhausts its retries on a transient error — fall to the next model. */
 class TransientModelError extends Error {}
 
-async function fetchModel(model: string, key: string, payload: string): Promise<Response> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+interface ChatMessage {
+  role: "user";
+  content: string;
+}
+
+/** POST /api/chat with backoff retry on transient (429/5xx). */
+async function fetchChat(key: string, payload: string): Promise<Response> {
+  const url = `${OLLAMA_HOST}/api/chat`;
   let lastDetail = "";
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const res = await fetch(url, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-goog-api-key": key },
+      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
       body: payload,
     });
     if (res.ok || !RETRYABLE.has(res.status)) return res;
@@ -68,41 +77,53 @@ async function fetchModel(model: string, key: string, payload: string): Promise<
   throw new TransientModelError(lastDetail.slice(0, 200));
 }
 
-async function callGemini(key: string, name: string, manufacturer: string): Promise<string> {
-  const ask = `Brand: ${name}\nManufacturer: ${manufacturer || "(unknown)"}`;
-  const payload = JSON.stringify({
-    contents: [{ parts: [{ text: `${PROMPT}\n\n${ask}` }] }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0 },
-  });
-  let res: Response | null = null;
-  let transientDetail = "";
+async function onceOverChain(
+  key: string,
+  messages: ChatMessage[],
+  think: boolean | undefined,
+): Promise<{ res?: Response; rejectedThink?: boolean; transient?: string }> {
+  let transient = "";
   for (const model of MODELS) {
+    const body = JSON.stringify({
+      model,
+      messages,
+      stream: false,
+      format: "json",
+      ...(think === undefined ? {} : { think }),
+      options: { temperature: 0, num_ctx: NUM_CTX, num_predict: NUM_PREDICT },
+    });
     try {
-      const r = await fetchModel(model, key, payload);
-      if (r.ok) {
-        res = r;
-        break;
-      }
+      const r = await fetchChat(key, body);
+      if (r.ok) return { res: r };
       const detail = await r.text();
+      if (think !== undefined && /think/i.test(detail)) return { rejectedThink: true };
       if (r.status === 404 && MODELS.indexOf(model) < MODELS.length - 1) continue;
-      throw new Error(`Gemini API ${r.status}: ${detail.slice(0, 300)}`);
+      throw new Error(`Ollama API ${r.status}: ${detail.slice(0, 300)}`);
     } catch (e) {
       if (e instanceof TransientModelError) {
-        transientDetail = e.message;
+        transient = e.message;
         continue;
       }
       throw e;
     }
   }
-  if (!res) throw new Error(`Gemini API 503: all models busy (${MODELS.join(", ")}). Last: ${transientDetail}`);
-  const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts ?? [];
-  const text = parts.map((p: { text?: string }) => p.text ?? "").join("");
-  if (!text) {
-    const reason = data?.candidates?.[0]?.finishReason ?? data?.promptFeedback?.blockReason;
-    throw new Error(`Gemini returned no text${reason ? ` (${reason})` : ""}`);
+  return { transient };
+}
+
+/** Send a chat and return the model's text content (think:false → JSON directly; drop on reject). */
+async function callOllama(key: string, name: string, manufacturer: string): Promise<string> {
+  const messages: ChatMessage[] = [
+    { role: "user", content: `${PROMPT}\n\nBrand: ${name}\nManufacturer: ${manufacturer || "(unknown)"}` },
+  ];
+  let out = await onceOverChain(key, messages, false);
+  if (out.rejectedThink) out = await onceOverChain(key, messages, undefined);
+  if (!out.res) {
+    throw new Error(`Ollama API unavailable (${MODELS.join(", ")})${out.transient ? `. Last: ${out.transient}` : ""}`);
   }
-  return text;
+  const data = await out.res.json();
+  const content = typeof data?.message?.content === "string" ? data.message.content : "";
+  if (!content) throw new Error(`Ollama returned no content${data?.error ? `: ${data.error}` : ""}`);
+  return content;
 }
 
 function parseModelJson(raw: string): Record<string, unknown> {
@@ -135,13 +156,13 @@ Deno.serve(async (req: Request) => {
     new Response(JSON.stringify(body), { status, headers: { ...CORS, "content-type": "application/json" } });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
-  const key = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("OCR_API_KEY");
+  const key = Deno.env.get("OLLAMA_API_KEY") ?? Deno.env.get("OCR_API_KEY");
   if (!key) return json({ error: "ai_not_configured" }, 501);
 
   try {
     const { name, manufacturer } = await req.json();
     if (!name || typeof name !== "string") return json({ error: "name required" }, 400);
-    const text = await callGemini(key, name, typeof manufacturer === "string" ? manufacturer : "");
+    const text = await callOllama(key, name, typeof manufacturer === "string" ? manufacturer : "");
     return json(normalize(parseModelJson(text)));
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : "enrichment failed" }, 500);
