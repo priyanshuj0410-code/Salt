@@ -406,17 +406,20 @@ function ScanReview({ scanId }: { scanId: string }) {
         }));
         // Upsert (not insert) on the (org_id, item_code) unique index: a code that already
         // exists — created earlier, by the migrator, or by a concurrent post — is skipped,
-        // not errored. ignoreDuplicates ⇒ ON CONFLICT DO NOTHING; the select returns only
-        // the newly-created rows (existing ones are already in iMap from loadMasters).
-        const { data, error: e } = await supabase
+        // not errored. ignoreDuplicates ⇒ ON CONFLICT DO NOTHING.
+        const { error: e } = await supabase
           .from("items")
-          .upsert(payload, { onConflict: "org_id,item_code", ignoreDuplicates: true })
-          .select("id,name,item_code,barcode");
+          .upsert(payload, { onConflict: "org_id,item_code", ignoreDuplicates: true });
         if (e) { setError(`Could not create items: ${e.message}`); return; }
-        for (const row of (data as ItemRow[]) ?? []) {
-          if (row.item_code) iMap.set(`code:${row.item_code.toLowerCase()}`, row.id);
-          if (row.barcode) iMap.set(`bar:${row.barcode.toLowerCase()}`, row.id);
-          iMap.set(`name:${row.name.toLowerCase()}`, row.id);
+        // Rebuild the map from a fresh read — do NOT trust the upsert's RETURNING: with
+        // ignoreDuplicates it omits the skipped (already-existing) rows and is unreliable
+        // even for inserted ones, which left new items unmapped → the post failed "could
+        // not resolve". A re-load has the id for every item this invoice needs.
+        const fresh = await loadMasters(orgId);
+        for (const it of fresh.items) {
+          if (it.item_code) iMap.set(`code:${it.item_code.toLowerCase()}`, it.id);
+          if (it.barcode) iMap.set(`bar:${it.barcode.toLowerCase()}`, it.id);
+          iMap.set(`name:${it.name.toLowerCase()}`, it.id);
         }
       }
 

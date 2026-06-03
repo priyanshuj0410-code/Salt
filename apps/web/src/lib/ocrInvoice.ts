@@ -26,15 +26,26 @@ const str = (v: unknown): string => {
 };
 
 /**
- * Pharma invoices print expiry as MM/YYYY (e.g. "08/2027"), and the OCR prompt
- * asks for that — but the purchase importer validates `YYYY-MM`. Normalise the
- * common printed forms to `YYYY-MM` here (the OCR→rows boundary) so valid dates
- * aren't flagged. Two-digit years map to 2000+YY. Anything we can't confidently
- * parse passes through unchanged, so the importer still warns on true garbage.
+ * Pharma invoices print expiry as MM/YYYY (e.g. "08/2027") or a full date (Indian bills
+ * use DD-MM-YYYY, e.g. "31-07-2027"), but the purchase importer validates `YYYY-MM`.
+ * Normalise the common printed forms to `YYYY-MM` here (the OCR→rows boundary) so valid
+ * dates aren't flagged — a pharma expiry is month-level, so the day is dropped. Two-digit
+ * years map to 2000+YY. Anything we can't confidently parse (incl. an out-of-range month)
+ * passes through unchanged, so the importer still warns on true garbage.
  */
 export function normalizeExpiry(raw: string): string {
   const v = raw.trim();
   if (v === "" || /^\d{4}-\d{2}$/.test(v)) return v; // empty or already YYYY-MM
+
+  // Full dates → keep month + year, drop the day. Indian invoices print DD-MM-YYYY;
+  // the middle field is the month (an out-of-range month falls through to a warning).
+  let m = v.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2}|\d{4})$/); // DD-MM-YYYY / DD-MM-YY
+  if (m && Number(m[2]) >= 1 && Number(m[2]) <= 12) {
+    return `${m[3].length === 2 ? `20${m[3]}` : m[3]}-${m[2].padStart(2, "0")}`;
+  }
+  m = v.match(/^(\d{4})[/-](\d{1,2})[/-]\d{1,2}$/); // ISO YYYY-MM-DD
+  if (m && Number(m[2]) >= 1 && Number(m[2]) <= 12) return `${m[1]}-${m[2].padStart(2, "0")}`;
+
   const sep = v.match(/^(\d{1,2})[/-](\d{2}|\d{4})$/); // MM/YYYY, MM-YY, M/YYYY
   if (sep) {
     const mm = sep[1].padStart(2, "0");
