@@ -224,12 +224,17 @@ export function ScanQueue({ batchId, reloadSignal }: { batchId?: string; reloadS
           {
             key: "vendor",
             header: "Vendor",
-            cell: (r) => (
-              <span>
-                {r.vendor_guess ?? <span className="text-text-tertiary">—</span>}
-                {r.invoice_no && <span className="ml-1.5 text-xs text-text-tertiary">{r.invoice_no}</span>}
-              </span>
-            ),
+            // A failed row never extracted a vendor — show *why* it failed here instead, so
+            // the reason is on the row (not buried in the DB).
+            cell: (r) =>
+              r.status === "failed" && r.error ? (
+                <span className="text-xs text-destructive" title={r.error}>{r.error}</span>
+              ) : (
+                <span>
+                  {r.vendor_guess ?? <span className="text-text-tertiary">—</span>}
+                  {r.invoice_no && <span className="ml-1.5 text-xs text-text-tertiary">{r.invoice_no}</span>}
+                </span>
+              ),
           },
           { key: "status", header: "Status", cell: (r) => <Badge variant={scanStatusVariant(r.status)}>{scanStatusLabel(r.status)}</Badge> },
           {
@@ -273,6 +278,19 @@ export function ScanQueue({ batchId, reloadSignal }: { batchId?: string; reloadS
           },
         ]}
       />
+
+      {rows.some((r) => r.status === "failed" && r.error) && (
+        <div className="mt-4 space-y-1 text-xs text-text-tertiary">
+          {rows
+            .filter((r) => r.status === "failed" && r.error)
+            .slice(0, 6)
+            .map((r) => (
+              <p key={r.id}>
+                <span className="text-destructive">{r.original_filename ?? "invoice"}:</span> {r.error}
+              </p>
+            ))}
+        </div>
+      )}
 
       {delErr && <p className="mt-3 text-sm text-destructive">{delErr}</p>}
     </div>

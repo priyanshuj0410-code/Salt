@@ -11,3 +11,11 @@ verify_jwt = true
 # Razorpay calls this with an X-Razorpay-Signature HMAC, not a Supabase JWT,
 # so JWT verification MUST be off (the function verifies the HMAC itself).
 verify_jwt = false
+
+[functions.extract-invoice]
+# Called server-to-server by the process-scans worker (with the service-role key) as well
+# as from the browser. It does pure OCR and never uses the caller identity, so the gateway
+# JWT check adds nothing — but it rejects the worker's service-role token with 401, which
+# fails every background extraction. Turn it off; the function is still gated by the
+# required apikey header. (Redeploy: `supabase functions deploy extract-invoice`.)
+verify_jwt = false
