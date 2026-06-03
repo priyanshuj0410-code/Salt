@@ -11,6 +11,7 @@
     "start": "node --env-file=.env src/index.ts",
     "once": "node --env-file=.env src/index.ts --once",
     "reclaim": "node --env-file=.env src/index.ts --reclaim",
+    "test-ui": "node src/test-server.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

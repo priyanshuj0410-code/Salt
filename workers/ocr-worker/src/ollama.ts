@@ -1,16 +1,21 @@
-// Call the local Ollama vision model with the invoice page images. We force JSON
-// output and temperature 0 to mirror the Flash extractor's
-// (responseMimeType:"application/json", temperature:0), so the JSON shape matches.
-// Ollama serves on the SAME laptop as this worker — no tunnel, no exposed port.
+// Call the local Ollama model. We force JSON output and temperature 0 to mirror the
+// Flash extractor's (responseMimeType:"application/json", temperature:0), so the JSON
+// shape matches. Ollama serves on the SAME laptop as this worker — no tunnel.
 //
-// Uses node:http (not global fetch): undici caps headers at ~300s, but cold-loading
-// a large model + a vision pass on a laptop routinely runs longer. node:http lets us
-// set a generous idle timeout (OLLAMA_TIMEOUT_MS) instead of failing spuriously.
+// Uses node:http (not global fetch): undici caps headers at ~300s, but cold-loading a
+// large model + a vision pass on a laptop routinely runs longer. node:http lets us set
+// a generous idle timeout (OLLAMA_TIMEOUT_MS) instead of failing spuriously.
 import http from "node:http";
 import https from "node:https";
 import { config } from "./config.ts";
 
-export function callOllamaVision(images: string[], prompt: string): Promise<string> {
+interface ChatMessage {
+  role: string;
+  content: string;
+  images?: string[];
+}
+
+function postChat(messages: ChatMessage[]): Promise<string> {
   const url = new URL("/api/chat", config.ollamaHost);
   const body = JSON.stringify({
     model: config.model,
@@ -18,8 +23,7 @@ export function callOllamaVision(images: string[], prompt: string): Promise<stri
     format: "json",
     think: false, // gemma4 etc. can "think"; we want pure JSON, no reasoning preamble
     options: { temperature: 0 },
-    // Ollama vision: page images ride on the user message as base64 (no data: prefix).
-    messages: [{ role: "user", content: prompt, images }],
+    messages,
   });
   const lib = url.protocol === "https:" ? https : http;
 
@@ -59,4 +63,14 @@ export function callOllamaVision(images: string[], prompt: string): Promise<stri
     req.write(body);
     req.end();
   });
+}
+
+/** Vision: invoice page images ride on the user message as base64 (no data: prefix). */
+export function callOllamaVision(images: string[], prompt: string): Promise<string> {
+  return postChat([{ role: "user", content: prompt, images }]);
+}
+
+/** Text: e.g. a CSV/tabular export pasted into the prompt (the test harness CSV path). */
+export function callOllamaText(prompt: string): Promise<string> {
+  return postChat([{ role: "user", content: prompt }]);
 }

@@ -1,0 +1,155 @@
+// Local OCR extraction tester (the §14.1 accuracy-gate harness). Serves a Salt-skinned
+// page and runs the REAL worker pipeline server-side — poppler rasterize → Ollama Gemma
+// vision → the same prompt + parser the worker uses — so you can eyeball extraction
+// quality on real PDFs / images / CSVs before trusting the free lane. No Supabase needed.
+// If GEMINI_API_KEY is set it also runs Gemini Flash side by side (the comparison).
+//
+//   pnpm test-ui        → http://localhost:5599
+//
+// Loads .env if present (for OCR_MODEL / OLLAMA_HOST / GEMINI_API_KEY); otherwise uses
+// sensible defaults. Supabase creds are NOT required here.
+import http from "node:http";
+import { readFileSync } from "node:fs";
+
+try {
+  process.loadEnvFile();
+} catch {
+  // No .env yet — fine for a first test; defaults below cover it.
+}
+process.env.OCR_MODEL ||= "gemma4:26b-a4b-it-q4_K_M";
+process.env.OLLAMA_HOST ||= "http://localhost:11434";
+process.env.SUPABASE_URL ||= "http://localhost"; // unused by the tester
+process.env.SUPABASE_SERVICE_KEY ||= "unused"; // unused; only satisfies config.ts
+
+// Import AFTER env is set so config.ts validates against it.
+const { config } = await import("./config.ts");
+const { PROMPT, parseModelJson } = await import("./contract.ts");
+const { fileToImages } = await import("./files.ts");
+const { callOllamaVision, callOllamaText } = await import("./ollama.ts");
+
+const PORT = Number(process.env.TEST_UI_PORT ?? 5599);
+const GEMINI_KEY = process.env.GEMINI_API_KEY ?? "";
+const PAGE = readFileSync(new URL("./test-ui.html", import.meta.url), "utf8");
+
+interface ExtractBody {
+  filename?: string;
+  mime?: string;
+  base64?: string;
+  runFlash?: boolean;
+}
+
+function isCsv(mime: string, filename: string): boolean {
+  return mime.startsWith("text/") || /csv$/i.test(mime) || /\.csv$/i.test(filename);
+}
+
+/** Gemini Flash, mirroring extract-invoice: PDFs/images inline, CSV/text as a text part. */
+async function callFlash(base64: string, mime: string, filename: string): Promise<unknown> {
+  const part = isCsv(mime, filename)
+    ? { text: `CSV / tabular export to map into the schema below:\n\n${Buffer.from(base64, "base64").toString("utf8")}` }
+    : { inline_data: { mime_type: mime, data: base64 } };
+  const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": GEMINI_KEY },
+    body: JSON.stringify({ contents: [{ parts: [part, { text: PROMPT }] }], generationConfig: { responseMimeType: "application/json", temperature: 0 } }),
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+  const text = (data?.candidates?.[0]?.content?.parts ?? []).map((p) => p.text ?? "").join("");
+  return parseModelJson(text);
+}
+
+interface EngineResult {
+  json?: unknown;
+  ms?: number;
+  error?: string;
+}
+
+async function extract(body: ExtractBody): Promise<Record<string, unknown>> {
+  const mime = body.mime ?? "application/octet-stream";
+  const filename = body.filename ?? "";
+  const base64 = body.base64 ?? "";
+  if (!base64) throw new Error("no file data");
+  const csv = isCsv(mime, filename);
+
+  const out: Record<string, unknown> = { model: config.model };
+  let images: string[] = [];
+
+  // --- Gemma (the real worker path) ---
+  const t0 = Date.now();
+  let gemma: EngineResult;
+  try {
+    let raw: string;
+    if (csv) {
+      const text = Buffer.from(base64, "base64").toString("utf8");
+      raw = await callOllamaText(`${PROMPT}\n\nCSV / tabular export to map into the schema above:\n\n${text}`);
+    } else {
+      images = fileToImages(new Uint8Array(Buffer.from(base64, "base64")), mime);
+      raw = await callOllamaVision(images, PROMPT);
+    }
+    gemma = { json: parseModelJson(raw), ms: Date.now() - t0 };
+  } catch (e) {
+    gemma = { error: e instanceof Error ? e.message : String(e), ms: Date.now() - t0 };
+  }
+  out.gemma = gemma;
+  out.images = images;
+  out.csvText = csv ? Buffer.from(base64, "base64").toString("utf8").slice(0, 8000) : null;
+
+  // --- Flash (optional comparison) ---
+  if (body.runFlash && GEMINI_KEY) {
+    const f0 = Date.now();
+    try {
+      out.flash = { json: await callFlash(base64, mime, filename), ms: Date.now() - f0 } satisfies EngineResult;
+    } catch (e) {
+      out.flash = { error: e instanceof Error ? e.message : String(e), ms: Date.now() - f0 } satisfies EngineResult;
+    }
+  }
+  return out;
+}
+
+function json(res: http.ServerResponse, status: number, body: unknown): void {
+  res.writeHead(status, { "content-type": "application/json" });
+  res.end(JSON.stringify(body));
+}
+
+const server = http.createServer((req, res) => {
+  if (req.method === "GET" && req.url === "/") {
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
+    res.end(PAGE);
+    return;
+  }
+  if (req.method === "GET" && req.url === "/config") {
+    json(res, 200, { model: config.model, flash: Boolean(GEMINI_KEY) });
+    return;
+  }
+  if (req.method === "POST" && req.url === "/extract") {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    req.on("data", (c: Buffer) => {
+      size += c.length;
+      if (size > 60 * 1024 * 1024) {
+        json(res, 413, { error: "file too large (>60MB)" });
+        req.destroy();
+        return;
+      }
+      chunks.push(c);
+    });
+    req.on("end", () => {
+      void (async () => {
+        try {
+          const body = JSON.parse(Buffer.concat(chunks).toString("utf8")) as ExtractBody;
+          json(res, 200, await extract(body));
+        } catch (e) {
+          json(res, 500, { error: e instanceof Error ? e.message : String(e) });
+        }
+      })();
+    });
+    return;
+  }
+  res.writeHead(404);
+  res.end("not found");
+});
+
+server.listen(PORT, () => {
+  console.log(`\n  Salt OCR tester → http://localhost:${PORT}`);
+  console.log(`  model=${config.model}  ollama=${config.ollamaHost}  flash=${GEMINI_KEY ? "on" : "off (set GEMINI_API_KEY to enable)"}\n`);
+});
