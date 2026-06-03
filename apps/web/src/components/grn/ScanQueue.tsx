@@ -216,8 +216,13 @@ export function ScanQueue({ batchId, reloadSignal }: { batchId?: string; reloadS
             key: "file",
             header: "File",
             cell: (r) => (
-              <button onClick={() => openFile(r)} className="inline-flex items-center gap-1 text-primary hover:underline">
-                <FileText className="size-3.5" /> {r.original_filename ?? "invoice"}
+              <button
+                onClick={() => openFile(r)}
+                title={r.original_filename ?? "invoice"}
+                className="inline-flex max-w-full items-center gap-1 text-primary hover:underline"
+              >
+                <FileText className="size-3.5 shrink-0" />
+                <span className="truncate">{r.original_filename ?? "invoice"}</span>
               </button>
             ),
           },
