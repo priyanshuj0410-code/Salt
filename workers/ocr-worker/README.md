@@ -54,7 +54,7 @@ that prompt ever changes, update both.
 
 - **Node ≥ 23.6** (this repo runs `.ts` directly via Node's type-stripping — no build
   step). `node --version`.
-- **[Ollama](https://ollama.com/download)** (macOS app or `brew install ollama`).
+- **[Ollama](https://ollama.com/download) ≥ 0.30** — install the **macOS app** (`brew install --cask ollama-app`), not the `ollama` CLI formula. Older 0.2x has a Metal residency-set bug on macOS 14+ that crashes the runner mid-extraction (`ggml-metal-device.m … GGML_ASSERT([rsets->data count] == 0)`), and the brew *formula* bottle has shipped without the `llama-server` runner. The app bundles a working runtime; the `ollama` CLI still works as a client against it.
 - **poppler** for PDFs: `brew install poppler` (provides `pdftotext` for digital PDFs +
   `pdftoppm` to rasterize scanned ones). Image downscaling uses `sips` (ships with macOS).
 
@@ -170,6 +170,8 @@ Two modes, chosen by which env you set:
 
 - **`Ollama 404: model not pulled`** — `ollama pull <OCR_MODEL>`; confirm `ollama list`.
 - **`pdftoppm failed`** — `brew install poppler`.
+- **`model runner has unexpectedly stopped`** / `GGML_ASSERT([rsets->data count] == 0)` — Ollama Metal bug in 0.2x. Upgrade to the **Ollama.app ≥ 0.30** (`brew install --cask ollama-app`); the worker also retries the runner once automatically.
+- **`llama-server binary not found`** — the brew *formula* `ollama` 0.30.x bottle is missing the runner. Use the cask app instead (`brew install --cask ollama-app`).
 - **`Missing required env`** — copy `.env.example` → `.env` and fill it in.
 - **Jobs never appear** — confirm `0062_ocr_queue.sql` is applied and shops are
   uploading on `lane=queue` (M2); check the operator console / `invoice_scans`.
