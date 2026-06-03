@@ -4,8 +4,6 @@ import { format } from "date-fns";
 import { FileText, Loader2, RefreshCw, RotateCcw, ScanLine, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Page } from "@/components/patterns/page";
-import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
@@ -24,16 +22,16 @@ import {
   scanStatusVariant,
   type InvoiceScanRow,
 } from "@/lib/invoiceScans";
-import { ocrInvoiceToRows } from "@/lib/ocrInvoice";
-import { parsePurchaseInvoices } from "@/lib/importPurchaseInvoice";
 
 /**
- * Scan history (SALT-221): the audit trail of every OCR'd invoice. Each row links
- * to the stored file (signed URL) and the posted GRN. A failed scan can be retried
- * from the stored file — re-running extraction without a re-upload. A retry that
- * extracts cleanly routes to /purchases/scan to review + post.
+ * The invoice-scan queue/history list (SALT-221), extracted so the unified Import
+ * surface and its History tab share one implementation. Self-contained: it fetches
+ * its own rows (scoped to `batchId` when given), auto-refreshes while anything is in
+ * flight, shows per-file status, and runs the row actions — open file, Review & post
+ * (navigate to the existing review screen), Retry, and Delete (which reverses a posted
+ * GRN). `Process queued` runs the background worker and surfaces the result.
  */
-export function InvoiceScansPage() {
+export function ScanQueue({ batchId, reloadSignal }: { batchId?: string; reloadSignal?: number }) {
   const orgId = useAuth().membership?.orgId;
   const navigate = useNavigate();
   const [rows, setRows] = useState<InvoiceScanRow[]>([]);
@@ -41,22 +39,21 @@ export function InvoiceScansPage() {
   const [unavailable, setUnavailable] = useState(false);
   const [retrying, setRetrying] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  // Delete needs a deliberate second click (no native confirm in the design system).
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [delErr, setDelErr] = useState<string | null>(null);
-  // Manual "Process queued" — runs the worker and surfaces its result.
   const [processing, setProcessing] = useState(false);
   const [procMsg, setProcMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase || !orgId) return;
     let active = true;
-    supabase
+    let q = supabase
       .from("invoice_scans")
       .select("id,storage_path,original_filename,mime,status,invoice_no,vendor_guess,error,purchase_id,created_at")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
+      .eq("org_id", orgId);
+    if (batchId) q = q.eq("batch_id", batchId);
+    q.order("created_at", { ascending: false })
       .limit(500)
       .then(({ data, error }) => {
         if (!active) return;
@@ -72,7 +69,7 @@ export function InvoiceScansPage() {
     return () => {
       active = false;
     };
-  }, [orgId, reloadKey]);
+  }, [orgId, batchId, reloadKey, reloadSignal]);
 
   // Auto-refresh while anything is in flight, so background extraction is visible as it
   // happens (the worker updates rows server-side; without this the list looks frozen).
@@ -104,15 +101,6 @@ export function InvoiceScansPage() {
         return;
       }
       await updateScan(r.id, { status: "extracted", extracted_json: out.json, invoice_no: scanInvoiceNo(out.json), vendor_guess: vendorGuess(out.json), error: null });
-      // Sanity: make sure it actually parses to at least one invoice before sending
-      // the user to review; if not, leave it extracted with a note.
-      const parsed = parsePurchaseInvoices(ocrInvoiceToRows(out.json).rows);
-      if (parsed.invoices.length === 0) {
-        setReloadKey((k) => k + 1);
-        return;
-      }
-      // The scan screen re-extracts on its own upload; for a retry we just refresh
-      // the row to "extracted" — the user re-opens the scan flow to post. Keep it simple.
       setReloadKey((k) => k + 1);
     } finally {
       setRetrying(null);
@@ -126,7 +114,7 @@ export function InvoiceScansPage() {
     setProcessing(true);
     setProcMsg(null);
     try {
-      const res = await runProcessScans();
+      const res = await runProcessScans(batchId ?? null);
       if (!res.ok) {
         setProcMsg(`Could not run extraction: ${res.error}`);
       } else if ((res.total ?? 0) === 0) {
@@ -169,59 +157,41 @@ export function InvoiceScansPage() {
 
   if (unavailable) {
     return (
-      <Page width="lg">
-        <PageHeader icon={ScanLine} title="Scan history" subtitle="Audit trail of OCR-scanned invoices." />
-        <div className="rounded-lg border border-warning-border bg-warning-bg p-4 text-sm text-warning">
-          Scan history isn't set up yet — run migration <code>0049_invoice_scans.sql</code> (creates the
-          <code> invoice-scans</code> bucket + <code>invoice_scans</code> table). Scanning still works without it.
-        </div>
-      </Page>
+      <div className="rounded-lg border border-warning-border bg-warning-bg p-4 text-sm text-warning">
+        Scan history isn't set up yet — run migration <code>0049_invoice_scans.sql</code> (creates the
+        <code> invoice-scans</code> bucket + <code>invoice_scans</code> table). Importing still works without it.
+      </div>
     );
   }
 
   return (
-    <Page width="lg">
-      <PageHeader
-        icon={ScanLine}
-        title="Scan history"
-        subtitle={rows.length > 0 ? `${rows.length} scanned invoices` : "Audit trail of OCR-scanned invoices"}
-        actions={
-          <div className="flex items-center gap-2">
-            {pending > 0 && (
-              <Button variant="outline" onClick={processNow} disabled={processing}>
-                {processing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
-                {processing ? "Processing…" : `Process queued (${pending})`}
-              </Button>
-            )}
-            <Button onClick={() => navigate("/purchases/scan")}>
-              <ScanLine /> Scan invoice
-            </Button>
-          </div>
-        }
-      />
-
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Queued" value={pending} />
         <StatCard label="Extracting" value={extractingCount} />
         <StatCard label="Extracted" value={extractedCount} />
         <StatCard label="Posted" value={postedCount} />
       </div>
 
-      {(pending > 0 || extractingCount > 0) && (
-        <p className="mb-3 flex items-center gap-1.5 text-xs text-text-tertiary">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="flex items-center gap-1.5 text-xs text-text-tertiary">
           {extractingCount > 0 && <Loader2 className="size-3 animate-spin" />}
-          {extractingCount > 0
-            ? "Extracting in the background — this list refreshes automatically."
-            : "Queued invoices are waiting for the background worker. The list auto-refreshes; if they do not move, click Process queued."}
+          {pending > 0 || extractingCount > 0
+            ? extractingCount > 0
+              ? "Extracting in the background — this list refreshes automatically."
+              : "Queued invoices are waiting for the worker. The list auto-refreshes; if they do not move, click Process queued."
+            : dupCount > 0 || failedCount > 0
+              ? [dupCount > 0 ? `${dupCount} duplicate` : null, failedCount > 0 ? `${failedCount} failed` : null].filter(Boolean).join(" · ")
+              : ""}
         </p>
-      )}
-      {(dupCount > 0 || failedCount > 0) && (
-        <p className="mb-3 text-xs text-text-tertiary">
-          {[dupCount > 0 ? `${dupCount} duplicate` : null, failedCount > 0 ? `${failedCount} failed` : null]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-      )}
+        {pending > 0 && (
+          <Button variant="outline" size="sm" onClick={processNow} disabled={processing}>
+            {processing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+            {processing ? "Processing…" : `Process queued (${pending})`}
+          </Button>
+        )}
+      </div>
+
       {procMsg && <p className="mb-3 text-sm text-text-secondary">{procMsg}</p>}
 
       <DataTable<InvoiceScanRow>
@@ -229,7 +199,13 @@ export function InvoiceScansPage() {
         rowKey={(r) => r.id}
         cols="1fr 1.4fr 1fr 0.9fr 1fr"
         loading={loading}
-        empty={<EmptyState icon={ScanLine} title="No scans yet" hint="Scan a vendor invoice to start the audit trail." />}
+        empty={
+          <EmptyState
+            icon={ScanLine}
+            title={batchId ? "Nothing in this batch yet" : "No scans yet"}
+            hint={batchId ? "Drop invoices above to start." : "Import a vendor invoice to start the audit trail."}
+          />
+        }
         columns={[
           {
             key: "date",
@@ -270,9 +246,9 @@ export function InvoiceScansPage() {
                     View GRN →
                   </Link>
                 ) : r.status === "extracted" || r.status === "duplicate" ? (
-                  <Link to={`/purchases/scan?scan=${r.id}`} className="text-sm text-primary hover:underline">
+                  <button onClick={() => navigate(`/purchases/scan?scan=${r.id}`)} className="text-sm text-primary hover:underline">
                     Review &amp; post →
-                  </Link>
+                  </button>
                 ) : null}
                 {confirmId === r.id ? (
                   <button
@@ -298,20 +274,7 @@ export function InvoiceScansPage() {
         ]}
       />
 
-      {rows.some((r) => r.status === "failed" && r.error) && (
-        <div className="mt-4 space-y-1 text-xs text-text-tertiary">
-          {rows
-            .filter((r) => r.status === "failed" && r.error)
-            .slice(0, 5)
-            .map((r) => (
-              <p key={r.id}>
-                <span className="text-destructive">{r.original_filename ?? "invoice"}:</span> {r.error}
-              </p>
-            ))}
-        </div>
-      )}
-
       {delErr && <p className="mt-3 text-sm text-destructive">{delErr}</p>}
-    </Page>
+    </div>
   );
 }

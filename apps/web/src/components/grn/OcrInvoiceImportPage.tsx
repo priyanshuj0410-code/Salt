@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import Papa from "papaparse";
-import { Download, FileUp, ScanLine, Upload } from "lucide-react";
+import { Download, ScanLine, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { cn } from "@/lib/utils";
@@ -29,17 +29,18 @@ import {
   insertExtractedScan,
   invokeExtract,
   kickoffProcessScans,
-  scanInvoiceNo,
   updateScan,
   uploadScanFile,
-  vendorGuess,
 } from "@/lib/invoiceScans";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { ShopSetupDialog } from "@/components/settings/ShopSetupDialog";
 import { findExistingInvoice } from "@/lib/purchaseDedup";
+import { Dropzone } from "@/components/grn/Dropzone";
+import { ScanQueue } from "@/components/grn/ScanQueue";
 
 interface VendorRow { id: string; name: string; gstin: string | null }
 interface ItemRow { id: string; name: string; item_code: string | null; barcode: string | null }
+interface PostResult { invoiceNo: string; ok: boolean; error?: string }
 
 const readAsBase64 = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -52,7 +53,7 @@ const readAsBase64 = (file: File) =>
 const isCsv = (f: File) => /csv/i.test(f.type) || f.name.toLowerCase().endsWith(".csv");
 
 /** Parse one CSV file to canonical rows: deterministic first (instant + free), then AI
- *  normalisation if the columns aren't recognised. Mirrors the old CSV importer. */
+ *  normalisation if the columns aren't recognised. */
 async function parseCsvFileToRows(file: File): Promise<{ rows: PurchaseRawRow[]; usedAi: boolean }> {
   const text = await file.text();
   const parsed = Papa.parse<PurchaseRawRow>(text, {
@@ -63,13 +64,45 @@ async function parseCsvFileToRows(file: File): Promise<{ rows: PurchaseRawRow[];
   if (parsePurchaseInvoices(parsed.data).invoices.some((i) => i.valid)) {
     return { rows: parsed.data, usedAi: false };
   }
-  // Columns weren't recognised → let AI normalise this file (extract-invoice text mode).
   const bytes = new TextEncoder().encode(text);
   let bin = "";
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   const out = await invokeExtract(btoa(bin), "text/csv");
   if (out.json) return { rows: ocrInvoiceToRows(out.json).rows, usedAi: true };
   return { rows: [], usedAi: false };
+}
+
+/** Parse + persist one CSV file into the queue: upload it once, then write one
+ *  `extracted` (or `duplicate`) scan row per invoice it contains. CSV is parsed
+ *  client-side, so its rows land ready immediately — no background worker needed. */
+async function persistCsvFile(
+  orgId: string,
+  shopId: string | null,
+  file: File,
+  batchId: string,
+): Promise<{ rowCount: number; written: number; usedAi: boolean; issues: string[] }> {
+  const issues: string[] = [];
+  const { rows, usedAi } = await parseCsvFileToRows(file);
+  let written = 0;
+  if (rows.length === 0) return { rowCount: 0, written, usedAi, issues };
+  const jsons = rowsToOcrInvoices(rows);
+  if (jsons.length === 0) return { rowCount: rows.length, written, usedAi, issues };
+  const invoices = parsePurchaseInvoices(rows).invoices;
+  const b64 = await readAsBase64(file);
+  const up = await uploadScanFile(orgId, file, b64);
+  if (up.error) {
+    issues.push(`Could not save ${file.name}: ${up.error}`);
+    return { rowCount: rows.length, written, usedAi, issues };
+  }
+  const fileMeta = { path: up.path, filename: file.name, mime: file.type || null };
+  for (const { key, json } of jsons) {
+    const inv = invoices.find((i) => i.key === key);
+    if (!inv || !inv.valid) continue; // only postable invoices enter the queue
+    const ex = await findExistingInvoice(orgId, inv.invoiceNo, inv.vendorName);
+    const created = await insertExtractedScan(orgId, shopId, fileMeta, json, ex?.ref, batchId);
+    if (created.id && !created.error) written += 1;
+  }
+  return { rowCount: rows.length, written, usedAi, issues };
 }
 
 function downloadTemplate() {
@@ -91,263 +124,171 @@ async function loadMasters(orgId: string) {
   return { vendors: (v.data as VendorRow[]) ?? [], items: (it.data as ItemRow[]) ?? [] };
 }
 
-interface PostResult { invoiceNo: string; ok: boolean; error?: string }
+/**
+ * The Import surface (`/purchases/scan`). Drop PDFs, photos, or CSVs → each becomes one
+ * `invoice_scans` row (the queue), status-tracked in the list below and reviewed/posted
+ * from there. Every file routes the same way (uniform): CSVs are parsed client-side and
+ * land `extracted`; PDFs/images go `pending` for the background worker. "This upload"
+ * shows the current batch; "History" shows everything.
+ */
+function ImportSurface() {
+  const { membership, shopId } = useAuth();
+  const orgId = membership?.orgId;
+  const [tab, setTab] = useState<"batch" | "history">("history");
+  const [batchId, setBatchId] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [issues, setIssues] = useState<string[]>([]);
+  const [reloadSignal, setReloadSignal] = useState(0);
+
+  async function ingest(files: File[]) {
+    if (!supabase || !orgId || files.length === 0) return;
+    setBusy(true);
+    setNote(null);
+    setIssues([]);
+    try {
+      const newBatch = crypto.randomUUID();
+      let queued = 0;
+      let usedAi = false;
+      const probs: string[] = [];
+      for (const file of files) {
+        if (isCsv(file)) {
+          const r = await persistCsvFile(orgId, shopId ?? null, file, newBatch);
+          queued += r.written;
+          if (r.usedAi) usedAi = true;
+          if (r.written === 0) probs.push(`Could not read ${file.name}.`);
+          probs.push(...r.issues);
+        } else {
+          const b64 = await readAsBase64(file);
+          const created = await createScan(orgId, shopId ?? null, file, b64, newBatch);
+          if (!created.error) queued += 1;
+          else probs.push(`Could not upload ${file.name}: ${created.error}`);
+        }
+      }
+      setIssues(probs);
+      if (queued === 0) {
+        setNote(null);
+        if (probs.length === 0) setIssues(["Nothing could be queued. Is scan history set up (migration 0049)?"]);
+        return;
+      }
+      await kickoffProcessScans(newBatch);
+      setBatchId(newBatch);
+      setTab("batch");
+      setReloadSignal((s) => s + 1);
+      setNote(`Added ${queued} file${queued === 1 ? "" : "s"}${usedAi ? " (some CSV columns normalised with AI)" : ""} — extracting now. You can leave; this keeps running.`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Page width="lg">
+      <Link to="/purchases" className="mb-2 inline-block text-sm text-text-tertiary hover:text-text-primary">
+        ← Purchases
+      </Link>
+      <PageHeader
+        icon={ScanLine}
+        title="Import invoices"
+        subtitle="Drop vendor bills — PDF, photo, or CSV. Each lands as a GRN (stock, payable, ITC); missing vendors and items are created. Review & post each from the list. Files keep extracting if you leave."
+        actions={
+          <Button variant="outline" onClick={downloadTemplate}>
+            <Download /> CSV template
+          </Button>
+        }
+      />
+
+      <Dropzone onFiles={ingest} busy={busy} busyLabel="Uploading…" />
+
+      {note && <div className="mt-4 rounded-lg border border-border bg-surface p-3 text-sm">{note}</div>}
+      {issues.length > 0 && (
+        <ul className="mt-3 space-y-1 rounded-md border border-warning-border bg-warning-bg p-3 text-xs text-warning">
+          {issues.map((m, i) => <li key={i}>• {m}</li>)}
+        </ul>
+      )}
+
+      <div className="mt-7">
+        <div className="mb-4 flex items-center gap-1 border-b border-border text-sm">
+          <button
+            onClick={() => setTab("batch")}
+            disabled={!batchId}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 font-medium transition-colors disabled:opacity-40",
+              tab === "batch" ? "border-primary text-text-primary" : "border-transparent text-text-tertiary hover:text-text-primary",
+            )}
+          >
+            This upload
+          </button>
+          <button
+            onClick={() => setTab("history")}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 font-medium transition-colors",
+              tab === "history" ? "border-primary text-text-primary" : "border-transparent text-text-tertiary hover:text-text-primary",
+            )}
+          >
+            History
+          </button>
+        </div>
+
+        {tab === "batch" && batchId ? (
+          <ScanQueue batchId={batchId} reloadSignal={reloadSignal} />
+        ) : (
+          <ScanQueue reloadSignal={reloadSignal} />
+        )}
+      </div>
+    </Page>
+  );
+}
 
 /**
- * Unified purchase-invoice import (SALT-027 + queue unification). Upload PDFs, photos,
- * or CSVs — every invoice lands in the one `invoice_scans` queue (status-tracked in scan
- * history) and dedups against the whole queue (posted GRNs ∪ in-flight scans), so the
- * same bill on either channel is flagged. Routing:
- *   • single PDF/image  → extract inline → review → post (fast path)
- *   • CSV (1+ files)     → parse client-side (deterministic→AI) → write `extracted` rows
- *                          → inline review → bulk post
- *   • many / mixed files → queue for background extraction → review from scan history
- * Posting reuses the existing receive_purchase path (auto-creating missing vendors/items).
+ * Review & post one extracted scan (`/purchases/scan?scan=<id>`), reached from the queue.
+ * Loads the stored extraction — no re-OCR — into the dry-run review, flags duplicates,
+ * and posts through `receive_purchase` (auto-creating missing vendors/items), then marks
+ * the scan posted + linked to its GRN.
  */
-export function OcrInvoiceImportPage() {
+function ScanReview({ scanId }: { scanId: string }) {
   const { membership, shopId } = useAuth();
   const orgId = membership?.orgId;
   const loadCatalog = useCatalog((s) => s.load);
   const blockers = useShopBlockers();
-  const [sp] = useSearchParams();
-
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [extracting, setExtracting] = useState(false);
   const [result, setResult] = useState<PurchaseImportResult | null>(null);
-  const [ocrIssues, setOcrIssues] = useState<string[]>([]);
-  const [aiNote, setAiNote] = useState<string | null>(null);
+  const [issues, setIssues] = useState<string[]>([]);
+  const [dupes, setDupes] = useState<Map<string, string>>(new Map());
   const [importing, setImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [notConfigured, setNotConfigured] = useState(false);
   const [report, setReport] = useState<{ posted: number; failed: number; results: PostResult[] } | null>(null);
   const [setupOpen, setSetupOpen] = useState(false);
-  // Invoice key → existing GRN/scan ref (dedup badge); and invoice key → its scan-row id
-  // (to mark the row posted + linked once its GRN is created).
-  const [dupes, setDupes] = useState<Map<string, string>>(new Map());
-  const [scanIdByKey, setScanIdByKey] = useState<Map<string, string>>(new Map());
-  // Multi-file: queued background extraction (process-scans). batchMsg is the receipt.
-  const [batching, setBatching] = useState(false);
-  const [batchMsg, setBatchMsg] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
-  function resetForUpload(name: string) {
-    setFileName(name);
-    setResult(null);
-    setReport(null);
-    setError(null);
-    setNotConfigured(false);
-    setOcrIssues([]);
-    setAiNote(null);
-    setBatchMsg(null);
-    setDupes(new Map());
-    setScanIdByKey(new Map());
-  }
-
-  // Flag invoices already captured for this org (dedup, check-before-post): a posted GRN
-  // or an in-flight scan on either channel. `exclude` skips this upload's own rows.
-  const computeDupes = useCallback(
-    async (invoices: ParsedPurchaseInvoice[], exclude: string[]): Promise<Map<string, string>> => {
-      const m = new Map<string, string>();
-      if (!orgId) return m;
-      for (const inv of invoices) {
-        if (!inv.invoiceNo) continue;
-        const ex = await findExistingInvoice(orgId, inv.invoiceNo, inv.vendorName, { excludeIds: exclude });
-        if (ex) m.set(inv.key, ex.ref);
-      }
-      return m;
-    },
-    [orgId],
-  );
-
-  // Parse + persist one CSV file: upload it once, then write one `extracted` (or
-  // `duplicate`) scan row per invoice it contains. Returns what was written so the
-  // caller can build the review + the post-time scan linkage.
-  async function persistCsvFile(
-    file: File,
-    batchId: string,
-  ): Promise<{ rows: PurchaseRawRow[]; usedAi: boolean; written: { key: string; scanId: string; dupRef: string | null }[] }> {
-    const { rows, usedAi } = await parseCsvFileToRows(file);
-    const written: { key: string; scanId: string; dupRef: string | null }[] = [];
-    if (!orgId || rows.length === 0) return { rows, usedAi, written };
-    const jsons = rowsToOcrInvoices(rows);
-    if (jsons.length === 0) return { rows, usedAi, written };
-    const invoices = parsePurchaseInvoices(rows).invoices;
-    const b64 = await readAsBase64(file);
-    const up = await uploadScanFile(orgId, file, b64);
-    if (up.error) {
-      setOcrIssues((c) => [...c, `Could not save ${file.name} to scan history: ${up.error}`]);
-      return { rows, usedAi, written };
-    }
-    const fileMeta = { path: up.path, filename: file.name, mime: file.type || null };
-    for (const { key, json } of jsons) {
-      const inv = invoices.find((i) => i.key === key);
-      if (!inv || !inv.valid) continue; // only postable invoices enter the queue
-      const ex = await findExistingInvoice(orgId, inv.invoiceNo, inv.vendorName);
-      const created = await insertExtractedScan(orgId, shopId ?? null, fileMeta, json, ex?.ref, batchId);
-      if (created.id && !created.error) written.push({ key, scanId: created.id, dupRef: ex?.ref ?? null });
-    }
-    return { rows, usedAi, written };
-  }
-
-  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length === 0 || !supabase || !orgId) return;
-    // Single document (PDF/image) → inline extract → review → post (fast path).
-    if (files.length === 1 && !isCsv(files[0])) {
-      await onSingleDoc(files[0]);
-      return;
-    }
-    // CSV-only (one or many) → parse client-side + inline bulk review (queue-backed).
-    if (files.every(isCsv)) {
-      await onCsvFiles(files);
-      return;
-    }
-    // Many / mixed → queue everything; the user reviews from scan history.
-    await onMultiFile(files);
-  }
-
-  async function onSingleDoc(file: File) {
-    resetForUpload(file.name);
-    setExtracting(true);
-    try {
-      const b64 = await readAsBase64(file);
-      // Persist the file + a pending audit row BEFORE calling OCR, so a failed or
-      // interrupted scan is still on record and retryable from storage.
-      const created = await createScan(orgId!, shopId ?? null, file, b64);
-      const sid = created.id || null;
-      if (created.error) {
-        setOcrIssues((cur) => [...cur, `Could not save to scan history: ${created.error}`]);
-      }
-      const out = await invokeExtract(b64, file.type || "application/octet-stream");
-      if (out.notConfigured) {
-        setNotConfigured(true);
-        if (sid) await updateScan(sid, { status: "failed", error: "ocr_not_configured" });
-        return;
-      }
-      if (out.error || !out.json) {
-        setError(`Extraction failed: ${out.error ?? "no data returned"}`);
-        if (sid) await updateScan(sid, { status: "failed", error: out.error ?? "no data" });
-        return;
-      }
-      if (sid) {
-        await updateScan(sid, {
-          status: "extracted",
-          extracted_json: out.json,
-          invoice_no: scanInvoiceNo(out.json),
-          vendor_guess: vendorGuess(out.json),
-        });
-      }
-      const mapped = ocrInvoiceToRows(out.json);
-      setOcrIssues((cur) => [...cur, ...mapped.issues]);
-      const parsed = parsePurchaseInvoices(mapped.rows);
-      const m = new Map<string, string>();
-      if (sid) for (const inv of parsed.invoices) m.set(inv.key, sid);
-      const dup = await computeDupes(parsed.invoices, sid ? [sid] : []);
-      setScanIdByKey(m);
-      setDupes(dup);
-      setResult(parsed);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not process the file.");
-    } finally {
-      setExtracting(false);
-    }
-  }
-
-  // CSV-only upload: parse + persist each file as extracted scan rows, then show the
-  // merged invoices inline for a bulk review + post (preserving the old CSV UX).
-  async function onCsvFiles(files: File[]) {
-    resetForUpload(files.length === 1 ? files[0].name : `${files.length} files`);
-    setExtracting(true);
-    try {
-      const batchId = crypto.randomUUID();
-      const allRows: PurchaseRawRow[] = [];
-      const m = new Map<string, string>();
-      const dupMap = new Map<string, string>();
-      let usedAi = false;
-      for (const file of files) {
-        const { rows, usedAi: ai, written } = await persistCsvFile(file, batchId);
-        if (ai) usedAi = true;
-        allRows.push(...rows);
-        for (const w of written) {
-          m.set(w.key, w.scanId);
-          if (w.dupRef) dupMap.set(w.key, w.dupRef);
-        }
-      }
-      if (usedAi) setAiNote("Some columns weren't recognised — normalised with AI. Double-check the figures before posting.");
-      if (allRows.length === 0) {
-        setError("Couldn't read these CSVs. Use the template below, or set up OCR for AI normalisation.");
-        return;
-      }
-      setScanIdByKey(m);
-      setDupes(dupMap);
-      setResult(parsePurchaseInvoices(allRows));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not read the CSV.");
-    } finally {
-      setExtracting(false);
-    }
-  }
-
-  // Many / mixed files: queue them and let the user review from scan history. CSVs are
-  // parsed client-side here too (instant + free) and land `extracted`; PDFs/images go in
-  // `pending` for the background worker. A single kickoff drains the batch.
-  async function onMultiFile(files: File[]) {
-    resetForUpload(files.length === 1 ? files[0].name : `${files.length} files`);
-    setBatching(true);
-    try {
-      const batchId = crypto.randomUUID();
-      let queued = 0;
-      for (const file of files) {
-        if (isCsv(file)) {
-          const { rows, written } = await persistCsvFile(file, batchId);
-          queued += written.length;
-          if (rows.length === 0) setOcrIssues((c) => [...c, `Could not read ${file.name}.`]);
-          continue;
-        }
-        const b64 = await readAsBase64(file);
-        const created = await createScan(orgId!, shopId ?? null, file, b64, batchId);
-        if (!created.error) queued += 1;
-      }
-      if (queued === 0) {
-        setError("Could not queue any invoices. Is scan history set up (migration 0049)?");
-        return;
-      }
-      await kickoffProcessScans(batchId);
-      setBatchMsg(`Queued ${queued} invoice${queued === 1 ? "" : "s"} — extracting in the background. Review and post them from Scan history.`);
-    } finally {
-      setBatching(false);
-    }
-  }
-
-  // Review + post a background-extracted scan opened from history (?scan=<id>): load its
-  // stored JSON into the same review/post flow — no re-extraction.
   useEffect(() => {
-    const scanParam = sp.get("scan");
-    if (!scanParam || !orgId) return;
+    if (!orgId) return;
     let active = true;
     (async () => {
-      const json = await getScanJson(orgId, scanParam);
-      if (!active || !json) return;
+      const json = await getScanJson(orgId, scanId);
+      if (!active) return;
+      if (!json) {
+        setNotFound(true);
+        return;
+      }
       const mapped = ocrInvoiceToRows(json);
       const parsed = parsePurchaseInvoices(mapped.rows);
-      const m = new Map<string, string>();
-      for (const inv of parsed.invoices) m.set(inv.key, scanParam);
-      const dup = await computeDupes(parsed.invoices, [scanParam]);
+      const dup = new Map<string, string>();
+      for (const inv of parsed.invoices) {
+        if (!inv.invoiceNo) continue;
+        const ex = await findExistingInvoice(orgId, inv.invoiceNo, inv.vendorName, { excludeIds: [scanId] });
+        if (ex) dup.set(inv.key, ex.ref);
+      }
       if (!active) return;
-      setFileName("(from scan history)");
-      setOcrIssues(mapped.issues);
-      setScanIdByKey(m);
+      setIssues(mapped.issues);
       setDupes(dup);
       setResult(parsed);
     })();
     return () => {
       active = false;
     };
-  }, [orgId, sp, computeDupes]);
+  }, [orgId, scanId]);
 
   async function doImport() {
     if (!supabase || !orgId || !result) return;
-    // Pre-flight: the shop needs a state_code or receive_purchase trips the
-    // is_interstate NOT NULL. Pop the rescue dialog and bail; it retries the import.
     if (!blockers.ready || !shopId) {
       setError(null);
       setSetupOpen(true);
@@ -358,7 +299,7 @@ export function OcrInvoiceImportPage() {
     try {
       const valid = result.invoices.filter((i) => i.valid && i.lines.length > 0 && !dupes.has(i.key));
       if (!valid.length) {
-        setError("No valid invoice to import — fix the flagged fields, or everything was a duplicate.");
+        setError("No valid invoice to import — fix the flagged fields, or it was a duplicate.");
         return;
       }
       const masters = await loadMasters(orgId);
@@ -383,7 +324,6 @@ export function OcrInvoiceImportPage() {
         iMap.get(`name:${l.name.toLowerCase()}`) ||
         null;
 
-      // Create missing vendors.
       const newVendors = new Map<string, { name: string; gstin: string }>();
       for (const inv of valid) {
         if (!resolveVendor(inv)) {
@@ -403,7 +343,6 @@ export function OcrInvoiceImportPage() {
           vMap.set(`name:${row.name.toLowerCase()}`, row.id);
         }
       }
-      // Create missing items.
       const newItems = new Map<string, { code: string; barcode: string; name: string; hsn: string; gst: number }>();
       for (const inv of valid) {
         for (const l of inv.lines) {
@@ -450,17 +389,15 @@ export function OcrInvoiceImportPage() {
         );
         const { data: grnId, error: e } = await supabase.rpc("receive_purchase", args);
         results.push({ invoiceNo: inv.invoiceNo, ok: !e, error: e?.message });
-        // Mark this invoice's queue row posted + linked to the GRN it produced.
-        const sid = scanIdByKey.get(inv.key);
-        if (!e && sid && typeof grnId === "string") {
-          await updateScan(sid, { status: "posted", purchase_id: grnId });
+        if (!e && typeof grnId === "string") {
+          await updateScan(scanId, { status: "posted", purchase_id: grnId });
         }
       }
 
       await loadCatalog(orgId);
       const posted = results.filter((r) => r.ok).length;
       setReport({ posted, failed: results.length - posted, results });
-      if (results.every((r) => r.ok)) { setResult(null); setFileName(null); }
+      if (results.every((r) => r.ok)) setResult(null);
     } finally {
       setImporting(false);
     }
@@ -470,67 +407,15 @@ export function OcrInvoiceImportPage() {
 
   return (
     <Page width="md">
-      <Link to="/purchases" className="mb-2 inline-block text-sm text-text-tertiary hover:text-text-primary">
-        ← Purchases
+      <Link to="/purchases/scan" className="mb-2 inline-block text-sm text-text-tertiary hover:text-text-primary">
+        ← Import
       </Link>
-      <PageHeader
-        icon={ScanLine}
-        title="Import invoices"
-        subtitle="Upload distributor invoices — PDF, photo, or CSV. We extract the lines for review, then post each as a GRN (stock, payable, ITC). Missing vendors/items are created. Several files extract in the background."
-      />
+      <PageHeader icon={ScanLine} title="Review &amp; post" subtitle="Check the extracted figures — OCR can misread — then post as a GRN." />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <label htmlFor="invoice-file" className={cn(buttonVariants({ variant: "default" }), "cursor-pointer", (extracting || batching) && "pointer-events-none opacity-60")}>
-          <FileUp />
-          {batching ? "Uploading…" : extracting ? "Reading…" : fileName ?? "Choose files (PDF · image · CSV)"}
-        </label>
-        <input
-          id="invoice-file"
-          type="file"
-          accept="application/pdf,image/*,.csv,text/csv"
-          multiple
-          className="hidden"
-          onChange={onFile}
-          disabled={extracting || batching}
-        />
-        <Button variant="ghost" size="sm" onClick={downloadTemplate} className="text-text-tertiary">
-          <Download /> CSV template
-        </Button>
-        <Link to="/purchases/scans" className="text-sm text-text-tertiary hover:text-text-primary">
-          scan history →
-        </Link>
-      </div>
-
-      {aiNote && (
-        <div className="mt-4 rounded-md border border-warning-border bg-warning-bg p-3 text-xs text-warning">{aiNote}</div>
-      )}
-
-      {batchMsg && (
-        <div className="mt-6 rounded-lg border border-border bg-surface p-4 text-sm">
-          <p>{batchMsg}</p>
-          <Link to="/purchases/scans" className="mt-1 inline-block font-medium text-primary underline">Open Scan history →</Link>
-        </div>
-      )}
-
-      {notConfigured && (
-        <div className="mt-6 rounded-lg border border-warning-border bg-warning-bg p-4 text-sm text-warning">
-          <p className="font-medium">OCR isn't set up yet.</p>
-          <p className="mt-1 text-xs">
-            The <code>extract-invoice</code> Edge Function needs to be deployed and a vision API key set
-            (<code>supabase functions deploy extract-invoice</code> + <code>supabase secrets set GEMINI_API_KEY=…</code>).
-            Until then, import a <strong>CSV</strong> here instead — that path needs no OCR.
-          </p>
-        </div>
-      )}
-
-      {ocrIssues.length > 0 && (
-        <ul className="mt-4 space-y-1 rounded-md border border-border bg-surface p-3 text-xs text-text-secondary">
-          {ocrIssues.map((m, i) => <li key={i}>• {m}</li>)}
-        </ul>
-      )}
+      {notFound && <p className="text-sm text-destructive">This scan could not be loaded. It may have been deleted.</p>}
 
       {report && (
-        <div className="mt-6 rounded-lg border border-success-border bg-success-bg p-4 text-sm text-success">
+        <div className="mb-6 rounded-lg border border-success-border bg-success-bg p-4 text-sm text-success">
           <p className="font-medium">
             Posted {report.posted} {report.posted === 1 ? "invoice" : "invoices"}{report.failed > 0 ? `, ${report.failed} failed` : ""}.
           </p>
@@ -539,12 +424,21 @@ export function OcrInvoiceImportPage() {
               {report.results.filter((r) => !r.ok).map((r, i) => <li key={i}>{r.invoiceNo}: {r.error}</li>)}
             </ul>
           )}
-          <Link to="/purchases" className="mt-1 inline-block font-medium underline">View GRNs →</Link>
+          <div className="mt-1 flex gap-3">
+            <Link to="/purchases" className="font-medium underline">View GRNs →</Link>
+            <Link to="/purchases/scan" className="font-medium underline">Back to import →</Link>
+          </div>
         </div>
       )}
 
+      {issues.length > 0 && (
+        <ul className="mb-4 space-y-1 rounded-md border border-border bg-surface p-3 text-xs text-text-secondary">
+          {issues.map((m, i) => <li key={i}>• {m}</li>)}
+        </ul>
+      )}
+
       {result && (
-        <div className="mt-6 rounded-lg border border-border">
+        <div className="rounded-lg border border-border">
           <div className="flex items-center justify-between gap-2 border-b border-border bg-surface px-3 py-2">
             <span className="text-xs font-medium">Extracted — review before posting</span>
             <span className="text-xs text-text-tertiary">
@@ -585,7 +479,7 @@ export function OcrInvoiceImportPage() {
             </ul>
           )}
           <div className="flex items-center justify-between gap-3 border-t border-border p-3">
-            <p className="text-xs text-text-tertiary">Check the extracted figures — OCR can misread. Each invoice posts on its own.</p>
+            <p className="text-xs text-text-tertiary">Missing vendors/items are created on post.</p>
             <Button onClick={doImport} disabled={importing || postable === 0}>
               <Upload /> {importing ? "Posting…" : `Post ${postable} invoice(s)`}
             </Button>
@@ -598,4 +492,11 @@ export function OcrInvoiceImportPage() {
       <ShopSetupDialog open={setupOpen} onOpenChange={setSetupOpen} onResolved={() => void doImport()} />
     </Page>
   );
+}
+
+/** Router: `?scan=<id>` opens the review/post screen; otherwise the Import surface. */
+export function OcrInvoiceImportPage() {
+  const [sp] = useSearchParams();
+  const scanId = sp.get("scan");
+  return scanId ? <ScanReview scanId={scanId} /> : <ImportSurface />;
 }
