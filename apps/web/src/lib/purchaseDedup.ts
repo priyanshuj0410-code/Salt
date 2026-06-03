@@ -39,7 +39,6 @@ interface PurchaseDupRow {
 
 interface ScanDupRow {
   id: string;
-  invoice_no: string | null;
   vendor_guess: string | null;
   original_filename: string | null;
 }
@@ -76,12 +75,17 @@ export async function findExistingInvoice(
   // 2. An in-flight scan (uploaded on either channel, not yet a GRN) with the same
   //    invoice number — catches cross-channel + pre-post dupes. Skip the current
   //    upload's own rows (excludeIds) so it never matches itself.
+  //    Match on the invoice number INSIDE the stored extraction
+  //    (`extracted_json->>invoice_no`), not the denormalised `invoice_no` column: that
+  //    column is only written by the newer process-scans worker, so relying on it
+  //    silently breaks this check whenever an older worker is deployed. The extraction
+  //    JSON is always present once a scan has extracted.
   const exclude = new Set(opts?.excludeIds ?? []);
   const { data: scans } = await supabase
     .from("invoice_scans")
-    .select("id,invoice_no,vendor_guess,original_filename")
+    .select("id,vendor_guess,original_filename")
     .eq("org_id", orgId)
-    .ilike("invoice_no", inv)
+    .ilike("extracted_json->>invoice_no", inv)
     .in("status", ["pending", "processing", "extracted", "duplicate"])
     .limit(10);
   for (const r of (scans as ScanDupRow[] | null) ?? []) {
@@ -89,7 +93,7 @@ export async function findExistingInvoice(
     if (vendorNameMatches(vendorName, r.vendor_guess ?? "")) {
       return {
         id: r.id,
-        ref: r.vendor_guess ?? r.original_filename ?? r.invoice_no ?? `scan ${r.id.slice(0, 8)}`,
+        ref: r.vendor_guess ?? r.original_filename ?? inv,
         kind: "scan",
       };
     }
