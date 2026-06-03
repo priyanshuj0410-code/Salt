@@ -76,6 +76,7 @@ const DiscountLimitsPage = lazy(() => import("@/components/settings/DiscountLimi
 const UsersRolesPage = lazy(() => import("@/components/settings/UsersRolesPage").then((m) => ({ default: m.UsersRolesPage })));
 const WhatsAppPage = lazy(() => import("@/components/integrations/WhatsAppPage").then((m) => ({ default: m.WhatsAppPage })));
 const SmartImportPage = lazy(() => import("@/components/import/smart/SmartImportPage").then((m) => ({ default: m.SmartImportPage })));
+const OcrConsolePage = lazy(() => import("@/components/admin/OcrConsolePage").then((m) => ({ default: m.OcrConsolePage })));
 
 function PageFallback() {
   return (
@@ -627,6 +628,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["owner"]}>
             <WhatsAppPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* Salt-admin OCR operator console — the page itself gates on is_salt_admin(). */}
+      <Route
+        path="/admin/ocr"
+        element={
+          <ProtectedRoute>
+            <OcrConsolePage />
           </ProtectedRoute>
         }
       />
