@@ -34,6 +34,23 @@ export interface OutboxRecord {
   /** "parked" after `maxAttempts` failures — skipped by flush so it never blocks the head. Absent = pending. */
   status?: "pending" | "parked";
   lastError?: string;
+  /** Opaque, non-routing metadata (e.g. amountPaise) for diagnostics/telemetry. Never read by the queue. */
+  meta?: Record<string, unknown>;
+}
+
+/**
+ * Generic lifecycle hooks for the (impure) caller to observe the queue — kept
+ * here so `offline.ts` stays pure: it only invokes the callbacks, the wiring to
+ * Supabase/telemetry lives in `./outbox`. Each callback must be side-effect-only
+ * and non-throwing.
+ */
+export interface OutboxObserver {
+  /** A queued record begins its first replay attempt (i.e. connectivity returned). */
+  onReplayStart?(rec: OutboxRecord): void;
+  /** A record synced and was removed from the queue. */
+  onSynced?(rec: OutboxRecord): void;
+  /** A record was parked (poison) after exhausting maxAttempts. */
+  onParked?(rec: OutboxRecord): void;
 }
 
 /** Durable storage for the queue. FIFO is by `createdAt`. */
@@ -139,17 +156,31 @@ export class Outbox {
   private handlers = new Map<string, OutboxHandler>();
   private store: OutboxStore;
   private onChange?: () => void;
+  private observer?: OutboxObserver;
 
-  constructor(store: OutboxStore, onChange?: () => void) {
+  constructor(store: OutboxStore, onChange?: () => void, observer?: OutboxObserver) {
     this.store = store;
     this.onChange = onChange;
+    this.observer = observer;
+  }
+
+  /** Invoke an observer callback so a throwing observer can NEVER alter the drain
+   *  (a throw in `onSynced` would otherwise hit flush's catch and re-queue an
+   *  already-synced record → duplicate bill). Enforces the no-throw contract. */
+  private safeNotify(cb: ((rec: OutboxRecord) => void) | undefined, rec: OutboxRecord): void {
+    if (!cb) return;
+    try {
+      cb(rec);
+    } catch {
+      /* observers must never break the queue */
+    }
   }
 
   register(kind: string, handler: OutboxHandler): void {
     this.handlers.set(kind, handler);
   }
 
-  async enqueue(kind: string, payload: unknown): Promise<OutboxRecord> {
+  async enqueue(kind: string, payload: unknown, meta?: Record<string, unknown>): Promise<OutboxRecord> {
     const rec: OutboxRecord = {
       id: uuid(),
       kind,
@@ -157,6 +188,7 @@ export class Outbox {
       createdAt: new Date().toISOString(),
       attempts: 0,
       status: "pending",
+      ...(meta ? { meta } : {}),
     };
     await this.store.add(rec);
     this.onChange?.();
@@ -192,10 +224,13 @@ export class Outbox {
       if (rec.status === "parked") continue;
       const handler = this.handlers.get(rec.kind);
       if (!handler) continue;
+      // First replay of a queued record — connectivity has returned for it.
+      if (rec.attempts === 0) this.safeNotify(this.observer?.onReplayStart, rec);
       try {
         await handler(rec.payload, rec);
         await this.store.remove(rec.id);
         sent += 1;
+        this.safeNotify(this.observer?.onSynced, rec);
         this.onChange?.();
       } catch (err) {
         rec.attempts += 1;
@@ -204,6 +239,7 @@ export class Outbox {
           rec.status = "parked";
           await this.store.update(rec);
           parked += 1;
+          this.safeNotify(this.observer?.onParked, rec);
           this.onChange?.();
           continue; // poison record parked — keep draining the rest
         }

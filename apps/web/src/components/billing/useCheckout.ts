@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { useShopBlockers } from "@/lib/useShopBlockers";
 import { useOnlineStatus } from "@/lib/useOnlineStatus";
 import { outbox } from "@/lib/outbox";
+import { emitClientEvent } from "@/lib/clientEvents";
 import { formatPaise } from "@/lib/currency";
 import { gatedLines, requiresRx } from "@/lib/billing";
 import { creditCheck } from "@/lib/credit";
@@ -350,7 +351,9 @@ export function useCheckout({
     // GST invoice number is allocated then (a provisional ref prints now). Read connectivity live
     // (not the render snapshot) so the decision is made at the moment of save.
     if (typeof navigator !== "undefined" && !navigator.onLine) {
-      const rec = await outbox.enqueue("create_sales_invoice", args);
+      // Stamp the bill value so the outbox flush can report money-at-risk if this
+      // queued bill is later lost (parked). SALT-36 telemetry rides the flush, not here.
+      const rec = await outbox.enqueue("create_sales_invoice", args, { amountPaise: t.grand });
       const receipt =
         printIntent.current && shop
           ? buildInvoiceData({ invoiceId: rec.id, shop, party, customer, lines, payment, totals: t, billDiscount, isInterstate })
@@ -384,7 +387,7 @@ export function useCheckout({
     printIntent.current = false;
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
-    void reconcile(args, receipt, willPrint);
+    void reconcile(args, receipt, willPrint, t.grand);
     return null;
   }
 
@@ -395,6 +398,7 @@ export function useCheckout({
     args: SalesInvoiceArgs,
     receipt: ReturnType<typeof buildInvoiceData> | null,
     willPrint: boolean,
+    totalPaise?: number,
   ): Promise<void> {
     if (!supabase) return;
     try {
@@ -403,6 +407,12 @@ export function useCheckout({
         // A returned error means the server did NOT write (atomic rollback), so a retry is safe.
         const oversell = /insufficient stock/i.test(err.message);
         if (oversell && orgId) void loadCatalog(orgId);
+        // SALT-36: a definite online rejection (server rolled back) — a bill the
+        // cashier may abandon. Fire-and-forget; never blocks the banner.
+        emitClientEvent("bill_save_failed", {
+          amountPaise: totalPaise ?? null,
+          meta: { reason: oversell ? "oversell" : "server_error" },
+        });
         setFailedSave({
           args,
           receipt,
@@ -428,6 +438,11 @@ export function useCheckout({
     } catch (e) {
       // Timeout: the write MAY have landed — never auto-retry (would duplicate without a server
       // idempotency key, SALT-205); the cashier checks Bills first. Hence retryable: false.
+      // SALT-36: a slow/dead link during an "online" save — a bill that may be lost.
+      emitClientEvent("bill_save_timeout", {
+        amountPaise: totalPaise ?? null,
+        meta: { reason: e instanceof TimeoutError ? "timeout" : "network" },
+      });
       setFailedSave({
         args,
         receipt,

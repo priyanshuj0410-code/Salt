@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { IndexedDbOutboxStore, InMemoryOutboxStore, Outbox, type OutboxStore } from "./offline";
+import { IndexedDbOutboxStore, InMemoryOutboxStore, Outbox, type OutboxRecord, type OutboxStore } from "./offline";
 import { useOnlineStatus } from "./useOnlineStatus";
+import { emitClientEvent } from "./clientEvents";
 
 /**
  * Browser singleton + React bindings for the offline write outbox (SALT-100).
@@ -34,7 +35,38 @@ function refresh() {
   });
 }
 
-export const outbox = new Outbox(makeStore(), refresh);
+/** Money-at-risk stamped on the record at enqueue time (offline branch of useCheckout). */
+const amountOf = (rec: OutboxRecord): number | null =>
+  typeof rec.meta?.amountPaise === "number" ? rec.meta.amountPaise : null;
+
+/** Map raw RPC error text to a controlled reason code — avoids unbounded server
+ *  strings (which can embed batch/product ids) in telemetry. */
+const reasonCode = (msg?: string): string =>
+  !msg ? "rpc_error" : /insufficient stock/i.test(msg) ? "oversell" : /timeout|network|fetch|failed to fetch/i.test(msg) ? "network" : "rpc_error";
+
+// SALT-36 telemetry: observe the queue lifecycle so we can measure bills LOST to
+// outages (parked) vs ridden-through (synced). Fire-and-forget; never blocks flush.
+export const outbox = new Outbox(makeStore(), refresh, {
+  onReplayStart: (rec) =>
+    emitClientEvent("bill_queued_offline", {
+      billRef: rec.id,
+      amountPaise: amountOf(rec),
+      occurredAt: rec.createdAt,
+      meta: { kind: rec.kind },
+    }),
+  onSynced: (rec) =>
+    emitClientEvent("offline_bill_synced", {
+      billRef: rec.id,
+      amountPaise: amountOf(rec),
+      meta: { kind: rec.kind, priorFailures: rec.attempts, queuedAt: rec.createdAt },
+    }),
+  onParked: (rec) =>
+    emitClientEvent("offline_bill_parked", {
+      billRef: rec.id,
+      amountPaise: amountOf(rec),
+      meta: { kind: rec.kind, priorFailures: rec.attempts, reason: reasonCode(rec.lastError), queuedAt: rec.createdAt },
+    }),
+});
 
 // Seed the cached count once at startup.
 refresh();

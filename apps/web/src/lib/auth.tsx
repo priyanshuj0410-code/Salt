@@ -10,6 +10,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 import type { PermissionOverrides } from "./permissions";
+import { setTelemetryContext } from "./clientEvents";
 import { IdleWarningDialog } from "@/components/auth/IdleWarningDialog";
 import { UpdatePasswordDialog } from "@/components/auth/UpdatePasswordDialog";
 import { MfaChallengeDialog } from "@/components/auth/MfaChallengeDialog";
@@ -182,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const orgName = Array.isArray(org) ? (org[0]?.name ?? "") : (org?.name ?? "");
       const permissions = (data.permissions ?? {}) as PermissionOverrides;
       setMembership({ orgId: data.org_id as string, orgName, role: data.role as UserRole, permissions });
+      setTelemetryContext({ orgId: data.org_id as string, actorId: userId }); // SALT-36 event attribution
       // Resolve the org's shops (SALT-173). Ordered primary-first then oldest,
       // so the primary (or, absent one, the oldest) is the deterministic
       // fallback. This covers orgs whose imports created shops without ever
@@ -223,16 +225,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const active = list.find((s) => s.id === stored) ?? list.find((s) => s.id === primaryId) ?? list[0];
         setShop(active);
         setShopId(active.id);
+        setTelemetryContext({ shopId: active.id });
       } else {
         setShops([]);
         setShop(null);
         setShopId(null);
+        setTelemetryContext({ shopId: null });
       }
     } else {
       setMembership(null);
       setShopId(null);
       setShop(null);
       setShops([]);
+      setTelemetryContext({ orgId: null, actorId: null, shopId: null });
     }
   }, []);
 
@@ -260,11 +265,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (nextId) {
         setLoading(true); // genuine sign-in; the membership effect clears it
         setMfaChallengeRequired(false); // re-evaluated by the AAL effect
+        setTelemetryContext({ orgId: null, actorId: null, shopId: null }); // SALT-36: never attribute to the prior user
       } else {
         setMembership(null);
         setShopId(null);
         setShop(null);
         setShops([]);
+        setTelemetryContext({ orgId: null, actorId: null, shopId: null }); // SALT-36: stop attributing on sign-out
         setMfaChallengeRequired(false);
         setLoading(false); // signed out
       }
