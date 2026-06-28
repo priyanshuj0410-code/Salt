@@ -9,7 +9,7 @@ import { DataTable } from "@/components/patterns/data-table";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import {
   istToday,
   topItemsSold,
@@ -247,17 +247,20 @@ export function DashboardPage() {
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard
               label="Today's sales"
-              value={formatPaise(data.todayTotalPaise)}
+              value={formatPaiseCompact(data.todayTotalPaise)}
+              valueTitle={formatPaise(data.todayTotalPaise)}
               hint={`${data.todayCount} ${data.todayCount === 1 ? "invoice" : "invoices"}`}
             />
             <StatCard
               label="Cash / credit (today)"
-              value={formatPaise(data.cashPaise)}
+              value={formatPaiseCompact(data.cashPaise)}
+              valueTitle={formatPaise(data.cashPaise)}
               hint={`${formatPaise(data.creditPaise)} on credit`}
             />
             <StatCard
               label="Collected today"
-              value={formatPaise(data.collectedPaise)}
+              value={formatPaiseCompact(data.collectedPaise)}
+              valueTitle={formatPaise(data.collectedPaise)}
               tone={data.collectedPaise > 0 ? "success" : "default"}
               hint={`${data.collectedCount} ${data.collectedCount === 1 ? "receipt" : "receipts"}`}
             />
@@ -277,18 +280,21 @@ export function DashboardPage() {
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard
               label="Overdue > 30 days"
-              value={formatPaise(data.receivable.over30Paise)}
+              value={formatPaiseCompact(data.receivable.over30Paise)}
+              valueTitle={formatPaise(data.receivable.over30Paise)}
               tone={data.receivable.over30Paise > 0 ? "danger" : "success"}
               hint={`${data.receivable.over30Parties} ${data.receivable.over30Parties === 1 ? "party" : "parties"}`}
             />
             <StatCard
               label="Receivables"
-              value={formatPaise(data.receivable.outstandingPaise)}
+              value={formatPaiseCompact(data.receivable.outstandingPaise)}
+              valueTitle={formatPaise(data.receivable.outstandingPaise)}
               hint={`${data.receivable.parties} ${data.receivable.parties === 1 ? "party owes" : "parties owe"}`}
             />
             <StatCard
               label="Payables"
-              value={formatPaise(data.payable.outstandingPaise)}
+              value={formatPaiseCompact(data.payable.outstandingPaise)}
+              valueTitle={formatPaise(data.payable.outstandingPaise)}
               hint={`${data.payable.parties} ${data.payable.parties === 1 ? "vendor" : "vendors"}`}
             />
             <StatCard label="Drug licenses" value={licenseValue} tone={licenseTone} hint={licenseHint} />
