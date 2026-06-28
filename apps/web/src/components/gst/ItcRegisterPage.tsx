@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import {
   buildItcRegister,
   buildItcReversal,
@@ -145,15 +145,15 @@ export function ItcRegisterPage() {
       ) : (
         <div className="flex flex-col gap-7">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard label="Taxable value" value={formatPaise(register.totals.taxablePaise)} hint={`${register.count} invoices`} />
-            <StatCard label="Eligible ITC" value={formatPaise(register.totals.itcPaise)} tone="success" />
+            <StatCard label="Taxable value" value={formatPaiseCompact(register.totals.taxablePaise)} valueTitle={formatPaise(register.totals.taxablePaise)} hint={`${register.count} invoices`} />
+            <StatCard label="Eligible ITC" value={formatPaiseCompact(register.totals.itcPaise)} valueTitle={formatPaise(register.totals.itcPaise)} tone="success" />
             <StatCard
               label="ITC to reverse"
-              value={formatPaise(reversal.totalReversePaise)}
+              value={formatPaiseCompact(reversal.totalReversePaise)} valueTitle={formatPaise(reversal.totalReversePaise)}
               tone={reversal.totalReversePaise > 0 ? "danger" : "default"}
               hint={`${reversal.rows.length} expired batches`}
             />
-            <StatCard label="Net ITC" value={formatPaise(netItc)} hint="eligible − reversal" />
+            <StatCard label="Net ITC" value={formatPaiseCompact(netItc)} valueTitle={formatPaise(netItc)} hint="eligible − reversal" />
           </div>
 
           <section>

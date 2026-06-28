@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import { buildTallyXml, shiftPeriod, type TallySaleRow, type TallyPurchaseRow } from "@/lib/gst";
 
 interface SaleFetch {
@@ -150,9 +150,9 @@ export function TallyExportPage() {
         <div className="flex flex-col gap-7">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard label="Sales vouchers" value={sales.length} />
-            <StatCard label="Sales value" value={formatPaise(salesTotal)} />
+            <StatCard label="Sales value" value={formatPaiseCompact(salesTotal)} valueTitle={formatPaise(salesTotal)} />
             <StatCard label="Purchase vouchers" value={purchases.length} />
-            <StatCard label="Purchase value" value={formatPaise(purchasesTotal)} />
+            <StatCard label="Purchase value" value={formatPaiseCompact(purchasesTotal)} valueTitle={formatPaise(purchasesTotal)} />
           </div>
 
           <section className="grid gap-2 rounded-lg border border-border bg-surface p-4 text-sm">

@@ -6,7 +6,7 @@ import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable } from "@/components/patterns/data-table";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 
 /**
  * Credit / debit notes (SALT-061) — a read view on /payments. A credit note is a
@@ -151,8 +151,8 @@ export function CreditDebitNotes({ orgId, nameById }: { orgId: string | null; na
       {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <StatCard label="Credit notes" value={formatPaise(stats.credit)} tone="success" hint="reduce customer receivable" />
-        <StatCard label="Debit notes" value={formatPaise(stats.debit)} hint="reduce vendor payable" />
+        <StatCard label="Credit notes" value={formatPaiseCompact(stats.credit)} valueTitle={formatPaise(stats.credit)} tone="success" hint="reduce customer receivable" />
+        <StatCard label="Debit notes" value={formatPaiseCompact(stats.debit)} valueTitle={formatPaise(stats.debit)} hint="reduce vendor payable" />
         <StatCard label="Notes" value={stats.count.toLocaleString("en-IN")} />
       </div>
 

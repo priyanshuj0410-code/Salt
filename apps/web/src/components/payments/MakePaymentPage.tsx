@@ -11,7 +11,7 @@ import { StatCard } from "@/components/patterns/stat-card";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import { TimeoutError } from "@/lib/orders";
 import {
   PAYMENT_MODES,
@@ -314,12 +314,12 @@ export function MakePaymentPage() {
 
           {/* Allocation summary */}
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="Outstanding" value={formatPaise(totalOutstanding)} />
-            <StatCard label="Paying" value={formatPaise(amountPaise)} />
-            <StatCard label="Allocated" value={formatPaise(allocated)} tone={allocated > amountPaise ? "danger" : "default"} />
+            <StatCard label="Outstanding" value={formatPaiseCompact(totalOutstanding)} valueTitle={formatPaise(totalOutstanding)} />
+            <StatCard label="Paying" value={formatPaiseCompact(amountPaise)} valueTitle={formatPaise(amountPaise)} />
+            <StatCard label="Allocated" value={formatPaiseCompact(allocated)} valueTitle={formatPaise(allocated)} tone={allocated > amountPaise ? "danger" : "default"} />
             <StatCard
               label={unallocated >= 0 ? "On account" : "Over-allocated"}
-              value={formatPaise(Math.abs(unallocated))}
+              value={formatPaiseCompact(Math.abs(unallocated))} valueTitle={formatPaise(Math.abs(unallocated))}
               tone={unallocated < 0 ? "danger" : "default"}
             />
           </div>

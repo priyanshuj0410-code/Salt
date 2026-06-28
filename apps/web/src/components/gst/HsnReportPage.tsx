@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import { buildHsnSummary, hsnSummaryToCsv, shiftPeriod, type HsnLineInput, type HsnRow } from "@/lib/gst";
 
 const LINE_COLS = "qty,gst_rate,taxable_paise,cgst_paise,sgst_paise,igst_paise,items(hsn)";
@@ -127,8 +127,8 @@ export function HsnReportPage() {
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard label="HSN × rate rows" value={summary.rows.length} />
             <StatCard label="Total qty" value={summary.qty} />
-            <StatCard label="Taxable value" value={formatPaise(summary.totals.taxablePaise)} />
-            <StatCard label="Total tax" value={formatPaise(totalTax)} />
+            <StatCard label="Taxable value" value={formatPaiseCompact(summary.totals.taxablePaise)} valueTitle={formatPaise(summary.totals.taxablePaise)} />
+            <StatCard label="Total tax" value={formatPaiseCompact(totalTax)} valueTitle={formatPaise(totalTax)} />
           </div>
 
           <DataTable<HsnRow>

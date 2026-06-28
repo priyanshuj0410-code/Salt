@@ -11,7 +11,7 @@ import { DataTable } from "@/components/patterns/data-table";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
-import { formatPaise, formatSigned } from "@/lib/currency";
+import { formatPaise, formatSigned, formatPaiseCompact } from "@/lib/currency";
 import { signedAmount, type PaymentListRow } from "@/lib/payments";
 import { RecordPaymentDialog, type PartyLite } from "./RecordPaymentDialog";
 import { PaymentReceiptDialog } from "./PaymentReceiptDialog";
@@ -170,8 +170,8 @@ export function PaymentsPage() {
       ) : (
         <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Received" value={formatPaise(stats.received)} tone="success" hint="money in from customers" />
-        <StatCard label="Paid" value={formatPaise(stats.paid)} tone="danger" hint="money out to vendors" />
+        <StatCard label="Received" value={formatPaiseCompact(stats.received)} valueTitle={formatPaise(stats.received)} tone="success" hint="money in from customers" />
+        <StatCard label="Paid" value={formatPaiseCompact(stats.paid)} valueTitle={formatPaise(stats.paid)} tone="danger" hint="money out to vendors" />
         <StatCard
           label="Net"
           value={formatSigned(stats.net)}
