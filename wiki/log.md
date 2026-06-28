@@ -1,6 +1,6 @@
 ---
 type: log
-updated: 2026-06-03
+updated: 2026-06-28
 ---
 
 # Log
@@ -295,3 +295,9 @@ Reconciled the wiki after a coordinated multi-lane pass gave **every shipped mod
 
 ## [2026-06-03] design | V2 IA redesign — working set filed to the wiki
 Filed the V2 information-architecture redesign as a **living, V1-feedback-driven working set** (explicitly **not** a finalized spec). New: **11 interactive HTML artifacts** in [design/](design/index.md) — the V1 systems map, the 7 personas (+ their outside-the-ERP apps), the medicine lifecycle + build/market coverage, the 7 per-role IAs, and the unified **capability-lens** composer (with the Varanasi wholesale real-shop validation); the durable model at [architecture/ia-redesign](architecture/ia-redesign.md) (*one experience / many views*; three knobs = capabilities × altitude × context; the 15-atom registry; the no-V3 thesis); and the working plan at [product/ia-redesign-plan](product/ia-redesign-plan.md) (coverage audit — nothing dropped; workstreams + rough estimates ~112–181 core person-days; phased rollout; V1 quality findings §13; appendices for multi-platform §12, inbound invoice interchange §14, a Marg connector §15). Artifacts moved out of the repo root into `wiki/design/`; index gained a Design section. Marked everywhere as 🚧 working / V2-definition. Docs only — no app code. → [design/index](design/index.md)
+
+## [2026-06-28] decision | OCR extraction stays on Gemini Flash — local Gemma worker shelved
+Evaluated moving purchase-invoice OCR off the paid Gemini **Flash** path (`extract-invoice`) to a free, self-hosted **Gemma vision** worker. A full **local OCR worker** was built on branch `feat/gemma-ocr-worker` (durable Supabase queue + Ollama Gemma vision + a tester picker with live streaming; M0–M6) and a two-lane design — free async queue + paid "fetch now" → Flash — was speced (`prd-gemma-ocr-worker.md`, root). **Decision: keep Gemini Flash.** Local Gemma was **not accurate / fast enough on dense pharma invoices** (batch / expiry / qty / multi-rate line tables) vs Flash, and Flash on the cheap tier is already ~sub-cent/page. The worker branch is **parked** (PR #270 closed) — do not re-pitch local OCR. The real cost lever instead: cache `gemini-enrich` into the shared master + Batch API + text-layer-first for digital PDFs.
+
+## [2026-06-28] docs | V2 IA-redesign backlog filed to Plane (SALT-1…34)
+The V2 IA-redesign plan ([product/ia-redesign-plan](product/ia-redesign-plan.md)) became a tracked backlog in **Plane** — workspace `claude-pri`, project **Salt** (`SALT`): decisions/spikes (scope, WS1+WS2 slice, WS20 grid), V2 Core WS1–WS16, V2 Quality WS17–WS21, optional multi-platform + integrations (SALT-1…32), plus two wiki-accuracy follow-ups — reconcile `data-model.md`/`schema.md` to the live schema (SALT-33) and dedup ADR 0017 (SALT-34). Workspace/project mapping + state IDs in `knowledge/plane.config.md`. The local-Gemma OCR worker is intentionally excluded (shelved — see above).
