@@ -10,12 +10,15 @@ import { cn } from "@/lib/utils";
 function StatCard({
   label,
   value,
+  valueTitle,
   hint,
   tone = "default",
   className,
 }: {
   label: React.ReactNode;
   value: React.ReactNode;
+  /** Full value shown on hover when `value` is compacted (e.g. ₹12.3K → ₹12,345.00). */
+  valueTitle?: string;
   hint?: React.ReactNode;
   tone?: "default" | "success" | "danger";
   className?: string;
@@ -24,6 +27,7 @@ function StatCard({
     <div className={cn("rounded-lg border border-border bg-background p-3", className)}>
       <div className="text-[0.6875rem] font-medium tracking-wide text-text-tertiary uppercase">{label}</div>
       <div
+        title={valueTitle}
         className={cn(
           "mt-1 text-xl font-semibold tabular-nums",
           tone === "success" && "text-success",
