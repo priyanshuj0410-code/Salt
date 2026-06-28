@@ -1,7 +1,8 @@
 import { can, MODULES, type ModuleKey, type PermissionOverrides } from "@/lib/permissions";
 import type { UserRole } from "@/lib/auth";
-import type { AtomId } from "./atoms";
+import { ATOM_BY_ID, type AtomId } from "./atoms";
 import { atomsForRole } from "./roleAtoms";
+import { MODULE_SURFACE, type SurfaceKey } from "./surfaces";
 
 /**
  * A user HOLDS a set of capability atoms (A..O, derived from their role in
@@ -82,9 +83,22 @@ function deriveAltitudes(atoms: Set<AtomId>): string[] {
   return f;
 }
 
+/** The 8 V2 surfaces this user sees in the unified shell — a faithful projection
+ *  of the modules their atoms light (NOT a hand-keyed atom→surface map, which would
+ *  drop the multi-module atoms I/J/L). Display grouping only; gating stays on
+ *  litSurfaces (modules). */
+function deriveSurfaces(atoms: Set<AtomId>): Set<SurfaceKey> {
+  const s = new Set<SurfaceKey>();
+  for (const id of atoms) for (const mod of ATOM_BY_ID[id].modules) s.add(MODULE_SURFACE[mod]);
+  return s;
+}
+
 export interface Lens {
   /** The capability atoms this user holds (Slice 1: derived from role). */
   heldAtoms: Set<AtomId>;
+  /** The V2 surfaces lit in the unified shell (WS2) — display grouping over the
+   *  modules in litSurfaces; additive, never widens access. */
+  surfaces: Set<SurfaceKey>;
   /** Surfaces this user may see/reach — the single gate for routes AND nav.
    *  Kept `can()`-based in Slice 1 (no gating regression); atom-driven in WS2. */
   litSurfaces: Set<ModuleKey>;
@@ -107,6 +121,7 @@ export function deriveLens(
   const primarySurface = derivePrimarySurface(heldAtoms);
   return {
     heldAtoms,
+    surfaces: deriveSurfaces(heldAtoms),
     litSurfaces: new Set<ModuleKey>(ALL_KEYS.filter((k) => can(role, perms, k))),
     primarySurface,
     primaryRoute: ROUTE_OF[primarySurface] ?? "/",
