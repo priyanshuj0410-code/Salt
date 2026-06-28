@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { ChevronDown, ChevronRight, Lock, LogOut, PanelLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Inbox, Lock, LogOut, PanelLeft, Receipt, RefreshCw, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { pathModule } from "@/lib/permissions";
@@ -10,6 +10,15 @@ import { NAV, type NavLeaf, type NavModule } from "./navConfig";
 import { ShopSwitcher } from "./ShopSwitcher";
 
 const COLLAPSE_KEY = "salt.nav.collapsed";
+
+// Icon for the lens's persistent action (the verb derived from the user's atoms).
+const ACTION_ICON: Record<string, typeof Receipt> = {
+  Bill: Receipt,
+  Find: Search,
+  "Approve · Inbox": Inbox,
+  Export: Download,
+  "Sync + collect": RefreshCw,
+};
 const pathOf = (p?: string) => (p ? p.split("?")[0] : undefined);
 
 function isModuleActive(mod: NavModule, current: string): boolean {
@@ -138,6 +147,8 @@ export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; 
       : NAV.filter((m) => m.path != null && lens.litSurfaces.has(pathModule(m.path)))
     : NAV.filter((m) => role != null && m.roles.includes(role));
 
+  const ActionIcon = ACTION_ICON[lens.persistentAction.label] ?? Search;
+
   const toggle = () =>
     setLocalCollapsed((c) => {
       const next = !c;
@@ -165,6 +176,24 @@ export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; 
           </button>
         )}
       </div>
+
+      {/* The one persistent action — the verb derived from the user's atoms (SALT-4 Slice 2). */}
+      {LENS_V2 && lens.persistentAction.label !== "—" && (
+        <div className="border-b border-sidebar-border p-2">
+          <NavLink
+            to={lens.persistentAction.route}
+            onClick={onNavigate}
+            title={lens.persistentAction.label}
+            className={cn(
+              "flex items-center gap-2 rounded-md bg-primary px-2 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90",
+              collapsed && "justify-center",
+            )}
+          >
+            <ActionIcon className="size-4 shrink-0" />
+            {!collapsed && <span className="truncate">{lens.persistentAction.label}</span>}
+          </NavLink>
+        </div>
+      )}
 
       <nav
         onClick={(e) => onNavigate && (e.target as HTMLElement).closest("a") && onNavigate()}

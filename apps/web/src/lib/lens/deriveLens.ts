@@ -61,6 +61,15 @@ function deriveVerb(atoms: Set<AtomId>): string {
   return "—";
 }
 
+/** Where the persistent action takes you — mirrors deriveVerb's branch order. */
+function deriveActionRoute(atoms: Set<AtomId>): string {
+  if (atoms.has("I")) return "/approvals"; // Approve · Inbox
+  if (atoms.has("J") || atoms.has("K")) return "/reports"; // Export — the desk
+  if (atoms.has("A") || atoms.has("C")) return "/"; // Find — at the counter
+  if (atoms.has("G")) return "/salesmen"; // Sync + collect — the beat
+  return "/"; // Bill — the counter
+}
+
 /** Altitude facets — DERIVED from atoms, not a stored knob (this resolves the
  *  3-vs-5 dispute: altitude falls out of which atoms you hold). */
 function deriveAltitudes(atoms: Set<AtomId>): string[] {
@@ -83,8 +92,9 @@ export interface Lens {
   primarySurface: ModuleKey;
   /** The V1 route for `primarySurface` — the flag-on landing target. */
   primaryRoute: string;
-  /** The one always-present action, derived from atoms (Bill/Find/Approve/Export/Sync). */
-  persistentAction: string;
+  /** The one always-present action, derived from atoms (Bill/Find/Approve/Export/Sync)
+   *  + the route it takes you to. */
+  persistentAction: { label: string; route: string };
   /** Altitude facets this user operates at — derived from atoms, not stored. */
   altitudes: string[];
 }
@@ -100,7 +110,7 @@ export function deriveLens(
     litSurfaces: new Set<ModuleKey>(ALL_KEYS.filter((k) => can(role, perms, k))),
     primarySurface,
     primaryRoute: ROUTE_OF[primarySurface] ?? "/",
-    persistentAction: deriveVerb(heldAtoms),
+    persistentAction: { label: deriveVerb(heldAtoms), route: deriveActionRoute(heldAtoms) },
     altitudes: deriveAltitudes(heldAtoms),
   };
 }
