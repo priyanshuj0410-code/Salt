@@ -4,6 +4,7 @@ title: Salt design system
 description: The authoritative design tokens, principles, and component patterns for Salt's UI. Audited from apps/web/src/index.css (the source of truth) and wiki/architecture/design-system.md. Read before any UI change; update when a new pattern is introduced.
 plane_issues:
   - SALT-2 (lens-spine spike — logic-only, introduced no new UI pattern)
+  - SALT-20 (DataTable real-design pass — sortable headers, skeleton, empty state)
 ---
 
 # Salt design system
@@ -49,6 +50,8 @@ plane_issues:
 ## Patterns / primitives
 
 - Built on **shadcn/ui "base-nova"** over `@base-ui/react`. Reuse existing primitives: `ui/kbd` (Kbd), `ui/dialog`, `ui/card`, Dot, Badge.
+- **DataTable** (`patterns/data-table.tsx`) is the one table primitive (used in ~40 screens). Codified pattern (SALT-20, grounded in Mercury/Quicken/Midday finance tables via Lazyweb): frozen uppercase header, 1px row dividers (no zebra), right-aligned `tabular-nums` for money/qty, hover tint, ↑/↓ keyboard row focus, desktop-grid→mobile-card reflow, TanStack virtualization for 10k+ rows. **Sortable headers** are opt-in per column (`sortable` + `sortValue`) with a faint two-way chevron that resolves to the active direction; sort cycles asc→desc→off. **Loading** renders skeleton rows that mirror the grid (never a bare "Loading…"). **Empty** is a centred, quiet block (override via the `empty` prop).
+- **Truncate** (`patterns/truncate.tsx`): single-line ellipsis that reveals the full value as a native tooltip only when actually clipped. Use for any text that can overflow (names, codes). Money compaction pairs with `formatPaiseCompact` (`lib/currency.ts`, K/L/Cr).
 - **Keyboard is the primary input** (`design.md` §2): every navigable action has a shortcut; the command palette (`Ctrl/Cmd+K`) and `?` help overlay are data-driven from `lib/shortcuts.ts` so they never drift. No tooltip-only shortcuts.
 - **Money is integer paise**, rendered mono with `Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" })`. Never floats. (V2 finding: also support K/L/Cr compaction + never overflow → truncate+hover.)
 - Status is communicated with the state triads above (a coloured Dot/Badge), not with coloured text blocks.

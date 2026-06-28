@@ -311,9 +311,9 @@ export function DashboardPage() {
                 loading={loading}
                 empty={<EmptyState title="No sales yet today" hint="Items sold today will rank here by quantity." />}
                 columns={[
-                  { key: "name", header: "Item", cell: (r) => r.name },
-                  { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty },
-                  { key: "value", header: "Value", numeric: true, cell: (r) => formatPaise(r.valuePaise) },
+                  { key: "name", header: "Item", cell: (r) => r.name, sortable: true, sortValue: (r) => r.name },
+                  { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty, sortable: true, sortValue: (r) => r.qty },
+                  { key: "value", header: "Value", numeric: true, cell: (r) => formatPaise(r.valuePaise), sortable: true, sortValue: (r) => r.valuePaise },
                 ]}
               />
             </section>
