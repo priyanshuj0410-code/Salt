@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Page } from "@/components/patterns/page";
 import { PageHeader } from "@/components/patterns/page-header";
 import { StatCard } from "@/components/patterns/stat-card";
+import { formatPaiseCompact } from "@/lib/currency";
 import { CreatePartyDialog } from "@/components/parties/CreatePartyDialog";
 import { AgingTable } from "@/components/parties/AgingTable";
 import { supabase } from "@/lib/supabase";
@@ -373,8 +374,8 @@ export function PartiesPage() {
           <StatCard label="Customers" value={stats.customers.toLocaleString("en-IN")} />
           <StatCard label="Vendors" value={stats.vendors.toLocaleString("en-IN")} />
           <StatCard label="Other" value={stats.others.toLocaleString("en-IN")} />
-          <StatCard label="Receivable" value={`₹${rupees(stats.receivable)}`} tone="success" />
-          <StatCard label="Payable" value={`₹${rupees(stats.payable)}`} tone="danger" />
+          <StatCard label="Receivable" value={formatPaiseCompact(stats.receivable)} valueTitle={`₹${rupees(stats.receivable)}`} tone="success" />
+          <StatCard label="Payable" value={formatPaiseCompact(stats.payable)} valueTitle={`₹${rupees(stats.payable)}`} tone="danger" />
         </div>
 
         {/* State coverage (SALT-054) — missing state_code defaults sales to intra-state CGST+SGST */}

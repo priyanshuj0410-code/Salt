@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import { buildGstr3b, buildGstr3bJson, gstr3bToCsv, buildWriteoffReversal, type Gstr3bOutwardRow, type Gstr3bItcRow, type WriteoffRow, type WriteoffReversalRow } from "@/lib/gst";
 
 const OUTWARD_COLS = "taxable_paise,cgst_paise,sgst_paise,igst_paise";
@@ -183,24 +183,24 @@ export function Gstr3bPage() {
       ) : (
         <div className="flex flex-col gap-7">
           <div hidden={!hasData} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <StatCard label="Output tax" value={formatPaise(summary.outputTotalPaise)} hint={`${summary.invoiceCount} invoices`} />
+            <StatCard label="Output tax" value={formatPaiseCompact(summary.outputTotalPaise)} valueTitle={formatPaise(summary.outputTotalPaise)} hint={`${summary.invoiceCount} invoices`} />
             <StatCard
               label="Less: credit notes"
-              value={formatPaise(summary.creditNoteTotalPaise)}
+              value={formatPaiseCompact(summary.creditNoteTotalPaise)} valueTitle={formatPaise(summary.creditNoteTotalPaise)}
               tone={summary.creditNoteTotalPaise > 0 ? "danger" : "default"}
               hint={summary.creditNoteTotalPaise > 0 ? `net ${formatPaise(summary.netOutputTotalPaise)} · ${summary.creditNoteCount} notes` : "no sales returns"}
             />
-            <StatCard label="Gross ITC" value={formatPaise(summary.itcTotalPaise)} hint={`${summary.purchaseCount} purchases`} />
+            <StatCard label="Gross ITC" value={formatPaiseCompact(summary.itcTotalPaise)} valueTitle={formatPaise(summary.itcTotalPaise)} hint={`${summary.purchaseCount} purchases`} />
             <StatCard
               label="ITC reversal"
-              value={formatPaise(summary.reversalPaise)}
+              value={formatPaiseCompact(summary.reversalPaise)} valueTitle={formatPaise(summary.reversalPaise)}
               tone={summary.reversalPaise > 0 ? "danger" : "default"}
               hint={`${reversal.rows.length} write-offs`}
             />
-            <StatCard label="Net ITC" value={formatPaise(summary.netItcPaise)} hint="gross − reversal" />
+            <StatCard label="Net ITC" value={formatPaiseCompact(summary.netItcPaise)} valueTitle={formatPaise(summary.netItcPaise)} hint="gross − reversal" />
             <StatCard
               label="Net payable"
-              value={formatPaise(summary.netPayablePaise)}
+              value={formatPaiseCompact(summary.netPayablePaise)} valueTitle={formatPaise(summary.netPayablePaise)}
               tone={summary.netPayablePaise > 0 ? "danger" : "success"}
               hint={summary.creditCarryPaise > 0 ? `${formatPaise(summary.creditCarryPaise)} credit c/f` : "after set-off"}
             />

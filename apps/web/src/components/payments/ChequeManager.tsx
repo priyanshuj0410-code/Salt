@@ -4,7 +4,7 @@ import { StatCard } from "@/components/patterns/stat-card";
 import { DataTable } from "@/components/patterns/data-table";
 import { supabase } from "@/lib/supabase";
 import { selectAll } from "@/lib/selectAll";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 
 /**
  * Post-dated cheque management (SALT-060) — an in-module tab on /payments. Lists
@@ -106,10 +106,10 @@ export function ChequeManager({ orgId, nameById }: { orgId: string | null; nameB
       {error && <p className="mb-3 text-sm text-destructive">{error}</p>}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Pending" value={formatPaise(stats.pending)} hint="cheques not yet cleared" />
-        <StatCard label="Due ≤ 7 days" value={formatPaise(stats.due7)} tone={stats.due7 ? "danger" : "default"} />
-        <StatCard label="Due ≤ 30 days" value={formatPaise(stats.due30)} />
-        <StatCard label="Bounced" value={formatPaise(stats.bounced)} tone={stats.bounced ? "danger" : "default"} />
+        <StatCard label="Pending" value={formatPaiseCompact(stats.pending)} valueTitle={formatPaise(stats.pending)} hint="cheques not yet cleared" />
+        <StatCard label="Due ≤ 7 days" value={formatPaiseCompact(stats.due7)} valueTitle={formatPaise(stats.due7)} tone={stats.due7 ? "danger" : "default"} />
+        <StatCard label="Due ≤ 30 days" value={formatPaiseCompact(stats.due30)} valueTitle={formatPaise(stats.due30)} />
+        <StatCard label="Bounced" value={formatPaiseCompact(stats.bounced)} valueTitle={formatPaise(stats.bounced)} tone={stats.bounced ? "danger" : "default"} />
       </div>
 
       <div className="mt-4">

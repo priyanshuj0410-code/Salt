@@ -7,7 +7,7 @@ import { StatCard } from "@/components/patterns/stat-card";
 import { EmptyState } from "@/components/patterns/empty-state";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { formatPaise, formatSigned } from "@/lib/currency";
+import { formatPaise, formatSigned, formatPaiseCompact } from "@/lib/currency";
 import { buildGstLiability, shiftPeriod, type DatedTaxRow, type LiabilityDelta } from "@/lib/gst";
 
 const TAX_COLS = "cgst_paise,sgst_paise,igst_paise";
@@ -147,11 +147,11 @@ export function GstLiabilityPage() {
       ) : (
         <div className="flex flex-col gap-7">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard label="Output tax" value={formatPaise(view.current.outputPaise)} hint="on this month's sales" />
-            <StatCard label="Eligible ITC" value={formatPaise(view.current.itcPaise)} hint="on this month's purchases" />
+            <StatCard label="Output tax" value={formatPaiseCompact(view.current.outputPaise)} valueTitle={formatPaise(view.current.outputPaise)} hint="on this month's sales" />
+            <StatCard label="Eligible ITC" value={formatPaiseCompact(view.current.itcPaise)} valueTitle={formatPaise(view.current.itcPaise)} hint="on this month's purchases" />
             <StatCard
               label="Net payable"
-              value={formatPaise(view.current.netPayablePaise)}
+              value={formatPaiseCompact(view.current.netPayablePaise)} valueTitle={formatPaise(view.current.netPayablePaise)}
               tone={view.current.netPayablePaise > 0 ? "danger" : "success"}
               hint={view.current.netPaise < 0 ? `${formatPaise(-view.current.netPaise)} credit c/f` : "after full set-off"}
             />

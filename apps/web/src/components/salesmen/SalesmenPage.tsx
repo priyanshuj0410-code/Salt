@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dot } from "@/components/ui/dot";
 import { RangeControls, ExportButton } from "@/components/reports/report-controls";
 import { useAuth } from "@/lib/auth";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import { presetRange, downloadCsv, paiseToRupeeStr } from "@/lib/reports";
 import {
   listSalesmen,
@@ -137,9 +137,9 @@ export function SalesmenPage() {
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Orders" value={<span className="tabular-nums">{totals.orders}</span>} hint="In the period" />
-        <StatCard label="Net sales" value={formatPaise(totals.net)} hint="Ex-GST, attributed" />
-        <StatCard label="Commission" value={formatPaise(totals.commission)} hint="Earned in period" />
-        <StatCard label="Collections" value={formatPaise(totals.collections)} tone="success" hint="Received in period" />
+        <StatCard label="Net sales" value={formatPaiseCompact(totals.net)} valueTitle={formatPaise(totals.net)} hint="Ex-GST, attributed" />
+        <StatCard label="Commission" value={formatPaiseCompact(totals.commission)} valueTitle={formatPaise(totals.commission)} hint="Earned in period" />
+        <StatCard label="Collections" value={formatPaiseCompact(totals.collections)} valueTitle={formatPaise(totals.collections)} tone="success" hint="Received in period" />
       </div>
 
       <DataTable<Salesman>

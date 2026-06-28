@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { formatPaise } from "@/lib/currency";
+import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import {
   buildGstr1,
   buildGstr1Json,
@@ -289,10 +289,10 @@ export function Gstr1Page() {
       ) : (
         <div className="flex flex-col gap-7">
           <div hidden={!hasData} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <StatCard label="Taxable value" value={formatPaise(summary.totals.taxablePaise)} />
-            <StatCard label="CGST" value={formatPaise(summary.totals.cgstPaise)} />
-            <StatCard label="SGST" value={formatPaise(summary.totals.sgstPaise)} />
-            <StatCard label="IGST" value={formatPaise(summary.totals.igstPaise)} />
+            <StatCard label="Taxable value" value={formatPaiseCompact(summary.totals.taxablePaise)} valueTitle={formatPaise(summary.totals.taxablePaise)} />
+            <StatCard label="CGST" value={formatPaiseCompact(summary.totals.cgstPaise)} valueTitle={formatPaise(summary.totals.cgstPaise)} />
+            <StatCard label="SGST" value={formatPaiseCompact(summary.totals.sgstPaise)} valueTitle={formatPaise(summary.totals.sgstPaise)} />
+            <StatCard label="IGST" value={formatPaiseCompact(summary.totals.igstPaise)} valueTitle={formatPaise(summary.totals.igstPaise)} />
             <StatCard label="Invoices" value={summary.invoiceCount} hint={`${summary.hsn.length} HSN × rate rows`} />
           </div>
 

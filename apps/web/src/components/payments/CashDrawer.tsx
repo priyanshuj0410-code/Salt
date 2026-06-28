@@ -9,7 +9,7 @@ import { DataTable } from "@/components/patterns/data-table";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { selectAll } from "@/lib/selectAll";
-import { formatPaise, formatSigned } from "@/lib/currency";
+import { formatPaise, formatSigned, formatPaiseCompact } from "@/lib/currency";
 
 /**
  * Cash-drawer reconciliation (SALT-059) — an in-module tab on /payments. Open a
@@ -152,9 +152,9 @@ export function CashDrawer({ orgId }: { orgId: string | null }) {
             </h3>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard label="Opening float" value={formatPaise(open.opening_paise)} />
+            <StatCard label="Opening float" value={formatPaiseCompact(open.opening_paise)} valueTitle={formatPaise(open.opening_paise)} />
             <StatCard label="Net cash (shift)" value={formatSigned(cashNet)} tone={cashNet >= 0 ? "success" : "danger"} />
-            <StatCard label="Expected in drawer" value={formatPaise(expected)} />
+            <StatCard label="Expected in drawer" value={formatPaiseCompact(expected)} valueTitle={formatPaise(expected)} />
             <StatCard
               label="Variance"
               value={counted ? formatSigned(variancePreview) : "—"}
