@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Page } from "@/components/patterns/page";
+import { Truncate } from "@/components/patterns/truncate";
 import { PageHeader } from "@/components/patterns/page-header";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
@@ -151,7 +152,7 @@ export function PartyPrivacyPage() {
                       onClick={() => pick(p)}
                       className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm hover:bg-muted"
                     >
-                      <span className="truncate">{p.name}</span>
+                      <Truncate text={p.name} className="min-w-0" />
                       {p.type && <Badge variant="neutral">{p.type}</Badge>}
                     </button>
                   </li>
