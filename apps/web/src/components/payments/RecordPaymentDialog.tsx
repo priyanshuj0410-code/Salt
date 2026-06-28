@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Truncate } from "@/components/patterns/truncate";
 import { FormRow } from "@/components/patterns/form-row";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
@@ -158,7 +159,7 @@ export function RecordPaymentDialog({
           {party ? (
             <div className="flex items-center justify-between rounded-md border border-border bg-surface px-3 py-2">
               <div className="min-w-0">
-                <div className="truncate text-sm font-medium">{party.name}</div>
+                <Truncate text={party.name} className="text-sm font-medium" />
                 <div className="text-xs text-text-tertiary capitalize">{party.type}</div>
               </div>
               <Button size="sm" variant="ghost" onClick={() => setPartyId(null)}>
