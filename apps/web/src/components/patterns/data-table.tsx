@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,10 @@ export interface Column<T> {
   /** Right-align + tabular figures (money / qty / counts). */
   numeric?: boolean;
   cell: (row: T) => React.ReactNode;
+  /** Make the header a sort toggle (asc → desc → off). Needs `sortValue`. */
+  sortable?: boolean;
+  /** Comparison key for sorting — string sorts by locale, number numerically. */
+  sortValue?: (row: T) => string | number;
 }
 
 interface DataTableProps<T> {
@@ -33,6 +38,8 @@ interface DataTableProps<T> {
 
 const ROW_PX = 44; // --row-height default; desktop rows are a single truncated line
 
+type SortState = { key: string; dir: "asc" | "desc" } | null;
+
 /**
  * design.md §6.1 — sticky uppercase header, tabular numeric columns, 1px row
  * dividers, hover tint. Keyboard: ↑/↓ moves row focus, Enter activates (native
@@ -50,6 +57,26 @@ export function DataTable<T>({
   virtualize = false,
 }: DataTableProps<T>) {
   const bodyRef = React.useRef<HTMLDivElement>(null);
+  const [sort, setSort] = React.useState<SortState>(null);
+
+  // Client-side sort, opt-in per column. Default null → rows render as given, so
+  // callers that pre-sort are unaffected until a header is clicked. Only the
+  // active-sort path pays the O(n log n); the null path returns immediately.
+  const sortedRows = React.useMemo(() => {
+    if (!sort) return rows;
+    const sv = columns.find((c) => c.key === sort.key)?.sortValue;
+    if (!sv) return rows;
+    const dir = sort.dir === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const av = sv(a);
+      const bv = sv(b);
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+  }, [rows, sort, columns]);
+
+  const toggleSort = (key: string) =>
+    setSort((s) => (s?.key !== key ? { key, dir: "asc" } : s.dir === "asc" ? { key, dir: "desc" } : null));
 
   // Window only at desktop width — below `md` rows reflow to variable-height cards that a
   // fixed-size virtualizer would mis-position, and a phone never browses 10k unfiltered.
@@ -63,12 +90,12 @@ export function DataTable<T>({
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  const windowed = virtualize && isDesktop && !loading && rows.length > 0;
+  const windowed = virtualize && isDesktop && !loading && sortedRows.length > 0;
 
   // Hook is always called (count 0 when not windowing) to satisfy rules-of-hooks.
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Virtual returns un-memoizable fns by design
   const virtualizer = useVirtualizer({
-    count: windowed ? rows.length : 0,
+    count: windowed ? sortedRows.length : 0,
     getScrollElement: () => bodyRef.current,
     estimateSize: () => ROW_PX,
     overscan: 12,
@@ -80,10 +107,10 @@ export function DataTable<T>({
 
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-    if (rows.length === 0) return;
+    if (sortedRows.length === 0) return;
     e.preventDefault();
     const cur = Number((document.activeElement as HTMLElement | null)?.getAttribute?.("data-index") ?? "-1");
-    const last = rows.length - 1;
+    const last = sortedRows.length - 1;
     const next = cur < 0 ? 0 : e.key === "ArrowDown" ? Math.min(cur + 1, last) : Math.max(cur - 1, 0);
     if (windowed) {
       // The target row may not be mounted yet — scroll it in, then focus on the next frame.
@@ -128,6 +155,19 @@ export function DataTable<T>({
     </RowTag>
   );
 
+  // Loading placeholder — mirrors the column grid so the layout never jumps.
+  const renderSkeleton = (i: number) => (
+    <div
+      key={i}
+      style={grid}
+      className="hidden gap-2 border-b border-divider px-3 last:border-b-0 md:grid md:min-h-[var(--row-height)] md:items-center"
+    >
+      {columns.map((c) => (
+        <div key={c.key} className={cn("h-3 animate-pulse rounded bg-surface-2", c.numeric ? "ml-auto w-12" : "w-2/3")} />
+      ))}
+    </div>
+  );
+
   return (
     <div className="overflow-hidden rounded-lg border border-border">
       {/* Header — desktop only */}
@@ -135,26 +175,61 @@ export function DataTable<T>({
         style={grid}
         className="hidden gap-2 border-b border-border bg-surface px-3 py-2 text-[0.6875rem] font-medium tracking-wide text-text-tertiary uppercase md:grid"
       >
-        {columns.map((c) => (
-          <span key={c.key} className={cn("block min-w-0 truncate", c.numeric && "text-right")}>
-            {c.header}
-          </span>
-        ))}
+        {columns.map((c) => {
+          const active = sort?.key === c.key;
+          if (!c.sortable) {
+            return (
+              <span key={c.key} className={cn("block min-w-0 truncate", c.numeric && "text-right")}>
+                {c.header}
+              </span>
+            );
+          }
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => toggleSort(c.key)}
+              className={cn(
+                "flex min-w-0 items-center gap-1 uppercase tracking-wide hover:text-text-secondary",
+                c.numeric ? "justify-end" : "justify-start",
+                active && "text-text-secondary",
+              )}
+            >
+              {c.numeric && <SortCaret active={active} dir={sort?.dir} />}
+              <span className="truncate">{c.header}</span>
+              {!c.numeric && <SortCaret active={active} dir={sort?.dir} />}
+            </button>
+          );
+        })}
       </div>
 
       <div ref={bodyRef} onKeyDown={onKeyDown} className="overflow-y-auto" style={{ maxHeight }}>
         {loading ? (
-          <p className="px-3 py-6 text-sm text-text-tertiary">Loading…</p>
-        ) : rows.length === 0 ? (
-          (empty ?? <p className="px-3 py-6 text-sm text-text-tertiary">Nothing here yet.</p>)
+          <>
+            <p className="px-3 py-3 text-sm text-text-tertiary md:hidden">Loading…</p>
+            {Array.from({ length: 8 }, (_, i) => renderSkeleton(i))}
+          </>
+        ) : sortedRows.length === 0 ? (
+          (empty ?? (
+            // Neutral single line — correct for both a genuinely-empty table and a
+            // filtered view with no matches. Call sites pass a richer `empty` when wanted.
+            <div className="px-3 py-12 text-center text-sm text-text-tertiary">Nothing here yet.</div>
+          ))
         ) : windowed ? (
           <div style={{ height: virtualizer.getTotalSize(), position: "relative" }}>
-            {virtualizer.getVirtualItems().map((vi) => renderRow(rows[vi.index], vi.index, vi.start))}
+            {virtualizer.getVirtualItems().map((vi) => renderRow(sortedRows[vi.index], vi.index, vi.start))}
           </div>
         ) : (
-          rows.map((row, index) => renderRow(row, index))
+          sortedRows.map((row, index) => renderRow(row, index))
         )}
       </div>
     </div>
   );
+}
+
+/** Sort affordance on a sortable header: faint two-way chevron when idle, a single
+ *  chevron in the active direction when sorting by this column. */
+function SortCaret({ active, dir }: { active: boolean; dir?: "asc" | "desc" }) {
+  if (!active) return <ChevronsUpDown className="size-3 shrink-0 opacity-40" />;
+  return dir === "asc" ? <ChevronUp className="size-3 shrink-0" /> : <ChevronDown className="size-3 shrink-0" />;
 }
