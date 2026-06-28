@@ -7,6 +7,7 @@ import { pathModule } from "@/lib/permissions";
 import { LENS_V2 } from "@/lib/flags";
 import { useLens } from "@/lib/lens/useLens";
 import { NAV, type NavLeaf, type NavModule } from "./navConfig";
+import { SURFACE_NAV } from "./surfaceNav";
 import { ShopSwitcher } from "./ShopSwitcher";
 
 const COLLAPSE_KEY = "salt.nav.collapsed";
@@ -137,14 +138,21 @@ export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; 
   const [localCollapsed, setLocalCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === "1");
   const collapsed = expanded ? false : localCollapsed;
 
-  // V2: the same lit-surface set that gates routes drives nav visibility — so a
-  // per-user grant finally shows in the sidebar (V1 here only honoured role
-  // defaults via `m.roles`, which the route gate did not). Map each module to
-  // its ModuleKey via its path. V1 path unchanged.
-  const modules = LENS_V2
+  // V2 (WS2 Slice 1): the sidebar's top level is the 8 surfaces lit for this user
+  // (lens.surfaces). Within each, leaves are filtered by the module gate
+  // (lens.litSurfaces) so a surface only shows the sub-areas the user can actually
+  // reach — the per-leaf filter is the escalation guard. The surface's own link
+  // points at its first reachable leaf, so it never lands on a gated route. V1
+  // path (role-default 13-module nav) is unchanged.
+  const modules: NavModule[] = LENS_V2
     ? role == null
-      ? [] // membership not resolved yet — match V1 (empty) instead of flashing counter-only
-      : NAV.filter((m) => m.path != null && lens.litSurfaces.has(pathModule(m.path)))
+      ? [] // membership not resolved yet — match V1 (empty) instead of flashing
+      : SURFACE_NAV.filter((s) => lens.surfaces.has(s.surface))
+          .map((s) => {
+            const children = s.children.filter((c) => c.path != null && lens.litSurfaces.has(pathModule(c.path)));
+            return { ...s, path: children[0]?.path ?? s.path, children };
+          })
+          .filter((s) => s.children.length > 0)
     : NAV.filter((m) => role != null && m.roles.includes(role));
 
   const ActionIcon = ACTION_ICON[lens.persistentAction.label] ?? Search;
