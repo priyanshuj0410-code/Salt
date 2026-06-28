@@ -3,6 +3,9 @@ import { NavLink, useLocation } from "react-router-dom";
 import { ChevronDown, ChevronRight, Lock, LogOut, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
+import { pathModule } from "@/lib/permissions";
+import { LENS_V2 } from "@/lib/flags";
+import { useLens } from "@/lib/lens/useLens";
 import { NAV, type NavLeaf, type NavModule } from "./navConfig";
 import { ShopSwitcher } from "./ShopSwitcher";
 
@@ -120,11 +123,20 @@ function IconItem({ mod, current }: { mod: NavModule; current: string }) {
 export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; onNavigate?: () => void }) {
   const { membership, signOut } = useAuth();
   const role = membership?.role;
+  const lens = useLens();
   const { pathname } = useLocation();
   const [localCollapsed, setLocalCollapsed] = useState(() => localStorage.getItem(COLLAPSE_KEY) === "1");
   const collapsed = expanded ? false : localCollapsed;
 
-  const modules = NAV.filter((m) => role != null && m.roles.includes(role));
+  // V2: the same lit-surface set that gates routes drives nav visibility — so a
+  // per-user grant finally shows in the sidebar (V1 here only honoured role
+  // defaults via `m.roles`, which the route gate did not). Map each module to
+  // its ModuleKey via its path. V1 path unchanged.
+  const modules = LENS_V2
+    ? role == null
+      ? [] // membership not resolved yet — match V1 (empty) instead of flashing counter-only
+      : NAV.filter((m) => m.path != null && lens.litSurfaces.has(pathModule(m.path)))
+    : NAV.filter((m) => role != null && m.roles.includes(role));
 
   const toggle = () =>
     setLocalCollapsed((c) => {

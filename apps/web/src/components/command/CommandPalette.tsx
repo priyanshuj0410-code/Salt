@@ -5,6 +5,8 @@ import { Kbd } from "@/components/ui/kbd";
 import { useUI } from "@/store/ui";
 import { useAuth } from "@/lib/auth";
 import { paletteItems } from "@/lib/shortcuts";
+import { LENS_V2 } from "@/lib/flags";
+import { useLens } from "@/lib/lens/useLens";
 
 /** Ctrl/Cmd+K command palette — jump to any screen (and, later, party/item).
  *  cmdk supplies fuzzy filter + arrow/enter navigation inside our Dialog. */
@@ -13,7 +15,8 @@ export function CommandPalette() {
   const setOpen = useUI((s) => s.setPaletteOpen);
   const navigate = useNavigate();
   const role = useAuth().membership?.role;
-  const items = paletteItems(role);
+  const lens = useLens();
+  const items = paletteItems(role, LENS_V2 ? lens.litSurfaces : undefined);
 
   function go(path: string) {
     setOpen(false);

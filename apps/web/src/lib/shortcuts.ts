@@ -1,5 +1,16 @@
-import { NAV } from "@/components/nav/navConfig";
+import { NAV, type NavModule } from "@/components/nav/navConfig";
 import type { UserRole } from "@/lib/auth";
+import { pathModule, type ModuleKey } from "@/lib/permissions";
+
+/**
+ * Whether a module is visible to the user. V2 (lens on): the caller passes the
+ * lens's lit surfaces and visibility is the same gate as routes/sidebar. V1:
+ * role-default visibility via `m.roles`.
+ */
+function moduleVisible(m: NavModule, role: UserRole | undefined, lit?: Set<ModuleKey>): boolean {
+  if (lit) return m.path != null && lit.has(pathModule(m.path));
+  return !role || m.roles.includes(role);
+}
 
 /**
  * The single source of truth for the keyboard layer — derived from the nav IA
@@ -16,11 +27,11 @@ export interface PaletteItem {
 
 const chip = (k: string) => (k === "," ? "," : k.toUpperCase());
 
-/** Every navigable destination, role-filtered, for the command palette. */
-export function paletteItems(role: UserRole | undefined): PaletteItem[] {
+/** Every navigable destination, visibility-filtered, for the command palette. */
+export function paletteItems(role: UserRole | undefined, litSurfaces?: Set<ModuleKey>): PaletteItem[] {
   const items: PaletteItem[] = [];
   for (const m of NAV) {
-    if (role && !m.roles.includes(role)) continue;
+    if (!moduleVisible(m, role, litSurfaces)) continue;
     if (m.built && m.path) {
       items.push({ label: m.label, path: m.path, keys: ["G", chip(m.key)] });
     }
@@ -45,8 +56,8 @@ export interface HelpGroup {
 }
 
 /** Grouped reference for the `?` help overlay. */
-export function helpGroups(role: UserRole | undefined): HelpGroup[] {
-  const goTo = NAV.filter((m) => (!role || m.roles.includes(role)) && m.built && m.path).map((m) => ({
+export function helpGroups(role: UserRole | undefined, litSurfaces?: Set<ModuleKey>): HelpGroup[] {
+  const goTo = NAV.filter((m) => moduleVisible(m, role, litSurfaces) && m.built && m.path).map((m) => ({
     label: m.label,
     keys: ["G", chip(m.key)],
   }));

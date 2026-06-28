@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth, type UserRole } from "@/lib/auth";
 import { can, pathModule } from "@/lib/permissions";
+import { LENS_V2 } from "@/lib/flags";
+import { useLens } from "@/lib/lens/useLens";
 
 export function ProtectedRoute({
   children,
@@ -16,6 +18,9 @@ export function ProtectedRoute({
 }) {
   const { session, membership, loading } = useAuth();
   const { pathname } = useLocation();
+  // Called unconditionally (rules of hooks); tolerates a null membership and is
+  // only consulted when the lens flag is on. Cheap + memoized.
+  const lens = useLens();
 
   if (loading) {
     return (
@@ -32,7 +37,11 @@ export function ProtectedRoute({
 
   // Capability gate: the role (+ per-user overrides) must permit this route's
   // module. `counter` ("/") is always allowed, so a denied user lands safely.
-  if (!can(membership.role, membership.permissions, pathModule(pathname))) {
+  // V2: the same gate is derived from the lens's lit surfaces (one derivation
+  // for routes AND nav); V1 path is the unchanged `can()` call.
+  const mod = pathModule(pathname);
+  const allowed = LENS_V2 ? lens.litSurfaces.has(mod) : can(membership.role, membership.permissions, mod);
+  if (!allowed) {
     return <Navigate to="/" replace />;
   }
 
