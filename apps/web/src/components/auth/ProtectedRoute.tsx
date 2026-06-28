@@ -35,6 +35,19 @@ export function ProtectedRoute({
   // Signed in but no org yet → onboarding.
   if (!membership) return <Navigate to="/onboarding" replace />;
 
+  // V2: land the user on their lens's primary surface (derived from their atoms)
+  // instead of the bare counter — e.g. an accountant opens on the desk (reports),
+  // not an empty bill. Only redirects away from "/" and only to a surface they
+  // can reach; counter-primary users (owner/cashier/pharmacist) are unaffected.
+  if (
+    LENS_V2 &&
+    pathname === "/" &&
+    lens.primaryRoute !== "/" &&
+    lens.litSurfaces.has(lens.primarySurface)
+  ) {
+    return <Navigate to={lens.primaryRoute} replace />;
+  }
+
   // Capability gate: the role (+ per-user overrides) must permit this route's
   // module. `counter` ("/") is always allowed, so a denied user lands safely.
   // V2: the same gate is derived from the lens's lit surfaces (one derivation
