@@ -3,6 +3,8 @@ import { Kbd } from "@/components/ui/kbd";
 import { useUI } from "@/store/ui";
 import { useAuth } from "@/lib/auth";
 import { helpGroups } from "@/lib/shortcuts";
+import { LENS_V2 } from "@/lib/flags";
+import { useLens } from "@/lib/lens/useLens";
 
 /** The `?` keyboard-help overlay — data-driven from the shortcut registry, so it
  *  can never drift from the handlers. design.md: no tooltip-only shortcuts. */
@@ -10,7 +12,8 @@ export function ShortcutHelp() {
   const open = useUI((s) => s.helpOpen);
   const setOpen = useUI((s) => s.setHelpOpen);
   const role = useAuth().membership?.role;
-  const groups = helpGroups(role);
+  const lens = useLens();
+  const groups = helpGroups(role, LENS_V2 ? lens.litSurfaces : undefined);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

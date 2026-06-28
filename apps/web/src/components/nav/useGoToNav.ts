@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { pathModule } from "@/lib/permissions";
+import { LENS_V2 } from "@/lib/flags";
+import { useLens } from "@/lib/lens/useLens";
 import { NAV } from "./navConfig";
 
 const FIELD = /^(input|textarea|select)$/i;
@@ -21,6 +24,7 @@ function inField(target: EventTarget | null): boolean {
 export function useGoToNav() {
   const navigate = useNavigate();
   const role = useAuth().membership?.role;
+  const lens = useLens();
   const armedAt = useRef(0);
 
   useEffect(() => {
@@ -41,12 +45,16 @@ export function useGoToNav() {
 
       const mod = NAV.find((m) => m.key === key);
       if (!mod || !mod.built || !mod.path) return;
-      if (role && !mod.roles.includes(role)) return;
+      // V2: gate the jump on the lens's lit surfaces (same gate as routes/sidebar);
+      // V1: role-default visibility. mod.path is guaranteed non-null here.
+      if (LENS_V2) {
+        if (!lens.litSurfaces.has(pathModule(mod.path))) return;
+      } else if (role && !mod.roles.includes(role)) return;
       e.preventDefault();
       navigate(mod.path);
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [navigate, role]);
+  }, [navigate, role, lens]);
 }
