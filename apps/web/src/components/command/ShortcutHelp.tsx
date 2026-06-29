@@ -3,6 +3,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { useUI } from "@/store/ui";
 import { useAuth } from "@/lib/auth";
 import { helpGroups } from "@/lib/shortcuts";
+import { visibleSurfaces } from "@/components/nav/surfaceNav";
 import { LENS_V2 } from "@/lib/flags";
 import { useLens } from "@/lib/lens/useLens";
 
@@ -13,7 +14,7 @@ export function ShortcutHelp() {
   const setOpen = useUI((s) => s.setHelpOpen);
   const role = useAuth().membership?.role;
   const lens = useLens();
-  const groups = helpGroups(role, LENS_V2 ? lens.litSurfaces : undefined);
+  const groups = helpGroups(role, LENS_V2 ? visibleSurfaces(lens) : undefined);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

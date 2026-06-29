@@ -5,6 +5,7 @@ import { Kbd } from "@/components/ui/kbd";
 import { useUI } from "@/store/ui";
 import { useAuth } from "@/lib/auth";
 import { paletteItems } from "@/lib/shortcuts";
+import { visibleSurfaces } from "@/components/nav/surfaceNav";
 import { LENS_V2 } from "@/lib/flags";
 import { useLens } from "@/lib/lens/useLens";
 
@@ -16,7 +17,7 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const role = useAuth().membership?.role;
   const lens = useLens();
-  const items = paletteItems(role, LENS_V2 ? lens.litSurfaces : undefined);
+  const items = paletteItems(role, LENS_V2 ? visibleSurfaces(lens) : undefined);
 
   function go(path: string) {
     setOpen(false);

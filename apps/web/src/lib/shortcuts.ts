@@ -1,16 +1,6 @@
-import { NAV, type NavModule } from "@/components/nav/navConfig";
+import { NAV } from "@/components/nav/navConfig";
+import type { SurfaceNav } from "@/components/nav/surfaceNav";
 import type { UserRole } from "@/lib/auth";
-import { pathModule, type ModuleKey } from "@/lib/permissions";
-
-/**
- * Whether a module is visible to the user. V2 (lens on): the caller passes the
- * lens's lit surfaces and visibility is the same gate as routes/sidebar. V1:
- * role-default visibility via `m.roles`.
- */
-function moduleVisible(m: NavModule, role: UserRole | undefined, lit?: Set<ModuleKey>): boolean {
-  if (lit) return m.path != null && lit.has(pathModule(m.path));
-  return !role || m.roles.includes(role);
-}
 
 /**
  * The single source of truth for the keyboard layer — derived from the nav IA
@@ -27,18 +17,15 @@ export interface PaletteItem {
 
 const chip = (k: string) => (k === "," ? "," : k.toUpperCase());
 
-/** Every navigable destination, visibility-filtered, for the command palette. */
-export function paletteItems(role: UserRole | undefined, litSurfaces?: Set<ModuleKey>): PaletteItem[] {
+/** Every navigable destination for the command palette. V2: the lit surfaces +
+ *  their reachable leaves (pass visibleSurfaces); V1: the role-default module nav. */
+export function paletteItems(role: UserRole | undefined, surfaces?: SurfaceNav[]): PaletteItem[] {
   const items: PaletteItem[] = [];
-  for (const m of NAV) {
-    if (!moduleVisible(m, role, litSurfaces)) continue;
-    if (m.built && m.path) {
-      items.push({ label: m.label, path: m.path, keys: ["G", chip(m.key)] });
-    }
+  const groups = surfaces ?? NAV.filter((m) => !role || m.roles.includes(role));
+  for (const m of groups) {
+    if (m.built && m.path) items.push({ label: m.label, path: m.path, keys: ["G", chip(m.key)] });
     for (const c of m.children) {
-      if (c.built && c.path && c.path !== m.path) {
-        items.push({ label: c.label, hint: m.label, path: c.path });
-      }
+      if (c.built && c.path && c.path !== m.path) items.push({ label: c.label, hint: m.label, path: c.path });
     }
   }
   return items;
@@ -56,8 +43,9 @@ export interface HelpGroup {
 }
 
 /** Grouped reference for the `?` help overlay. */
-export function helpGroups(role: UserRole | undefined, litSurfaces?: Set<ModuleKey>): HelpGroup[] {
-  const goTo = NAV.filter((m) => moduleVisible(m, role, litSurfaces) && m.built && m.path).map((m) => ({
+export function helpGroups(role: UserRole | undefined, surfaces?: SurfaceNav[]): HelpGroup[] {
+  const groups = surfaces ?? NAV.filter((m) => !role || m.roles.includes(role));
+  const goTo = groups.filter((m) => m.built && m.path).map((m) => ({
     label: m.label,
     keys: ["G", chip(m.key)],
   }));

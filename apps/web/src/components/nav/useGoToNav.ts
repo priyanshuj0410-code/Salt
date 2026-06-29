@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { pathModule } from "@/lib/permissions";
 import { LENS_V2 } from "@/lib/flags";
 import { useLens } from "@/lib/lens/useLens";
-import { NAV } from "./navConfig";
+import { NAV, type NavModule } from "./navConfig";
+import { visibleSurfaces } from "./surfaceNav";
 
 const FIELD = /^(input|textarea|select)$/i;
 
@@ -43,15 +43,16 @@ export function useGoToNav() {
       }
       armedAt.current = 0;
 
-      const mod = NAV.find((m) => m.key === key);
-      if (!mod || !mod.built || !mod.path) return;
-      // V2: gate the jump on the lens's lit surfaces (same gate as routes/sidebar);
-      // V1: role-default visibility. mod.path is guaranteed non-null here.
-      if (LENS_V2) {
-        if (!lens.litSurfaces.has(pathModule(mod.path))) return;
-      } else if (role && !mod.roles.includes(role)) return;
+      // V2: jump to a SURFACE by its chord (visibleSurfaces is already lit +
+      // leaf-filtered, and its path is the first reachable leaf); V1: jump to a
+      // module by its chord, role-gated.
+      const target: NavModule | undefined = LENS_V2
+        ? visibleSurfaces(lens).find((s) => s.key === key)
+        : NAV.find((m) => m.key === key);
+      if (!target || !target.built || !target.path) return;
+      if (!LENS_V2 && role && !target.roles.includes(role)) return;
       e.preventDefault();
-      navigate(mod.path);
+      navigate(target.path);
     }
 
     window.addEventListener("keydown", onKeyDown);
