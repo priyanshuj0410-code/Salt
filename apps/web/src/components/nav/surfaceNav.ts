@@ -1,6 +1,8 @@
 import { Bike, Home, Landmark, Package, Settings, Store, Truck, Wallet } from "lucide-react";
 
+import { pathModule } from "@/lib/permissions";
 import type { SurfaceKey } from "@/lib/lens/surfaces";
+import type { Lens } from "@/lib/lens/deriveLens";
 import type { NavLeaf, NavModule } from "./navConfig";
 
 /**
@@ -10,7 +12,7 @@ import type { NavLeaf, NavModule } from "./navConfig";
  * them. Extends NavModule so the existing ModuleItem/IconItem render it unchanged;
  * `surface` is the key the lens lights, `key` is the (future) go-to chord.
  *
- * Leaves are filtered per-route by the module gate (lens.litSurfaces) at render,
+ * Leaves are filtered per-route by the module gate (lens.litModules) at render,
  * so a surface a user holds still only shows the sub-areas they can actually reach.
  */
 export interface SurfaceNav extends NavModule {
@@ -68,3 +70,19 @@ export const SURFACE_NAV: SurfaceNav[] = [
     ],
   },
 ];
+
+/**
+ * The surfaces this user sees, each with only the leaves they can reach — the ONE
+ * source the sidebar, the go-to chords, and the command palette all consume under
+ * LENS_V2, so they can never drift. Surface lit by `lens.surfaces`; leaves gated by
+ * the module gate (`lens.litModules`); empty surfaces dropped; each surface's own
+ * link points at its first reachable leaf so it never lands on a gated route.
+ */
+export function visibleSurfaces(lens: Lens): SurfaceNav[] {
+  return SURFACE_NAV.filter((s) => lens.surfaces.has(s.surface))
+    .map((s) => {
+      const children = s.children.filter((c) => c.path != null && lens.litModules.has(pathModule(c.path)));
+      return { ...s, path: children[0]?.path ?? s.path, children };
+    })
+    .filter((s) => s.children.length > 0);
+}

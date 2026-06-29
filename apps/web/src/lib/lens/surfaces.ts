@@ -5,7 +5,7 @@ import type { ModuleKey } from "@/lib/permissions";
  * fold into these. Surfaces are a GROUPING over existing routes, NOT a URL
  * namespace: no route is renamed, so deep-links/bookmarks are untouched.
  *
- * Gating still runs on ModuleKey (litSurfaces) — the surface set is a DISPLAY
+ * Gating still runs on ModuleKey (litModules) — the surface set is a DISPLAY
  * filter that decides which surfaces appear in the sidebar; it is not a security
  * boundary. So lighting a surface can never widen access (Slice 1 changes no gate).
  */

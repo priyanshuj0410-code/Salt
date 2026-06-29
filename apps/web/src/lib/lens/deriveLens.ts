@@ -12,9 +12,11 @@ import { MODULE_SURFACE, type SurfaceKey } from "./surfaces";
  * (wiki/design/salt-unified-experience.html; the SALT-1 reconciliation +
  * Varanasi test signed it off).
  *
- * Slice 1 keeps `litSurfaces` (the route/nav gate) running through `can()` so
- * there is NO access regression; WS2 will drive it from atoms once the nav is
- * re-homed onto the 8 V2 surfaces. The lens is consumed only when LENS_V2 is on.
+ * `litModules` (the route/nav gate) runs through `can()` and stays at MODULE
+ * granularity BY DESIGN — it is the security boundary, so it must equal `can()`
+ * exactly (no access regression). The atom-derived `surfaces` set is the display
+ * layer the shell groups by; it never gates. The lens is consumed only when
+ * LENS_V2 is on.
  */
 
 /** Every coarse module key. `counter` is omitted from MODULES (always reachable). */
@@ -86,7 +88,7 @@ function deriveAltitudes(atoms: Set<AtomId>): string[] {
 /** The 8 V2 surfaces this user sees in the unified shell — a faithful projection
  *  of the modules their atoms light (NOT a hand-keyed atom→surface map, which would
  *  drop the multi-module atoms I/J/L). Display grouping only; gating stays on
- *  litSurfaces (modules). */
+ *  litModules (modules). */
 function deriveSurfaces(atoms: Set<AtomId>): Set<SurfaceKey> {
   const s = new Set<SurfaceKey>();
   for (const id of atoms) for (const mod of ATOM_BY_ID[id].modules) s.add(MODULE_SURFACE[mod]);
@@ -97,11 +99,11 @@ export interface Lens {
   /** The capability atoms this user holds (Slice 1: derived from role). */
   heldAtoms: Set<AtomId>;
   /** The V2 surfaces lit in the unified shell (WS2) — display grouping over the
-   *  modules in litSurfaces; additive, never widens access. */
+   *  modules in litModules; additive, never widens access. */
   surfaces: Set<SurfaceKey>;
-  /** Surfaces this user may see/reach — the single gate for routes AND nav.
-   *  Kept `can()`-based in Slice 1 (no gating regression); atom-driven in WS2. */
-  litSurfaces: Set<ModuleKey>;
+  /** The modules this user may reach — the single route/nav GATE (= can()). The
+   *  surface set is display only; THIS is the security boundary. */
+  litModules: Set<ModuleKey>;
   /** The surface this user lands on, derived from their atoms. */
   primarySurface: ModuleKey;
   /** The V1 route for `primarySurface` — the flag-on landing target. */
@@ -122,7 +124,7 @@ export function deriveLens(
   return {
     heldAtoms,
     surfaces: deriveSurfaces(heldAtoms),
-    litSurfaces: new Set<ModuleKey>(ALL_KEYS.filter((k) => can(role, perms, k))),
+    litModules: new Set<ModuleKey>(ALL_KEYS.filter((k) => can(role, perms, k))),
     primarySurface,
     primaryRoute: ROUTE_OF[primarySurface] ?? "/",
     persistentAction: { label: deriveVerb(heldAtoms), route: deriveActionRoute(heldAtoms) },

@@ -43,7 +43,7 @@ export function ProtectedRoute({
     LENS_V2 &&
     pathname === "/" &&
     lens.primaryRoute !== "/" &&
-    lens.litSurfaces.has(lens.primarySurface)
+    lens.litModules.has(lens.primarySurface)
   ) {
     return <Navigate to={lens.primaryRoute} replace />;
   }
@@ -53,7 +53,7 @@ export function ProtectedRoute({
   // V2: the same gate is derived from the lens's lit surfaces (one derivation
   // for routes AND nav); V1 path is the unchanged `can()` call.
   const mod = pathModule(pathname);
-  const allowed = LENS_V2 ? lens.litSurfaces.has(mod) : can(membership.role, membership.permissions, mod);
+  const allowed = LENS_V2 ? lens.litModules.has(mod) : can(membership.role, membership.permissions, mod);
   if (!allowed) {
     return <Navigate to="/" replace />;
   }
