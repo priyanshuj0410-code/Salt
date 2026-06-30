@@ -49,8 +49,9 @@ function tileDatum(atom: AtomId, d: DashboardData): Datum | null {
         hint: `${formatPaiseCompact(d.receivable.over30Paise)} over 30 days`,
         tone: d.receivable.over30Paise > 0 ? "danger" : "default",
       };
-    case "C":
     case "F":
+      // C (dispense gate) signals H1/X today, which we don't compute yet — let it
+      // fall through to an "Open ->" router rather than mislabel a near-expiry count.
       return d.nearExpiryCount > 0
         ? {
             value: `${d.nearExpiryCount} ${d.nearExpiryCount === 1 ? "batch" : "batches"}`,
