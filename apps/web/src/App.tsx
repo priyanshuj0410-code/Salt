@@ -57,6 +57,7 @@ const SalesmenPage = lazy(() => import("@/components/salesmen/SalesmenPage").the
 const SalesmanDetailPage = lazy(() => import("@/components/salesmen/SalesmanDetailPage").then((m) => ({ default: m.SalesmanDetailPage })));
 const DashboardPage = lazy(() => import("@/components/reports/DashboardPage").then((m) => ({ default: m.DashboardPage })));
 const AssembledHome = lazy(() => import("@/components/home/AssembledHome").then((m) => ({ default: m.AssembledHome })));
+const LandingPage = lazy(() => import("@/components/marketing/LandingPage").then((m) => ({ default: m.LandingPage })));
 const SalesReportsPage = lazy(() => import("@/components/reports/SalesReportsPage").then((m) => ({ default: m.SalesReportsPage })));
 const PurchaseReportsPage = lazy(() => import("@/components/reports/PurchaseReportsPage").then((m) => ({ default: m.PurchaseReportsPage })));
 const InventoryReportsPage = lazy(() => import("@/components/reports/InventoryReportsPage").then((m) => ({ default: m.InventoryReportsPage })));
@@ -106,6 +107,7 @@ function App() {
       <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/onboarding" element={<OnboardingPage />} />
+      <Route path="/welcome" element={<LandingPage />} />
       <Route element={<AppLayout />}>
       <Route element={<AppContent />}>
       <Route

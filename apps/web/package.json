@@ -27,6 +27,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^4.3.0",
     "dinero.js": "^2.0.2",
+    "framer-motion": "^12.42.0",
     "lucide-react": "^1.16.0",
     "papaparse": "^5.5.3",
     "react": "^19.2.6",
