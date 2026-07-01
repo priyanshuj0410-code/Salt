@@ -3,18 +3,19 @@ import { ArrowRight, Loader2 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 import { COPY } from "./copy";
 
 /**
- * The "Invisible Auth" chat widget — the page's ONLY hero CTA. A named human
- * (Priyanshu) opens a conversation; the shop owner enters a 10-digit number,
- * we simulate a ~1s OTP send, then a 4-digit OTP auto-submits. On success we
- * call `onAuthenticated` so the parent can bloom into the app. This is a
- * SIMULATION — no Supabase call fires here; real auth lives at /login.
+ * The "Invisible Auth" chat widget — the page's only hero CTA. A named human
+ * (Priyanshu) opens a conversation; the shop owner enters a 10-digit number, we
+ * send a REAL Supabase SMS OTP (signInWithOtp), then verify the 6-digit code
+ * (verifyOtp). On success a session is live and we call onAuthenticated so the
+ * page can bloom into the app; "Enter Salt" then lands on "/" (real app /
+ * onboarding). Resend (with a cooldown) and "change number" mirror PhoneLogin.
  *
- * One field + one action per state; disabled-until-valid submit; numeric
- * keypad on mobile; SMS autofill (autoComplete one-time-code); focus follows
- * the conversation; new bubbles are announced via aria-live.
+ * Degrades gracefully when Supabase / SMS is not configured (a friendly bubble,
+ * never a crash). One field + one action per state; numeric keypad; SMS autofill.
  */
 type Step = "number" | "otp";
 interface Msg {
@@ -23,14 +24,34 @@ interface Msg {
   text: string;
 }
 
+const RESEND_COOLDOWN = 30; // seconds; Supabase also rate-limits server-side
+
 let seq = 0;
 const nextId = () => (seq += 1);
 
+/** Map raw Supabase auth errors to a calm Hinglish line (never leak internals). */
+function friendlyError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("rate") || m.includes("limit") || m.includes("seconds"))
+    return "Thodi der ruk kar dobara bhejein.";
+  if (m.includes("invalid") && m.includes("phone"))
+    return "Yeh number theek nahi lag raha. Dobara check karein.";
+  if (m.includes("token") || m.includes("otp") || m.includes("expired"))
+    return "OTP galat ya purana ho gaya. Naya OTP mangwaein.";
+  if (m.includes("provider") || m.includes("disabled") || m.includes("not enabled"))
+    return "SMS sign-in abhi set nahi hai. Thodi der baad try karein.";
+  return "Kuch dikkat aa gayi. Dobara try karein.";
+}
+
 export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => void }) {
   const [step, setStep] = useState<Step>("number");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(""); // 10 local digits
+  const [phoneE164, setPhoneE164] = useState(""); // the number we actually texted
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState("");
+  const [resendIn, setResendIn] = useState(0);
+  const [resendNonce, setResendNonce] = useState(0);
   const [messages, setMessages] = useState<Msg[]>([
     { id: nextId(), role: "system", text: COPY.chatGreeting },
   ]);
@@ -49,34 +70,100 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  const phoneValid = phone.length === 10;
-  const otpValid = otp.length === 4;
-
-  function submitPhone() {
-    if (!phoneValid || loading) return;
-    setMessages((m) => [...m, { id: nextId(), role: "user", text: "+91 " + phone }]);
-    setLoading(true);
-    // ~1s simulated OTP send — a timeout in a handler (never a setState in an
-    // effect body, which the Salt ESLint config forbids).
-    window.setTimeout(() => {
-      if (!alive.current) return;
-      setLoading(false);
-      setMessages((m) => [...m, { id: nextId(), role: "system", text: COPY.chatOtp }]);
-      setStep("otp");
+  // Resend cooldown ticker — the countdown seed is set in the handler (never a
+  // setState in the effect body, which the Salt ESLint config forbids); this
+  // effect only decrements once per second.
+  useEffect(() => {
+    if (resendNonce === 0) return;
+    const id = window.setInterval(() => {
+      setResendIn((s) => (s <= 1 ? 0 : s - 1));
     }, 1000);
+    return () => window.clearInterval(id);
+  }, [resendNonce]);
+
+  function startCooldown() {
+    setResendIn(RESEND_COOLDOWN);
+    setResendNonce((n) => n + 1);
   }
 
-  function finishOtp(code: string) {
-    setMessages((m) => [...m, { id: nextId(), role: "user", text: code.replace(/./g, "•") }]);
+  const pushSys = (text: string) => setMessages((m) => [...m, { id: nextId(), role: "system", text }]);
+  const pushUser = (text: string) => setMessages((m) => [...m, { id: nextId(), role: "user", text }]);
+
+  const phoneValid = phone.length === 10;
+  const otpValid = otp.length === 6;
+
+  async function sendOtp() {
+    if (!phoneValid || loading) return;
+    const e164 = "+91" + phone;
+    pushUser("+91 " + phone);
+    setLoadingText("OTP bhej raha hoon…");
+    setLoading(true);
+    if (!supabase) {
+      setLoading(false);
+      pushSys("SMS sign-in abhi set nahi hai. Thodi der baad try karein.");
+      return;
+    }
+    const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
+    if (!alive.current) return;
+    setLoading(false);
+    if (error) {
+      pushSys(friendlyError(error.message));
+      return; // stay on the number step
+    }
+    setPhoneE164(e164);
+    setStep("otp");
+    pushSys(COPY.chatOtp);
+    startCooldown();
+  }
+
+  async function verify(code: string) {
+    if (loading) return;
+    pushUser(code.replace(/./g, "•"));
+    setOtp("");
+    setLoadingText("Verify kar raha hoon…");
+    setLoading(true);
+    if (!supabase) {
+      setLoading(false);
+      pushSys("SMS sign-in abhi set nahi hai. Thodi der baad try karein.");
+      return;
+    }
+    const { error } = await supabase.auth.verifyOtp({ phone: phoneE164, token: code, type: "sms" });
+    if (!alive.current) return;
+    setLoading(false);
+    if (error) {
+      pushSys(friendlyError(error.message));
+      otpRef.current?.focus();
+      return;
+    }
+    // Session is live — bloom into the app.
     window.setTimeout(() => {
       if (alive.current) onAuthenticated();
-    }, 420);
+    }, 320);
   }
 
   function onOtpChange(v: string) {
-    const digits = v.replace(/\D/g, "").slice(0, 4);
+    const digits = v.replace(/\D/g, "").slice(0, 6);
     setOtp(digits);
-    if (digits.length === 4) finishOtp(digits); // auto-submit — no extra tap
+    if (digits.length === 6) verify(digits); // auto-submit — no extra tap
+  }
+
+  async function resend() {
+    if (!supabase || !phoneE164 || resendIn > 0 || loading) return;
+    setLoadingText("Naya OTP bhej raha hoon…");
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({ phone: phoneE164 });
+    if (!alive.current) return;
+    setLoading(false);
+    if (error) pushSys(friendlyError(error.message));
+    else {
+      pushSys("Naya OTP bhej diya.");
+      startCooldown();
+    }
+  }
+
+  function editNumber() {
+    setStep("number");
+    setOtp("");
   }
 
   return (
@@ -115,7 +202,7 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
         ))}
         {loading && (
           <div className="flex max-w-[85%] items-center gap-2 self-start rounded-2xl rounded-bl-sm bg-surface-2 px-3 py-2 text-sm text-text-tertiary">
-            <Loader2 className="size-4 animate-spin" /> OTP bhej raha hoon…
+            <Loader2 className="size-4 animate-spin" /> {loadingText}
           </div>
         )}
       </div>
@@ -125,7 +212,7 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            submitPhone();
+            sendOtp();
           }}
           className="flex items-center gap-2 border-t border-border px-3 py-3"
         >
@@ -140,37 +227,73 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
               pattern="[0-9]*"
               placeholder="98765 43210"
               aria-label="Mobile number"
-              className="h-full w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary"
+              disabled={loading}
+              className="h-full w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-tertiary disabled:opacity-60"
             />
           </div>
-          <Button type="submit" size="icon" variant="primary" className="size-9 shrink-0" disabled={!phoneValid} aria-label="Send OTP">
+          <Button
+            type="submit"
+            size="icon"
+            variant="primary"
+            className="size-9 shrink-0"
+            disabled={!phoneValid || loading}
+            aria-label="Send OTP"
+          >
             <ArrowRight />
           </Button>
         </form>
       ) : (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (otpValid) finishOtp(otp);
-          }}
-          className="flex items-center gap-2 border-t border-border px-3 py-3"
-        >
-          <input
-            ref={otpRef}
-            value={otp}
-            onChange={(e) => onOtpChange(e.target.value)}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]*"
-            maxLength={4}
-            placeholder="1234"
-            aria-label="4-digit OTP"
-            className="h-9 flex-1 rounded-lg border border-input bg-background text-center text-lg font-semibold tracking-[0.5em] text-text-primary outline-none placeholder:font-normal placeholder:tracking-normal placeholder:text-text-tertiary focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-          />
-          <Button type="submit" size="icon" variant="primary" className="size-9 shrink-0" disabled={!otpValid} aria-label="Verify OTP">
-            <ArrowRight />
-          </Button>
-        </form>
+        <div className="flex flex-col gap-2 border-t border-border px-3 py-3">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (otpValid) verify(otp);
+            }}
+            className="flex items-center gap-2"
+          >
+            <input
+              ref={otpRef}
+              value={otp}
+              onChange={(e) => onOtpChange(e.target.value)}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              pattern="[0-9]*"
+              maxLength={6}
+              placeholder="123456"
+              aria-label="6-digit OTP"
+              disabled={loading}
+              className="h-9 flex-1 rounded-lg border border-input bg-background text-center text-lg font-semibold tracking-[0.3em] text-text-primary outline-none placeholder:font-normal placeholder:tracking-normal placeholder:text-text-tertiary focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60"
+            />
+            <Button
+              type="submit"
+              size="icon"
+              variant="primary"
+              className="size-9 shrink-0"
+              disabled={!otpValid || loading}
+              aria-label="Verify OTP"
+            >
+              <ArrowRight />
+            </Button>
+          </form>
+          <div className="flex items-center justify-between px-0.5 text-xs">
+            <button
+              type="button"
+              onClick={editNumber}
+              disabled={loading}
+              className="font-medium text-text-secondary underline-offset-2 hover:text-text-primary hover:underline disabled:opacity-50"
+            >
+              Number badlein
+            </button>
+            <button
+              type="button"
+              onClick={resend}
+              disabled={resendIn > 0 || loading}
+              className="font-medium text-text-secondary underline-offset-2 hover:text-text-primary hover:underline disabled:opacity-50 disabled:no-underline"
+            >
+              {resendIn > 0 ? `Dobara bhejein (${resendIn}s)` : "OTP dobara bhejein"}
+            </button>
+          </div>
+        </div>
       )}
     </Card>
   );

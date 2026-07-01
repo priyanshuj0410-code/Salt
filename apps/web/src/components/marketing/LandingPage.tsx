@@ -20,7 +20,8 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
   const [entered, setEntered] = useState(false);
-  const goToApp = useCallback(() => navigate("/login"), [navigate]);
+  const toLogin = useCallback(() => navigate("/login"), [navigate]); // returning customer
+  const toApp = useCallback(() => navigate("/"), [navigate]); // post-auth → real app/onboarding
 
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background font-sans text-text-primary">
@@ -34,7 +35,7 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
       >
         <HeroCounter
           videoSrc={videoSrc}
-          onLogin={goToApp}
+          onLogin={toLogin}
           widget={<AuthChatWidget onAuthenticated={() => setEntered(true)} />}
         />
       </motion.div>
@@ -49,7 +50,7 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={reduce ? { duration: 0.25 } : { type: "spring", stiffness: 220, damping: 30 }}
           >
-            <DashboardReveal onEnter={goToApp} />
+            <DashboardReveal onEnter={toApp} />
           </motion.div>
         )}
       </AnimatePresence>
