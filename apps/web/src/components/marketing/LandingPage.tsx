@@ -3,17 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { HeroCounter } from "./HeroCounter";
-import { AuthChatWidget } from "./AuthChatWidget";
+import { ReceiptChat, type ParseSummary } from "./ReceiptChat";
 import { DashboardReveal } from "./DashboardReveal";
 
 /**
- * The single-page invisible-auth funnel. The storefront (hero + chat widget)
- * and the app dashboard are two layers of one page: on OTP success the
- * dashboard blooms full-screen from a scale/opacity spring (the "expanding
- * universe") while the storefront fades out together. prefers-reduced-motion
- * collapses the flight to a quick crossfade. The chat performs REAL Supabase
- * phone OTP; on success the app blooms in, Enter Salt lands on "/" (real
- * app / onboarding), and the top-bar login link goes to /login.
+ * The single-page invisible-onboarding funnel. Storefront (hero + receipt chat)
+ * and the app dashboard are two layers of one page: uploading a bill (demo-)parses
+ * it and blooms the dashboard full-screen from a scale/opacity spring (the
+ * "expanding universe") while the storefront fades out. prefers-reduced-motion
+ * collapses the flight to a quick crossfade. "Skip" and the top-bar login go to
+ * the real /login; the dashboard's Enter Salt lands on "/" (real app/onboarding).
  *
  * Mount as a PUBLIC route (outside ProtectedRoute), e.g. /welcome.
  */
@@ -21,8 +20,9 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
   const [entered, setEntered] = useState(false);
-  const toLogin = useCallback(() => navigate("/login"), [navigate]); // returning customer
-  const toApp = useCallback(() => navigate("/"), [navigate]); // post-auth → real app/onboarding
+  const [parsed, setParsed] = useState<ParseSummary | null>(null);
+  const toLogin = useCallback(() => navigate("/login"), [navigate]);
+  const toApp = useCallback(() => navigate("/"), [navigate]);
 
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background font-sans text-text-primary">
@@ -36,8 +36,17 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
       >
         <HeroCounter
           videoSrc={videoSrc}
+          paused={entered}
           onLogin={toLogin}
-          widget={<AuthChatWidget onAuthenticated={() => setEntered(true)} />}
+          widget={
+            <ReceiptChat
+              onParsed={(summary) => {
+                setParsed(summary);
+                setEntered(true);
+              }}
+              onSkip={toLogin}
+            />
+          }
         />
       </motion.div>
 
@@ -51,7 +60,7 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={reduce ? { duration: 0.25 } : { type: "spring", stiffness: 220, damping: 30 }}
           >
-            <DashboardReveal onEnter={toApp} />
+            <DashboardReveal onEnter={toApp} parsed={parsed} />
           </motion.div>
         )}
       </AnimatePresence>
