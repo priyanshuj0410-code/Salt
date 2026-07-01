@@ -29,7 +29,7 @@ export function HeroCounter({
   return (
     <div className="relative min-h-[100dvh] w-full">
       {/* Video / gradient backdrop + scrim for text contrast */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0 z-0 overflow-hidden">
         {videoSrc ? (
           <video
             className="h-full w-full object-cover"

@@ -11,8 +11,9 @@ import { DashboardReveal } from "./DashboardReveal";
  * and the app dashboard are two layers of one page: on OTP success the
  * dashboard blooms full-screen from a scale/opacity spring (the "expanding
  * universe") while the storefront fades out together. prefers-reduced-motion
- * collapses the flight to a quick crossfade. The terminal CTA (and the top-bar
- * login) navigate to the REAL /login — the chat itself is a simulation.
+ * collapses the flight to a quick crossfade. The chat performs REAL Supabase
+ * phone OTP; on success the app blooms in, Enter Salt lands on "/" (real
+ * app / onboarding), and the top-bar login link goes to /login.
  *
  * Mount as a PUBLIC route (outside ProtectedRoute), e.g. /welcome.
  */
@@ -20,7 +21,8 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
   const navigate = useNavigate();
   const reduce = useReducedMotion();
   const [entered, setEntered] = useState(false);
-  const goToApp = useCallback(() => navigate("/login"), [navigate]);
+  const toLogin = useCallback(() => navigate("/login"), [navigate]); // returning customer
+  const toApp = useCallback(() => navigate("/"), [navigate]); // post-auth → real app/onboarding
 
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background font-sans text-text-primary">
@@ -34,7 +36,7 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
       >
         <HeroCounter
           videoSrc={videoSrc}
-          onLogin={goToApp}
+          onLogin={toLogin}
           widget={<AuthChatWidget onAuthenticated={() => setEntered(true)} />}
         />
       </motion.div>
@@ -49,7 +51,7 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={reduce ? { duration: 0.25 } : { type: "spring", stiffness: 220, damping: 30 }}
           >
-            <DashboardReveal onEnter={goToApp} />
+            <DashboardReveal onEnter={toApp} />
           </motion.div>
         )}
       </AnimatePresence>
