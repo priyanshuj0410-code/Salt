@@ -36,6 +36,7 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
       >
         <HeroCounter
           videoSrc={videoSrc}
+          paused={entered}
           onLogin={toLogin}
           widget={
             <ReceiptChat

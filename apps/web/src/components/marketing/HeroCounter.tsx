@@ -20,14 +20,19 @@ const GRADIENT =
   "radial-gradient(1000px 680px at 92% 96%, #1e3a8a 0%, rgba(30,58,138,0) 55%)," +
   "linear-gradient(158deg, #0b1220 0%, #18181b 100%)";
 
+// Stable reference so parent re-renders never restart the typewriter loop.
+const HERO_PHRASES = [COPY.headlineLatin, COPY.headlineDevanagari];
+
 export function HeroCounter({
   videoSrc,
   onLogin,
   widget,
+  paused = false,
 }: {
   videoSrc?: string;
   onLogin: () => void;
   widget: ReactNode;
+  paused?: boolean;
 }) {
   const reduce = useReducedMotion();
 
@@ -61,11 +66,7 @@ export function HeroCounter({
             Sirf chemists ke liye bana
           </span>
           <h1 className="mt-4 text-[1.75rem] leading-tight font-semibold text-white sm:text-4xl md:text-5xl">
-            <TypewriterHeadline
-              phrases={[COPY.headlineLatin, COPY.headlineDevanagari]}
-              reduce={!!reduce}
-              className="min-w-0"
-            />
+            <TypewriterHeadline phrases={HERO_PHRASES} reduce={!!reduce} paused={paused} className="min-w-0" />
           </h1>
           <p className="mt-4 max-w-md text-base text-white/85 sm:text-lg">{COPY.subhead}</p>
           <ul className="mt-6 flex flex-wrap gap-2">

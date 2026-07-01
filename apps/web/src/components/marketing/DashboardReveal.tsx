@@ -96,15 +96,16 @@ export function DashboardReveal({
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard label="Items imported" value={String(items)} hint="is bill se" />
-              <StatCard label="Vendors" value={String(vendors)} hint="auto-detected" />
+              <StatCard className="bg-surface" label="Items imported" value={String(items)} hint="is bill se" />
+              <StatCard className="bg-surface" label="Vendors" value={String(vendors)} hint="auto-detected" />
               <StatCard
+                className="bg-surface"
                 label="Stock value (est.)"
                 value={formatPaiseCompact(stockValuePaise)}
                 valueTitle={formatPaise(stockValuePaise)}
                 tone="success"
               />
-              <StatCard label="Near expiry" value="12 batches" tone="danger" hint="dekhne layak" />
+              <StatCard className="bg-surface" label="Near expiry" value="12 batches" tone="danger" hint="dekhne layak" />
             </div>
 
             {/* Stock preview */}
@@ -138,7 +139,7 @@ export function DashboardReveal({
                 ))}
               </div>
               <p className="mt-2 text-xs text-text-tertiary">
-                Poora Marg backup Salt ke andar import kar sakte hain — yeh sirf ek bill ka preview hai.
+                Pehle 5 items ka preview — poora {items}-item catalogue Salt ke andar ready hai.
               </p>
             </div>
           </div>
