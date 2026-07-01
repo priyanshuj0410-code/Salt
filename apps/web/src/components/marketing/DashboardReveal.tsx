@@ -10,7 +10,7 @@ import { COPY } from "./copy";
  * (see LandingPage) so it uses Salt's real dark tokens. Feature chrome is
  * deliberately quiet; the single focal action is the centred DBF drag-and-drop.
  * Drop OR click OR keyboard runs a simulated 0→100 import, then the persistent
- * "Enter Salt" CTA hands off to the real /login via `onEnter`.
+ * "Enter Salt" CTA hands off to the real app ("/") via `onEnter`.
  */
 const NAV = [
   { icon: Receipt, label: "Billing" },
