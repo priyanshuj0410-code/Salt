@@ -9,13 +9,14 @@ import { COPY } from "./copy";
 /**
  * The "Invisible Auth" chat widget — the page's only hero CTA. A named human
  * (Priyanshu) opens a conversation; the shop owner enters a 10-digit number, we
- * send a REAL Supabase SMS OTP (signInWithOtp), then verify the 6-digit code
+ * send a REAL Supabase SMS OTP (signInWithOtp) and verify the 6-digit code
  * (verifyOtp). On success a session is live and we call onAuthenticated so the
- * page can bloom into the app; "Enter Salt" then lands on "/" (real app /
- * onboarding). Resend (with a cooldown) and "change number" mirror PhoneLogin.
+ * page can bloom into the app; "Enter Salt" then lands on "/".
  *
- * Degrades gracefully when Supabase / SMS is not configured (a friendly bubble,
- * never a crash). One field + one action per state; numeric keypad; SMS autofill.
+ * If SMS is not configured on the project (no phone provider / signups off, or
+ * no Supabase client), we fall back to a clearly-labelled DEMO so the marketing
+ * funnel still shows the product — any 6-digit code advances the morph, and the
+ * page auto-upgrades to real OTP the moment Phone auth is enabled in Supabase.
  */
 type Step = "number" | "otp";
 interface Msg {
@@ -25,11 +26,24 @@ interface Msg {
 }
 
 const RESEND_COOLDOWN = 30; // seconds; Supabase also rate-limits server-side
+const DEMO_PROMPT = "Live SMS abhi set ho raha hai — demo dekhne ke liye koi bhi 6-digit code daalein.";
 
 let seq = 0;
 const nextId = () => (seq += 1);
 
-/** Map raw Supabase auth errors to a calm Hinglish line (never leak internals). */
+/** True when the failure means SMS just is not wired up on this project. */
+function smsUnavailable(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("provider") ||
+    m.includes("disabled") ||
+    m.includes("not enabled") ||
+    m.includes("unsupported") ||
+    m.includes("signups")
+  );
+}
+
+/** Map remaining Supabase auth errors to a calm Hinglish line (never leak internals). */
 function friendlyError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("rate") || m.includes("limit") || m.includes("seconds"))
@@ -38,8 +52,6 @@ function friendlyError(message: string): string {
     return "Yeh number theek nahi lag raha. Dobara check karein.";
   if (m.includes("token") || m.includes("otp") || m.includes("expired"))
     return "OTP galat ya purana ho gaya. Naya OTP mangwaein.";
-  if (m.includes("provider") || m.includes("disabled") || m.includes("not enabled"))
-    return "SMS sign-in abhi set nahi hai. Thodi der baad try karein.";
   return "Kuch dikkat aa gayi. Dobara try karein.";
 }
 
@@ -47,6 +59,7 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
   const [step, setStep] = useState<Step>("number");
   const [phone, setPhone] = useState(""); // 10 local digits
   const [phoneE164, setPhoneE164] = useState(""); // the number we actually texted
+  const [demo, setDemo] = useState(false); // SMS not configured → labelled demo
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("");
@@ -70,9 +83,8 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  // Resend cooldown ticker — the countdown seed is set in the handler (never a
-  // setState in the effect body, which the Salt ESLint config forbids); this
-  // effect only decrements once per second.
+  // Resend cooldown ticker — the seed is set in the handler (never a setState in
+  // the effect body, which the Salt ESLint config forbids); this only decrements.
   useEffect(() => {
     if (resendNonce === 0) return;
     const id = window.setInterval(() => {
@@ -92,6 +104,15 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
   const phoneValid = phone.length === 10;
   const otpValid = otp.length === 6;
 
+  /** SMS is not wired up on this project — advance to a labelled demo of the flow. */
+  function enterDemo(e164: string) {
+    setDemo(true);
+    setPhoneE164(e164);
+    setStep("otp");
+    pushSys(DEMO_PROMPT);
+    startCooldown();
+  }
+
   async function sendOtp() {
     if (!phoneValid || loading) return;
     const e164 = "+91" + phone;
@@ -100,13 +121,17 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
     setLoading(true);
     if (!supabase) {
       setLoading(false);
-      pushSys("SMS sign-in abhi set nahi hai. Thodi der baad try karein.");
+      enterDemo(e164); // no client configured at all
       return;
     }
     const { error } = await supabase.auth.signInWithOtp({ phone: e164 });
     if (!alive.current) return;
     setLoading(false);
     if (error) {
+      if (smsUnavailable(error.message)) {
+        enterDemo(e164); // provider not enabled → demo, not a dead end
+        return;
+      }
       pushSys(friendlyError(error.message));
       return; // stay on the number step
     }
@@ -120,11 +145,13 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
     if (loading) return;
     pushUser(code.replace(/./g, "•"));
     setOtp("");
-    setLoadingText("Verify kar raha hoon…");
+    setLoadingText(demo ? "Salt khol raha hoon…" : "Verify kar raha hoon…");
     setLoading(true);
-    if (!supabase) {
+    if (demo || !supabase) {
       setLoading(false);
-      pushSys("SMS sign-in abhi set nahi hai. Thodi der baad try karein.");
+      window.setTimeout(() => {
+        if (alive.current) onAuthenticated(); // demo: any 6 digits show the app
+      }, 320);
       return;
     }
     const { error } = await supabase.auth.verifyOtp({ phone: phoneE164, token: code, type: "sms" });
@@ -148,7 +175,13 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
   }
 
   async function resend() {
-    if (!supabase || !phoneE164 || resendIn > 0 || loading) return;
+    if (resendIn > 0 || loading) return;
+    if (demo) {
+      pushSys("Demo mode — koi bhi 6-digit code chalega.");
+      startCooldown();
+      return;
+    }
+    if (!supabase || !phoneE164) return;
     setLoadingText("Naya OTP bhej raha hoon…");
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({ phone: phoneE164 });
@@ -164,6 +197,7 @@ export function AuthChatWidget({ onAuthenticated }: { onAuthenticated: () => voi
   function editNumber() {
     setStep("number");
     setOtp("");
+    setDemo(false);
   }
 
   return (
