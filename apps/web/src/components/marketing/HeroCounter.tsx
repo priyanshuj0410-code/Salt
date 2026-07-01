@@ -1,13 +1,16 @@
 import type { ReactNode } from "react";
+import { useReducedMotion } from "framer-motion";
 
 import { COPY } from "./copy";
+import { TypewriterHeadline } from "./TypewriterHeadline";
 
 /**
  * The "Digital Counter" hero — a video placeholder of the founder behind a
- * Varanasi pharmacy counter, with the verbatim overlay copy and quiet local
- * trust chips. The chat widget is injected as `widget` so this stays a pure
- * presentational shell. The page is fully usable with no video (gradient +
- * scrim is the default; video is progressive enhancement).
+ * Varanasi pharmacy counter, with the overlay copy (a bilingual typewriter
+ * headline) and quiet local trust chips. The chat widget is injected as `widget`
+ * so this stays a presentational shell. Fully usable with no video (gradient +
+ * scrim is the default; video is progressive enhancement). Wordmark uses Geist
+ * (font-semibold tracking-tight) to match the rest of the app.
  */
 
 // Media placeholder for the hero video — a calm, premium counter backdrop.
@@ -26,28 +29,22 @@ export function HeroCounter({
   onLogin: () => void;
   widget: ReactNode;
 }) {
+  const reduce = useReducedMotion();
+
   return (
     <div className="relative min-h-[100dvh] w-full">
       {/* Video / gradient backdrop + scrim for text contrast */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         {videoSrc ? (
-          <video
-            className="h-full w-full object-cover"
-            src={videoSrc}
-            autoPlay
-            muted
-            loop
-            playsInline
-            aria-hidden
-          />
+          <video className="h-full w-full object-cover" src={videoSrc} autoPlay muted loop playsInline aria-hidden />
         ) : null}
         <div className="absolute inset-0" style={{ background: GRADIENT }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/25 to-black/45" />
       </div>
 
-      {/* Top bar: wordmark + a low-emphasis login escape hatch for returning shops */}
+      {/* Top bar: wordmark + a low-emphasis login escape hatch */}
       <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-4 pt-5">
-        <span className="font-display text-lg font-semibold text-white">Salt</span>
+        <span className="text-lg font-semibold tracking-tight text-white">Salt</span>
         <button
           type="button"
           onClick={onLogin}
@@ -63,8 +60,12 @@ export function HeroCounter({
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/90 ring-1 ring-white/15 backdrop-blur">
             Sirf chemists ke liye bana
           </span>
-          <h1 className="mt-4 text-[1.75rem] leading-tight font-semibold text-balance text-white sm:text-4xl md:text-5xl">
-            {COPY.headline}
+          <h1 className="mt-4 text-[1.75rem] leading-tight font-semibold text-white sm:text-4xl md:text-5xl">
+            <TypewriterHeadline
+              phrases={[COPY.headlineLatin, COPY.headlineDevanagari]}
+              reduce={!!reduce}
+              className="min-w-0"
+            />
           </h1>
           <p className="mt-4 max-w-md text-base text-white/85 sm:text-lg">{COPY.subhead}</p>
           <ul className="mt-6 flex flex-wrap gap-2">
