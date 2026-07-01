@@ -56,6 +56,7 @@ const ItemDetailPage = lazy(() => import("@/components/catalog/ItemDetailPage").
 const SalesmenPage = lazy(() => import("@/components/salesmen/SalesmenPage").then((m) => ({ default: m.SalesmenPage })));
 const SalesmanDetailPage = lazy(() => import("@/components/salesmen/SalesmanDetailPage").then((m) => ({ default: m.SalesmanDetailPage })));
 const DashboardPage = lazy(() => import("@/components/reports/DashboardPage").then((m) => ({ default: m.DashboardPage })));
+const AssembledHome = lazy(() => import("@/components/home/AssembledHome").then((m) => ({ default: m.AssembledHome })));
 const SalesReportsPage = lazy(() => import("@/components/reports/SalesReportsPage").then((m) => ({ default: m.SalesReportsPage })));
 const PurchaseReportsPage = lazy(() => import("@/components/reports/PurchaseReportsPage").then((m) => ({ default: m.PurchaseReportsPage })));
 const InventoryReportsPage = lazy(() => import("@/components/reports/InventoryReportsPage").then((m) => ({ default: m.InventoryReportsPage })));
@@ -112,6 +113,14 @@ function App() {
         element={
           <ProtectedRoute>
             <BillingScreen />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/home"
+        element={
+          <ProtectedRoute>
+            <AssembledHome />
           </ProtectedRoute>
         }
       />

@@ -22,12 +22,13 @@ import { MODULE_SURFACE, type SurfaceKey } from "./surfaces";
 /** Every coarse module key. `counter` is omitted from MODULES (always reachable). */
 const ALL_KEYS: ModuleKey[] = ["counter", ...MODULES.map((m) => m.key)];
 
-/** V1 route for a primary ModuleKey — the flag-on landing target (until WS2).
- *  INVARIANT (loop-safety depends on it): pathModule(ROUTE_OF[k]) === k, so a
- *  redirect to a primary surface always passes that surface's own route gate. */
+/** V1 route for a primary ModuleKey — the flag-on landing target. INVARIANT
+ *  (loop-safety depends on it): pathModule(ROUTE_OF[k]) === k, so a redirect to a
+ *  primary surface always passes that surface's own route gate. `reports` lands on
+ *  the assembled Home (WS3) — pathModule("/home") === "reports" preserves it. */
 const ROUTE_OF: Partial<Record<ModuleKey, string>> = {
   counter: "/",
-  reports: "/reports",
+  reports: "/home",
   inventory: "/inventory",
   purchases: "/purchases",
   payments: "/payments",
@@ -43,6 +44,11 @@ const OPERATE_ATOMS: AtomId[] = ["A", "B", "C", "D", "E", "F", "G", "H", "N", "O
 /** The surface this user lands on — ported from the prototype's deriveSurface. */
 function derivePrimarySurface(atoms: Set<AtomId>): ModuleKey {
   const counter = atoms.has("A") || atoms.has("B") || atoms.has("C");
+  // Books/pulse people (J keeps the books, L watches the pulse) open on the
+  // assembled Home (WS3) — the signal feed, not a work surface. This beats the
+  // counter check so an owner/manager lands on Home, not an empty bill. `reports`
+  // is the module that gates /home and these atoms always light it (no loop).
+  if (atoms.has("J") || atoms.has("L")) return "reports";
   if (atoms.has("G") && atoms.size <= 2) return "salesmen"; // field-only → the beat
   if (counter) return "counter";
   if (atoms.has("E") || atoms.has("F") || atoms.has("N")) return "inventory"; // stock / godown

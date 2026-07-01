@@ -23,8 +23,8 @@ const leaf = (label: string, path: string): NavLeaf => ({ label, path, built: tr
 
 export const SURFACE_NAV: SurfaceNav[] = [
   {
-    surface: "home", key: "h", label: "Home", icon: Home, path: "/reports", built: true, roles: [],
-    children: [leaf("Dashboard", "/reports"), leaf("Activity", "/activity"), leaf("Approvals", "/approvals")],
+    surface: "home", key: "h", label: "Home", icon: Home, path: "/home", built: true, roles: [],
+    children: [leaf("Home", "/home"), leaf("Dashboard", "/reports"), leaf("Activity", "/activity"), leaf("Approvals", "/approvals")],
   },
   {
     surface: "counter", key: "c", label: "Counter", icon: Store, path: "/", built: true, roles: [],

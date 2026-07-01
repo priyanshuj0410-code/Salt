@@ -98,6 +98,7 @@ export function rolesForModule(mod: ModuleKey): UserRole[] {
 /** Map a route pathname to the module it belongs to. Unknown → settings (owner-only). */
 export function pathModule(pathname: string): ModuleKey {
   const p = pathname;
+  if (p.startsWith("/home")) return "reports"; // V2 assembled Home — gated as the desk
   if (p === "/") return "counter";
   if (p.startsWith("/activity")) return "activity";
   if (p.startsWith("/approvals")) return "approvals";
