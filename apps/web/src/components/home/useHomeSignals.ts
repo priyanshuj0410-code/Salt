@@ -12,34 +12,48 @@ export interface HomeSignal {
   tone?: SignalTone;
 }
 
-/** Atoms whose Home tile is backed by a live server-side COUNT (this hook). */
-export const SIGNAL_ATOMS: ReadonlySet<AtomId> = new Set<AtomId>(["I"]);
+/** Atoms whose Home tile is backed by a live server-side number (this hook). */
+export const SIGNAL_ATOMS: ReadonlySet<AtomId> = new Set<AtomId>(["D", "I"]);
 
 const CLEAR: HomeSignal = { value: "Clear", tone: "success" };
 
 interface Signal {
   atom: AtomId;
-  /** A cheap head+count query — no rows are fetched, so there is no 1000-row
-   *  SELECT cap to under-report against and the count is computed server-side. */
+  /** Resolve the tile's number for an org. Cheap: a head+count or a single
+   *  aggregate row — no bulk rows, so no 1000-row SELECT cap to under-report. */
   count: (orgId: string) => Promise<number>;
   toSignal: (n: number) => HomeSignal;
 }
 
 /**
- * Only atom I ships as a live tile today. It reads `approval_requests`, which
- * keeps member-level RLS (0030) so every holder (owner, manager) gets a true
- * count. The other page-datum atoms are deliberately NOT here:
- *   - E (GRN "to verify"): `purchases` has no `draft`/unverified state — it is
- *     born `received` (0019); there is no verification workflow to count. Also
- *     owner-only SELECT after 0044.
- *   - K (GST "2B mismatch"): `gstr2b_matches` is owner-only after 0044, so a
- *     manager/accountant (who hold K) would silently read 0 → a false "Clear".
- *     Needs a SECURITY DEFINER RPC + a decision on whether non-owners may see it.
- *   - D (reorder), J (unallocated): need a dedicated stock-on-hand / on-account
- *     view to be cheap and correct.
+ * Live signal atoms. Only the ones with a correct + cheap + member-readable
+ * source ship:
+ *   - I (approvals): `approval_requests` keeps member-level RLS (0030).
+ *   - D (reorder): reads `v_reorder_count` (0063) — inventory is is_member (0004),
+ *     untouched by 0044. Requires migration 0063 to be applied; until then the
+ *     query errors and the tile degrades to "Clear".
+ * Deliberately NOT here:
+ *   - E (GRN "to verify"): `purchases` has no draft/unverified state (born
+ *     `received`, 0019) and is owner-only after 0044.
+ *   - K (GST "2B"): `gstr2b_matches` is owner-only after 0044, so managers /
+ *     accountants (who hold K) would silently read 0. Needs a SECURITY DEFINER
+ *     RPC + an access decision.
+ *   - J (unallocated): financial, same owner-only RLS wall as K.
  * All of the above stay "Open ->" until their backend lands.
  */
 const SIGNALS: Signal[] = [
+  {
+    atom: "D", // Order stock — "reorder / low"
+    count: async (orgId) => {
+      const { data } = await supabase!
+        .from("v_reorder_count")
+        .select("reorder_count")
+        .eq("org_id", orgId)
+        .maybeSingle();
+      return (data as { reorder_count: number } | null)?.reorder_count ?? 0;
+    },
+    toSignal: (n) => (n > 0 ? { value: String(n), hint: n === 1 ? "item to reorder" : "items to reorder", tone: "danger" } : CLEAR),
+  },
   {
     atom: "I", // Credit & approvals — "needs you"
     count: async (orgId) => {
@@ -55,10 +69,10 @@ const SIGNALS: Signal[] = [
 ];
 
 /**
- * Live numbers for the assembled Home's page-datum tiles — one cheap server-side
- * COUNT per HELD signal atom, run in parallel and only for atoms the user holds.
- * Keyed on a primitive string (the held signal-atom letters) so it never
- * re-fetches on unrelated re-renders.
+ * Live numbers for the assembled Home's page-datum tiles — one cheap query per
+ * HELD signal atom, run in parallel and only for atoms the user holds. Keyed on
+ * a primitive string (the held signal-atom letters) so it never re-fetches on
+ * unrelated re-renders.
  */
 export function useHomeSignals(lens: Lens): { signals: Partial<Record<AtomId, HomeSignal>>; loading: boolean } {
   const { membership } = useAuth();
@@ -66,7 +80,7 @@ export function useHomeSignals(lens: Lens): { signals: Partial<Record<AtomId, Ho
   const [signals, setSignals] = useState<Partial<Record<AtomId, HomeSignal>>>({});
   const [loading, setLoading] = useState(true);
 
-  // Which signal atoms this user holds, as a stable-by-value key (e.g. "I").
+  // Which signal atoms this user holds, as a stable-by-value key (e.g. "DI").
   const wantedKey = useMemo(
     () => SIGNALS.filter((s) => lens.heldAtoms.has(s.atom)).map((s) => s.atom).join(""),
     [lens],
