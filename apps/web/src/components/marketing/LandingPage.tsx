@@ -12,7 +12,8 @@ import { DashboardReveal } from "./DashboardReveal";
  * it and blooms the dashboard full-screen from a scale/opacity spring (the
  * "expanding universe") while the storefront fades out. prefers-reduced-motion
  * collapses the flight to a quick crossfade. "Skip" and the top-bar login go to
- * the real /login; the dashboard's Enter Salt lands on "/" (real app/onboarding).
+ * the real /login; the dashboard's Enter Salt also goes to /login (the demo
+ * never authenticates, and the site root now redirects logged-out users here).
  *
  * Mount as a PUBLIC route (outside ProtectedRoute), e.g. /welcome.
  */
@@ -22,7 +23,6 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
   const [entered, setEntered] = useState(false);
   const [parsed, setParsed] = useState<ParseSummary | null>(null);
   const toLogin = useCallback(() => navigate("/login"), [navigate]);
-  const toApp = useCallback(() => navigate("/"), [navigate]);
 
   return (
     <div className="relative min-h-[100dvh] w-full overflow-hidden bg-background font-sans text-text-primary">
@@ -60,7 +60,7 @@ export function LandingPage({ videoSrc }: { videoSrc?: string }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={reduce ? { duration: 0.25 } : { type: "spring", stiffness: 220, damping: 30 }}
           >
-            <DashboardReveal onEnter={toApp} parsed={parsed} />
+            <DashboardReveal onEnter={toLogin} parsed={parsed} />
           </motion.div>
         )}
       </AnimatePresence>

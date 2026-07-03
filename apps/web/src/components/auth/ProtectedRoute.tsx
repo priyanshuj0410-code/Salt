@@ -30,7 +30,9 @@ export function ProtectedRoute({
     );
   }
 
-  if (!session) return <Navigate to="/login" replace />;
+  // Unauthenticated: the site root is the marketing landing (/welcome); a deep
+  // link to a specific app route still goes to /login so returning users can sign in.
+  if (!session) return <Navigate to={pathname === "/" ? "/welcome" : "/login"} replace />;
 
   // Signed in but no org yet → onboarding.
   if (!membership) return <Navigate to="/onboarding" replace />;
