@@ -11,6 +11,7 @@ import { useDashboardData, type DashboardData } from "@/components/reports/useDa
 import { useAuth } from "@/lib/auth";
 import { useLens } from "@/lib/lens/useLens";
 import { assembledTiles } from "@/lib/lens/homeTiles";
+import { useHomeSignals, SIGNAL_ATOMS } from "./useHomeSignals";
 import { formatPaise, formatPaiseCompact } from "@/lib/currency";
 import type { AtomId } from "@/lib/lens/atoms";
 
@@ -75,6 +76,7 @@ export function AssembledHome() {
   const { shop } = useAuth();
   const lens = useLens();
   const { data, loading, shops, shopFilter, setShopFilter, today } = useDashboardData();
+  const { signals, loading: signalsLoading } = useHomeSignals(lens);
   const tiles = assembledTiles(lens);
   const scopeLabel = scopeLabelFor(shops, shopFilter, shop?.name);
 
@@ -95,15 +97,19 @@ export function AssembledHome() {
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {tiles.map((t) => {
-            const d = tileDatum(t.atom, data);
+            const reuse = tileDatum(t.atom, data);
+            const isSignal = !reuse && SIGNAL_ATOMS.has(t.atom);
+            const sig = isSignal ? signals[t.atom] : undefined;
+            const datum = reuse ?? sig ?? null;
+            const pending = reuse ? loading : isSignal ? signalsLoading && !sig : false;
             return (
               <NavLink key={t.atom} to={t.route} className="block outline-none">
                 <StatCard
                   label={t.label}
-                  value={d ? (loading ? "…" : d.value) : "Open →"}
-                  valueTitle={d?.valueTitle}
-                  hint={d?.hint}
-                  tone={d?.tone}
+                  value={pending ? "…" : datum ? datum.value : "Open →"}
+                  valueTitle={reuse?.valueTitle}
+                  hint={datum?.hint}
+                  tone={datum?.tone}
                   className="h-full transition-colors hover:border-border-strong"
                 />
               </NavLink>
