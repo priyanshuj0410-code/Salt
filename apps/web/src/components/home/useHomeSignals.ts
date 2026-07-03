@@ -13,7 +13,7 @@ export interface HomeSignal {
 }
 
 /** Atoms whose Home tile is backed by a live server-side COUNT (this hook). */
-export const SIGNAL_ATOMS: ReadonlySet<AtomId> = new Set<AtomId>(["E", "I", "K"]);
+export const SIGNAL_ATOMS: ReadonlySet<AtomId> = new Set<AtomId>(["I"]);
 
 const CLEAR: HomeSignal = { value: "Clear", tone: "success" };
 
@@ -25,6 +25,20 @@ interface Signal {
   toSignal: (n: number) => HomeSignal;
 }
 
+/**
+ * Only atom I ships as a live tile today. It reads `approval_requests`, which
+ * keeps member-level RLS (0030) so every holder (owner, manager) gets a true
+ * count. The other page-datum atoms are deliberately NOT here:
+ *   - E (GRN "to verify"): `purchases` has no `draft`/unverified state — it is
+ *     born `received` (0019); there is no verification workflow to count. Also
+ *     owner-only SELECT after 0044.
+ *   - K (GST "2B mismatch"): `gstr2b_matches` is owner-only after 0044, so a
+ *     manager/accountant (who hold K) would silently read 0 → a false "Clear".
+ *     Needs a SECURITY DEFINER RPC + a decision on whether non-owners may see it.
+ *   - D (reorder), J (unallocated): need a dedicated stock-on-hand / on-account
+ *     view to be cheap and correct.
+ * All of the above stay "Open ->" until their backend lands.
+ */
 const SIGNALS: Signal[] = [
   {
     atom: "I", // Credit & approvals — "needs you"
@@ -38,40 +52,13 @@ const SIGNALS: Signal[] = [
     },
     toSignal: (n) => (n > 0 ? { value: String(n), hint: n === 1 ? "needs you" : "need you", tone: "danger" } : CLEAR),
   },
-  {
-    atom: "E", // Receive stock (GRN) — "GRNs to verify" (draft = not yet finalized)
-    count: async (orgId) => {
-      const { count } = await supabase!
-        .from("purchases")
-        .select("id", { count: "exact", head: true })
-        .eq("org_id", orgId)
-        .eq("status", "draft");
-      return count ?? 0;
-    },
-    toSignal: (n) => (n > 0 ? { value: String(n), hint: n === 1 ? "GRN to verify" : "GRNs to verify" } : CLEAR),
-  },
-  {
-    atom: "K", // File GST & compliance — "2B mismatch" (any non-matched reconciliation line)
-    count: async (orgId) => {
-      const { count } = await supabase!
-        .from("gstr2b_matches")
-        .select("id", { count: "exact", head: true })
-        .eq("org_id", orgId)
-        .neq("match_status", "matched");
-      return count ?? 0;
-    },
-    toSignal: (n) => (n > 0 ? { value: String(n), hint: "2B to reconcile", tone: "danger" } : CLEAR),
-  },
 ];
 
 /**
  * Live numbers for the assembled Home's page-datum tiles — one cheap server-side
- * COUNT per HELD signal atom (I approvals, E GRNs-to-verify, K GST 2B), run in
- * parallel and only for atoms the user actually holds. Keyed on a primitive
- * string (the held signal-atom letters) so it never re-fetches on unrelated
- * re-renders. Reorder (D) and unallocated (J) are intentionally absent: a
- * correct+cheap tile for them needs a dedicated SQL view (stock-on-hand vs
- * reorder level; on-account receipts), so they stay "Open ->" until that lands.
+ * COUNT per HELD signal atom, run in parallel and only for atoms the user holds.
+ * Keyed on a primitive string (the held signal-atom letters) so it never
+ * re-fetches on unrelated re-renders.
  */
 export function useHomeSignals(lens: Lens): { signals: Partial<Record<AtomId, HomeSignal>>; loading: boolean } {
   const { membership } = useAuth();
@@ -79,7 +66,7 @@ export function useHomeSignals(lens: Lens): { signals: Partial<Record<AtomId, Ho
   const [signals, setSignals] = useState<Partial<Record<AtomId, HomeSignal>>>({});
   const [loading, setLoading] = useState(true);
 
-  // Which signal atoms this user holds, as a stable-by-value key (e.g. "EIK").
+  // Which signal atoms this user holds, as a stable-by-value key (e.g. "I").
   const wantedKey = useMemo(
     () => SIGNALS.filter((s) => lens.heldAtoms.has(s.atom)).map((s) => s.atom).join(""),
     [lens],
