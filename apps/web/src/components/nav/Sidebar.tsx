@@ -6,7 +6,9 @@ import { useAuth } from "@/lib/auth";
 import { LENS_V2 } from "@/lib/flags";
 import { useLens } from "@/lib/lens/useLens";
 import { NAV, type NavLeaf, type NavModule } from "./navConfig";
-import { visibleSurfaces } from "./surfaceNav";
+import { visibleSurfaces, type SurfaceNav } from "./surfaceNav";
+import { useAltitude, splitByAltitude } from "@/lib/lens/altitude";
+import { AltitudeSwitcher } from "./AltitudeSwitcher";
 import { ShopSwitcher } from "./ShopSwitcher";
 
 const COLLAPSE_KEY = "salt.nav.collapsed";
@@ -125,6 +127,31 @@ function IconItem({ mod, current }: { mod: NavModule; current: string }) {
 }
 
 /**
+ * The tucked surfaces at the current altitude — collapsed by default (the whole
+ * point: fewer visible tabs), one click to reveal. Everything here is still fully
+ * reachable; altitude only decides what is up top vs behind "More".
+ */
+function MoreNav({ surfaces, current }: { surfaces: NavModule[]; current: string }) {
+  const [open, setOpen] = useState(false);
+  if (surfaces.length === 0) return null;
+  return (
+    <div className="mt-1 border-t border-sidebar-border pt-1">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-sidebar-accent/60"
+      >
+        <span>More</span>
+        <span className="ml-auto tabular-nums opacity-70">{surfaces.length}</span>
+        <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
+      </button>
+      {open && surfaces.map((m) => <ModuleItem key={m.label} mod={m} current={current} />)}
+    </div>
+  );
+}
+
+/**
  * Left navigation. `expanded` forces the full width (used inside the mobile
  * drawer, which has no room for the collapse rail); `onNavigate` fires when a
  * link is clicked so the drawer can close itself.
@@ -140,11 +167,16 @@ export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; 
   // V2 (WS2): the sidebar's top level is the 8 surfaces — the same visibleSurfaces
   // the go-to chords + command palette consume, so they never drift. V1 path
   // (role-default 13-module nav) is unchanged.
-  const modules: NavModule[] = LENS_V2
-    ? role == null
-      ? [] // membership not resolved yet — match V1 (empty) instead of flashing
-      : visibleSurfaces(lens)
-    : NAV.filter((m) => role != null && m.roles.includes(role));
+  // V2: top level is the 8 surfaces (empty until membership resolves — matches V1).
+  const surfaces: SurfaceNav[] = LENS_V2 && role != null ? visibleSurfaces(lens) : [];
+  const modules: NavModule[] = LENS_V2 ? surfaces : NAV.filter((m) => role != null && m.roles.includes(role));
+
+  // Altitude (the SALT-4 facet, now consumed): a multi-altitude user gets a mode
+  // switch — the active altitude's surfaces stay up top and the rest tuck into
+  // "More". Display-only; it reorders/groups nav and never touches litModules.
+  const { active, setActive, held } = useAltitude(lens);
+  const altitudeUi = LENS_V2 && !collapsed && held.length > 1 && surfaces.length > 0;
+  const { front, more } = altitudeUi ? splitByAltitude(surfaces, active) : { front: surfaces, more: [] as SurfaceNav[] };
 
   const ActionIcon = ACTION_ICON[lens.persistentAction.label] ?? Search;
 
@@ -198,12 +230,22 @@ export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; 
         onClick={(e) => onNavigate && (e.target as HTMLElement).closest("a") && onNavigate()}
         className={cn("flex-1 space-y-0.5 overflow-y-auto p-2", collapsed && "flex flex-col items-stretch")}
       >
-        {modules.map((m) =>
-          collapsed ? (
-            <IconItem key={m.label} mod={m} current={pathname} />
-          ) : (
-            <ModuleItem key={m.label} mod={m} current={pathname} />
-          ),
+        {altitudeUi ? (
+          <>
+            <AltitudeSwitcher held={held} active={active} onChange={setActive} />
+            {front.map((m) => (
+              <ModuleItem key={m.label} mod={m} current={pathname} />
+            ))}
+            <MoreNav surfaces={more} current={pathname} />
+          </>
+        ) : (
+          modules.map((m) =>
+            collapsed ? (
+              <IconItem key={m.label} mod={m} current={pathname} />
+            ) : (
+              <ModuleItem key={m.label} mod={m} current={pathname} />
+            ),
+          )
         )}
       </nav>
 
