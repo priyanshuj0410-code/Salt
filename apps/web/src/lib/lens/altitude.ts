@@ -44,7 +44,10 @@ export function heldAltitudes(lens: Lens): Altitude[] {
   const held = new Set<Altitude>();
   for (const facet of lens.altitudes) {
     const a = FACET_TO_ALTITUDE[facet];
-    if (a) held.add(a);
+    // Only offer an altitude that actually fronts >=1 surface this user sees —
+    // else switching to it would strand the whole nav into "More" (an accountant
+    // holds `operate` via H/payments but sees none of operate's surfaces).
+    if (a && ALTITUDE_SURFACES[a].some((sk) => lens.surfaces.has(sk))) held.add(a);
   }
   return ORDER.filter((a) => held.has(a));
 }

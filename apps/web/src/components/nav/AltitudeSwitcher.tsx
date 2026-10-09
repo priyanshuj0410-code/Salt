@@ -16,13 +16,13 @@ export function AltitudeSwitcher({
   onChange: (a: Altitude) => void;
 }) {
   return (
-    <div role="tablist" aria-label="Altitude" className="mb-1.5 flex gap-0.5 rounded-lg bg-sidebar-accent/60 p-0.5">
+    <div role="radiogroup" aria-label="Altitude" className="mb-1.5 flex gap-0.5 rounded-lg bg-sidebar-accent/60 p-0.5">
       {held.map((a) => (
         <button
           key={a}
           type="button"
-          role="tab"
-          aria-selected={a === active}
+          role="radio"
+          aria-checked={a === active}
           onClick={() => onChange(a)}
           className={cn(
             "flex-1 rounded-md px-1.5 py-1 text-xs font-medium transition-colors",
