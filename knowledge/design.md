@@ -74,12 +74,42 @@ Computed in `knowledge/contrast.py` (57 of 57 pass): text-tertiary is 5.09:1 on 
 - `--font-sans` **Geist Variable** (Inter fallback) — all UI.
 - `--font-mono` **Geist Mono Variable** — numbers, money, codes, Kbd.
 - `--font-display` **Fraunces** (serif) — display headings only, sparingly.
-- Scale (compact, tabular): xs .6875rem · sm .8125rem · base .9375rem · lg 1.0625rem · xl 1.375rem · 2xl 1.75rem.
+- Scale (six steps, no improvised sizes; `text-[13px]` is banned, it is `text-sm`), with the line height each step carries: xs .6875rem (11px, 1.4) · sm .8125rem (13px, 1.45) · base .9375rem (15px, 1.45) · lg 1.0625rem (17px, 1.3) · xl 1.375rem (22px, 1.2) · 2xl 1.75rem (28px, 1.1).
+- Tabular numerals (`tabular-nums`) wherever money, quantity, percent or a count lives. Uppercase labels: `text-xs uppercase tracking-wide font-semibold text-text-tertiary`.
 
 ## Shape & spacing
 
 - Radius: base `--radius` 0.5rem (8px); sm .25 / md .375 / lg .5 / xl .75rem.
-- Tailwind v4 spacing scale; dense, keyboard-first layouts (this is a power-user ERP replacing Marg — see `wiki/design/salt-personas.html`).
+- **Spacing is Tailwind's 4px scale**, so `p-3` is 12px. The documented steps are 1 (4px), 2 (8px), 3 (12px), 4 (16px), 5 (20px), 6 (24px), 8 (32px) and 12 (48px): 1 to 3 inside compact components (icon to label, badge gaps, input padding), 4 to 8 between sections (form rows 4, card body 5, page sections and header padding 6). The root doc's `--space-*` variables are not defined in `index.css`; the code uses the utilities directly. It also uses half steps the root doc does not list (`1.5` = 6px in about 150 places, `2.5` = 10px, `0.5` = 2px), so treat those as tolerated, not spec.
+- **Density** has two modes on one set of tokens, set with `data-density` on the screen container (`patterns/page.tsx`, which also sets `px-4 py-5 sm:px-6`). Components read `--row-height` and `--input-height`; never build a separate compact component.
+
+| | Compact (counter) | Default (owner) |
+|---|---|---|
+| Row height (`--row-height-*`) | 36px | 44px |
+| Input height (`--input-height-*`) | 32px | 36px |
+| Body text | `text-sm` (13px) | `text-base` (15px) |
+| Card padding | space-3 to space-4 | space-5 |
+
+Density is desktop only; mobile relaxes to touch sizing. Dense, keyboard-first layouts: this is a power-user ERP replacing Marg (see `wiki/design/salt-personas.html`).
+
+## Motion
+
+Functional, never decorative: speed comes first (root `design.md` §1), so nothing may delay the cashier seeing the result of an action.
+
+- **The scale** (root `design.md` §2.1, `salt-design-system.html` Motion): instant 50ms (opacity-only micro changes), fast 120ms (hover, focus, button press), medium 200ms (dropdown open, slide-in), slow 320ms (modal enter, full-screen transitions); easing `cubic-bezier(0.2, 0.8, 0.2, 1)` out, `cubic-bezier(0.4, 0, 0.2, 1)` in-out.
+- **What the code does:** `index.css` defines no `--duration-*` or `--ease-*` variables. Components use Tailwind `duration-100`, `duration-150` and `duration-200`, the `tw-animate-css` `animate-in` and `animate-out` on `Dialog` and `Sheet`, `animate-pulse` on `DataTable` skeleton rows and on a live `Dot` (`pulse`), and `animate-spin` for busy. Stay inside the scale above when adding any.
+- **Reduced motion:** one global rule in `index.css` sets animation and transition durations to 0.01ms, iteration count to 1 and scroll behaviour to auto under `prefers-reduced-motion: reduce`; the live `Dot` also carries `motion-reduce:animate-none`. A new animation needs no extra handling, but must not be the only carrier of a state.
+- **Hard rule:** Save & Print never animates its exit; the bill clears instantly so the next sale can start. No celebrations on save, no toast for a primary action (inline feedback instead).
+
+## Voice
+
+From `salt-design-system.html` (Brand, Voice); the root `design.md` has no voice section.
+
+- **Direct.** "Bill saved", not "Your bill has been saved successfully."
+- **Operational.** Name the action the cashier is doing: "Save & Print", not "Complete transaction". The button shows its key ("Save & Print · F9").
+- **Calm.** No marketing exclamation marks, no emoji in product UI, no celebration.
+- **Bilingual where it matters.** Item names and Hindi text sit side by side ("Crocin 500" next to its Hindi name); short English action words such as "Pay" stay English because cashiers prefer them.
+- Money and dates follow `en-IN` (see Patterns below); status is text or an icon plus colour, never colour alone.
 
 ## Patterns / primitives
 
