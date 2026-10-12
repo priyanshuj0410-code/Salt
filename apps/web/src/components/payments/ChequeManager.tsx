@@ -132,7 +132,7 @@ export function ChequeManager({ orgId, nameById }: { orgId: string | null; nameB
                   type="date"
                   value={r.cheque_due_date ?? ""}
                   onChange={(e) => patch(r.id, { cheque_due_date: e.target.value || null })}
-                  className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                  className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
                 />
               ),
             },
@@ -155,7 +155,7 @@ export function ChequeManager({ orgId, nameById }: { orgId: string | null; nameB
                 <select
                   value={r.status}
                   onChange={(e) => patch(r.id, { status: e.target.value })}
-                  className="h-8 rounded-md border border-input bg-background px-2 text-sm capitalize outline-none focus-visible:border-ring"
+                  className="h-8 rounded-md border border-input bg-background px-2 text-sm capitalize focus-visible:border-ring"
                 >
                   {STATUSES.map((s) => (
                     <option key={s} value={s}>

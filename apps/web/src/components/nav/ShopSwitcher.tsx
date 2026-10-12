@@ -19,7 +19,7 @@ export function ShopSwitcher() {
         value={shopId ?? ""}
         onChange={(e) => setActiveShop(e.target.value)}
         aria-label="Active shop"
-        className="h-7 min-w-0 flex-1 rounded-md border border-sidebar-border bg-sidebar px-1.5 text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="h-7 min-w-0 flex-1 rounded-md border border-input bg-sidebar px-1.5 text-xs focus-visible:border-ring"
       >
         {shops.map((s) => (
           <option key={s.id} value={s.id}>

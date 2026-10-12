@@ -103,7 +103,7 @@ export function AssembledHome() {
             const datum = reuse ?? sig ?? null;
             const pending = reuse ? loading : isSignal ? signalsLoading && !sig : false;
             return (
-              <NavLink key={t.atom} to={t.route} className="block outline-none">
+              <NavLink key={t.atom} to={t.route} className="block">
                 <StatCard
                   label={t.label}
                   value={pending ? "…" : datum ? datum.value : "Open →"}

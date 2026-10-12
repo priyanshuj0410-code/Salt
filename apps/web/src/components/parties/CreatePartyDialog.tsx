@@ -183,7 +183,7 @@ export function CreatePartyDialog({
               <select
                 value={form.stateCode}
                 onChange={(e) => set("stateCode", e.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
               >
                 <option value="">—</option>
                 {INDIAN_STATE_CODES.map((s) => (
@@ -208,7 +208,7 @@ export function CreatePartyDialog({
                 <select
                   value={form.group}
                   onChange={(e) => set("group", e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
                 >
                   <option value="">—</option>
                   {CUSTOMER_GROUPS.map((g) => (

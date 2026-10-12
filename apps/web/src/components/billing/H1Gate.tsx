@@ -17,7 +17,7 @@ import { ScheduleBadge } from "./ScheduleBadge";
 const EMPTY_RX: RxDetails = { doctorName: "", doctorRegNo: "", patientName: "", patientAddress: "" };
 
 const fieldCls =
-  "h-9 w-full rounded-md border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50";
+  "h-9 w-full rounded-md border border-input bg-background px-2.5 text-sm focus-visible:border-ring";
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (

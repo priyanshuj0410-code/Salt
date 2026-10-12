@@ -11,7 +11,7 @@ import { useAuth, type Shop } from "@/lib/auth";
 import { INDIAN_STATE_CODES, stateName } from "@/lib/stateCodes";
 
 const selectCls =
-  "h-8 rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "h-8 rounded-lg border border-input bg-background px-2 text-sm focus-visible:border-ring";
 
 /** Editable settings for the org's active shop — used by GST/RPC flows. */
 export function OrgSettingsPage() {

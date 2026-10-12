@@ -251,7 +251,7 @@ export function EntityStep({
               <select
                 value={mapping[f.key] ?? ""}
                 onChange={(e) => setMapping((m) => ({ ...m, [f.key]: e.target.value || null }))}
-                className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
               >
                 <option value="">— not mapped —</option>
                 {parsed?.headers.map((h) => (
@@ -306,7 +306,7 @@ export function EntityStep({
             <select
               value={bulkField}
               onChange={(e) => setBulkField(e.target.value)}
-              className="h-7 rounded-md border border-input bg-background px-2 text-sm outline-none"
+              className="h-7 rounded-md border border-input bg-background px-2 text-sm"
             >
               {entity.fields.map((f) => (
                 <option key={f.key} value={f.key}>
@@ -352,7 +352,7 @@ export function EntityStep({
                             )
                           }
                           className={cn(
-                            "h-7 w-28 rounded-md border bg-background px-2 text-sm outline-none",
+                            "h-7 w-28 rounded-md border bg-background px-2 text-sm",
                             errFields.has(f.key) ? "border-destructive" : "border-input",
                           )}
                         />

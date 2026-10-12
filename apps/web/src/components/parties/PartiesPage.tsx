@@ -439,7 +439,7 @@ export function PartiesPage() {
                     <Link
                       key={`${p.vendorId}-${i}`}
                       to={`/parties/${p.vendorId}`}
-                      className="flex items-center gap-3 py-1.5 text-sm hover:bg-surface focus-visible:bg-surface focus-visible:outline-none"
+                      className="flex items-center gap-3 py-1.5 text-sm hover:bg-surface focus-visible:bg-surface focus-visible:-outline-offset-2"
                     >
                       <span className="min-w-0 flex-1 truncate">{p.vendorName}</span>
                       <span className="shrink-0 text-xs text-text-tertiary">{fmtDueDate(p.dueDate)}</span>
@@ -543,7 +543,7 @@ export function PartiesPage() {
                 <div key={r.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-surface">
                   <Link
                     to={`/parties/${r.id}`}
-                    className="flex min-w-0 flex-1 items-center gap-3 focus-visible:outline-none"
+                    className="flex min-w-0 flex-1 items-center gap-3"
                   >
                     <span
                       className={cn(
@@ -571,7 +571,7 @@ export function PartiesPage() {
                       value={r.customer_group ?? ""}
                       disabled={retagging === r.id}
                       onChange={(e) => regroup(r.id, e.target.value)}
-                      className="hidden h-8 shrink-0 rounded-md border border-input bg-background px-1.5 text-xs outline-none focus-visible:border-ring disabled:opacity-50 sm:block"
+                      className="hidden h-8 shrink-0 rounded-md border border-input bg-background px-1.5 text-xs focus-visible:border-ring disabled:opacity-50 sm:block"
                     >
                       <option value="">— group —</option>
                       {CUSTOMER_GROUPS.map((g) => (
@@ -587,7 +587,7 @@ export function PartiesPage() {
                     value={r.type}
                     disabled={retagging === r.id}
                     onChange={(e) => retag(r.id, e.target.value)}
-                    className="h-8 shrink-0 rounded-md border border-input bg-background px-1.5 text-xs capitalize outline-none focus-visible:border-ring disabled:opacity-50"
+                    className="h-8 shrink-0 rounded-md border border-input bg-background px-1.5 text-xs capitalize focus-visible:border-ring disabled:opacity-50"
                   >
                     <option value="customer">customer</option>
                     <option value="vendor">vendor</option>

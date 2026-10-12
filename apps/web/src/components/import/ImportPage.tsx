@@ -326,7 +326,7 @@ export function ImportPage() {
                       readOnly
                       value={token}
                       onFocus={(e) => e.currentTarget.select()}
-                      className="h-8 flex-1 rounded-md border bg-surface-2 px-2 font-mono text-xs"
+                      className="h-8 flex-1 rounded-md border border-input bg-surface-2 px-2 font-mono text-xs"
                       aria-label="Migration token"
                     />
                     <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(token)}>

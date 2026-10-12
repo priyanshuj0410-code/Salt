@@ -20,7 +20,7 @@ export function SalesmanPicker({
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
         aria-label="Salesman"
-        className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
       >
         <option value="">No salesman</option>
         {salesmen.map((s) => (

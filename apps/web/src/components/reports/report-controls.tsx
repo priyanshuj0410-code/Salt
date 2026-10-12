@@ -26,7 +26,7 @@ export function ShopSelect({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       aria-label="Shop scope"
-      className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+      className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
     >
       <option value={ALL_SHOPS}>All shops</option>
       {shops.map((s) => (
@@ -55,7 +55,7 @@ export function ViewTabs<T extends string>({
   onChange: (key: T) => void;
 }) {
   return (
-    <div className="inline-flex flex-wrap gap-0.5 rounded-lg border border-border bg-surface p-0.5" role="tablist">
+    <div className="inline-flex flex-wrap gap-0.5 rounded-lg border border-input bg-surface p-0.5" role="tablist">
       {views.map((v) => (
         <button
           key={v.key}

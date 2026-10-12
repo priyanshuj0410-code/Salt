@@ -213,7 +213,7 @@ export function ReturnDialog({
               aria-label="Refund mode"
               value={refundMode}
               onChange={(e) => setRefundMode(e.target.value as "cash" | "bank" | "credit")}
-              className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground focus-visible:border-ring"
             >
               {REFUND_MODES.map((m) => (
                 <option key={m.value} value={m.value} disabled={m.value === "credit" && !partyId}>

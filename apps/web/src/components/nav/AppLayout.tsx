@@ -33,7 +33,7 @@ export function AppLayout() {
           the sidebar (WCAG 2.4.1). Visually hidden until focused. */}
       <a
         href="#main-content"
-        className="sr-only rounded-lg border border-ring bg-background text-sm font-medium text-text-primary shadow-lg outline-none ring-3 ring-ring/50 focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[60] focus:px-3 focus:py-2"
+        className="sr-only rounded-lg border border-ring bg-background text-sm font-medium text-text-primary shadow-lg focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-[60] focus:px-3 focus:py-2"
       >
         Skip to content
       </a>

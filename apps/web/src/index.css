@@ -17,6 +17,7 @@
   --border: #e4e4e7;             /* zinc-200 */
   --border-strong: #d4d4d8;      /* zinc-300 */
   --divider: #f4f4f5;            /* zinc-100 */
+  --control: #898992;            /* border of inputs and outlined controls: ≥3:1 on background, surface and surface-2 (WCAG 1.4.11). --border stays for cards and dividers. */
 
   --text-primary: #18181b;       /* zinc-900 */
   --text-secondary: #52525b;     /* zinc-600 */
@@ -44,8 +45,9 @@
   --danger-on-dark:  #f87171;
 
   /* ---- Focus ---- */
-  --focus-ring: rgba(24, 24, 27, 0.15);
-  --focus-ring-strong: rgba(24, 24, 27, 0.3);
+  /* Solid, never translucent: drawn as a 2px outline 2px off the edge (see the base layer).
+     It follows --action-primary, so it flips with the theme: ink on light, near-white on dark. */
+  --focus-ring: var(--action-primary);
 
   /* ---- Density (desktop only; mobile relaxes to touch sizing) ---- */
   --row-height-compact: 36px;  --row-height-default: 44px;
@@ -65,12 +67,12 @@
   --muted: var(--surface-2);         --muted-foreground: var(--text-tertiary);
   --accent: var(--surface-2);        --accent-foreground: var(--text-primary);
   --destructive: var(--danger);
-  --input: var(--border);
-  --ring: var(--focus-ring-strong);
+  --input: var(--control);
+  --ring: var(--focus-ring);
   --sidebar: var(--surface);                    --sidebar-foreground: var(--text-primary);
   --sidebar-primary: var(--action-primary);     --sidebar-primary-foreground: var(--action-primary-text);
   --sidebar-accent: var(--surface-2);           --sidebar-accent-foreground: var(--text-primary);
-  --sidebar-border: var(--border);              --sidebar-ring: var(--focus-ring-strong);
+  --sidebar-border: var(--border);              --sidebar-ring: var(--focus-ring);
 }
 
 /* Density modes — set data-density on a screen wrapper (compact = counter). */
@@ -83,6 +85,7 @@
   --surface-2: #27272a;          /* zinc-800 */
   --border: #27272a;
   --border-strong: #3f3f46;      /* zinc-700 */
+  --control: #74747d;            /* ≥3:1 on background, surface and surface-2 */
   --divider: #27272a;
 
   --text-primary: #fafafa;
@@ -103,9 +106,6 @@
   --warning: #fbbf24;  --warning-bg: #422006;  --warning-border: #b45309;
   --danger:  #f87171;  --danger-bg:  #450a0a;  --danger-border:  #b91c1c;
   --info:    #93c5fd;  --info-bg:    #172554;  --info-border:    #1e40af;
-
-  --focus-ring: rgba(250, 250, 250, 0.2);
-  --focus-ring-strong: rgba(250, 250, 250, 0.35);
 }
 
 /* =============================================================================
@@ -164,6 +164,7 @@
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-border-strong: var(--border-strong);
+  --color-control: var(--control);
   --color-divider: var(--divider);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
@@ -181,7 +182,14 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring;
+  }
+  /* The one focus indicator: a solid 2px ring, 2px off the edge, in --ring. Do not replace it
+     with a translucent ring-ring/50 or remove it with outline-none; where the edge would be
+     clipped (rows, cells), pull it in with -outline-offset-2. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
   body {
     @apply bg-background text-foreground font-sans;

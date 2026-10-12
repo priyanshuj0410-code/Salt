@@ -72,7 +72,7 @@ export function GstinPrompt({
           }}
           placeholder="22ABCDE1234F1Z5"
           aria-label="Customer GSTIN"
-          className="h-8 w-full rounded-md border border-input bg-background px-2 font-mono text-xs uppercase outline-none focus-visible:border-ring"
+          className="h-8 w-full rounded-md border border-input bg-background px-2 font-mono text-xs uppercase focus-visible:border-ring"
         />
         <Button size="sm" onClick={save} disabled={busy || !val.trim()}>
           Save

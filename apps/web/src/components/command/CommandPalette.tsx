@@ -35,7 +35,7 @@ export function CommandPalette() {
           <Command.Input
             autoFocus
             placeholder="Search screens and actions…"
-            className="w-full border-b border-border bg-transparent px-4 py-3 text-base outline-none placeholder:text-text-tertiary"
+            className="w-full border-b border-border bg-transparent px-4 py-3 text-base focus-visible:-outline-offset-2 placeholder:text-text-tertiary"
           />
           <Command.List className="max-h-[50vh] overflow-y-auto p-1.5">
             <Command.Empty className="px-3 py-8 text-center text-sm text-text-tertiary">No matches.</Command.Empty>

@@ -108,7 +108,7 @@ export function DropAllPanel({ onRoute }: { onRoute: (stepKey: string, file: Fil
                 <select
                   value={r.chosen}
                   onChange={(e) => setChosen(r.id, e.target.value)}
-                  className="h-8 shrink-0 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                  className="h-8 shrink-0 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
                 >
                   <option value="">— handle manually —</option>
                   {CANDIDATES.map((c) => (

@@ -37,7 +37,7 @@ function RupeeInput({
         value={paise ? paise / 100 : ""}
         placeholder="0"
         onChange={(e) => onPaise(Math.round((parseFloat(e.target.value) || 0) * 100))}
-        className="h-8 w-24 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="h-8 w-24 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums focus-visible:border-ring"
       />
     </div>
   );
@@ -132,7 +132,7 @@ export function SplitTender({
                   value={creditDays}
                   onChange={(e) => setCreditDays(Number(e.target.value) || 0)}
                   aria-label="Custom repayment days"
-                  className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                  className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums focus-visible:border-ring"
                 />
                 <span className="text-sm text-text-tertiary">days</span>
               </div>
