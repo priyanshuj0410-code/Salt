@@ -101,7 +101,7 @@ export function VendorPicker({
             <p className="px-3 py-3 text-sm text-text-tertiary">Loading…</p>
           ) : filtered.length === 0 ? (
             <p className="px-3 py-3 text-sm text-text-tertiary">
-              {rows.length === 0 ? "No vendors yet — import or add a vendor party first." : "No matches."}
+              {rows.length === 0 ? "No vendors yet: import or add a vendor party first." : "No matches."}
             </p>
           ) : (
             filtered.map((r) => (

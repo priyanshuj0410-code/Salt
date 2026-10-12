@@ -28,7 +28,7 @@ export function MapGroup({
               onChange={(e) => onChange({ ...mapping, [f.key]: e.target.value || null })}
               className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
             >
-              <option value="">— not mapped —</option>
+              <option value="">Not mapped</option>
               {headers.map((h) => (
                 <option key={h} value={h}>
                   {h}

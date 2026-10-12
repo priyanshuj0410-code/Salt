@@ -228,7 +228,7 @@ export function PaymentsPage() {
               header: "Date",
               cell: (p) => <span className="text-text-tertiary">{format(new Date(p.payment_date), "d MMM yyyy")}</span>,
             },
-            { key: "party", header: "Party", cell: (p) => <span className="font-medium">{nameById.get(p.party_id) ?? "—"}</span> },
+            { key: "party", header: "Party", cell: (p) => <span className="font-medium">{nameById.get(p.party_id) ?? "-"}</span> },
             {
               key: "dir",
               header: "Type",
@@ -239,7 +239,7 @@ export function PaymentsPage() {
               ),
             },
             { key: "mode", header: "Mode", cell: (p) => <Badge variant="neutral" className="uppercase">{p.mode}</Badge> },
-            { key: "ref", header: "Reference", cell: (p) => <span className="text-text-tertiary">{p.reference || "—"}</span> },
+            { key: "ref", header: "Reference", cell: (p) => <span className="text-text-tertiary">{p.reference || "-"}</span> },
             {
               key: "amount",
               header: "Amount",
@@ -270,7 +270,7 @@ export function PaymentsPage() {
         open={receipt !== null}
         onOpenChange={(v) => !v && setReceipt(null)}
         payment={receipt}
-        partyName={receipt ? (nameById.get(receipt.party_id) ?? "—") : "—"}
+        partyName={receipt ? (nameById.get(receipt.party_id) ?? "-") : "-"}
         partyPhone={receipt ? (phoneById.get(receipt.party_id) ?? null) : null}
       />
     </Page>

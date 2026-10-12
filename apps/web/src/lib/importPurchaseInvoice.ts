@@ -217,11 +217,11 @@ export function parsePurchaseInvoices(rows: PurchaseRawRow[]): PurchaseImportRes
     const name = s(raw.item_name);
 
     if (!invoiceNo) {
-      issues.push({ row: line, level: "error", message: "Missing invoice/bill no — row skipped" });
+      issues.push({ row: line, level: "error", message: "Missing invoice/bill no: row skipped" });
       return;
     }
     if (!vendorName) {
-      issues.push({ row: line, level: "error", message: `Invoice ${invoiceNo}: missing vendor — row skipped` });
+      issues.push({ row: line, level: "error", message: `Invoice ${invoiceNo}: missing vendor: row skipped` });
       return;
     }
     const key = `${invoiceNo.toLowerCase()}|${vendorName.toLowerCase()}`;
@@ -248,7 +248,7 @@ export function parsePurchaseInvoices(rows: PurchaseRawRow[]): PurchaseImportRes
       discountPct: discountValue,
     });
     if (resolved.ratePaise <= 0) {
-      issues.push({ row: line, level: "error", message: `"${name}": no usable purchase rate — set PTR, PTS or the line amount` });
+      issues.push({ row: line, level: "error", message: `"${name}": no usable purchase rate: set PTR, PTS or the line amount` });
       errorRows.add(key);
       return;
     }
@@ -256,13 +256,13 @@ export function parsePurchaseInvoices(rows: PurchaseRawRow[]): PurchaseImportRes
     if (resolved.source === "pts") {
       issues.push({ row: line, level: "warning", message: `"${name}": billed on PTS ₹${rate.toFixed(2)}/unit (matches the invoice amount), not PTR` });
     } else if (resolved.source === "amount") {
-      issues.push({ row: line, level: "warning", message: `"${name}": rate ₹${rate.toFixed(2)}/unit derived from the printed amount — verify` });
+      issues.push({ row: line, level: "warning", message: `"${name}": rate ₹${rate.toFixed(2)}/unit derived from the printed amount, verify` });
     } else if (resolved.ambiguous) {
-      issues.push({ row: line, level: "warning", message: `"${name}": invoice shows PTR & PTS but no line amount — used PTR; confirm it should not be PTS` });
+      issues.push({ row: line, level: "warning", message: `"${name}": invoice shows PTR & PTS but no line amount, used PTR; confirm it should not be PTS` });
     }
     const mrp = num(raw.mrp) ?? 0;
     if (mrp <= 0) {
-      issues.push({ row: line, level: "warning", message: `"${name}": no MRP — the received batch will not be sellable until you set one` });
+      issues.push({ row: line, level: "warning", message: `"${name}": no MRP: the received batch will not be sellable until you set one` });
     } else if (mrp < rate) {
       issues.push({ row: line, level: "warning", message: `"${name}": MRP is below purchase rate` });
     }

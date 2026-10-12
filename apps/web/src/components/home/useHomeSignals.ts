@@ -43,7 +43,7 @@ interface Signal {
  */
 const SIGNALS: Signal[] = [
   {
-    atom: "D", // Order stock — "reorder / low"
+    atom: "D", // Order stock: "reorder / low"
     count: async (orgId) => {
       const { data } = await supabase!
         .from("v_reorder_count")
@@ -55,7 +55,7 @@ const SIGNALS: Signal[] = [
     toSignal: (n) => (n > 0 ? { value: String(n), hint: n === 1 ? "item to reorder" : "items to reorder", tone: "danger" } : CLEAR),
   },
   {
-    atom: "I", // Credit & approvals — "needs you"
+    atom: "I", // Credit & approvals, "needs you"
     count: async (orgId) => {
       const { count } = await supabase!
         .from("approval_requests")

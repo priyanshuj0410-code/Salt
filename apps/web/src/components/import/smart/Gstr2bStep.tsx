@@ -56,7 +56,7 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
     try {
       const lines = prepareLines(parsed.rows, mapping);
       if (lines.length === 0) {
-        setError("No usable invoice rows found — check the column mapping.");
+        setError("No usable invoice rows found. Check the column mapping.");
         return;
       }
       const lineIds = lines.map(() => crypto.randomUUID());
@@ -140,7 +140,7 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
       <div className="rounded-lg border p-5">
         <div className="mb-4">
           <p className="text-sm">
-            Your <span className="font-medium">GSTR-2B</span> (from the GST portal — not Marg). We import the
+            Your <span className="font-medium">GSTR-2B</span> (from the GST portal, not Marg). We import the
             B2B invoices and reconcile them against your purchases to flag ITC gaps.
           </p>
           <p className="mt-2 text-xs font-medium text-text-tertiary">Columns we look for:</p>
@@ -193,7 +193,7 @@ export function Gstr2bStep({ orgId, onComplete }: { orgId: string | undefined; o
         <div className="flex items-center gap-2 text-sm">
           <Wand2 className="size-4 text-primary" />
           <span className="font-medium">Check the column mapping</span>
-          <span className="text-text-tertiary">— {parsed?.rows.length ?? 0} rows.</span>
+          <span className="text-text-tertiary">{parsed?.rows.length ?? 0} rows.</span>
         </div>
 
         <div className="mt-4 grid grid-cols-[1fr_1.5fr] items-center gap-3 text-sm">

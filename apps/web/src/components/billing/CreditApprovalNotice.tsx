@@ -50,8 +50,8 @@ export function CreditApprovalNotice({ gate, onCancel }: { gate: CreditGate; onC
             : pending
               ? "Waiting for manager approval…"
               : rejected
-                ? "Manager declined — take payment or reduce the bill"
-                : `Credit over the ${formatPaise(gate.limitPaise)} limit — needs approval`}
+                ? "Manager declined: take payment or reduce the bill"
+                : `Credit over the ${formatPaise(gate.limitPaise)} limit: needs approval`}
         </span>
       </span>
       {pending && (

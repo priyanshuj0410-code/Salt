@@ -175,11 +175,11 @@ export function GrnDetailPage() {
                   )}
                 </div>
                 <span className="truncate text-xs text-text-tertiary">
-                  {l.batch_no || "—"}
+                  {l.batch_no || "-"}
                   {l.expiry ? ` · ${l.expiry}` : ""}
                 </span>
                 <span className="text-right tabular-nums">{l.qty}</span>
-                <span className="text-right tabular-nums text-text-tertiary">{l.free_qty || "—"}</span>
+                <span className="text-right tabular-nums text-text-tertiary">{l.free_qty || "-"}</span>
                 <span className="text-right tabular-nums">{formatPaise(l.ptr_paise)}</span>
                 <span className="text-right tabular-nums text-text-tertiary">{l.gst_rate}%</span>
                 <span className="text-right tabular-nums">{formatPaise(l.taxable_paise)}</span>

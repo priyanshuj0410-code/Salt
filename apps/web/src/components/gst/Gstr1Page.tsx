@@ -235,7 +235,7 @@ export function Gstr1Page() {
       {filerGstin ? (
         <span className="tabular-nums">{filerGstin}</span>
       ) : (
-        <span className="text-warning">no GSTIN set on this shop — set it in Settings before filing</span>
+        <span className="text-warning">no GSTIN set on this shop. Set it in Settings before filing</span>
       )}
     </span>
   );
@@ -244,7 +244,7 @@ export function Gstr1Page() {
     <Page width="lg">
       <PageHeader
         icon={Landmark}
-        title="GSTR-1 — outward supplies"
+        title="GSTR-1: outward supplies"
         subtitle={subtitle}
         actions={
           <>
@@ -296,7 +296,7 @@ export function Gstr1Page() {
             <StatCard label="Invoices" value={summary.invoiceCount} hint={`${summary.hsn.length} HSN × rate rows`} />
           </div>
 
-          <Section title="B2B — registered recipients" count={summary.b2b.length}>
+          <Section title="B2B: registered recipients" count={summary.b2b.length}>
             <DataTable<B2bParty>
               cols="1.5fr 1.6fr 0.7fr 1fr 0.9fr 0.9fr 0.9fr"
               rows={summary.b2b}
@@ -305,7 +305,7 @@ export function Gstr1Page() {
               empty="No B2B sales (no recipient had a GSTIN)."
               columns={[
                 { key: "gstin", header: "GSTIN", cell: (r) => <span className="tabular-nums">{r.gstin}</span> },
-                { key: "name", header: "Party", cell: (r) => r.name || "—" },
+                { key: "name", header: "Party", cell: (r) => r.name || "-" },
                 { key: "inv", header: "Invoices", numeric: true, cell: (r) => r.invoices.length },
                 { key: "tax", header: "Taxable", numeric: true, cell: (r) => formatPaise(r.taxablePaise) },
                 { key: "cgst", header: "CGST", numeric: true, cell: (r) => formatPaise(r.cgstPaise) },
@@ -315,7 +315,7 @@ export function Gstr1Page() {
             />
           </Section>
 
-          <Section title="B2C (small) — by place of supply & rate" count={summary.b2cs.length}>
+          <Section title="B2C (small): by place of supply & rate" count={summary.b2cs.length}>
             <DataTable<B2csRow>
               cols="0.8fr 0.8fr 0.7fr 1fr 0.9fr 0.9fr 0.9fr"
               rows={summary.b2cs}
@@ -323,7 +323,7 @@ export function Gstr1Page() {
               loading={loading}
               empty="No B2C sales this period."
               columns={[
-                { key: "pos", header: "POS", cell: (r) => <span className="tabular-nums">{r.pos || "—"}</span> },
+                { key: "pos", header: "POS", cell: (r) => <span className="tabular-nums">{r.pos || "-"}</span> },
                 { key: "type", header: "Supply", cell: (r) => r.supplyType },
                 { key: "rate", header: "Rate", numeric: true, cell: (r) => pct(r.rate) },
                 { key: "tax", header: "Taxable", numeric: true, cell: (r) => formatPaise(r.taxablePaise) },
@@ -335,7 +335,7 @@ export function Gstr1Page() {
           </Section>
 
           {summary.b2cl.length > 0 && (
-            <Section title="B2C (large) — inter-state invoices ≥ ₹2.5L" count={summary.b2cl.length}>
+            <Section title="B2C (large): inter-state invoices ≥ ₹2.5L" count={summary.b2cl.length}>
               <DataTable<B2clInvoice>
                 cols="1.2fr 0.7fr 1fr 1fr 1fr 1fr"
                 rows={summary.b2cl}
@@ -343,7 +343,7 @@ export function Gstr1Page() {
                 loading={loading}
                 columns={[
                   { key: "inv", header: "Invoice", cell: (r) => <span className="tabular-nums">{r.invoiceNo}</span> },
-                  { key: "pos", header: "POS", cell: (r) => <span className="tabular-nums">{r.pos || "—"}</span> },
+                  { key: "pos", header: "POS", cell: (r) => <span className="tabular-nums">{r.pos || "-"}</span> },
                   { key: "date", header: "Date", cell: (r) => r.date },
                   { key: "tax", header: "Taxable", numeric: true, cell: (r) => formatPaise(r.taxablePaise) },
                   { key: "igst", header: "IGST", numeric: true, cell: (r) => formatPaise(r.igstPaise) },
@@ -354,7 +354,7 @@ export function Gstr1Page() {
           )}
 
           {cnSections.cdnr.length > 0 && (
-            <Section title="CDNR — credit notes to registered recipients" count={cnSections.cdnr.length}>
+            <Section title="CDNR: credit notes to registered recipients" count={cnSections.cdnr.length}>
               <DataTable<CdnrRow>
                 cols="1.2fr 1fr 1.2fr 0.6fr 1fr 0.9fr 0.9fr 0.9fr"
                 rows={cnSections.cdnr}
@@ -373,7 +373,7 @@ export function Gstr1Page() {
                           {r.origInvoiceDate && <span className="ml-1 text-text-tertiary">{r.origInvoiceDate}</span>}
                         </span>
                       ) : (
-                        "—"
+                        "-"
                       ),
                   },
                   { key: "rate", header: "Rate", numeric: true, cell: (r) => pct(r.rate) },
@@ -387,7 +387,7 @@ export function Gstr1Page() {
           )}
 
           {cnSections.cdnur.length > 0 && (
-            <Section title="CDNUR — credit notes to unregistered (B2C)" count={cnSections.cdnur.length}>
+            <Section title="CDNUR: credit notes to unregistered (B2C)" count={cnSections.cdnur.length}>
               <DataTable<CdnurRow>
                 cols="1fr 1.2fr 0.7fr 0.6fr 1fr 0.9fr 0.9fr 0.9fr"
                 rows={cnSections.cdnur}
@@ -405,10 +405,10 @@ export function Gstr1Page() {
                           {r.origInvoiceDate && <span className="ml-1 text-text-tertiary">{r.origInvoiceDate}</span>}
                         </span>
                       ) : (
-                        "—"
+                        "-"
                       ),
                   },
-                  { key: "pos", header: "POS", cell: (r) => <span className="tabular-nums">{r.pos || "—"}</span> },
+                  { key: "pos", header: "POS", cell: (r) => <span className="tabular-nums">{r.pos || "-"}</span> },
                   { key: "rate", header: "Rate", numeric: true, cell: (r) => pct(r.rate) },
                   { key: "tax", header: "Taxable", numeric: true, cell: (r) => `− ${formatPaise(r.taxablePaise)}` },
                   { key: "cgst", header: "CGST", numeric: true, cell: (r) => formatPaise(r.cgstPaise) },

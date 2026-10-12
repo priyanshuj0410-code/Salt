@@ -115,7 +115,7 @@ export function DiscountLimitsPage() {
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <Field label="Max discount %" hint="e.g. 10 — discounts above 10% need approval.">
+            <Field label="Max discount %" hint="e.g. 10: discounts above 10% need approval.">
               <div className="relative">
                 <Input
                   type="number"

@@ -155,7 +155,7 @@ export function SchemeDialog({
                 <Input
                   value={itemQuery}
                   onChange={(e) => setItemQuery(e.target.value)}
-                  placeholder="All items — or search to scope to one"
+                  placeholder="All items: or search to scope to one"
                   className="h-9"
                 />
                 {itemResults.length > 0 && (

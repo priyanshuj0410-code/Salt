@@ -193,7 +193,7 @@ export function H1Notice({
         <span className="truncate font-medium">
           {rxCaptured
             ? `Prescription recorded${doctorName ? ` · ${doctorName}` : ""}`
-            : "Schedule H1/X — prescription required"}
+            : "Schedule H1/X: prescription required"}
         </span>
       </span>
       <span className="shrink-0 text-xs font-medium underline-offset-2 hover:underline">

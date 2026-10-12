@@ -38,18 +38,18 @@ const SELECT = "id,license_type,license_no,holder_name,issued_date,expiry_date,n
 
 /** Common Drugs & Cosmetics Rules license forms — suggestions, not a closed list. */
 const LICENSE_TYPES = [
-  "Form 20 (retail — allopathic)",
-  "Form 21 (retail — Schedule C & C1)",
+  "Form 20 (retail, allopathic)",
+  "Form 21 (retail, Schedule C & C1)",
   "Form 20A (restricted retail)",
-  "Form 20B (wholesale — allopathic)",
-  "Form 21B (wholesale — Schedule C & C1)",
-  "Form 20F (Schedule X — retail)",
-  "Form 21F (Schedule X — wholesale)",
-  "Form 20C (homeopathic — retail)",
-  "Form 20D (homeopathic — wholesale)",
+  "Form 20B (wholesale, allopathic)",
+  "Form 21B (wholesale, Schedule C & C1)",
+  "Form 20F (Schedule X, retail)",
+  "Form 21F (Schedule X, wholesale)",
+  "Form 20C (homeopathic, retail)",
+  "Form 20D (homeopathic, wholesale)",
 ];
 
-const fmtDate = (d: string | null) => (d ? format(parseISO(d), "d MMM yyyy") : "—");
+const fmtDate = (d: string | null) => (d ? format(parseISO(d), "d MMM yyyy") : "-");
 
 interface Draft {
   id?: string;
@@ -151,9 +151,9 @@ export function DrugLicensesPage() {
             <span className="font-medium">
               {alert.count} license{alert.count === 1 ? "" : "s"} need attention
             </span>
-            {alert.expired > 0 && ` — ${alert.expired} already expired`}.{" "}
+            {alert.expired > 0 && `: ${alert.expired} already expired`}.{" "}
             <span className="text-text-secondary">
-              Soonest: {soonest.license_type} ({soonest.license_no}) — {soonestStatus.label.toLowerCase()}.
+              Soonest: {soonest.license_type} ({soonest.license_no}): {soonestStatus.label.toLowerCase()}.
             </span>
           </div>
         </div>
@@ -190,7 +190,7 @@ export function DrugLicensesPage() {
               </>
             ),
           },
-          { key: "holder", header: "Holder", cell: (l) => l.holder_name ?? <span className="text-text-tertiary">—</span> },
+          { key: "holder", header: "Holder", cell: (l) => l.holder_name ?? <span className="text-text-tertiary">-</span> },
           { key: "issued", header: "Issued", cell: (l) => <span className="text-text-tertiary">{fmtDate(l.issued_date)}</span> },
           { key: "expiry", header: "Expiry", cell: (l) => fmtDate(l.expiry_date) },
           {
@@ -331,12 +331,12 @@ function LicenseForm({
           <Input
             value={draft.license_no}
             onChange={(e) => edit("license_no", e.target.value)}
-            placeholder="—"
+            placeholder="-"
             className="font-mono text-xs"
           />
         </Field>
         <Field label="Holder name" hint="Whose name the license is issued in.">
-          <Input value={draft.holder_name} onChange={(e) => edit("holder_name", e.target.value)} placeholder="—" />
+          <Input value={draft.holder_name} onChange={(e) => edit("holder_name", e.target.value)} placeholder="-" />
         </Field>
         <div className="hidden sm:block" />
         <Field label="Issued date">
@@ -351,7 +351,7 @@ function LicenseForm({
             value={draft.notes}
             onChange={(e) => edit("notes", e.target.value)}
             rows={2}
-            placeholder="—"
+            placeholder="-"
             className="w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm focus-visible:border-ring"
           />
         </label>

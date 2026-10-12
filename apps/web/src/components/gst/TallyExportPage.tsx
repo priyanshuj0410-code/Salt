@@ -162,11 +162,11 @@ export function TallyExportPage() {
               <strong>Purchase</strong> voucher per GRN for {period}, each a balanced double entry with the GST split:
             </p>
             <ul className="ml-4 list-disc text-text-tertiary">
-              <li>Sale — Dr party/Cash · Cr Sales (taxable) · Cr Output CGST/SGST/IGST</li>
-              <li>Purchase — Dr Purchase (taxable) · Dr Input CGST/SGST/IGST · Cr vendor</li>
+              <li>Sale: Dr party/Cash · Cr Sales (taxable) · Cr Output CGST/SGST/IGST</li>
+              <li>Purchase: Dr Purchase (taxable) · Dr Input CGST/SGST/IGST · Cr vendor</li>
             </ul>
             <p className="text-text-tertiary">
-              Ledgers are referenced by name (Sales, Purchase, Output/Input CGST/SGST/IGST, Cash, and party names) — Tally maps or
+              Ledgers are referenced by name (Sales, Purchase, Output/Input CGST/SGST/IGST, Cash, and party names), Tally maps or
               creates them on import. Cash/UPI/card bills post to <strong>Cash</strong>; credit bills to the party ledger.
             </p>
           </section>

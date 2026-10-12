@@ -53,8 +53,8 @@ export function DiscountApprovalNotice({ gate, onCancel }: { gate: DiscountGate;
             : pending
               ? "Waiting for manager approval…"
               : rejected
-                ? "Manager declined — adjust the discount"
-                : `Discount ${gate.pct.toFixed(1)}% over the ${limitText} — needs approval`}
+                ? "Manager declined: adjust the discount"
+                : `Discount ${gate.pct.toFixed(1)}% over the ${limitText}: needs approval`}
         </span>
       </span>
       {pending && (

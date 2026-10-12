@@ -119,13 +119,13 @@ export function CreateItemDialog({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Salt / molecule">
-              <Input value={form.salt} onChange={(e) => set("salt", e.target.value)} placeholder="—" className="h-9" />
+              <Input value={form.salt} onChange={(e) => set("salt", e.target.value)} placeholder="-" className="h-9" />
             </Field>
             <Field label="Manufacturer">
               <Input
                 value={form.manufacturer}
                 onChange={(e) => set("manufacturer", e.target.value)}
-                placeholder="—"
+                placeholder="-"
                 className="h-9"
               />
             </Field>
@@ -141,7 +141,7 @@ export function CreateItemDialog({
               <Input
                 value={form.hsn}
                 onChange={(e) => set("hsn", e.target.value)}
-                placeholder="—"
+                placeholder="-"
                 className="h-9 font-mono text-xs"
               />
             </Field>

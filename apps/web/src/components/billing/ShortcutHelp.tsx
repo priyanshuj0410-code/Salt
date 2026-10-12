@@ -23,7 +23,7 @@ const staticGroups: { title: string; items: [string, string][] }[] = [
     items: [
       ["Type", "Filter the catalogue by name, salt, manufacturer, HSN or barcode"],
       ["↑ / ↓", "Move between search results"],
-      ["Enter", "Add the highlighted item (FEFO batch) — or its best substitute if out of stock"],
+      ["Enter", "Add the highlighted item (FEFO batch), or its best substitute if out of stock"],
       ["Esc", "Clear the search box"],
       ["↓", "From an empty search box, jump into the bill"],
     ],
@@ -66,7 +66,7 @@ export function ShortcutHelp({
         return;
       }
       const key = keyFromEvent(e);
-      if (!key) return; // bare modifier — keep listening for the real key
+      if (!key) return; // bare modifier: keep listening for the real key
       e.preventDefault();
       e.stopPropagation();
       const conflict = rebind(editing, key);
@@ -96,7 +96,7 @@ export function ShortcutHelp({
           <div>
             <div className="mb-1.5 flex items-center justify-between">
               <p className="text-xs font-medium uppercase tracking-wide text-text-tertiary">
-                Actions — click a key to rebind
+                Actions: click a key to rebind
               </p>
               <Button
                 variant="ghost"

@@ -227,7 +227,7 @@ export function buildReceiptMessage(opts: {
 }): string {
   const verb = opts.direction === "received" ? "Received from" : "Paid to";
   return [
-    opts.shopName?.trim() ? `*${opts.shopName.trim()}* — Payment Receipt` : "Payment Receipt",
+    opts.shopName?.trim() ? `*${opts.shopName.trim()}*: Payment Receipt` : "Payment Receipt",
     "",
     `${verb}: ${opts.partyName}`,
     `Amount: ${formatPaise(opts.amountPaise)}`,

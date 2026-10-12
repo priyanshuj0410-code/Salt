@@ -138,7 +138,7 @@ export function RecordPaymentDialog({
     } catch (e) {
       setError(
         e instanceof TimeoutError
-          ? "Taking too long — it may have gone through. Check before retrying."
+          ? "Taking too long: it may have gone through. Check before retrying."
           : e instanceof Error
             ? e.message
             : "Could not record the payment. Please try again.",
@@ -260,7 +260,7 @@ export function RecordPaymentDialog({
 
           {/* Notes */}
           <FormRow label="Notes (optional)">
-            <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="—" className="h-9" />
+            <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="-" className="h-9" />
           </FormRow>
 
           {/* Collected by (salesman) — receipts only (SALT-193) */}
@@ -271,7 +271,7 @@ export function RecordPaymentDialog({
                 onChange={(e) => setSalesmanId(e.target.value)}
                 className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
               >
-                <option value="">—</option>
+                <option value="">-</option>
                 {salesmen.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -281,7 +281,7 @@ export function RecordPaymentDialog({
             </FormRow>
           )}
 
-          {!shopId && <p className="text-xs text-warning">No shop selected — pick a shop before recording.</p>}
+          {!shopId && <p className="text-xs text-warning">No shop selected: pick a shop before recording.</p>}
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button onClick={submit} disabled={busy || !shopId || !partyId}>
             <Wallet /> {busy ? "Recording…" : direction === "received" ? "Record receipt" : "Record payment"}

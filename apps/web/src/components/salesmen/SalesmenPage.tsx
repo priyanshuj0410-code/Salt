@@ -117,7 +117,7 @@ export function SalesmenPage() {
         subtitle={
           rows.length > 0
             ? `${totals.active} active · ${rows.length} total`
-            : "Field salesmen — orders, commission and collections"
+            : "Field salesmen: orders, commission and collections"
         }
         actions={
           <Button onClick={() => setEditing(BLANK_SALESMAN)} disabled={!orgId}>
@@ -179,7 +179,7 @@ export function SalesmenPage() {
             key: "commission_pct",
             header: "Comm %",
             numeric: true,
-            cell: (s) => <span className="text-text-secondary">{s.commission_pct ? `${s.commission_pct}%` : "—"}</span>,
+            cell: (s) => <span className="text-text-secondary">{s.commission_pct ? `${s.commission_pct}%` : "-"}</span>,
           },
           { key: "orders", header: "Orders", numeric: true, cell: (s) => (perf.get(s.id)?.orders ?? 0) || <span className="text-text-tertiary">0</span> },
           { key: "net", header: "Net sales", numeric: true, cell: (s) => formatPaise(perf.get(s.id)?.netSalesPaise ?? 0) },

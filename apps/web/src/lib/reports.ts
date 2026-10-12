@@ -84,7 +84,7 @@ export function topItemsSold(lines: SoldLineRow[], limit = 10): ItemSold[] {
     const key = l.item_id ?? `name:${l.name}`;
     let row = map.get(key);
     if (!row) {
-      row = { itemId: l.item_id, name: l.name || "—", qty: 0, valuePaise: 0 };
+      row = { itemId: l.item_id, name: l.name || "-", qty: 0, valuePaise: 0 };
       map.set(key, row);
     }
     row.qty += l.qty;

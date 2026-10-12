@@ -58,7 +58,7 @@ export function DropAllPanel({ onRoute }: { onRoute: (stepKey: string, file: Fil
       <div className="mb-3">
         <p className="text-sm font-medium">Drop everything</p>
         <p className="mt-0.5 text-xs text-text-tertiary">
-          Drop all your Marg exports at once — we detect what each file is and send it to the right step.
+          Drop all your Marg exports at once. We detect what each file is and send it to the right step.
           Anything we are unsure about, you place yourself.
         </p>
       </div>
@@ -101,7 +101,7 @@ export function DropAllPanel({ onRoute }: { onRoute: (stepKey: string, file: Fil
                       ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                       : "bg-amber-500/10 text-amber-700 dark:text-amber-500",
                   )}
-                  title={confident ? "Detected" : "Low confidence — pick the right step or handle it in the stepper"}
+                  title={confident ? "Detected" : "Low confidence: pick the right step or handle it in the stepper"}
                 >
                   {confident ? `${pct}% match` : r.cls.matches[0] ? `${pct}% (unsure)` : "unknown"}
                 </span>
@@ -110,7 +110,7 @@ export function DropAllPanel({ onRoute }: { onRoute: (stepKey: string, file: Fil
                   onChange={(e) => setChosen(r.id, e.target.value)}
                   className="h-8 shrink-0 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
                 >
-                  <option value="">— handle manually —</option>
+                  <option value="">Handle manually</option>
                   {CANDIDATES.map((c) => (
                     <option key={c.stepKey} value={c.stepKey}>
                       {c.label}

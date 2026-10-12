@@ -29,7 +29,7 @@ export const PURCHASE_DOC: DocumentConfig = {
   table: "purchases",
   lineTable: "purchase_lines",
   lineFk: "purchase_id",
-  description: "Your purchase / GRN register — one row per line, grouped into bills.",
+  description: "Your purchase / GRN register, one row per line, grouped into bills.",
   tip: "Export the purchase register with item + batch detail. Imported as records (no stock re-posting); vendors must already exist (import ledgers first).",
   headerFields: [
     { key: "doc_no", label: "Bill / GRN no", required: true, aliases: ["bill no", "invoice no", "grn no", "purchase no", "voucher no", "vendor invoice", "ref no", "bill"] },
@@ -60,7 +60,7 @@ export const SALES_DOC: DocumentConfig = {
   table: "sales_invoices",
   lineTable: "sale_lines",
   lineFk: "invoice_id",
-  description: "Your sales register — one row per line, grouped into invoices.",
+  description: "Your sales register: one row per line, grouped into invoices.",
   tip: "Export the sale register with item + batch detail. Imported as records (no stock/ledger re-posting); unknown customers import as walk-in.",
   headerFields: [
     { key: "doc_no", label: "Invoice no", required: true, aliases: ["invoice no", "bill no", "voucher no", "sale no", "ref no", "invoice", "bill"] },
@@ -89,7 +89,7 @@ export const CREDIT_NOTE_DOC: DocumentConfig = {
   table: "credit_notes",
   lineTable: "credit_note_lines",
   lineFk: "credit_note_id",
-  description: "Your sales-return register (credit notes) — one row per line, grouped by note no.",
+  description: "Your sales-return register (credit notes), one row per line, grouped by note no.",
   tip: "Export the sales-return register with item detail. Imported as records (no stock/ledger re-posting); unknown customers import as walk-in.",
   headerFields: [
     { key: "doc_no", label: "Note no", required: true, aliases: ["note no", "credit note no", "cn no", "return no", "voucher no", "ref no", "note", "bill no"] },
@@ -118,7 +118,7 @@ export const DEBIT_NOTE_DOC: DocumentConfig = {
   table: "debit_notes",
   lineTable: "debit_note_lines",
   lineFk: "debit_note_id",
-  description: "Your purchase-return register (debit notes) — one row per line, grouped by note no.",
+  description: "Your purchase-return register (debit notes), one row per line, grouped by note no.",
   tip: "Export the purchase-return register with item detail. Imported as records (no stock re-posting); vendors must already exist (import ledgers first).",
   headerFields: [
     { key: "doc_no", label: "Note no", required: true, aliases: ["note no", "debit note no", "dn no", "return no", "voucher no", "ref no", "note", "bill no"] },

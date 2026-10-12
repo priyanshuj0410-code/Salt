@@ -114,8 +114,8 @@ export function FinancialReportsPage() {
         fetchAllPaged<PnlFetchRow>((f, t) => db.from("v_pnl").select("amount_paise").eq("org_id", orgId).range(f, t)),
       ]);
       if (!active) return;
-      setRecv(r.map((x) => ({ ...x, party_id: x.party_id ?? "", name: x.party_name ?? "—" })));
-      setPay(p.map((x) => ({ ...x, party_id: x.vendor_id ?? "", name: x.vendor_name ?? "—" })));
+      setRecv(r.map((x) => ({ ...x, party_id: x.party_id ?? "", name: x.party_name ?? "-" })));
+      setPay(p.map((x) => ({ ...x, party_id: x.vendor_id ?? "", name: x.vendor_name ?? "-" })));
       setTb(t);
       setBs(b);
       setRetainedPaise(sumBy(pnl, (x) => x.amount_paise));
@@ -227,7 +227,7 @@ export function FinancialReportsPage() {
       downloadCsv(
         `day-book-${periodTag}.csv`,
         ["Date", "Particulars", "Narration", "Debit", "Credit"],
-        entries.map((e) => [e.entry_date, e.chart_accounts?.name ?? e.ledgers?.name ?? "—", e.narration ?? "", paiseToRupeeStr(e.debit_paise), paiseToRupeeStr(e.credit_paise)]),
+        entries.map((e) => [e.entry_date, e.chart_accounts?.name ?? e.ledgers?.name ?? "-", e.narration ?? "", paiseToRupeeStr(e.debit_paise), paiseToRupeeStr(e.credit_paise)]),
       ),
     cashbook: () => exportBook("cash-book", cashBook),
     bankbook: () => exportBook("bank-book", bankBook),
@@ -326,10 +326,10 @@ export function FinancialReportsPage() {
                 loading={snapLoading}
                 empty={<EmptyState title="No ledger activity" hint="Posted documents build the trial balance." />}
                 columns={[
-                  { key: "code", header: "Code", cell: (r) => <span className="tabular-nums">{r.code ?? "—"}</span> },
+                  { key: "code", header: "Code", cell: (r) => <span className="tabular-nums">{r.code ?? "-"}</span> },
                   { key: "name", header: "Account", cell: (r) => r.name },
-                  { key: "dr", header: "Debit", numeric: true, cell: (r) => (r.debitPaise ? formatPaise(r.debitPaise) : "—") },
-                  { key: "cr", header: "Credit", numeric: true, cell: (r) => (r.creditPaise ? formatPaise(r.creditPaise) : "—") },
+                  { key: "dr", header: "Debit", numeric: true, cell: (r) => (r.debitPaise ? formatPaise(r.debitPaise) : "-") },
+                  { key: "cr", header: "Credit", numeric: true, cell: (r) => (r.creditPaise ? formatPaise(r.creditPaise) : "-") },
                 ]}
               />
               <div className="flex justify-end gap-6 px-3 text-sm">
@@ -355,10 +355,10 @@ export function FinancialReportsPage() {
               empty={<EmptyState title="No entries in range" hint="Every posted document writes balanced ledger entries." />}
               columns={[
                 { key: "date", header: "Date", cell: (e) => e.entry_date },
-                { key: "part", header: "Particulars", cell: (e) => e.chart_accounts?.name ?? e.ledgers?.name ?? "—" },
-                { key: "narr", header: "Narration", cell: (e) => e.narration ?? "—" },
-                { key: "dr", header: "Debit", numeric: true, cell: (e) => (e.debit_paise ? formatPaise(e.debit_paise) : "—") },
-                { key: "cr", header: "Credit", numeric: true, cell: (e) => (e.credit_paise ? formatPaise(e.credit_paise) : "—") },
+                { key: "part", header: "Particulars", cell: (e) => e.chart_accounts?.name ?? e.ledgers?.name ?? "-" },
+                { key: "narr", header: "Narration", cell: (e) => e.narration ?? "-" },
+                { key: "dr", header: "Debit", numeric: true, cell: (e) => (e.debit_paise ? formatPaise(e.debit_paise) : "-") },
+                { key: "cr", header: "Credit", numeric: true, cell: (e) => (e.credit_paise ? formatPaise(e.credit_paise) : "-") },
               ]}
             />
           )}
@@ -409,9 +409,9 @@ function AgingTable({
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="0–30" value={formatPaise(totals.d0_30Paise)} />
-        <StatCard label="31–60" value={formatPaise(totals.d31_60Paise)} />
-        <StatCard label="61–90" value={formatPaise(totals.d61_90Paise)} />
+        <StatCard label="0-30" value={formatPaise(totals.d0_30Paise)} />
+        <StatCard label="31-60" value={formatPaise(totals.d31_60Paise)} />
+        <StatCard label="61-90" value={formatPaise(totals.d61_90Paise)} />
         <StatCard label="90+" value={formatPaise(totals.d90_plusPaise)} tone={totals.d90_plusPaise > 0 ? "danger" : "default"} />
       </div>
       <DataTable
@@ -422,9 +422,9 @@ function AgingTable({
         empty={<EmptyState title={`No ${kind} outstanding`} />}
         columns={[
           { key: "name", header: kind === "receivables" ? "Customer" : "Vendor", cell: (r) => r.name },
-          { key: "d1", header: "0–30", numeric: true, cell: (r) => formatPaise(r.d0_30_paise) },
-          { key: "d2", header: "31–60", numeric: true, cell: (r) => formatPaise(r.d31_60_paise) },
-          { key: "d3", header: "61–90", numeric: true, cell: (r) => formatPaise(r.d61_90_paise) },
+          { key: "d1", header: "0-30", numeric: true, cell: (r) => formatPaise(r.d0_30_paise) },
+          { key: "d2", header: "31-60", numeric: true, cell: (r) => formatPaise(r.d31_60_paise) },
+          { key: "d3", header: "61-90", numeric: true, cell: (r) => formatPaise(r.d61_90_paise) },
           { key: "d4", header: "90+", numeric: true, cell: (r) => <span className={r.d90_plus_paise > 0 ? "text-danger" : undefined}>{formatPaise(r.d90_plus_paise)}</span> },
           { key: "out", header: "Outstanding", numeric: true, cell: (r) => <span className="font-medium">{formatPaise(r.outstanding_paise)}</span> },
         ]}
@@ -497,9 +497,9 @@ function BookTable({ rows, loading, label }: { rows: LedgerEntryRow[]; loading: 
       empty={<EmptyState title={`No ${label.toLowerCase()} movements in range`} hint={`${label} receipts and payments post here.`} />}
       columns={[
         { key: "date", header: "Date", cell: (r) => r.e.entry_date },
-        { key: "narr", header: "Narration", cell: (r) => r.e.narration ?? "—" },
-        { key: "dr", header: "Receipt", numeric: true, cell: (r) => (r.e.debit_paise ? formatPaise(r.e.debit_paise) : "—") },
-        { key: "cr", header: "Payment", numeric: true, cell: (r) => (r.e.credit_paise ? formatPaise(r.e.credit_paise) : "—") },
+        { key: "narr", header: "Narration", cell: (r) => r.e.narration ?? "-" },
+        { key: "dr", header: "Receipt", numeric: true, cell: (r) => (r.e.debit_paise ? formatPaise(r.e.debit_paise) : "-") },
+        { key: "cr", header: "Payment", numeric: true, cell: (r) => (r.e.credit_paise ? formatPaise(r.e.credit_paise) : "-") },
         { key: "bal", header: "Balance", numeric: true, cell: (r) => formatPaise(r.bal) },
       ]}
     />

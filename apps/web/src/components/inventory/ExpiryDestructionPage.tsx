@@ -168,7 +168,7 @@ export function ExpiryDestructionPage() {
             header: "Expiry",
             cell: (b) => (
               <span className={cn((b.daysToExpiry ?? 0) < 0 ? "text-danger" : "text-warning")}>
-                {b.expiryAt ? format(b.expiryAt, "MMM yyyy") : (b.expiry ?? "—")}
+                {b.expiryAt ? format(b.expiryAt, "MMM yyyy") : (b.expiry ?? "-")}
               </span>
             ),
           },
@@ -189,7 +189,7 @@ export function ExpiryDestructionPage() {
                   className="ml-auto w-16 text-right"
                 />
               ) : (
-                <span className="text-text-tertiary">—</span>
+                <span className="text-text-tertiary">-</span>
               ),
           },
           {
@@ -200,7 +200,7 @@ export function ExpiryDestructionPage() {
               sel[b.batch_id] != null ? (
                 formatPaise(itcReversalPaise(sel[b.batch_id], b.ptr_paise, b.gst_rate))
               ) : (
-                <span className="text-text-tertiary">—</span>
+                <span className="text-text-tertiary">-</span>
               ),
           },
         ]}

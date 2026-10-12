@@ -169,13 +169,13 @@ export function CreatePartyDialog({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <FormRow label="Phone">
-              <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="—" className="h-9" />
+              <Input value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="-" className="h-9" />
             </FormRow>
             <FormRow label="GSTIN">
               <Input
                 value={form.gstin}
                 onChange={(e) => onGstin(e.target.value)}
-                placeholder="—"
+                placeholder="-"
                 className="h-9 font-mono text-xs uppercase"
               />
             </FormRow>
@@ -185,7 +185,7 @@ export function CreatePartyDialog({
                 onChange={(e) => set("stateCode", e.target.value)}
                 className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
               >
-                <option value="">—</option>
+                <option value="">-</option>
                 {INDIAN_STATE_CODES.map((s) => (
                   <option key={s.code} value={s.code}>
                     {s.code} · {s.name}
@@ -210,7 +210,7 @@ export function CreatePartyDialog({
                   onChange={(e) => set("group", e.target.value)}
                   className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
                 >
-                  <option value="">—</option>
+                  <option value="">-</option>
                   {CUSTOMER_GROUPS.map((g) => (
                     <option key={g} value={g}>
                       {g}
@@ -222,7 +222,7 @@ export function CreatePartyDialog({
           </div>
 
           <FormRow label="Address">
-            <Input value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="—" className="h-9" />
+            <Input value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="-" className="h-9" />
           </FormRow>
 
           <div className="flex flex-col gap-1">
@@ -254,7 +254,7 @@ export function CreatePartyDialog({
               </Button>
             </div>
             <span className="text-xs text-text-tertiary">
-              {form.openingDir === "dr" ? "Dr — they owe you (receivable)" : "Cr — you owe them (payable)"}
+              {form.openingDir === "dr" ? "Dr: they owe you (receivable)" : "Cr: you owe them (payable)"}
             </span>
           </div>
 

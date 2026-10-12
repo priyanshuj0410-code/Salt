@@ -115,7 +115,7 @@ export function ApprovalsPage() {
       <PageHeader
         icon={ShieldCheck}
         title="Approvals"
-        subtitle="Requests raised at the counter — approve or reject from any device, live"
+        subtitle="Requests raised at the counter, approve or reject from any device, live"
         actions={
           <>
             <OnlineCounters />
@@ -138,7 +138,7 @@ export function ApprovalsPage() {
         <EmptyState
           icon={ShieldCheck}
           title="No approval requests"
-          hint="Raise one here, or wire the counter to request manager sign-off — it shows up live on every device."
+          hint="Raise one here, or wire the counter to request manager sign-off. It shows up live on every device."
         />
       ) : (
         <div className="space-y-6">

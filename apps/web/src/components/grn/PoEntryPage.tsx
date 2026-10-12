@@ -108,7 +108,7 @@ export function PoEntryPage() {
     } catch (e) {
       setError(
         e instanceof TimeoutError
-          ? "Saving is taking too long — it may have gone through. Check Purchase orders before saving again."
+          ? "Saving is taking too long. It may have gone through. Check Purchase orders before saving again."
           : "Could not save the purchase order. Please try again.",
       );
     } finally {
@@ -152,13 +152,13 @@ export function PoEntryPage() {
           <Input type="date" value={expectedDate} onChange={(e) => setExpectedDate(e.target.value)} className="h-9" />
         </Field>
         <Field label="Notes">
-          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="—" className="h-9" />
+          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="-" className="h-9" />
         </Field>
       </div>
 
       {usingSeed && (
         <p className="mt-3 rounded-md bg-warning-bg px-3 py-2 text-sm text-warning">
-          Demo catalogue — import or add your items before raising a purchase order.
+          Demo catalogue: import or add your items before raising a purchase order.
         </p>
       )}
 

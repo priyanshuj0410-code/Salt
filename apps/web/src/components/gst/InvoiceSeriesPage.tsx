@@ -165,7 +165,7 @@ export function InvoiceSeriesPage() {
         rows={rows}
         rowKey={(r) => r.id}
         loading={loading}
-        empty="No series yet — a DEFAULT one is created on the first bill, or add one below."
+        empty="No series yet: a DEFAULT one is created on the first bill, or add one below."
         columns={[
           {
             key: "code",
@@ -179,7 +179,7 @@ export function InvoiceSeriesPage() {
             ),
           },
           { key: "preview", header: "Next number", cell: (r) => <span className="tabular-nums">{seriesPreview(r.prefix ?? "", fy, r.number_width, r.next_number)}</span> },
-          { key: "prefix", header: "Prefix", cell: (r) => r.prefix || "—" },
+          { key: "prefix", header: "Prefix", cell: (r) => r.prefix || "-" },
           { key: "width", header: "Width", numeric: true, cell: (r) => r.number_width },
           {
             key: "actions",

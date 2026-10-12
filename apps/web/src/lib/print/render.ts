@@ -117,7 +117,7 @@ function sheetItemRow(l: InvoiceLine, i: number, showBatchExpiry: boolean): stri
     <td>${esc(l.hsn ?? "")}</td>
     <td class="r">${l.qty}</td>
     <td class="r">${formatPaise(l.mrpPaise)}</td>
-    <td class="r">${disc > 0 ? formatPaise(disc) : "—"}</td>
+    <td class="r">${disc > 0 ? formatPaise(disc) : "-"}</td>
     <td class="r">${formatPaise(taxable)}</td>
     <td class="r">${l.gstRate}%</td>
     <td class="r">${formatPaise(l.netPaise)}</td>
@@ -137,7 +137,7 @@ function sheetBody(d: InvoicePrintData, meta: DocMeta, t: PrintTemplate, lang: P
     .join(" · ");
   const posCode = d.customer?.state_code ?? d.shop.state_code;
   const posName = stateName(posCode);
-  const supply = `${posName || "—"}${posCode ? ` (${esc(posCode)})` : ""} · ${d.isInterstate ? "Inter-state" : "Intra-state"}`;
+  const supply = `${posName || "-"}${posCode ? ` (${esc(posCode)})` : ""} · ${d.isInterstate ? "Inter-state" : "Intra-state"}`;
   const taxRows = d.isInterstate
     ? `<tr><td>${L("igst", lang)}</td><td>${formatPaise(d.igst)}</td></tr>`
     : `<tr><td>${L("cgst", lang)}</td><td>${formatPaise(d.cgst)}</td></tr><tr><td>${L("sgst", lang)}</td><td>${formatPaise(d.sgst)}</td></tr>`;

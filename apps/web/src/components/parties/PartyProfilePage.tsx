@@ -282,7 +282,7 @@ export function PartyProfilePage() {
     } catch (e) {
       setPayError(
         e instanceof TimeoutError
-          ? "Taking too long — it may have gone through. Check before retrying."
+          ? "Taking too long: it may have gone through. Check before retrying."
           : "Could not record the payment. Please try again.",
       );
     } finally {
@@ -401,7 +401,7 @@ export function PartyProfilePage() {
             <Input
               value={ledger.gstin ?? ""}
               onChange={(e) => edit("gstin", e.target.value)}
-              placeholder="—"
+              placeholder="-"
               className="h-8 font-mono text-xs uppercase"
             />
           </Field>
@@ -411,7 +411,7 @@ export function PartyProfilePage() {
               onChange={(e) => edit("state_code", e.target.value || null)}
               className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
             >
-              <option value="">—</option>
+              <option value="">-</option>
               {INDIAN_STATE_CODES.map((s) => (
                 <option key={s.code} value={s.code}>
                   {s.code} · {s.name}
@@ -420,10 +420,10 @@ export function PartyProfilePage() {
             </select>
           </Field>
           <Field label="Phone">
-            <Input value={ledger.phone ?? ""} onChange={(e) => edit("phone", e.target.value)} placeholder="—" className="h-8" />
+            <Input value={ledger.phone ?? ""} onChange={(e) => edit("phone", e.target.value)} placeholder="-" className="h-8" />
           </Field>
           <Field label="Address">
-            <Input value={ledger.address ?? ""} onChange={(e) => edit("address", e.target.value)} placeholder="—" className="h-8" />
+            <Input value={ledger.address ?? ""} onChange={(e) => edit("address", e.target.value)} placeholder="-" className="h-8" />
           </Field>
           <Field label="Credit limit (₹)">
             <Input
@@ -517,7 +517,7 @@ export function PartyProfilePage() {
                   </span>
                 ),
               },
-              { key: "ref", header: "Reference", cell: (p) => <span className="text-text-tertiary">{p.reference || "—"}</span> },
+              { key: "ref", header: "Reference", cell: (p) => <span className="text-text-tertiary">{p.reference || "-"}</span> },
               {
                 key: "amount",
                 header: "Amount",
@@ -538,7 +538,7 @@ export function PartyProfilePage() {
       {bills.length > 0 && (
         <section className="mt-6">
           <h2 className="mb-2 text-sm font-medium text-text-primary">
-            Open bills <span className="text-xs font-normal text-text-tertiary">(from import — breakdown of opening balance)</span>
+            Open bills <span className="text-xs font-normal text-text-tertiary">(from import, breakdown of opening balance)</span>
           </h2>
           <DataTable
             cols="1fr 0.9fr 0.9fr 0.7fr"
@@ -546,8 +546,8 @@ export function PartyProfilePage() {
             rowKey={(b) => b.id}
             maxHeight="18rem"
             columns={[
-              { key: "ref", header: "Ref", cell: (b) => <span className="font-mono text-xs">{b.ref_no || "—"}</span> },
-              { key: "date", header: "Date", cell: (b) => <span className="text-text-tertiary">{b.bill_date ? format(new Date(b.bill_date), "d MMM yyyy") : "—"}</span> },
+              { key: "ref", header: "Ref", cell: (b) => <span className="font-mono text-xs">{b.ref_no || "-"}</span> },
+              { key: "date", header: "Date", cell: (b) => <span className="text-text-tertiary">{b.bill_date ? format(new Date(b.bill_date), "d MMM yyyy") : "-"}</span> },
               {
                 key: "amount",
                 header: "Amount",
@@ -558,7 +558,7 @@ export function PartyProfilePage() {
                   </>
                 ),
               },
-              { key: "days", header: "Days", numeric: true, cell: (b) => <span className="text-text-tertiary">{b.days_overdue ?? "—"}</span> },
+              { key: "days", header: "Days", numeric: true, cell: (b) => <span className="text-text-tertiary">{b.days_overdue ?? "-"}</span> },
             ]}
           />
         </section>

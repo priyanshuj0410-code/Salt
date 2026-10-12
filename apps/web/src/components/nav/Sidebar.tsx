@@ -120,7 +120,7 @@ function IconItem({ mod, current }: { mod: NavModule; current: string }) {
     );
   }
   return (
-    <div className={cn(base, disabledCls)} title={`${mod.label} — not built yet`}>
+    <div className={cn(base, disabledCls)} title={`${mod.label}: not built yet`}>
       <Icon className="size-4" />
     </div>
   );
@@ -209,7 +209,7 @@ export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; 
       </div>
 
       {/* The one persistent action — the verb derived from the user's atoms (SALT-4 Slice 2). */}
-      {LENS_V2 && lens.persistentAction.label !== "—" && (
+      {LENS_V2 && lens.persistentAction.label !== "-" && (
         <div className="border-b border-sidebar-border p-2">
           <NavLink
             to={lens.persistentAction.route}
@@ -250,7 +250,7 @@ export function Sidebar({ expanded = false, onNavigate }: { expanded?: boolean; 
       </nav>
 
       {/* Footer: active-shop switcher (multi-shop orgs) + signed-in user.
-          design.md — brand at top, user here, not on each screen. */}
+          design.md: brand at top, user here, not on each screen. */}
       <div className="border-t border-sidebar-border p-2">
         {!collapsed && <ShopSwitcher />}
         {collapsed ? (

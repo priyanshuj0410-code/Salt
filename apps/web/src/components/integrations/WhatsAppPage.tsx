@@ -73,7 +73,7 @@ function ConnectionCard({
           </Badge>
         </CardTitle>
         <CardDescription>
-          Click-to-chat opens WhatsApp with the message pre-filled — works today, no setup. Enable the
+          Click-to-chat opens WhatsApp with the message pre-filled, works today, no setup. Enable the
           Business API to send automatically from the server.
         </CardDescription>
       </CardHeader>

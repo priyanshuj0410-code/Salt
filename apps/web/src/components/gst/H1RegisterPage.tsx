@@ -75,7 +75,7 @@ export function H1RegisterPage() {
       setRows(
         ((regRes.data as unknown as H1Fetch[] | null) ?? []).map((r) => ({
           soldAt: r.sold_at,
-          drugName: r.drug_name ?? "—",
+          drugName: r.drug_name ?? "-",
           schedule: r.schedule,
           qty: r.qty,
           batchNo: r.batch_no ?? "",
@@ -166,14 +166,14 @@ export function H1RegisterPage() {
               { key: "drug", header: "Drug", cell: (r) => r.drugName },
               { key: "sch", header: "Sch", cell: (r) => r.schedule },
               { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty },
-              { key: "batch", header: "Batch", cell: (r) => <span className="tabular-nums">{r.batchNo || "—"}</span> },
-              { key: "expiry", header: "Expiry", cell: (r) => <span className="tabular-nums">{r.expiry || "—"}</span> },
+              { key: "batch", header: "Batch", cell: (r) => <span className="tabular-nums">{r.batchNo || "-"}</span> },
+              { key: "expiry", header: "Expiry", cell: (r) => <span className="tabular-nums">{r.expiry || "-"}</span> },
               {
                 key: "doctor",
                 header: "Prescriber",
                 cell: (r) => (
                   <div>
-                    {r.doctorName || "—"}
+                    {r.doctorName || "-"}
                     {r.doctorRegNo && <div className="text-xs text-text-tertiary">Reg: {r.doctorRegNo}</div>}
                   </div>
                 ),
@@ -183,12 +183,12 @@ export function H1RegisterPage() {
                 header: "Patient",
                 cell: (r) => (
                   <div>
-                    {r.patientName || "—"}
+                    {r.patientName || "-"}
                     {r.patientAddress && <div className="text-xs text-text-tertiary">{r.patientAddress}</div>}
                   </div>
                 ),
               },
-              { key: "pharma", header: "Pharmacist", cell: (r) => r.pharmacist || "—" },
+              { key: "pharma", header: "Pharmacist", cell: (r) => r.pharmacist || "-" },
             ]}
           />
         </div>

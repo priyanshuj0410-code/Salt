@@ -383,7 +383,7 @@ export function PartiesPage() {
           <div className="mt-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-warning-bg/50 p-3 text-sm">
             <span className="min-w-0 flex-1">
               <span className="font-medium">{stateGap.missing.toLocaleString("en-IN")}</span>{" "}
-              part{stateGap.missing === 1 ? "y has" : "ies have"} no state set — their sales default to CGST+SGST (intra-state).
+              part{stateGap.missing === 1 ? "y has" : "ies have"} no state set: their sales default to CGST+SGST (intra-state).
               {stateGap.fillable > 0
                 ? ` ${stateGap.fillable.toLocaleString("en-IN")} can be filled from their GSTIN.`
                 : " Add a state on each party to fix the GST split."}
@@ -455,7 +455,7 @@ export function PartiesPage() {
         {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
         {cachedAt != null && (
           <p className="mt-4 text-sm text-warning">
-            Offline — showing saved parties from {formatStaleness(cachedAt)}. Some figures may be out of date.
+            Offline: showing saved parties from {formatStaleness(cachedAt)}. Some figures may be out of date.
           </p>
         )}
 
@@ -529,7 +529,7 @@ export function PartiesPage() {
           ) : visible.length === 0 ? (
             rows.length === 0 ? (
               <div className="flex flex-col items-start gap-3 p-4">
-                <p className="text-sm text-text-tertiary">No parties yet — import your ledgers, or add one by hand.</p>
+                <p className="text-sm text-text-tertiary">No parties yet: import your ledgers, or add one by hand.</p>
                 <Button variant="outline" onClick={() => setCreateOpen(true)}>
                   <UserPlus /> New party
                 </Button>
@@ -556,7 +556,7 @@ export function PartiesPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{r.name}</div>
                       <div className="truncate text-xs text-text-tertiary">
-                        {[r.phone, r.gstin].filter(Boolean).join(" · ") || "—"}
+                        {[r.phone, r.gstin].filter(Boolean).join(" · ") || "-"}
                       </div>
                     </div>
                     <div className="shrink-0 text-right text-sm">
@@ -573,7 +573,7 @@ export function PartiesPage() {
                       onChange={(e) => regroup(r.id, e.target.value)}
                       className="hidden h-8 shrink-0 rounded-md border border-input bg-background px-1.5 text-xs focus-visible:border-ring disabled:opacity-50 sm:block"
                     >
-                      <option value="">— group —</option>
+                      <option value="">Group</option>
                       {CUSTOMER_GROUPS.map((g) => (
                         <option key={g} value={g}>
                           {g}

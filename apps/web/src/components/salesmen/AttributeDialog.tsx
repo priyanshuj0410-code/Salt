@@ -80,7 +80,7 @@ export function AttributeDialog({
           cands = xs.map((x) => ({
             id: x.id,
             title: x.mode.toUpperCase(),
-            party: x.ledgers?.name ?? "—",
+            party: x.ledgers?.name ?? "-",
             date: x.payment_date,
             amountPaise: x.amount_paise,
           }));

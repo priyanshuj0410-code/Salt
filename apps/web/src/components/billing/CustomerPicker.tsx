@@ -126,7 +126,7 @@ export function CustomerPicker({
             <p className="px-3 py-3 text-sm text-muted-foreground">Loading…</p>
           ) : filtered.length === 0 ? (
             <p className="px-3 py-3 text-sm text-muted-foreground">
-              {rows.length === 0 ? "No customers yet — import or add parties first." : "No matches."}
+              {rows.length === 0 ? "No customers yet: import or add parties first." : "No matches."}
             </p>
           ) : (
             filtered.map((r) => (

@@ -187,7 +187,7 @@ export interface PurchaseLine {
   qty: number;
   /** Scheme free goods (e.g. the "1" in 10+1): enter stock, carry zero ITC. */
   freeQty: number;
-  ptrPaise: number; // billed/landed cost per unit, tax-exclusive — what we pay the vendor
+  ptrPaise: number; // billed/landed cost per unit, tax-exclusive, what we pay the vendor
   /** Printed PTR in paise (storage); the cost above may be PTR or PTS per costBasis. */
   printedPtrPaise?: number;
   /** Printed PTS in paise, or null/absent when not printed. */

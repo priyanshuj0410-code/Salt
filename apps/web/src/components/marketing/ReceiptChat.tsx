@@ -142,7 +142,7 @@ export function ReceiptChat({
           disabled={busy}
           className="mx-auto text-xs font-medium text-text-secondary underline-offset-2 hover:text-text-primary hover:underline disabled:opacity-50"
         >
-          Upload skip karein — seedha login
+          Upload skip karein: seedha login
         </button>
       </div>
     </Card>

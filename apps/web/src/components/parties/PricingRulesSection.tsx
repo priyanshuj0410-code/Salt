@@ -230,7 +230,7 @@ export function PricingRulesSection({ ledgerId }: { ledgerId: string }) {
           ))}
         </div>
       ) : (
-        <p className="mb-3 text-xs text-text-tertiary">No pricing rules yet — this customer pays MRP.</p>
+        <p className="mb-3 text-xs text-text-tertiary">No pricing rules yet: this customer pays MRP.</p>
       )}
 
       {/* item scope + live preview */}

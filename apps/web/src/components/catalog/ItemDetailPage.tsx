@@ -328,7 +328,7 @@ export function ItemDetailPage() {
       });
       setEditing(true);
       setAiMsg(
-        `AI suggestions filled${s.confidence ? ` · ${s.confidence} confidence` : ""} — review and Save. Verify HSN / GST / schedule.`,
+        `AI suggestions filled${s.confidence ? ` · ${s.confidence} confidence` : ""}: review and Save. Verify HSN / GST / schedule.`,
       );
     } catch {
       if (!auto) setAiMsg("AI fill failed. Try again.");
@@ -353,11 +353,11 @@ export function ItemDetailPage() {
       const r = data as string;
       setPromoteMsg(
         r === "submitted"
-          ? "Submitted to the shared master — pending Salt-admin review."
+          ? "Submitted to the shared master. Pending Salt-admin review."
           : r === "linked"
             ? "Linked to an existing master entry."
             : r === "pending"
-              ? "Already submitted — pending review."
+              ? "Already submitted: pending review."
               : r === "already_linked"
                 ? "This item is already linked to the master."
                 : `Done (${r}).`,
@@ -405,14 +405,14 @@ export function ItemDetailPage() {
       header: "Batch",
       cell: (b) => (
         <span className="flex items-center gap-1.5">
-          <span className="font-mono text-xs">{b.batchNo || "—"}</span>
+          <span className="font-mono text-xs">{b.batchNo || "-"}</span>
           {fefo && b === fefo && (
             <span className="rounded-sm bg-info-bg px-1 text-[10px] font-medium text-info">FEFO</span>
           )}
         </span>
       ),
     },
-    { key: "expiry", header: "Expiry", cell: (b) => b.expiry || "—" },
+    { key: "expiry", header: "Expiry", cell: (b) => b.expiry || "-" },
     {
       key: "qty",
       header: "Qty",
@@ -430,7 +430,7 @@ export function ItemDetailPage() {
       cell: (s) => (
         <div className="min-w-0">
           <div className="truncate font-medium text-text-primary">{s.item.name}</div>
-          <div className="truncate text-xs text-text-tertiary">{s.item.manufacturer || "—"}</div>
+          <div className="truncate text-xs text-text-tertiary">{s.item.manufacturer || "-"}</div>
         </div>
       ),
     },
@@ -440,12 +440,12 @@ export function ItemDetailPage() {
       key: "margin",
       header: "Margin",
       numeric: true,
-      cell: (s) => (s.mrpPaise > 0 ? `${s.marginPct.toFixed(0)}%` : "—"),
+      cell: (s) => (s.mrpPaise > 0 ? `${s.marginPct.toFixed(0)}%` : "-"),
     },
   ];
 
   const buyCols: Column<(typeof recentBuys)[number]>[] = [
-    { key: "date", header: "Date", cell: (r) => (r.date ? r.date.slice(0, 10) : "—") },
+    { key: "date", header: "Date", cell: (r) => (r.date ? r.date.slice(0, 10) : "-") },
     { key: "ptr", header: "PTR", numeric: true, cell: (r) => formatPaise(r.ptrPaise) },
     { key: "mrp", header: "MRP", numeric: true, cell: (r) => formatPaise(r.mrpPaise) },
     { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty.toLocaleString("en-IN") },
@@ -487,7 +487,7 @@ export function ItemDetailPage() {
               >
                 <Sparkles /> {aiBusy ? "Filling…" : "AI fill"}
               </Button>
-              <Button onClick={startEdit} disabled={usingSeed} title={usingSeed ? "Demo item — cannot edit" : undefined}>
+              <Button onClick={startEdit} disabled={usingSeed} title={usingSeed ? "Demo item: cannot edit" : undefined}>
                 <PencilLine /> Edit
               </Button>
               <Button
@@ -521,7 +521,7 @@ export function ItemDetailPage() {
         <StatCard label="In stock" value={stock.toLocaleString("en-IN")} tone={stock > 0 ? "default" : "danger"} />
         <StatCard label="Batches" value={item.batches.length.toLocaleString("en-IN")} />
         <StatCard label="MRP" value={mrpRange(item)} />
-        <StatCard label="Next expiry" value={fefo?.expiry ?? "—"} hint={fefo ? "FEFO batch" : "no stock"} />
+        <StatCard label="Next expiry" value={fefo?.expiry ?? "-"} hint={fefo ? "FEFO batch" : "no stock"} />
       </div>
 
       {/* Master details — read view or inline edit */}
@@ -534,7 +534,7 @@ export function ItemDetailPage() {
             </EditField>
             <div className="grid gap-3 sm:grid-cols-2">
               <EditField label={form.ayush ? "Ingredients / contents" : "Salt / molecule"}>
-                <Input value={form.salt} onChange={(e) => set("salt", e.target.value)} className="h-9" placeholder="—" />
+                <Input value={form.salt} onChange={(e) => set("salt", e.target.value)} className="h-9" placeholder="-" />
               </EditField>
               <EditField label="Therapeutic category">
                 <Input
@@ -549,7 +549,7 @@ export function ItemDetailPage() {
                   value={form.manufacturer}
                   onChange={(e) => set("manufacturer", e.target.value)}
                   className="h-9"
-                  placeholder="—"
+                  placeholder="-"
                 />
               </EditField>
               <EditField label="Pack">
@@ -565,7 +565,7 @@ export function ItemDetailPage() {
                   value={form.hsn}
                   onChange={(e) => set("hsn", e.target.value)}
                   className="h-9 font-mono text-xs"
-                  placeholder="—"
+                  placeholder="-"
                 />
               </EditField>
               <EditField label="Barcode">
@@ -573,7 +573,7 @@ export function ItemDetailPage() {
                   value={form.barcode}
                   onChange={(e) => set("barcode", e.target.value)}
                   className="h-9 font-mono text-xs"
-                  placeholder="—"
+                  placeholder="-"
                 />
               </EditField>
               <EditField label="Reorder level">
@@ -619,7 +619,7 @@ export function ItemDetailPage() {
                 ))}
               </div>
               {form.ayush && (
-                <span className="text-xs text-text-tertiary">AYUSH items are non-scheduled — leave as OTC unless a schedule applies.</span>
+                <span className="text-xs text-text-tertiary">AYUSH items are non-scheduled: leave as OTC unless a schedule applies.</span>
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -758,7 +758,7 @@ export function ItemDetailPage() {
           rows={batches}
           rowKey={(b) => `${b.batchNo}|${b.expiry}`}
           cols="1.2fr 0.9fr 0.6fr 0.9fr 0.9fr"
-          empty={<p className="px-3 py-6 text-sm text-text-tertiary">No batches — this item has no stock yet.</p>}
+          empty={<p className="px-3 py-6 text-sm text-text-tertiary">No batches: this item has no stock yet.</p>}
         />
       </section>
 
@@ -766,7 +766,7 @@ export function ItemDetailPage() {
       <section className="mt-6">
         <div className="mb-2 flex items-baseline justify-between">
           <h2 className="text-sm font-medium text-text-primary">Purchase prices</h2>
-          <span className="text-xs text-text-tertiary">From your goods receipts (GRN) — to set or check the catalogue price.</span>
+          <span className="text-xs text-text-tertiary">From your goods receipts (GRN), to set or check the catalogue price.</span>
         </div>
         {usingSeed ? (
           <p className="rounded-lg border border-border px-3 py-6 text-sm text-text-tertiary">
@@ -781,10 +781,10 @@ export function ItemDetailPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <StatCard
                 label="Last PTR"
-                value={prices.latest ? formatPaise(prices.latest.ptrPaise) : "—"}
+                value={prices.latest ? formatPaise(prices.latest.ptrPaise) : "-"}
                 hint={prices.latest?.date ? prices.latest.date.slice(0, 10) : undefined}
               />
-              <StatCard label="Last MRP" value={prices.latest ? formatPaise(prices.latest.mrpPaise) : "—"} />
+              <StatCard label="Last MRP" value={prices.latest ? formatPaise(prices.latest.mrpPaise) : "-"} />
               <StatCard
                 label="Median PTR"
                 value={formatPaise(prices.medianPtrPaise)}
@@ -810,18 +810,18 @@ export function ItemDetailPage() {
           <div className="mb-2 flex items-baseline justify-between">
             <h2 className="text-sm font-medium text-text-primary">Crowd prices</h2>
             <span className="text-xs text-text-tertiary">
-              Anonymized median across {crowd.n_orgs} shops — never any single shop&rsquo;s data.
+              Anonymized median across {crowd.n_orgs} shops: never any single shop&rsquo;s data.
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard
               label="Crowd PTR"
-              value={crowd.ptr_median_paise != null ? formatPaise(Number(crowd.ptr_median_paise)) : "—"}
+              value={crowd.ptr_median_paise != null ? formatPaise(Number(crowd.ptr_median_paise)) : "-"}
               hint={`${crowd.n_orgs} shops · ${crowd.n_lines} buys`}
             />
             <StatCard
               label="Crowd MRP"
-              value={crowd.mrp_median_paise != null ? formatPaise(Number(crowd.mrp_median_paise)) : "—"}
+              value={crowd.mrp_median_paise != null ? formatPaise(Number(crowd.mrp_median_paise)) : "-"}
             />
           </div>
         </section>
@@ -832,7 +832,7 @@ export function ItemDetailPage() {
         <div className="mb-2 flex items-baseline justify-between">
           <h2 className="text-sm font-medium text-text-primary">Substitutes</h2>
           <span className="text-xs text-text-tertiary">
-            {stock > 0 ? "Same salt, in stock — by margin" : "Out of stock — sell one of these instead"}
+            {stock > 0 ? "Same salt, in stock: by margin" : "Out of stock: sell one of these instead"}
           </span>
         </div>
         {!item.salt.trim() ? (
@@ -859,7 +859,7 @@ export function ItemDetailPage() {
       <section className="mt-6 rounded-lg border border-border p-4">
         <div className="mb-1 flex items-baseline justify-between">
           <h2 className="text-sm font-medium text-text-primary">Notes</h2>
-          <span className="text-xs text-text-tertiary">Internal team messages about this item — synced across counters.</span>
+          <span className="text-xs text-text-tertiary">Internal team messages about this item, synced across counters.</span>
         </div>
         <MessageThread entityType="item" entityId={item.id} />
       </section>
@@ -893,7 +893,7 @@ function ViewField({ label, value, mono }: { label: string; value: React.ReactNo
     <div>
       <dt className="text-xs text-text-tertiary">{label}</dt>
       <dd className={mono && !empty ? "mt-0.5 font-mono text-sm text-text-primary" : "mt-0.5 text-sm text-text-primary"}>
-        {empty ? <span className="text-text-tertiary">—</span> : value}
+        {empty ? <span className="text-text-tertiary">-</span> : value}
       </dd>
     </div>
   );

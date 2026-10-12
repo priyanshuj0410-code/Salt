@@ -90,7 +90,7 @@ export function DocumentStep({
       return;
     }
     if (!shopId) {
-      setError("No active shop — set a primary shop before importing documents.");
+      setError("No active shop: set a primary shop before importing documents.");
       return;
     }
     setBusy(true);
@@ -178,7 +178,7 @@ export function DocumentStep({
             ))}
           </div>
           <p className="mt-2 text-xs text-text-tertiary">
-            One row per line — we group rows into documents by the bill number. Column names need not
+            One row per line: we group rows into documents by the bill number. Column names need not
             match; we auto-map them.
           </p>
           <p className="mt-1 text-xs text-text-tertiary">{cfg.tip}</p>
@@ -224,7 +224,7 @@ export function DocumentStep({
         <div className="flex items-center gap-2 text-sm">
           <Wand2 className="size-4 text-primary" />
           <span className="font-medium">Check the column mapping</span>
-          <span className="text-text-tertiary">— {parsed?.rows.length ?? 0} rows.</span>
+          <span className="text-text-tertiary">{parsed?.rows.length ?? 0} rows.</span>
         </div>
 
         <MapGroup
@@ -244,7 +244,7 @@ export function DocumentStep({
 
         {!docNoMapped && (
           <p className="mt-3 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-500">
-            <AlertTriangle className="size-4 shrink-0" /> Map the bill / GRN no — it groups rows into
+            <AlertTriangle className="size-4 shrink-0" /> Map the bill / GRN no. It groups rows into
             documents.
           </p>
         )}
@@ -284,8 +284,8 @@ export function DocumentStep({
         <>
           <p className="mt-3 text-sm text-text-tertiary">
             {cfg.kind === "purchase" || cfg.kind === "debit_note"
-              ? "These documents could not be matched to a vendor — import your ledgers/party-GST first, then re-run this step (already-imported documents are skipped)."
-              : "These documents could not be imported (see reasons). Fix the source data and re-run — already-imported documents are skipped."}
+              ? "These documents could not be matched to a vendor, import your ledgers/party-GST first, then re-run this step (already-imported documents are skipped)."
+              : "These documents could not be imported (see reasons). Fix the source data and re-run, already-imported documents are skipped."}
           </p>
           <div className="mt-2 max-h-48 overflow-auto rounded-md border bg-amber-500/5 p-2 text-xs">
             {result?.quarantined.slice(0, 50).map((q) => (

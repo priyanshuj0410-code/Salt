@@ -83,9 +83,9 @@ export function ItcRegisterPage() {
       if (!active) return;
       setPurchases(
         ((p.data as unknown as PurchaseFetch[] | null) ?? []).map((r) => ({
-          invoiceNo: r.vendor_invoice_no ?? r.grn_no ?? "—",
+          invoiceNo: r.vendor_invoice_no ?? r.grn_no ?? "-",
           date: r.received_date,
-          vendorName: r.vendor?.name ?? "—",
+          vendorName: r.vendor?.name ?? "-",
           vendorGstin: r.vendor?.gstin ?? "",
           taxablePaise: r.taxable_paise,
           cgstPaise: r.cgst_paise,
@@ -95,8 +95,8 @@ export function ItcRegisterPage() {
       );
       setBatches(
         ((b.data as unknown as BatchFetch[] | null) ?? []).map((r) => ({
-          itemName: r.items?.name ?? "—",
-          batchNo: r.batch_no ?? "—",
+          itemName: r.items?.name ?? "-",
+          batchNo: r.batch_no ?? "-",
           expiry: r.expiry ?? "",
           qty: r.qty,
           ptrPaise: r.ptr_paise,
@@ -168,7 +168,7 @@ export function ItcRegisterPage() {
               empty="No received purchases this month."
               columns={[
                 { key: "vendor", header: "Vendor", cell: (r) => r.vendorName },
-                { key: "gstin", header: "GSTIN", cell: (r) => <span className="tabular-nums">{r.vendorGstin || "—"}</span> },
+                { key: "gstin", header: "GSTIN", cell: (r) => <span className="tabular-nums">{r.vendorGstin || "-"}</span> },
                 { key: "inv", header: "Invoice", cell: (r) => <span className="tabular-nums">{r.invoiceNo}</span> },
                 { key: "date", header: "Date", cell: (r) => r.date },
                 { key: "tax", header: "Taxable", numeric: true, cell: (r) => formatPaise(r.taxablePaise) },
@@ -181,14 +181,14 @@ export function ItcRegisterPage() {
 
           <section>
             <h2 className="mb-2 text-sm font-semibold text-text-secondary">
-              ITC reversal — expired stock <span className="ml-1 font-normal text-text-tertiary">({reversal.rows.length})</span>
+              ITC reversal: expired stock <span className="ml-1 font-normal text-text-tertiary">({reversal.rows.length})</span>
             </h2>
             <DataTable<ItcReversalRow>
               cols="1.6fr 1fr 0.8fr 0.6fr 1fr"
               rows={reversal.rows}
               rowKey={(r) => `${r.itemName}|${r.batchNo}|${r.expiry}`}
               loading={loading}
-              empty="No expired stock on hand — nothing to reverse."
+              empty="No expired stock on hand. Nothing to reverse."
               columns={[
                 { key: "item", header: "Item", cell: (r) => r.itemName },
                 { key: "batch", header: "Batch", cell: (r) => <span className="tabular-nums">{r.batchNo}</span> },
@@ -199,7 +199,7 @@ export function ItcRegisterPage() {
             />
             <p className="mt-2 text-xs text-text-tertiary">
               Section 17(5)(h): ITC on expired/destroyed stock must be reversed. Estimated as PTR × GST rate × qty
-              (advisory — not auto-posted).
+              (advisory, not auto-posted).
             </p>
           </section>
         </div>

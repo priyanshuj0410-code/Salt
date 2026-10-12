@@ -478,7 +478,7 @@ export function formatPoText(po: PoTextInput): string {
   if (po.expectedDate) out.push(`Expected delivery: ${po.expectedDate}`);
   out.push("", "Items:");
   po.lines.forEach((l, i) => {
-    out.push(`${i + 1}. ${l.name} — ${l.qty} @ ${inr(l.ptrPaise)} = ${inr(Math.round(l.qty * l.ptrPaise))}`);
+    out.push(`${i + 1}. ${l.name}: ${l.qty} @ ${inr(l.ptrPaise)} = ${inr(Math.round(l.qty * l.ptrPaise))}`);
   });
   out.push("", `Total (excl. GST): ${inr(po.totalPaise)}`, "", "Please confirm availability and dispatch. Thank you.");
   return out.join("\n");

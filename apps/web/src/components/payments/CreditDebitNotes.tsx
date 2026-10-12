@@ -188,7 +188,7 @@ export function CreditDebitNotes({ orgId, nameById }: { orgId: string | null; na
               header: "Date",
               cell: (n) => <span className="text-text-tertiary">{format(new Date(n.note_date), "d MMM yyyy")}</span>,
             },
-            { key: "no", header: "Note no.", cell: (n) => <span className="font-mono text-xs">{n.note_no || "—"}</span> },
+            { key: "no", header: "Note no.", cell: (n) => <span className="font-mono text-xs">{n.note_no || "-"}</span> },
             {
               key: "kind",
               header: "Type",
@@ -196,9 +196,9 @@ export function CreditDebitNotes({ orgId, nameById }: { orgId: string | null; na
                 <Badge variant={n.kind === "credit" ? "success" : "warning"}>{n.kind === "credit" ? "Credit" : "Debit"}</Badge>
               ),
             },
-            { key: "party", header: "Party", cell: (n) => <span className="font-medium">{(n.party_id && nameById.get(n.party_id)) || "—"}</span> },
-            { key: "against", header: "Against", cell: (n) => <span className="text-text-tertiary">{n.againstRef || "—"}</span> },
-            { key: "reason", header: "Reason", cell: (n) => <span className="truncate text-text-tertiary">{n.reason || "—"}</span> },
+            { key: "party", header: "Party", cell: (n) => <span className="font-medium">{(n.party_id && nameById.get(n.party_id)) || "-"}</span> },
+            { key: "against", header: "Against", cell: (n) => <span className="text-text-tertiary">{n.againstRef || "-"}</span> },
+            { key: "reason", header: "Reason", cell: (n) => <span className="truncate text-text-tertiary">{n.reason || "-"}</span> },
             {
               key: "amount",
               header: "Amount",

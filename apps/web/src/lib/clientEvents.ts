@@ -22,10 +22,10 @@ import { supabase } from "./supabase";
 
 export type ClientEventName =
   | "bill_queued_offline"   // a bill rode an outage (queued to the outbox)
-  | "offline_bill_synced"   // that queued bill later reached the server — NOT lost
-  | "offline_bill_parked"   // queued bill went poison after maxAttempts — likely LOST
+  | "offline_bill_synced"   // that queued bill later reached the server, NOT lost
+  | "offline_bill_parked"   // queued bill went poison after maxAttempts, likely LOST
   | "bill_save_failed"      // online save definitively rejected (server rollback)
-  | "bill_save_timeout";    // online save timed out — may be lost on a dead link
+  | "bill_save_timeout";    // online save timed out, may be lost on a dead link
 
 interface TelemetryContext {
   orgId: string | null;
@@ -50,7 +50,7 @@ export interface ClientEventFields {
 
 export function emitClientEvent(name: ClientEventName, fields: ClientEventFields = {}): void {
   try {
-    if (!supabase || !ctx.orgId) return; // no session/org yet — drop silently
+    if (!supabase || !ctx.orgId) return; // no session/org yet: drop silently
     const row = {
       org_id: ctx.orgId,
       shop_id: ctx.shopId,

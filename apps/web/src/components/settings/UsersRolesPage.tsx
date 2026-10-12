@@ -37,7 +37,7 @@ interface Member {
 
 function rpcError(msg: string): string {
   if (/function|does not exist|not find|schema cache/i.test(msg)) {
-    return "Roles aren't installed yet — run supabase/migrations/0046_roles_permissions.sql, then retry.";
+    return "Roles aren't installed yet: run supabase/migrations/0046_roles_permissions.sql, then retry.";
   }
   return msg;
 }

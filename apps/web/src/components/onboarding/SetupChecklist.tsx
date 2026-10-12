@@ -23,7 +23,7 @@ export function SetupChecklist() {
         <div>
           <h2 className="text-sm font-medium">Finish setting up your shop</h2>
           <p className="text-xs text-muted-foreground">
-            {doneCount} of {total} done — {remaining.length} {remaining.length === 1 ? "step" : "steps"} to go.
+            {doneCount} of {total} done: {remaining.length} {remaining.length === 1 ? "step" : "steps"} to go.
           </p>
         </div>
         <Link to="/setup" className="shrink-0">

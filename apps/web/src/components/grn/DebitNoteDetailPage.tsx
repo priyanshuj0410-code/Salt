@@ -156,7 +156,7 @@ export function DebitNoteDetailPage() {
             lines.map((l) => (
               <div key={l.id} className={`grid ${LINE_GRID} items-center gap-2 border-b border-divider px-3 py-1.5 text-sm last:border-b-0`}>
                 <span className="min-w-0 truncate" title={l.name}>{l.name}</span>
-                <span className="truncate text-xs text-text-tertiary">{l.batch_no || "—"}</span>
+                <span className="truncate text-xs text-text-tertiary">{l.batch_no || "-"}</span>
                 <span className="text-right tabular-nums">{l.qty}</span>
                 <span className="text-right tabular-nums">{formatPaise(l.ptr_paise)}</span>
                 <span className="text-right tabular-nums text-text-tertiary">{l.gst_rate}%</span>

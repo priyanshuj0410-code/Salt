@@ -211,7 +211,7 @@ export function SalesmanDetailPage() {
             />
           }
           columns={[
-            { key: "invoice_no", header: "Invoice", cell: (i) => i.invoice_no ?? <span className="text-text-tertiary">—</span> },
+            { key: "invoice_no", header: "Invoice", cell: (i) => i.invoice_no ?? <span className="text-text-tertiary">-</span> },
             { key: "date", header: "Date", cell: (i) => <span className="text-text-secondary">{fmtDate(i.invoice_date)}</span> },
             { key: "party", header: "Party", cell: (i) => i.ledgers?.name ?? <span className="text-text-tertiary">Walk-in</span> },
             {
@@ -238,9 +238,9 @@ export function SalesmanDetailPage() {
           }
           columns={[
             { key: "date", header: "Date", cell: (c) => <span className="text-text-secondary">{fmtDate(c.payment_date)}</span> },
-            { key: "party", header: "Party", cell: (c) => c.ledgers?.name ?? <span className="text-text-tertiary">—</span> },
+            { key: "party", header: "Party", cell: (c) => c.ledgers?.name ?? <span className="text-text-tertiary">-</span> },
             { key: "mode", header: "Mode", cell: (c) => <span className="uppercase text-text-secondary">{c.mode}</span> },
-            { key: "reference", header: "Reference", cell: (c) => c.reference ?? <span className="text-text-tertiary">—</span> },
+            { key: "reference", header: "Reference", cell: (c) => c.reference ?? <span className="text-text-tertiary">-</span> },
             { key: "amount", header: "Amount", numeric: true, cell: (c) => <span className="text-success">{formatPaise(c.amount_paise)}</span> },
           ]}
         />

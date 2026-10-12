@@ -27,7 +27,7 @@ export function DeadStockPage() {
       <PageHeader
         icon={PackageX}
         title="Dead / slow stock"
-        subtitle={`On-hand items with no sale in the last ${n} days — capital sitting idle`}
+        subtitle={`On-hand items with no sale in the last ${n} days, capital sitting idle`}
       />
       <InventoryNav />
 
@@ -66,7 +66,7 @@ export function DeadStockPage() {
               <div className="min-w-0">
                 <div className="truncate">{it.name}</div>
                 <div className="truncate text-xs text-text-tertiary">
-                  {[it.pack, it.manufacturer].filter(Boolean).join(" · ") || "—"}
+                  {[it.pack, it.manufacturer].filter(Boolean).join(" · ") || "-"}
                 </div>
               </div>
             ),

@@ -21,9 +21,9 @@ export const EMPTY_AGING: AgingBuckets = { d0_30: 0, d31_60: 0, d61_90: 0, d90_p
 
 /** Display order + labels for the four bands. */
 export const AGING_BANDS: { key: Exclude<keyof AgingBuckets, "total">; label: string }[] = [
-  { key: "d0_30", label: "0–30" },
-  { key: "d31_60", label: "31–60" },
-  { key: "d61_90", label: "61–90" },
+  { key: "d0_30", label: "0-30" },
+  { key: "d31_60", label: "31-60" },
+  { key: "d61_90", label: "61-90" },
   { key: "d90_plus", label: "90+" },
 ];
 

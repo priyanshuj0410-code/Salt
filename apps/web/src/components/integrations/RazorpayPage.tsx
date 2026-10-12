@@ -75,7 +75,7 @@ function ConnectionCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <Field label="Key id" hint="Publishable — rzp_live_… or rzp_test_…">
+        <Field label="Key id" hint="Publishable: rzp_live_… or rzp_test_…">
           <Input
             value={config.keyId}
             onChange={(e) => onPatch({ keyId: e.target.value })}

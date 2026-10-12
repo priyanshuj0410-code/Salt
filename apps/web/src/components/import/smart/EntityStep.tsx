@@ -128,7 +128,7 @@ export function EntityStep({
   async function runImport() {
     if (!parsed) return;
     if (entity.shopScoped && !shopId) {
-      setError("No active shop — set a primary shop before importing this register.");
+      setError("No active shop: set a primary shop before importing this register.");
       return;
     }
     setBusy(true);
@@ -192,7 +192,7 @@ export function EntityStep({
           </div>
           <p className="mt-2 text-xs text-text-tertiary">
             <span className="text-destructive">*</span> required · others optional · column names
-            need not match — we auto-map them.
+            need not match: we auto-map them.
           </p>
           <p className="mt-1 text-xs text-text-tertiary">{entity.tip}</p>
         </div>
@@ -237,7 +237,7 @@ export function EntityStep({
           <Wand2 className="size-4 text-primary" />
           <span className="font-medium">Check the column mapping</span>
           <span className="text-text-tertiary">
-            — {parsed?.rows.length ?? 0} rows. We pre-matched columns; adjust any that are off.
+            {parsed?.rows.length ?? 0} rows. We pre-matched columns; adjust any that are off.
           </span>
         </div>
 
@@ -253,7 +253,7 @@ export function EntityStep({
                 onChange={(e) => setMapping((m) => ({ ...m, [f.key]: e.target.value || null }))}
                 className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
               >
-                <option value="">— not mapped —</option>
+                <option value="">Not mapped</option>
                 {parsed?.headers.map((h) => (
                   <option key={h} value={h}>
                     {h}

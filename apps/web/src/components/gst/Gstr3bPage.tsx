@@ -109,7 +109,7 @@ export function Gstr3bPage() {
       setCreditNotes((creditNotesRes.data as unknown as Gstr3bOutwardRow[] | null) ?? []);
       setWriteoffs(
         ((writeoffsRes.data as unknown as WoFetch[] | null) ?? []).map((r) => ({
-          itemName: r.items?.name ?? "—",
+          itemName: r.items?.name ?? "-",
           batchNo: r.batches?.batch_no ?? "",
           date: (r.created_at ?? "").slice(0, 10),
           qty: Math.abs(r.qty_delta),
@@ -142,7 +142,7 @@ export function Gstr3bPage() {
       {filerGstin ? (
         <span className="tabular-nums">{filerGstin}</span>
       ) : (
-        <span className="text-warning">no GSTIN set on this shop — set it in Settings before filing</span>
+        <span className="text-warning">no GSTIN set on this shop. Set it in Settings before filing</span>
       )}
     </span>
   );
@@ -151,7 +151,7 @@ export function Gstr3bPage() {
     <Page width="lg">
       <PageHeader
         icon={Scale}
-        title="GSTR-3B — summary return"
+        title="GSTR-3B: summary return"
         subtitle={subtitle}
         actions={
           <>
@@ -216,7 +216,7 @@ export function Gstr3bPage() {
               columns={[
                 { key: "head", header: "Tax", cell: (r) => r.head },
                 { key: "output", header: "Output", numeric: true, cell: (r) => formatPaise(r.outputPaise) },
-                { key: "credit", header: "Cr. notes", numeric: true, cell: (r) => (r.creditPaise > 0 ? `− ${formatPaise(r.creditPaise)}` : "—") },
+                { key: "credit", header: "Cr. notes", numeric: true, cell: (r) => (r.creditPaise > 0 ? `− ${formatPaise(r.creditPaise)}` : "-") },
                 { key: "itc", header: "ITC", numeric: true, cell: (r) => formatPaise(r.itcPaise) },
                 {
                   key: "balance",
@@ -237,7 +237,7 @@ export function Gstr3bPage() {
           {reversal.rows.length > 0 && (
             <section>
               <h2 className="mb-2 text-sm font-semibold text-text-secondary">
-                ITC reversal — expiry write-offs <span className="ml-1 font-normal text-text-tertiary">({reversal.rows.length})</span>
+                ITC reversal: expiry write-offs <span className="ml-1 font-normal text-text-tertiary">({reversal.rows.length})</span>
               </h2>
               <DataTable<WriteoffReversalRow>
                 cols="1.6fr 1fr 0.8fr 0.6fr 1fr"
@@ -246,7 +246,7 @@ export function Gstr3bPage() {
                 loading={loading}
                 columns={[
                   { key: "item", header: "Item", cell: (r) => r.itemName },
-                  { key: "batch", header: "Batch", cell: (r) => <span className="tabular-nums">{r.batchNo || "—"}</span> },
+                  { key: "batch", header: "Batch", cell: (r) => <span className="tabular-nums">{r.batchNo || "-"}</span> },
                   { key: "date", header: "Date", cell: (r) => r.date },
                   { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty },
                   { key: "rev", header: "ITC reversed", numeric: true, cell: (r) => formatPaise(r.reverseItcPaise) },

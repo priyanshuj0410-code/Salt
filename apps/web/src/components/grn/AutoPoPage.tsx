@@ -222,7 +222,7 @@ export function AutoPoPage() {
     } catch (e) {
       setError(
         e instanceof TimeoutError
-          ? "Saving is taking too long — it may have gone through. Check Purchase orders before retrying."
+          ? "Saving is taking too long. It may have gone through. Check Purchase orders before retrying."
           : "Could not create the draft orders. Please try again.",
       );
     } finally {
@@ -245,7 +245,7 @@ export function AutoPoPage() {
       <PageHeader
         icon={Sparkles}
         title="Reorder suggestions"
-        subtitle="Items at or below their reorder level, or running out fast by sales velocity. Pick what to order — drafts are grouped into one PO per vendor."
+        subtitle="Items at or below their reorder level, or running out fast by sales velocity. Pick what to order: drafts are grouped into one PO per vendor."
         actions={
           <Button onClick={createDraftPos} disabled={saving || pickedWithVendor.length === 0}>
             <ClipboardList /> {saving ? "Creating…" : `Create ${vendorCount || ""} draft PO${vendorCount === 1 ? "" : "s"}`}
@@ -315,9 +315,9 @@ export function AutoPoPage() {
                     <div className="truncate text-[0.6875rem] text-text-tertiary">{s.soldInWindow} sold in {windowDays}d</div>
                   </div>
                   <span className="text-right tabular-nums">{s.stockQty}</span>
-                  <span className="text-right tabular-nums text-text-tertiary">{s.reorderLevel || "—"}</span>
+                  <span className="text-right tabular-nums text-text-tertiary">{s.reorderLevel || "-"}</span>
                   <span className="text-right tabular-nums text-text-tertiary">{s.perDay.toFixed(1)}</span>
-                  <span className="text-right tabular-nums">{s.daysOfCover === Infinity ? "—" : `${Math.round(s.daysOfCover)}d`}</span>
+                  <span className="text-right tabular-nums">{s.daysOfCover === Infinity ? "-" : `${Math.round(s.daysOfCover)}d`}</span>
                   <Input
                     type="number"
                     min={1}
@@ -334,7 +334,7 @@ export function AutoPoPage() {
                         {s.lastPtrPaise != null && <span className="ml-1 text-text-tertiary">{formatPaise(s.lastPtrPaise)}</span>}
                       </>
                     ) : (
-                      <span className="text-warning">no vendor — order manually</span>
+                      <span className="text-warning">no vendor: order manually</span>
                     )}
                   </span>
                 </div>
@@ -347,7 +347,7 @@ export function AutoPoPage() {
       {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
       {noVendorCount > 0 && (
         <p className="mt-3 text-xs text-text-tertiary">
-          {noVendorCount} selected item{noVendorCount === 1 ? "" : "s"} have no prior vendor and are skipped — add them via a
+          {noVendorCount} selected item{noVendorCount === 1 ? "" : "s"} have no prior vendor and are skipped. Add them via a
           manual <Link to="/purchases/orders/new" className="text-primary hover:underline">purchase order</Link>.
         </p>
       )}

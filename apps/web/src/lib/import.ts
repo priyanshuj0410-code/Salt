@@ -128,7 +128,7 @@ export function validateRows(rows: RawRow[]): ValidationResult {
     const line = i + 2; // +1 for header, +1 for 1-based
     const name = s(raw.name);
     if (!name) {
-      issues.push({ row: line, level: "error", message: "Missing item name — row skipped" });
+      issues.push({ row: line, level: "error", message: "Missing item name: row skipped" });
       return;
     }
 

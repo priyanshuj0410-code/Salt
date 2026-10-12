@@ -19,7 +19,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   owner: "Full access, including settings and user management.",
-  manager: "Runs day-to-day operations — everything except settings.",
+  manager: "Runs day-to-day operations: everything except settings.",
   accountant: "Bills, parties, payments, GST and reports.",
   pharmacist: "Counter, inventory and catalogue.",
   cashier: "Counter billing only.",
@@ -83,7 +83,7 @@ export function can(
   perms: PermissionOverrides | null | undefined,
   mod: ModuleKey,
 ): boolean {
-  if (mod === "counter") return true; // always reachable — it is the redirect target
+  if (mod === "counter") return true; // always reachable: it is the redirect target
   if (!role) return false;
   if (perms?.revoke?.includes(mod)) return false;
   if (perms?.grant?.includes(mod)) return true;
@@ -98,7 +98,7 @@ export function rolesForModule(mod: ModuleKey): UserRole[] {
 /** Map a route pathname to the module it belongs to. Unknown → settings (owner-only). */
 export function pathModule(pathname: string): ModuleKey {
   const p = pathname;
-  if (p.startsWith("/home")) return "reports"; // V2 assembled Home — gated as the desk
+  if (p.startsWith("/home")) return "reports"; // V2 assembled Home: gated as the desk
   if (p === "/") return "counter";
   if (p.startsWith("/activity")) return "activity";
   if (p.startsWith("/approvals")) return "approvals";

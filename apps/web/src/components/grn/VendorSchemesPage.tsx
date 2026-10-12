@@ -27,7 +27,7 @@ function dealText(s: SchemeRow): string {
   if (s.discount_type && s.discount_value)
     parts.push(s.discount_type === "flat" ? `${formatPaise(s.discount_value)} off` : `${s.discount_value}% off`);
   if (s.scheme_buy_qty > 0 && s.scheme_free_qty > 0) parts.push(`${s.scheme_buy_qty}+${s.scheme_free_qty} free`);
-  return parts.join(" · ") || "—";
+  return parts.join(" · ") || "-";
 }
 
 const toScheme = (r: SchemeRow): VendorScheme => ({
@@ -89,7 +89,7 @@ export function VendorSchemesPage() {
       <PageHeader
         icon={Tag}
         title="Vendor schemes"
-        subtitle="Standing distributor deals — trade discount and/or free goods. Auto-applied and flagged when you receive stock."
+        subtitle="Standing distributor deals: trade discount and/or free goods. Auto-applied and flagged when you receive stock."
         actions={
           <Button onClick={openNew}>
             <Plus /> New scheme
@@ -134,8 +134,8 @@ export function VendorSchemesPage() {
             header: "Validity",
             cell: (r) => (
               <span className="text-text-tertiary">
-                {r.valid_from ? format(new Date(r.valid_from), "d MMM") : "—"}
-                {" – "}
+                {r.valid_from ? format(new Date(r.valid_from), "d MMM") : "-"}
+                {": "}
                 {r.valid_to ? format(new Date(r.valid_to), "d MMM yyyy") : "open"}
               </span>
             ),

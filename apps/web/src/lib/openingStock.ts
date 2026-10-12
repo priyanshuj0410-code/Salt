@@ -34,9 +34,9 @@ export interface OpeningMovement {
 export interface OpeningPlan {
   movements: OpeningMovement[];
   skippedExisting: number; // already had an opening movement
-  skippedZero: number; // qty 0 — nothing to open
+  skippedZero: number; // qty 0: nothing to open
   skippedNoShop: number; // no batch shop_id and no active shop to fall back to
-  skippedNoItem: number; // no item_id (anomaly — normally quarantined at batch import)
+  skippedNoItem: number; // no item_id (anomaly, normally quarantined at batch import)
 }
 
 /**

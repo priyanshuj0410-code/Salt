@@ -24,7 +24,7 @@ export function SetupWizard() {
         <span className="text-sm tabular-nums text-muted-foreground">{doneCount} / {total} done</span>
       </div>
       <p className="mt-1 text-sm text-muted-foreground">
-        A few steps to go from empty to your first bill. Do them in any order — this list keeps itself up to date.
+        A few steps to go from empty to your first bill. Do them in any order. This list keeps itself up to date.
       </p>
 
       {requiredDone && (
@@ -35,7 +35,7 @@ export function SetupWizard() {
             </span>
             <div>
               <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">You are ready to run your shop.</p>
-              <p className="text-xs text-muted-foreground">The optional steps can wait — jump into billing whenever you like.</p>
+              <p className="text-xs text-muted-foreground">The optional steps can wait, jump into billing whenever you like.</p>
             </div>
           </div>
           <Link to="/" className="shrink-0">

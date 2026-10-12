@@ -39,7 +39,7 @@ export function useGoToNav() {
       }
       if (Date.now() - armedAt.current > 650) {
         armedAt.current = 0;
-        return; // no recent `g` — not a go-to chord
+        return; // no recent `g`: not a go-to chord
       }
       armedAt.current = 0;
 

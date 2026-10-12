@@ -76,7 +76,7 @@ export interface ReconSummary {
   matched: number;
   mismatch: number;
   missingInBooks: number; // in 2B, no matching purchase
-  missingIn2b: number; // purchase with no 2B line (count only — gstr2b_matches needs a line)
+  missingIn2b: number; // purchase with no 2B line (count only, gstr2b_matches needs a line)
   itc2bPaise: number; // total ITC in the 2B file
   itcMatchedPaise: number; // 2B ITC that reconciles exactly to a purchase
 }

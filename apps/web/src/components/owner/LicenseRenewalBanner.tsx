@@ -68,7 +68,7 @@ export function LicenseRenewalBanner() {
             {flagged.length === 1
               ? "1 drug license needs renewal"
               : `${flagged.length} drug licenses need renewal`}
-            {expiredCount > 0 && ` — ${expiredCount} already expired`}
+            {expiredCount > 0 && `: ${expiredCount} already expired`}
           </h2>
           <p className="text-xs text-text-secondary">
             Renew before expiry to keep dispensing legally.

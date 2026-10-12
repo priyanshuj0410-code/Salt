@@ -77,7 +77,7 @@ export function ClinicalSection({ ledgerId }: { ledgerId: string }) {
         <HeartPulse className="size-4 text-text-tertiary" /> Clinical
       </h2>
       <p className="mb-3 text-xs text-text-tertiary">
-        Chronic conditions, allergies and regular medicines — for refill reminders and safer dispensing.
+        Chronic conditions, allergies and regular medicines, for refill reminders and safer dispensing.
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="Chronic conditions">

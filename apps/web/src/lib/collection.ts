@@ -17,7 +17,7 @@ export function normalizePhoneForWa(phone: string | null | undefined): string | 
   if (digits.length === 10) return "91" + digits; // bare Indian mobile
   if (digits.length === 11 && digits.startsWith("0")) return "91" + digits.slice(1);
   if (digits.length === 12 && digits.startsWith("91")) return digits;
-  return digits; // already carries some country code — best effort
+  return digits; // already carries some country code, best effort
 }
 
 /** A polite payment-reminder message: who it is from, the amount due, the

@@ -86,12 +86,12 @@ export function StockLedgerPage() {
               <div className="min-w-0">
                 <div className="truncate">{b.name}</div>
                 <div className="truncate text-xs text-text-tertiary">
-                  {[b.pack, b.salt].filter(Boolean).join(" · ") || "—"}
+                  {[b.pack, b.salt].filter(Boolean).join(" · ") || "-"}
                 </div>
               </div>
             ),
           },
-          { key: "batch", header: "Batch", cell: (b) => <span className="text-text-secondary">{b.batch_no ?? "—"}</span> },
+          { key: "batch", header: "Batch", cell: (b) => <span className="text-text-secondary">{b.batch_no ?? "-"}</span> },
           { key: "expiry", header: "Expiry", cell: (b) => <ExpiryCell b={b} /> },
           { key: "qty", header: "Qty", numeric: true, cell: (b) => b.qty },
           { key: "mrp", header: "MRP", numeric: true, cell: (b) => formatPaise(b.mrp_paise) },

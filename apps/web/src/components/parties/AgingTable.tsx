@@ -45,7 +45,7 @@ function Row({ label, buckets }: { label: string; buckets: AgingBuckets }) {
               v === 0 ? "text-text-tertiary" : b.key === "d90_plus" ? "text-danger" : "",
             )}
           >
-            {v === 0 ? "—" : formatPaise(v)}
+            {v === 0 ? "-" : formatPaise(v)}
           </td>
         );
       })}

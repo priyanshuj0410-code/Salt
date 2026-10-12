@@ -341,7 +341,7 @@ export function useCheckout({
     const noteParts: string[] = [];
     if (override) noteParts.push(`discount by ${override.approverName ?? "manager"}`);
     if (creditOverride) noteParts.push(`credit by ${creditOverride.approverName ?? "manager"}`);
-    const notes = noteParts.length ? `Manager override — ${noteParts.join("; ")}` : null;
+    const notes = noteParts.length ? `Manager override: ${noteParts.join("; ")}` : null;
     // Only thread a non-default series (SALT-209); the default path sends no p_series_id.
     const seriesArg = seriesId && seriesId !== defaultSeriesId ? seriesId : null;
     const args = buildSalesInvoicePayload(shopId, party, lines, payment, needsRx ? rxToUse : null, billDiscount, tenders, notes, seriesArg, salesmanId);
@@ -419,7 +419,7 @@ export function useCheckout({
           willPrint,
           retryable: true,
           message: oversell
-            ? "Stock changed — another counter may have sold the last unit. Catalogue refreshed; retry or re-check the bill."
+            ? "Stock changed: another counter may have sold the last unit. Catalogue refreshed; retry or re-check the bill."
             : `Could not save the bill: ${err.message}`,
         });
         return;
@@ -450,7 +450,7 @@ export function useCheckout({
         retryable: false,
         message:
           e instanceof TimeoutError
-            ? "Save timed out — it may have gone through. Check Bills before retrying."
+            ? "Save timed out: it may have gone through. Check Bills before retrying."
             : "Could not save the bill. Check Bills, then retry if it did not go through.",
       });
     }

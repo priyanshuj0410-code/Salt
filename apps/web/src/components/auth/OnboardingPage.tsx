@@ -114,7 +114,7 @@ export function OnboardingPage() {
                 <Input
                   type="text"
                   inputMode="text"
-                  placeholder="GSTIN (optional) — e.g. 27AAPFU0939F1ZV"
+                  placeholder="GSTIN (optional): e.g. 27AAPFU0939F1ZV"
                   value={gstin}
                   onChange={(e) => setGstin(e.target.value.toUpperCase())}
                   aria-label="GSTIN"
@@ -126,7 +126,7 @@ export function OnboardingPage() {
                 {gstinInfo.raw &&
                   (gstinInfo.valid ? (
                     <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
-                      ✓ {gstinInfo.stateName} — we&apos;ll set this as your billing state.
+                      ✓ {gstinInfo.stateName}: we&apos;ll set this as your billing state.
                     </p>
                   ) : gstinInfo.error ? (
                     <p className="mt-1 text-xs text-text-tertiary">{gstinInfo.error}</p>

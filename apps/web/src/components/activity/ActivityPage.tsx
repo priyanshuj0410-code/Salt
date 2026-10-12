@@ -113,7 +113,7 @@ export function ActivityPage() {
       <PageHeader
         icon={Activity}
         title="Activity"
-        subtitle="Every sale, payment and GRN across all counters — live"
+        subtitle="Every sale, payment and GRN across all counters, live"
         actions={
           <>
             <OnlineCounters />
@@ -164,7 +164,7 @@ export function ActivityPage() {
           title={events.length === 0 ? "No activity yet" : "Nothing matches"}
           hint={
             events.length === 0
-              ? "Save a bill, record a payment or receive stock — it shows up here instantly, on every counter."
+              ? "Save a bill, record a payment or receive stock. It shows up here instantly, on every counter."
               : "Try a different filter or search."
           }
         />

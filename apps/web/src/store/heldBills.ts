@@ -87,7 +87,7 @@ export const useHeldBills = create<HeldBillsState>((set, get) => ({
       p_rx: b.rx,
       p_label: b.party?.name ?? "Walk-in",
     });
-    if (error) return; // best-effort — leave the bill on the counter if the hold failed
+    if (error) return; // best-effort: leave the bill on the counter if the hold failed
     b.clear();
     await get().load(shopId);
   },
