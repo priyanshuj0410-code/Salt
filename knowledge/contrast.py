@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""WCAG 2.1 contrast check for Salt's tokens, light and dark.
+"""WCAG 2.1 contrast check for Salt's tokens, light and dark, plus the dash rule.
 
 Reads the real values from apps/web/src/index.css (:root and .dark), so a change there cannot
 drift from the figures in knowledge/design.md. Every ratio the doc states is recomputed and
-the doc must contain the computed figure, so a stale figure fails.
+the doc must contain the computed figure, so a stale figure fails. It also fails on any en or em
+dash (U+2013, U+2014) in the design docs or in a user-facing string under apps/web/src.
 
 Run: python3 knowledge/contrast.py     Exit status 1 on any failure.
 Targets: text 4.5, control borders, focus rings and meaningful graphics 3.
@@ -90,6 +91,33 @@ dark_toast = dark["surface"]
 print("--- Dots and accents on the dark toast surface (graphics, 3:1)")
 for st in ("success", "warning", "danger"):
     row(f"{st}-on-dark on dark surface", light[f"{st}-on-dark"], dark_toast, 3.0)
+
+print("--- Dash rule (no U+2013 or U+2014 in the design docs or user-facing copy)")
+
+
+def user_facing(text):
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    return re.sub(r"(?<![:\"'\w])//[^\n]*", "", text)
+
+
+dash_files = [os.path.join(ROOT, f) for f in ("design.md", "salt-design-system.html", "knowledge/design.md", "wiki/architecture/design-system.md")]
+for base, _, files in os.walk(os.path.join(ROOT, "wiki", "design")):
+    dash_files += [os.path.join(base, f) for f in files if f.endswith((".md", ".html"))]
+for base, _, files in os.walk(os.path.join(ROOT, "apps", "web", "src")):
+    dash_files += [os.path.join(base, f) for f in files if f.endswith((".ts", ".tsx"))]
+dashes = []
+for path in dash_files:
+    text = open(path, encoding="utf-8").read()
+    if path.endswith((".ts", ".tsx")):
+        text = user_facing(text)
+    for line in text.split("\n"):
+        if "\u2013" in line or "\u2014" in line:
+            dashes.append(f"{os.path.relpath(path, ROOT)}: {line.strip()[:70]}")
+count += 1
+fails += bool(dashes)
+print(f"{'FAIL' if dashes else 'PASS'}  no en or em dash in {len(dash_files)} doc and source files ({len(dashes)} found)")
+for line in dashes[:10]:
+    print("      " + line)
 
 print(f"\n{count - fails} of {count} checks pass")
 print("ALL PASS" if not fails else "SOME FAIL")
