@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
         >
           <p className="text-sm font-medium text-foreground">Something went wrong.</p>
           <p className="max-w-sm text-xs text-muted-foreground">
-            This page could not be loaded. It can happen right after an app update — reloading usually fixes it.
+            This page could not be loaded. It can happen right after an app update. Reloading usually fixes it.
           </p>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Reload

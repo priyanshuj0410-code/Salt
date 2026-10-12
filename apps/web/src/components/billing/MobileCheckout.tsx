@@ -231,7 +231,7 @@ export function MobileCheckout({
       )}
       {usingSeed && (
         <p className="px-3 pb-2 text-center text-xs text-text-tertiary">
-          Demo catalogue — import your items to save bills.
+          Demo catalogue: import your items to save bills.
         </p>
       )}
     </div>

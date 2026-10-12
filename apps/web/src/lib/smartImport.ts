@@ -41,7 +41,7 @@ export const ENTITIES: EntityConfig[] = [
     key: "ledgers",
     label: "Ledgers",
     order: 0,
-    description: "Your parties — customers and suppliers/distributors. Import these first.",
+    description: "Your parties: customers and suppliers/distributors. Import these first.",
     tip: "GSTIN is checked but never blocks the import; Type defaults to customer when blank.",
     fields: [
       { key: "name", label: "Name", required: true, aliases: ["party", "ledger", "account", "customer", "supplier", "vendor", "party name", "particulars"] },
@@ -57,7 +57,7 @@ export const ENTITIES: EntityConfig[] = [
     label: "Party details",
     order: 1,
     description: "Enrich your imported parties with GSTIN, address and phone from your GST master.",
-    tip: 'Export "Party GST Master" from Marg/Saral. We match by name and fill missing details — existing values are never overwritten.',
+    tip: 'Export "Party GST Master" from Marg/Saral. We match by name and fill missing details. Existing values are never overwritten.',
     fields: [
       { key: "name", label: "Name", required: true, aliases: ["party", "ledger", "account", "customer", "supplier", "particulars", "party name"] },
       { key: "gstin", label: "GSTIN", aliases: ["gst", "gst no", "gst number", "tax id", "gstin no"] },
@@ -69,7 +69,7 @@ export const ENTITIES: EntityConfig[] = [
     key: "items",
     label: "Items",
     order: 2,
-    description: "Your product master — medicines and surgicals with salt, tax and schedule.",
+    description: "Your product master: medicines and surgicals with salt, tax and schedule.",
     tip: "Missing HSN is allowed (flagged as a warning); an unknown Schedule defaults to OTC.",
     fields: [
       { key: "item_code", label: "Code", aliases: ["code", "item code", "itemcode", "product code", "sku"] },
@@ -87,7 +87,7 @@ export const ENTITIES: EntityConfig[] = [
     key: "batches",
     label: "Batches & stock",
     order: 3,
-    description: "Your physical stock — one row per item, linked by code (or name).",
+    description: "Your physical stock: one row per item, linked by code (or name).",
     tip: "Import Items first. We link by item code when present, else by name; unmatched rows are quarantined with a closest-match suggestion.",
     fields: [
       { key: "item_code", label: "Code", aliases: ["code", "item code", "itemcode", "product code", "sku"] },
@@ -103,7 +103,7 @@ export const ENTITIES: EntityConfig[] = [
     key: "salesmen",
     label: "Salesmen",
     order: 4,
-    description: "Your sales staff — so historical sales and collections can be attributed.",
+    description: "Your sales staff: so historical sales and collections can be attributed.",
     tip: "Just names; phone and territory are optional. Re-importing adds rows (no dedup).",
     fields: [
       { key: "name", label: "Name", required: true, aliases: ["salesman", "sales man", "sales person", "salesperson", "staff", "employee", "representative", "rep", "mr"] },
@@ -115,7 +115,7 @@ export const ENTITIES: EntityConfig[] = [
     key: "doctors",
     label: "Doctors",
     order: 5,
-    description: "Prescribing doctors — for Schedule H1/X records and prescriptions.",
+    description: "Prescribing doctors: for Schedule H1/X records and prescriptions.",
     tip: "Name is required; the registration no is the identity key. Re-importing adds rows (no dedup).",
     fields: [
       { key: "name", label: "Name", required: true, aliases: ["doctor", "dr", "physician", "prescriber", "doctor name"] },
@@ -127,7 +127,7 @@ export const ENTITIES: EntityConfig[] = [
     key: "shops",
     label: "Branches",
     order: 6,
-    description: "Your branches / outlets — one row per shop. Import each branch's data by switching the active shop.",
+    description: "Your branches / outlets: one row per shop. Import each branch's data by switching the active shop.",
     tip: "Name is required; GSTIN/state/code optional. Imported branches are never marked primary.",
     fields: [
       { key: "name", label: "Name", required: true, aliases: ["shop", "branch", "outlet", "store", "company", "firm"] },
@@ -143,7 +143,7 @@ export const ENTITIES: EntityConfig[] = [
     label: "Schedule H1/X register",
     order: 7,
     shopScoped: true,
-    description: "Your Schedule H1/X sale register — the statutory record (drug, batch, qty, doctor, patient).",
+    description: "Your Schedule H1/X sale register. The statutory record (drug, batch, qty, doctor, patient).",
     tip: "Drug name is required; an unknown schedule defaults to H1. Imported under the active shop, as records only (not linked to live invoices).",
     fields: [
       { key: "drug_name", label: "Drug", required: true, aliases: ["drug", "medicine", "item", "product", "drug name", "particulars", "item name"] },
@@ -163,7 +163,7 @@ export const ENTITIES: EntityConfig[] = [
     label: "Drug licences",
     order: 8,
     shopScoped: true,
-    description: "Your drug licences (Form 20 / 21 etc.) — type, number, holder, validity dates.",
+    description: "Your drug licences (Form 20 / 21 etc.): type, number, holder, validity dates.",
     tip: "Licence type and number are required; dates accept dd-mm-yyyy or yyyy-mm-dd.",
     fields: [
       { key: "license_type", label: "Type", required: true, aliases: ["type", "license type", "licence type", "form", "form no", "category"] },
@@ -180,7 +180,7 @@ export const ENTITIES: EntityConfig[] = [
     order: 9,
     shopScoped: true,
     upsertOn: "org_id,shop_id,period,return_type",
-    description: "Your filed GSTR-1 / GSTR-3B history — an archive of which returns were filed, by period.",
+    description: "Your filed GSTR-1 / GSTR-3B history. An archive of which returns were filed, by period.",
     tip: "Period (YYYY-MM) and return type (GSTR1/GSTR3B) are required; re-import updates the same period+type. Filed figures are kept verbatim in source.",
     fields: [
       { key: "period", label: "Period", required: true, aliases: ["period", "month", "return period", "tax period"] },
@@ -195,7 +195,7 @@ export const ENTITIES: EntityConfig[] = [
     order: 10,
     shopScoped: true,
     upsertOn: "org_id,shop_id,doc_type,financial_year",
-    description: "Your voucher numbering — so Salt continues each series without clashing with the old system.",
+    description: "Your voucher numbering: so Salt continues each series without clashing with the old system.",
     tip: "Doc type and financial year are required. Map your NEXT number to use (last used + 1). Re-import updates the same series.",
     fields: [
       { key: "doc_type", label: "Doc type", required: true, aliases: ["doc type", "document type", "type", "voucher type", "series", "book"] },
@@ -252,7 +252,7 @@ function fieldScore(field: FieldDef, header: string): number {
   for (const c of candidates) {
     if (!c) continue;
     let s: number;
-    if (c === h) s = 1; // exact — always wins
+    if (c === h) s = 1; // exact: always wins
     else if (h.includes(c) || c.includes(h))
       s = 0.7 + 0.25 * (Math.min(c.length, h.length) / Math.max(c.length, h.length)); // substring (< 1)
     else s = 0.85 * similarity(c, h); // fuzzy (< substring)
@@ -645,12 +645,12 @@ function validate(entity: EntityKey, d: Record<string, string>, ctx: ValidateCtx
   // non-numeric quantity warns (and saves as 0).
   const qty = Number((d.qty || "").replace(/[,\s]/g, ""));
   if (d.qty && !Number.isFinite(qty))
-    issues.push({ field: "qty", level: "warning", message: `Quantity "${d.qty}" isn't a number — saved as 0` });
+    issues.push({ field: "qty", level: "warning", message: `Quantity "${d.qty}" isn't a number: saved as 0` });
   // Opening stock: a zero-stock dormant item may carry no MRP — don't quarantine
   // the whole catalogue for that. Only block negatives; warn if it's in stock yet priceless.
   const mrp = Number((d.mrp || "").replace(/[,₹\s]/g, ""));
   if (!Number.isFinite(mrp) || mrp < 0) issues.push({ field: "mrp", level: "error", message: "MRP must be a number ≥ 0" });
-  else if (mrp === 0 && qty > 0) issues.push({ field: "mrp", level: "warning", message: "In stock but no MRP — set it before billing" });
+  else if (mrp === 0 && qty > 0) issues.push({ field: "mrp", level: "warning", message: "In stock but no MRP. Set it before billing" });
   let expiry: string | null = "";
   if (d.expiry) {
     expiry = toExpiryYM(d.expiry);

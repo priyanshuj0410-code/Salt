@@ -87,13 +87,13 @@ export function parseGlOpening(rows: GlRawRow[]): GlOpeningResult {
     const code = s(raw.code).toUpperCase();
     const name = s(raw.name);
     if (!name && !code) {
-      issues.push({ row: line, level: "error", message: "Row needs an account name or code — skipped" });
+      issues.push({ row: line, level: "error", message: "Row needs an account name or code, skipped" });
       return;
     }
     const label = name || code;
 
     if (PARTY_CONTROL.test(name) || PARTY_CONTROL.test(code)) {
-      issues.push({ row: line, level: "warning", message: `"${label}": debtor/creditor balances import from the ledger/trial-balance step, not here — skipped` });
+      issues.push({ row: line, level: "warning", message: `"${label}": debtor/creditor balances import from the ledger/trial-balance step, not here, skipped` });
       return;
     }
 
@@ -117,7 +117,7 @@ export function parseGlOpening(rows: GlRawRow[]): GlOpeningResult {
     if (rawType) {
       type = normalizeAccountType(rawType);
       if (!type) {
-        issues.push({ row: line, level: "warning", message: `"${label}": unrecognized type "${rawType}" — needed only if this account is new` });
+        issues.push({ row: line, level: "warning", message: `"${label}": unrecognized type "${rawType}": needed only if this account is new` });
       }
     }
 

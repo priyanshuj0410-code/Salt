@@ -118,7 +118,7 @@ export function ReturnDialog({
   async function submit() {
     if (!supabase || !shopId || !computed || computed.active.length === 0) return;
     if (refundMode === "credit" && !partyId) {
-      setError("A walk-in bill cannot credit to an account — choose cash or bank refund.");
+      setError("A walk-in bill cannot credit to an account, choose cash or bank refund.");
       return;
     }
     setSubmitting(true);

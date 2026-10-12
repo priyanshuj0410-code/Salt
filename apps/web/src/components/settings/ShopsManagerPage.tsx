@@ -168,7 +168,7 @@ export function ShopsManagerPage() {
               </div>
               {!s.state_code && (
                 <p className="mt-2 text-xs text-warning">
-                  Set the state — without it, the GST split on this shop's invoices fails.
+                  Set the state: without it, the GST split on this shop's invoices fails.
                 </p>
               )}
             </div>
@@ -225,7 +225,7 @@ function ShopForm({
       return;
     }
     if (!draft.state_code) {
-      setError("Pick the state the shop is registered in — the GST split needs it.");
+      setError("Pick the state the shop is registered in. The GST split needs it.");
       return;
     }
     setBusy(true);
@@ -272,7 +272,7 @@ function ShopForm({
             onChange={(e) => edit("state_code", e.target.value)}
             className="h-8 rounded-lg border border-input bg-background px-2 text-sm focus-visible:border-ring"
           >
-            <option value="">— select —</option>
+            <option value="">Select</option>
             {INDIAN_STATE_CODES.map((s) => (
               <option key={s.code} value={s.code}>
                 {s.code} · {s.name}
@@ -284,21 +284,21 @@ function ShopForm({
           <Input
             value={draft.gstin}
             onChange={(e) => edit("gstin", e.target.value)}
-            placeholder="—"
+            placeholder="-"
             className="font-mono text-xs uppercase"
           />
         </Field>
         <Field label="Phone">
-          <Input value={draft.phone} onChange={(e) => edit("phone", e.target.value)} placeholder="—" />
+          <Input value={draft.phone} onChange={(e) => edit("phone", e.target.value)} placeholder="-" />
         </Field>
         <Field label="Address">
-          <Input value={draft.address} onChange={(e) => edit("address", e.target.value)} placeholder="—" />
+          <Input value={draft.address} onChange={(e) => edit("address", e.target.value)} placeholder="-" />
         </Field>
         <Field label="UPI ID (VPA)" hint="Adds a pay link to collection reminders.">
           <Input
             value={draft.upi_vpa}
             onChange={(e) => edit("upi_vpa", e.target.value)}
-            placeholder="—"
+            placeholder="-"
             className="font-mono text-xs"
           />
         </Field>

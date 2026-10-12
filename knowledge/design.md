@@ -3,10 +3,11 @@ type: design-system
 title: Salt design system
 description: The authoritative design tokens, principles, and component patterns for Salt's UI. Audited from apps/web/src/index.css (the source of truth) and wiki/architecture/design-system.md. Read before any UI change; update when a new pattern is introduced.
 plane_issues:
-  - SALT-2 (lens-spine spike — logic-only, introduced no new UI pattern)
-  - SALT-20 (DataTable real-design pass — sortable headers, skeleton, empty state)
+  - SALT-2 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/86714868-7786-45d3-9236-e18e982143ac (lens-spine spike, logic-only, introduced no new UI pattern)
+  - SALT-20 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/fd2533bf-dcf6-4a5d-b6fd-22ecedf46fe3 (DataTable real-design pass, sortable headers, skeleton, empty state)
   - SALT-38 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/29df4720-0e15-465f-a3e7-b20547d30e47 (P1 accessibility: solid focus ring, 3:1 control border)
   - SALT-39 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/368eebfb-9363-4394-bb1c-f4d5201b061d (P2 design gaps: dark values, motion, spacing, density and voice carried in; broken links fixed; contrast.py)
+  - SALT-40 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/e6df6d91-6802-4904-8e86-4967821aa473 (P3 design gaps: legacy HTML docs aligned with the focus and control values, voice refused words, spelling and dash rules, dash check in contrast.py)
 ---
 
 # Salt design system
@@ -15,7 +16,7 @@ plane_issues:
 
 ## First principle
 
-**Light, quiet, near-monochrome zinc. Colour is reserved for *state*, never decoration.** The primary action is near-black (`#18181b`), surfaces are zinc-50/100, and the only saturated colour in the UI is success/warning/danger feedback. A screen at rest should read as black text on white with grey chrome. If you reach for an accent colour to make something "pop", stop — that is not this system.
+**Light, quiet, near-monochrome zinc. Colour is reserved for *state*, never decoration.** The primary action is near-black (`#18181b`), surfaces are zinc-50/100, and the only saturated colour in the UI is success/warning/danger feedback. A screen at rest should read as black text on white with grey chrome. If you reach for an accent colour to make something "pop", stop: that is not this system.
 
 ## Tokens (light; dark mode mirrors via `.dark`)
 
@@ -29,14 +30,14 @@ plane_issues:
 - One rule in `index.css` draws it for every control: `:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px }`. Do not add `ring-ring/50`, `focus-visible:ring-*` or `outline-none` to a control. Where the edge would be clipped (table rows and cells, the palette input) use `focus-visible:-outline-offset-2`. `outline-none` is only for a container focused by script (`tabIndex={-1}`: `main`, the dialog popup).
 - On a dark surface inside the light theme, use a solid white ring (`focus-visible:ring-white`).
 
-**Text** (WCAG AA enforced — see SALT-157)
+**Text** (WCAG AA enforced, see SALT-157)
 - `--text-primary` #18181b · `--text-secondary` #52525b · `--text-tertiary` #676770 · `--text-disabled` #a1a1aa · `--text-inverse` #fafafa
 
 **Actions**
 - `--action-primary` #18181b, hover #27272a, text #ffffff
 - `--action-secondary` #f4f4f5, hover #e4e4e7, text #18181b
 
-**State (the only colour)** — each is a triad `{fg, -bg, -border}`, plus `-on-dark` variants:
+**State (the only colour)**: each is a triad `{fg, -bg, -border}`, plus `-on-dark` variants:
 - success #166534 / #f0fdf4 / #bbf7d0
 - warning #b45309 / #fffbeb / #fde68a
 - danger #b91c1c / #fef2f2 / #fecaca
@@ -65,15 +66,15 @@ plane_issues:
 | danger fg / bg / border | #b91c1c / #fef2f2 / #fecaca | #f87171 / #450a0a / #b91c1c |
 | info fg / bg / border | #1e40af / #eff6ff / #bfdbfe | #93c5fd / #172554 / #1e40af |
 
-Computed in `knowledge/contrast.py` (57 of 57 pass): text-tertiary is 5.09:1 on surface-2 in light and 4.83:1 in dark; the control border and focus ring figures above hold in both themes; every state fg holds 4.5:1 on its own bg and on the page background in both themes; the on-dark dots hold 3:1 on the dark surface. The root doc's rule "text-tertiary never on surface-2" predates SALT-157 and no longer applies. Run `python3 knowledge/contrast.py` after any token change.
+Computed in `knowledge/contrast.py` (58 of 58 pass): text-tertiary is 5.09:1 on surface-2 in light and 4.83:1 in dark; the control border and focus ring figures above hold in both themes; every state fg holds 4.5:1 on its own bg and on the page background in both themes; the on-dark dots hold 3:1 on the dark surface. The root doc's rule "text-tertiary never on surface-2" predates SALT-157 and no longer applies. Run `python3 knowledge/contrast.py` after any token change.
 
 **shadcn/@base-ui bridge:** semantic aliases (`--primary`, `--muted`, `--destructive`, `--input`, `--ring`, `--sidebar-*`, …) map onto the tokens above; use the named utilities (`bg-surface`, `text-text-secondary`, `bg-primary`) not raw hexes.
 
 ## Typography
 
-- `--font-sans` **Geist Variable** (Inter fallback) — all UI.
-- `--font-mono` **Geist Mono Variable** — numbers, money, codes, Kbd.
-- `--font-display` **Fraunces** (serif) — display headings only, sparingly.
+- `--font-sans` **Geist Variable** (Inter fallback): all UI.
+- `--font-mono` **Geist Mono Variable**: numbers, money, codes, Kbd.
+- `--font-display` **Fraunces** (serif): display headings only, sparingly.
 - Scale (six steps, no improvised sizes; `text-[13px]` is banned, it is `text-sm`), with the line height each step carries: xs .6875rem (11px, 1.4) · sm .8125rem (13px, 1.45) · base .9375rem (15px, 1.45) · lg 1.0625rem (17px, 1.3) · xl 1.375rem (22px, 1.2) · 2xl 1.75rem (28px, 1.1).
 - Tabular numerals (`tabular-nums`) wherever money, quantity, percent or a count lives. Uppercase labels: `text-xs uppercase tracking-wide font-semibold text-text-tertiary`.
 
@@ -111,6 +112,17 @@ From `salt-design-system.html` (Brand, Voice); the root `design.md` has no voice
 - **Bilingual where it matters.** Item names and Hindi text sit side by side ("Crocin 500" next to its Hindi name); short English action words such as "Pay" stay English because cashiers prefer them.
 - Money and dates follow `en-IN` (see Patterns below); status is text or an icon plus colour, never colour alone.
 
+**Refused words and patterns:** "successfully", "Oops", "Sorry", "Congratulations", "Complete transaction", exclamation marks and emoji in product UI, and any error that does not say what to do next.
+
+| Do | Don't |
+|---|---|
+| "Bill saved" / "Save & Print · F9" | "Your bill has been saved successfully." / "Complete transaction" |
+| "Save timed out: it may have gone through. Check Bills before retrying." | "Oops! Something went wrong. Try again later." |
+
+**Spelling:** British English in prose and copy (colour, organisation, behaviour), with `en-IN` formats for money and dates. Code identifiers keep their names (`--color-*`, `text-text-primary`); do not rename them to match the prose.
+
+**Dashes:** no en dash (U+2013) or em dash (U+2014) anywhere in the design docs or the product's copy. Ranges use a hyphen (3-6, 2-8°C); an empty table value is a hyphen; a pause is a comma, colon, full stop or parentheses. `python3 knowledge/contrast.py` fails if one appears in the design docs or in a user-facing string under `apps/web/src` (comments are not checked).
+
 ## Patterns / primitives
 
 - Built on **shadcn/ui "base-nova"** over `@base-ui/react`. Reuse existing primitives: `ui/kbd` (Kbd), `ui/dialog`, `ui/card`, Dot, Badge.
@@ -122,10 +134,10 @@ From `salt-design-system.html` (Brand, Voice); the root `design.md` has no voice
 
 ## Sources
 
-Read these when this doc is not enough: [`design.md`](../design.md) §1 principles, §2.3 token usage rules, §4 density, §5 primitives, §6 patterns, §7 accessibility, §8 anti-patterns; [`salt-design-system.html`](../salt-design-system.html) for the visual reference (brand and voice, motion, spacing, density); [`wiki/architecture/design-system.md`](../wiki/architecture/design-system.md) for as-built status and gotchas.
+Read these when this doc is not enough: [`design.md`](../design.md) §1 principles, §2.3 token usage rules, §4 density, §5 primitives, §6 patterns, §7 accessibility, §8 anti-patterns; [`salt-design-system.html`](../salt-design-system.html) for the visual reference (brand and voice, motion, spacing, density; its focus ring, control border and text-tertiary values were aligned with `index.css` on 12 October 2026, [SALT-40](https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/e6df6d91-6802-4904-8e86-4967821aa473), and the CSS still wins on any difference); [`wiki/architecture/design-system.md`](../wiki/architecture/design-system.md) for as-built status and gotchas.
 
 ## When you change UI
 
-1. Read this file + `apps/web/src/index.css`. Use existing tokens/primitives — introduce no colour, font, spacing, or component pattern not defined here.
+1. Read this file + `apps/web/src/index.css`. Use existing tokens/primitives: introduce no colour, font, spacing, or component pattern not defined here.
 2. If a genuinely new pattern is unavoidable, validate it against real-world UI (Lazyweb) before codifying, then update this file and add the Plane issue to `plane_issues`.
-3. Logic-only changes to UI files (gating, routing, state) introduce no design pattern — note that and proceed.
+3. Logic-only changes to UI files (gating, routing, state) introduce no design pattern, note that and proceed.

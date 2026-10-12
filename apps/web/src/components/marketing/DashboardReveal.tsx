@@ -139,7 +139,7 @@ export function DashboardReveal({
                 ))}
               </div>
               <p className="mt-2 text-xs text-text-tertiary">
-                Pehle 5 items ka preview — poora {items}-item catalogue Salt ke andar ready hai.
+                Pehle 5 items ka preview, poora {items}-item catalogue Salt ke andar ready hai.
               </p>
             </div>
           </div>

@@ -28,7 +28,7 @@ export function BatchPicker({
     <Sheet open={!!line} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-xl">
         <SheetHeader>
-          <SheetTitle>{item?.name} — select batch</SheetTitle>
+          <SheetTitle>{item?.name}: select batch</SheetTitle>
           <SheetDescription>
             {item?.salt} · {item?.pack}
           </SheetDescription>

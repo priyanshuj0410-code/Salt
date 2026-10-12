@@ -247,7 +247,7 @@ export function BillSummary({
         </Button>
         {usingSeed && (
           <p className="text-center text-xs text-text-tertiary">
-            Demo catalogue — import your items to save bills.
+            Demo catalogue: import your items to save bills.
           </p>
         )}
         {error && <p className="text-center text-xs text-destructive">{error}</p>}

@@ -17,7 +17,7 @@ const DIMS: { key: TurnoverDim; label: string }[] = [
 ];
 
 /** "2.4×" — annualised turns. Dash when there is no inventory to turn over. */
-const fmtRatio = (r: number) => (r > 0 ? `${r.toFixed(1)}×` : "—");
+const fmtRatio = (r: number) => (r > 0 ? `${r.toFixed(1)}×` : "-");
 
 export function TurnoverPage() {
   const { items, loading, lookbackDays } = useInventory();
@@ -33,7 +33,7 @@ export function TurnoverPage() {
       <PageHeader
         icon={Repeat}
         title="Stock turnover"
-        subtitle={`How fast stock cycles — annualised from the last ${lookbackDays} days of sales`}
+        subtitle={`How fast stock cycles: annualised from the last ${lookbackDays} days of sales`}
       />
       <InventoryNav />
 

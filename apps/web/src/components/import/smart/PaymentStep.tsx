@@ -88,7 +88,7 @@ export function PaymentStep({
       return;
     }
     if (!shopId) {
-      setError("No active shop — set a primary shop before importing payments.");
+      setError("No active shop: set a primary shop before importing payments.");
       return;
     }
     setBusy(true);
@@ -202,7 +202,7 @@ export function PaymentStep({
         <div className="flex items-center gap-2 text-sm">
           <Wand2 className="size-4 text-primary" />
           <span className="font-medium">Check the column mapping</span>
-          <span className="text-text-tertiary">— {parsed?.rows.length ?? 0} rows.</span>
+          <span className="text-text-tertiary">{parsed?.rows.length ?? 0} rows.</span>
         </div>
 
         <MapGroup
@@ -236,13 +236,13 @@ export function PaymentStep({
 
         {!voucherMapped && (
           <p className="mt-3 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-500">
-            <AlertTriangle className="size-4 shrink-0" /> Map the voucher no — it is the dedup key for safe
+            <AlertTriangle className="size-4 shrink-0" /> Map the voucher no: it is the dedup key for safe
             re-import.
           </p>
         )}
         {voucherMapped && !amountMapped && (
           <p className="mt-3 flex items-center gap-2 text-sm text-amber-700 dark:text-amber-500">
-            <AlertTriangle className="size-4 shrink-0" /> Map an amount — a single Amount, or separate
+            <AlertTriangle className="size-4 shrink-0" /> Map an amount: a single Amount, or separate
             received / paid columns.
           </p>
         )}
@@ -282,7 +282,7 @@ export function PaymentStep({
         <>
           <p className="mt-3 text-sm text-text-tertiary">
             These vouchers could not be imported (see reasons). If parties are missing, import your
-            ledgers/party-GST first; then re-run — already-imported vouchers are skipped.
+            ledgers/party-GST first; then re-run: already-imported vouchers are skipped.
           </p>
           <div className="mt-2 max-h-48 overflow-auto rounded-md border bg-amber-500/5 p-2 text-xs">
             {result?.quarantined.slice(0, 50).map((q, i) => (

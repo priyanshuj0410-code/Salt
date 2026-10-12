@@ -102,7 +102,7 @@ export function OpeningStockStep({
     return (
       <div className="rounded-lg border p-5">
         <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-          {posted} opening movement{posted === 1 ? "" : "s"} posted — the stock ledger now reconciles to
+          {posted} opening movement{posted === 1 ? "" : "s"} posted: the stock ledger now reconciles to
           on-hand.
         </p>
         <div className="mt-4">
@@ -123,7 +123,7 @@ export function OpeningStockStep({
         </div>
         <p className="mt-2 text-sm text-text-tertiary">
           Post an opening balance to the stock movement ledger for every imported batch, so your
-          inventory movement history reconciles to current stock. On-hand is unchanged — this only fills
+          inventory movement history reconciles to current stock. On-hand is unchanged: this only fills
           in the audit ledger. Run once after importing batches; safe to re-run.
         </p>
       </div>
@@ -145,7 +145,7 @@ export function OpeningStockStep({
           </div>
           {(plan?.skippedNoShop ?? 0) > 0 && (
             <p className="mt-2 text-sm text-amber-700 dark:text-amber-500">
-              {plan?.skippedNoShop} batches have no shop and there is no active shop — set a primary shop,
+              {plan?.skippedNoShop} batches have no shop and there is no active shop. Set a primary shop,
               then re-scan.
             </p>
           )}
@@ -159,7 +159,7 @@ export function OpeningStockStep({
               </Button>
             ) : (
               <Button onClick={onComplete}>
-                {(plan?.skippedExisting ?? 0) > 0 ? "Already reconciled — continue" : "Nothing to post — continue"}
+                {(plan?.skippedExisting ?? 0) > 0 ? "Already reconciled: continue" : "Nothing to post: continue"}
               </Button>
             )}
             <Button variant="ghost" onClick={rescan} disabled={busy || loading}>

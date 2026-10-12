@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Manager IA — Simplified &amp; Natural</title>
+<title>Manager IA: Simplified &amp; Natural</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
     --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
     --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
     --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
-    --focus-ring-strong:rgba(24,24,27,.30);
+    --focus-ring-strong:#18181b;
     --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
     --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
     --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -106,7 +106,7 @@
 
   .area{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px;scroll-margin-top:14px;}
   .area.flash{animation:flash 1.2s ease;}
-  @keyframes flash{0%{box-shadow:0 0 0 3px var(--focus-ring-strong);}100%{box-shadow:var(--shadow-sm);}}
+  @keyframes flash{0%{box-shadow:0 0 0 3px rgba(24,24,27,.30);}100%{box-shadow:var(--shadow-sm);}}
   .area .ah{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
   .area .ak{width:30px;height:30px;border-radius:var(--radius-md);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;font-size:14px;}
   .area .an{font-size:var(--text-lg);font-weight:600;} .area .ahi{color:var(--text-tertiary);font-size:var(--text-sm);}
@@ -148,7 +148,7 @@
   <header class="top">
     <div class="logo">S</div>
     <div>
-      <h1><span class="wordmark">Salt</span> — Manager IA, simplified &amp; natural</h1>
+      <h1><span class="wordmark">Salt</span>: Manager IA, simplified &amp; natural</h1>
       <p>The same base, reshaped for the person who <b>runs the floor</b> instead of watching the money.</p>
     </div>
   </header>
@@ -156,25 +156,25 @@
   <div class="persona">
     <div class="av">R</div>
     <div>
-      <div class="nm">Rohit — Manager <span>· the operational spine, and the would-be champion</span></div>
-      <p>Runs the floor and approves the exceptions; does the heavy entry himself (GRN, returns); the most fluent across the whole app. <b>Interrupted constantly</b> — needs to resume mid-task. Benchmarks the app against fintech apps. His killer view is seeing <b>all counters live</b>; his daily friction is approvals that should be faster than a phone call. Has <b>everything except Settings</b>.</p>
+      <div class="nm">Rohit: Manager <span>· the operational spine, and the would-be champion</span></div>
+      <p>Runs the floor and approves the exceptions; does the heavy entry himself (GRN, returns); the most fluent across the whole app. <b>Interrupted constantly</b>: needs to resume mid-task. Benchmarks the app against fintech apps. His killer view is seeing <b>all counters live</b>; his daily friction is approvals that should be faster than a phone call. Has <b>everything except Settings</b>.</p>
     </div>
   </div>
 
   <div class="base-note">
-    <b>Base = the Owner IA.</b> Same spine — one Home, five work areas (Sell · Buy · Stock · Money · Comply), type-to-find, numbers-first, offline + WhatsApp + en-IN, Hinglish labels. This page only shows <b>what changes for the manager</b>: Home becomes the live floor, Approvals graduate to a first-class Inbox, Setup is removed, and the five areas turn from <em>observational</em> (owner watches) into <em>operational</em> (manager acts).
+    <b>Base = the Owner IA.</b> Same spine: one Home, five work areas (Sell · Buy · Stock · Money · Comply), type-to-find, numbers-first, offline + WhatsApp + en-IN, Hinglish labels. This page only shows <b>what changes for the manager</b>: Home becomes the live floor, Approvals graduate to a first-class Inbox, Setup is removed, and the five areas turn from <em>observational</em> (owner watches) into <em>operational</em> (manager acts).
   </div>
 
-  <div class="section-label">Principles — what carries over, what changes</div>
+  <div class="section-label">Principles: what carries over, what changes</div>
   <div class="grid g3" id="principles"></div>
 
-  <div class="section-label">The shape — Floor + Inbox + the same five areas (no Setup)</div>
+  <div class="section-label">The shape: Floor + Inbox + the same five areas (no Setup)</div>
   <div class="hero">
     <div class="rail" id="rail"></div>
     <div class="home">
-      <div class="hwh"><span class="lbl">Home · “Floor”</span><span style="margin-left:auto;font-size:var(--text-xs);color:var(--text-tertiary);font-weight:500">what he sees first — what’s happening &amp; what needs me</span></div>
+      <div class="hwh"><span class="lbl">Home · “Floor”</span><span style="margin-left:auto;font-size:var(--text-xs);color:var(--text-tertiary);font-weight:500">what he sees first: what’s happening &amp; what needs me</span></div>
       <div class="searchmock">⌕ &nbsp;Find a bill, party, item, or counter…<span class="k">⌘K</span></div>
-      <div class="clabel">Counters — live</div>
+      <div class="clabel">Counters: live</div>
       <div class="counters" id="counters"></div>
       <div class="tiles" id="hometiles"></div>
       <div class="quick">
@@ -186,13 +186,13 @@
     </div>
   </div>
 
-  <div class="section-label">The areas in detail — manager’s lens, and the delta from the owner</div>
+  <div class="section-label">The areas in detail: manager’s lens, and the delta from the owner</div>
   <div id="areas"></div>
 
-  <div class="section-label">Coverage check — what the manager sees (12 of 13 modules; Settings is owner-only)</div>
+  <div class="section-label">Coverage check: what the manager sees (12 of 13 modules; Settings is owner-only)</div>
   <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
 
-  <div class="section-label">The big moves — how the base changed for this persona</div>
+  <div class="section-label">The big moves: how the base changed for this persona</div>
   <div id="moves"></div>
 
   <footer class="foot">
@@ -202,14 +202,14 @@
 
 <script>
 const PRINCIPLES = [
-  {h:"Home is the floor, not the money", tag:["changed","Changed"], p:"His first question isn’t “how’s my money” — it’s “what’s happening right now and what needs me”. Live counters are the hero; the money pulse moves to the Money area."},
-  {h:"Approvals are a first-class Inbox", tag:["up","Elevated"], p:"He approves many times a day, mid-task, from his phone. For the owner this was one Home tile; for the manager it’s a primary surface — and it must beat a phone call, or it collapses into “haan de do”."},
-  {h:"He operates, he doesn’t configure", tag:["changed","Changed"], p:"No Setup area — that’s owner-only. He works within the limits the owner sets and escalates the exceptions. His only lever is approve / deny."},
+  {h:"Home is the floor, not the money", tag:["changed","Changed"], p:"His first question isn’t “how’s my money”. It’s “what’s happening right now and what needs me”. Live counters are the hero; the money pulse moves to the Money area."},
+  {h:"Approvals are a first-class Inbox", tag:["up","Elevated"], p:"He approves many times a day, mid-task, from his phone. For the owner this was one Home tile; for the manager it’s a primary surface, and it must beat a phone call, or it collapses into “haan de do”."},
+  {h:"He operates, he doesn’t configure", tag:["changed","Changed"], p:"No Setup area: that’s owner-only. He works within the limits the owner sets and escalates the exceptions. His only lever is approve / deny."},
   {h:"Resume anything", tag:["new","New"], p:"Interrupted constantly, so half-done GRNs and parked bills surface on Home with “resume”, and every flow survives a break. The owner never needed this."},
-  {h:"Multi-counter real-time is the spine", tag:["new","New"], p:"A unit sold on Counter 2 is gone on Counter 1 instantly. This is his killer view — and exactly what Marg can’t do. It’s the centre of his Home, not a feature buried elsewhere."},
-  {h:"Money is tasks, within limits", tag:["changed","Changed"], p:"For the owner, Money is the emotional khaata and the credit decision. For the manager it’s “who do I chase today / record this payment” — bounded by the owner’s credit limits."},
+  {h:"Multi-counter real-time is the spine", tag:["new","New"], p:"A unit sold on Counter 2 is gone on Counter 1 instantly. This is his killer view, and exactly what Marg can’t do. It’s the centre of his Home, not a feature buried elsewhere."},
+  {h:"Money is tasks, within limits", tag:["changed","Changed"], p:"For the owner, Money is the emotional khaata and the credit decision. For the manager it’s “who do I chase today / record this payment”, bounded by the owner’s credit limits."},
   {h:"Type-to-find · offline · WhatsApp · en-IN", tag:["kept","Inherited"], p:"Unchanged from the base: ⌘K and g+letter, numbers-first screens, billing that never stops offline, WhatsApp share/remind, Indian money format, Hinglish labels."},
-  {h:"Built to teach", tag:["new","New"], p:"He trains new cashiers. Consistent flows and visible shortcuts so a hire reaches billing speed in 2–3 days — the same stability the cashier needs, seen from the trainer’s side."},
+  {h:"Built to teach", tag:["new","New"], p:"He trains new cashiers. Consistent flows and visible shortcuts so a hire reaches billing speed in 2-3 days. The same stability the cashier needs, seen from the trainer’s side."},
 ];
 
 const COUNTERS = [
@@ -239,54 +239,54 @@ const RAIL = [
 ];
 
 const AREAS = [
-  {id:"floor", k:"F", n:"Floor", hi:"“Counters” — the home", ntag:["changed","reshaped"],
+  {id:"floor", k:"F", n:"Floor", hi:"“Counters”: the home", ntag:["changed","reshaped"],
    tag:"What’s happening right now, and what needs me.",
-   inside:["Live counters (real-time — who’s billing what, throughput, held bills)","Needs you (approvals summary)","What’s stuck (OOS at counter, GRNs to verify, returns to process, low stock)","Today’s throughput (bills, sales, returns)","Resume (drafts I was pulled away from)","Type-to-find everything (⌘K)"],
-   jtbd:"His first question — <b>“what’s happening and what needs me?”</b> — answered before he takes a step onto the floor.",
+   inside:["Live counters (real-time, who’s billing what, throughput, held bills)","Needs you (approvals summary)","What’s stuck (OOS at counter, GRNs to verify, returns to process, low stock)","Today’s throughput (bills, sales, returns)","Resume (drafts I was pulled away from)","Type-to-find everything (⌘K)"],
+   jtbd:"His first question: <b>“what’s happening and what needs me?”</b>: answered before he takes a step onto the floor.",
    life:["spans all"], absorbs:["Activity (live feed)","Reports → operational dashboard","Approvals (summary)"],
    delta:"Owner’s Home is the <b>money pulse</b> (“who do I chase”). The manager’s Home is the <b>live floor</b> (“what’s running, what’s stuck, what needs my nod”). Counters are the hero, not receivables."},
 
-  {id:"inbox", k:"I", n:"Inbox", hi:"“Manzoori” — approvals", ntag:["new","new area"],
-   tag:"Clear what needs my nod — faster than a phone call.",
+  {id:"inbox", k:"I", n:"Inbox", hi:"“Manzoori”: approvals", ntag:["new","new area"],
+   tag:"Clear what needs my nod, faster than a phone call.",
    inside:["Over-limit discounts","Voids / cancellations","Credit beyond the customer’s limit","GRNs & returns to authorise","Approve / deny in one tap (from the phone)"],
    jtbd:"He approves <b>many times a day, mid-task</b>. If the Inbox is slower than shouting “haan de do” across the shop, the control collapses and the limits become decorative.",
    life:["S7","S9","S15"], absorbs:["Approvals (elevated from a single Home tile)"],
-   delta:"For the owner this was one “Needs you” tile on Home. For the manager it is a <b>standing surface with a live count</b> — the thing he opens dozens of times a day."},
+   delta:"For the owner this was one “Needs you” tile on Home. For the manager it is a <b>standing surface with a live count</b>: the thing he opens dozens of times a day."},
 
-  {id:"sell", k:"C", n:"Sell", hi:"“Bikri” — the counter", ntag:["changed","operational"],
-   tag:"Oversee every counter’s bills — and train the cashiers.",
-   inside:["Bill (counter: keyboard, FEFO, H1/X gate, split tender, offline)","All counters’ bills (not just his own)","Sales returns — process & authorise","OOS → substitute by salt","Sale numbers"],
-   jtbd:"Operates <em>and</em> oversees the counter — handles the credit and over-limit bills, resolves OOS, and <b>trains new cashiers here</b>.",
+  {id:"sell", k:"C", n:"Sell", hi:"“Bikri”: the counter", ntag:["changed","operational"],
+   tag:"Oversee every counter’s bills: and train the cashiers.",
+   inside:["Bill (counter: keyboard, FEFO, H1/X gate, split tender, offline)","All counters’ bills (not just his own)","Sales returns: process & authorise","OOS → substitute by salt","Sale numbers"],
+   jtbd:"Operates <em>and</em> oversees the counter: handles the credit and over-limit bills, resolves OOS, and <b>trains new cashiers here</b>.",
    life:["S7","S8","S9","S15"], absorbs:["Counter","Sales / bills","Credit notes","Reports → Sales"],
    delta:"Owner <b>reviews</b> sales; the manager <b>runs the floor</b> and sees <b>all</b> counters, not just one biller’s history."},
 
-  {id:"buy", k:"B", n:"Buy", hi:"“Kharid” — purchasing", ntag:["changed","his heaviest area"],
-   tag:"His heaviest daily work — order, receive, verify, return.",
-   inside:["Order (purchase orders, reorder suggestions)","Receive & verify GRN (challan vs boxes — batch, expiry, qty)","Scan invoice / OCR","Vendor schemes (check it was applied)","Purchase returns (debit notes)","Purchase numbers"],
-   jtbd:"The hands-on owner of procurement — and the area where <b>“resume my half-done GRN”</b> matters most (he’s interrupted mid-entry).",
+  {id:"buy", k:"B", n:"Buy", hi:"“Kharid”: purchasing", ntag:["changed","his heaviest area"],
+   tag:"His heaviest daily work: order, receive, verify, return.",
+   inside:["Order (purchase orders, reorder suggestions)","Receive & verify GRN (challan vs boxes, batch, expiry, qty)","Scan invoice / OCR","Vendor schemes (check it was applied)","Purchase returns (debit notes)","Purchase numbers"],
+   jtbd:"The hands-on owner of procurement, and the area where <b>“resume my half-done GRN”</b> matters most (he’s interrupted mid-entry).",
    life:["S4","S5","S15"], absorbs:["Purchases","GRN","Purchase orders","Vendor schemes","Debit notes","Reports → Purchase"],
    delta:"Owner decides <b>what to buy and on what terms</b>; the manager does the <b>actual ordering, receiving and verification</b>."},
 
-  {id:"stock", k:"S", n:"Stock", hi:"“Maal” — goods & risk", ntag:["changed","operational"],
-   tag:"Act on stock health — return it, reorder it, fix the count.",
-   inside:["What’s here (stock + value)","Expiring soon — initiate the return","Reorder / out of stock — place the order","Dead / slow","Catalogue (items, prices, salts, substitutes)","Adjust / count / destroy / transfer"],
-   jtbd:"Owner <b>watches</b> the risk; the manager <b>acts</b> on it — initiates the supplier return, places the reorder, runs the physical count.",
+  {id:"stock", k:"S", n:"Stock", hi:"“Maal”: goods & risk", ntag:["changed","operational"],
+   tag:"Act on stock health: return it, reorder it, fix the count.",
+   inside:["What’s here (stock + value)","Expiring soon: initiate the return","Reorder / out of stock, place the order","Dead / slow","Catalogue (items, prices, salts, substitutes)","Adjust / count / destroy / transfer"],
+   jtbd:"Owner <b>watches</b> the risk; the manager <b>acts</b> on it: initiates the supplier return, places the reorder, runs the physical count.",
    life:["S6","S14"], absorbs:["Inventory (all)","Catalogue","Reports → Inventory"],
    delta:"Same area, flipped from <b>observe</b> to <b>do</b>: every risk tile is an action he takes, not just a number he reads."},
 
-  {id:"money", k:"M", n:"Money", hi:"“Paisa” — collections", ntag:["changed","bounded"],
-   tag:"Today’s collection tasks — within the owner’s limits.",
+  {id:"money", k:"M", n:"Money", hi:"“Paisa”: collections", ntag:["changed","bounded"],
+   tag:"Today’s collection tasks: within the owner’s limits.",
    inside:["Who to chase today (overdue)","Record a payment","WhatsApp reminder + pay-link (one tap)","Parties (view; limits are set by the owner)","Salesmen collections"],
-   jtbd:"Follows up collections <b>day to day</b>. He <b>can’t set credit limits</b> (the owner does) — he works within them and pushes exceptions to the Inbox.",
+   jtbd:"Follows up collections <b>day to day</b>. He <b>can’t set credit limits</b> (the owner does): he works within them and pushes exceptions to the Inbox.",
    life:["S12"], absorbs:["Parties (read/operate)","Payments","Salesmen","Reports → Financial"],
    delta:"Owner’s Money is the emotional <b>khaata</b> + the credit <b>decision</b>; the manager’s is the daily <b>chase</b>, bounded by the owner’s rules. Setting limits lives in the owner’s Setup."},
 
-  {id:"comply", k:"T", n:"Comply", hi:"“Hisaab” — tax & law", ntag:["changed","keep it clean"],
-   tag:"Keep the floor compliant — registers kept, flags clear.",
+  {id:"comply", k:"T", n:"Comply", hi:"“Hisaab”: tax & law", ntag:["changed","keep it clean"],
+   tag:"Keep the floor compliant: registers kept, flags clear.",
    inside:["H1 / X register actually filled during the rush","Licence-expiry flags","GST data clean & complete for the accountant","Inspector-ready at a moment’s notice"],
-   jtbd:"He makes sure the <b>register is filled at peak</b> (the gap that hurts at inspection) and the data is clean — the <b>accountant files</b>, the manager keeps the floor honest.",
+   jtbd:"He makes sure the <b>register is filled at peak</b> (the gap that hurts at inspection) and the data is clean. The <b>accountant files</b>, the manager keeps the floor honest.",
    life:["S13"], absorbs:["GST & compliance (monitor)","H1/X register","Drug licences"],
-   delta:"Owner carries the <b>liability</b>, the accountant <b>files</b> — the manager makes sure it’s actually <b>captured on the floor</b> in the first place."},
+   delta:"Owner carries the <b>liability</b>, the accountant <b>files</b>: the manager makes sure it’s actually <b>captured on the floor</b> in the first place."},
 ];
 
 const COVERAGE = [
@@ -296,14 +296,14 @@ const COVERAGE = [
   ["Inventory / Catalogue","Stock"],
   ["Purchases / GRN","Buy"],
   ["GST & compliance + licences","Comply"],
-  ["Settings","— not accessible (owner-only)"],
+  ["Settings","Not accessible (owner-only)"],
 ];
 
 const MOVES = [
-  {h:"Home flips: money-pulse → floor-command", p:"The owner opens to “how am I doing / who do I chase”. The manager opens to “what’s running and what needs me”, with the live multi-counter view as the hero — the one screen Marg structurally can’t produce.", ba:"landing: money pulse → live floor"},
+  {h:"Home flips: money-pulse → floor-command", p:"The owner opens to “how am I doing / who do I chase”. The manager opens to “what’s running and what needs me”, with the live multi-counter view as the hero. The one screen Marg structurally can’t produce.", ba:"landing: money pulse → live floor"},
   {h:"Approvals graduate to a first-class Inbox", p:"From a single “Needs you” tile (owner) to a standing surface with a live count (manager). It must be faster than a phone call, or cashiers route around it and the discount limits stop meaning anything.", ba:"Home tile → Inbox (g i), live badge"},
-  {h:"Setup disappears", p:"He has no settings access — he operates inside the owner’s configuration. The boundary is visible: he approves exceptions but cannot change the limits, roles or print/format that produced them.", ba:"7 areas → 6 (Setup removed, shown locked)"},
-  {h:"The five areas turn operational", p:"Sell, Buy, Stock, Money and Comply keep the same buckets but flip from <em>observe</em> (owner) to <em>do</em> (manager): he runs all counters, owns GRN, initiates returns, chases collections, and keeps the registers — Buy being his heaviest daily work.", ba:"observational → operational"},
+  {h:"Setup disappears", p:"He has no settings access. He operates inside the owner’s configuration. The boundary is visible: he approves exceptions but cannot change the limits, roles or print/format that produced them.", ba:"7 areas → 6 (Setup removed, shown locked)"},
+  {h:"The five areas turn operational", p:"Sell, Buy, Stock, Money and Comply keep the same buckets but flip from <em>observe</em> (owner) to <em>do</em> (manager): he runs all counters, owns GRN, initiates returns, chases collections, and keeps the registers, Buy being his heaviest daily work.", ba:"observational → operational"},
   {h:"Resume-anything becomes first-class", p:"Because he’s interrupted constantly, drafts (half-done GRN, parked bills) surface on Home with one-tap resume, and every flow is built to survive a break. New need the owner didn’t have.", ba:"+ resumable drafts on Home"},
   {h:"Money is bounded, not owned", p:"He chases and records, but the credit decision and the limits stay with the owner. The area shows balances and collection tasks; changing the rules routes to the owner.", ba:"khaata + decision → chase within limits"},
 ];
@@ -339,11 +339,11 @@ $("#areas").innerHTML = AREAS.map(a=>`
     <div class="arow"><span class="arl">Inside</span>${a.inside.map(i=>`<span class="chip">${i}</span>`).join("")}</div>
     <div class="jtbd">${a.jtbd}</div>
     <div class="arow" style="margin-top:10px"><span class="arl">Lifecycle</span>${a.life.map(l=>`<span class="chip lc">${l}</span>`).join("")}<span class="arl" style="margin-left:8px">Absorbs</span>${a.absorbs.map(x=>`<span class="chip ab">${x}</span>`).join("")}</div>
-    <div class="delta">↔ <b>vs owner</b> — ${a.delta}</div>
+    <div class="delta">↔ <b>vs owner</b>: ${a.delta}</div>
   </div>`).join("");
 
 $("#coverage").innerHTML = `<thead><tr><th>Today’s module</th><th></th><th>Manager’s home for it</th></tr></thead><tbody>` +
-  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('—')?'lock':''}">${n}</span></td></tr>`).join("") +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('-')?'lock':''}">${n}</span></td></tr>`).join("") +
   `</tbody>`;
 
 $("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");

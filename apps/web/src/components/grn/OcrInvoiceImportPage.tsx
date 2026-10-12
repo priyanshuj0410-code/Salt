@@ -224,7 +224,7 @@ function ImportSurface() {
       <PageHeader
         icon={ScanLine}
         title="Import invoices"
-        subtitle="Drop vendor bills — PDF, photo, or CSV. Each lands as a GRN (stock, payable, ITC); missing vendors and items are created. Review & post each from the list. Files keep extracting if you leave."
+        subtitle="Drop vendor bills: PDF, photo, or CSV. Each lands as a GRN (stock, payable, ITC); missing vendors and items are created. Review & post each from the list. Files keep extracting if you leave."
         actions={
           <Button variant="outline" onClick={downloadTemplate}>
             <Download /> CSV template
@@ -360,7 +360,7 @@ function ScanReview({ scanId }: { scanId: string }) {
     try {
       const valid = result.invoices.filter((i) => i.valid && i.lines.length > 0 && !dupes.has(i.key));
       if (!valid.length) {
-        setError("No valid invoice to import — fix the flagged fields, or it was a duplicate.");
+        setError("No valid invoice to import, fix the flagged fields, or it was a duplicate.");
         return;
       }
       const masters = await loadMasters(orgId);
@@ -481,7 +481,7 @@ function ScanReview({ scanId }: { scanId: string }) {
       <Link to="/purchases/scan" className="mb-2 inline-block text-sm text-text-tertiary hover:text-text-primary">
         ← Import
       </Link>
-      <PageHeader icon={ScanLine} title="Review &amp; post" subtitle="Check the extracted figures — OCR can misread — then post as a GRN." />
+      <PageHeader icon={ScanLine} title="Review &amp; post" subtitle="Check the extracted figures: OCR can misread. Then post as a GRN." />
 
       {notFound && <p className="text-sm text-destructive">This scan could not be loaded. It may have been deleted.</p>}
 
@@ -511,7 +511,7 @@ function ScanReview({ scanId }: { scanId: string }) {
       {result && (
         <div className="rounded-lg border border-border">
           <div className="flex items-center justify-between gap-2 border-b border-border bg-surface px-3 py-2">
-            <span className="text-xs font-medium">Extracted — review before posting</span>
+            <span className="text-xs font-medium">Extracted: review before posting</span>
             <span className="text-xs text-text-tertiary">
               {result.invoices.length} invoice{result.invoices.length === 1 ? "" : "s"} · {result.lineCount} lines
               {result.errorCount > 0 ? ` · ${result.errorCount} errors` : ""}

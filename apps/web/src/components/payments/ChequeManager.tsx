@@ -136,7 +136,7 @@ export function ChequeManager({ orgId, nameById }: { orgId: string | null; nameB
                 />
               ),
             },
-            { key: "party", header: "Party", cell: (r) => <span className="font-medium">{nameById.get(r.party_id) ?? "—"}</span> },
+            { key: "party", header: "Party", cell: (r) => <span className="font-medium">{nameById.get(r.party_id) ?? "-"}</span> },
             {
               key: "dir",
               header: "Type",
@@ -146,7 +146,7 @@ export function ChequeManager({ orgId, nameById }: { orgId: string | null; nameB
                 </Badge>
               ),
             },
-            { key: "no", header: "Cheque no.", cell: (r) => <span className="font-mono text-xs">{r.reference || "—"}</span> },
+            { key: "no", header: "Cheque no.", cell: (r) => <span className="font-mono text-xs">{r.reference || "-"}</span> },
             { key: "amt", header: "Amount", numeric: true, cell: (r) => formatPaise(r.amount_paise) },
             {
               key: "status",

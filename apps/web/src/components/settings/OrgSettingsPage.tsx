@@ -22,7 +22,7 @@ export function OrgSettingsPage() {
       <PageHeader
         icon={Building2}
         title="Organisation"
-        subtitle="Your shop's identity — printed on every tax invoice, and required to compute CGST/SGST vs IGST at billing time."
+        subtitle="Your shop's identity: printed on every tax invoice, and required to compute CGST/SGST vs IGST at billing time."
         actions={membership ? <Badge variant="secondary">{membership.orgName}</Badge> : undefined}
       />
 
@@ -91,7 +91,7 @@ function ShopEditor({ shop }: { shop: Shop }) {
     <section className="rounded-lg border bg-background p-4">
       <h2 className="text-sm font-medium text-text-primary">Shop details</h2>
       <p className="mt-1 text-xs text-text-tertiary">
-        State is required — without it, the GST split on every invoice fails.
+        State is required: without it, the GST split on every invoice fails.
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -104,7 +104,7 @@ function ShopEditor({ shop }: { shop: Shop }) {
             onChange={(e) => edit("state_code", e.target.value || null)}
             className={selectCls}
           >
-            <option value="">— select —</option>
+            <option value="">Select</option>
             {INDIAN_STATE_CODES.map((s) => (
               <option key={s.code} value={s.code}>
                 {s.code} · {s.name}
@@ -116,21 +116,21 @@ function ShopEditor({ shop }: { shop: Shop }) {
           <Input
             value={draft.gstin ?? ""}
             onChange={(e) => edit("gstin", e.target.value)}
-            placeholder="—"
+            placeholder="-"
             className="h-8 font-mono text-xs uppercase"
           />
         </FormRow>
         <FormRow label="Phone">
-          <Input value={draft.phone ?? ""} onChange={(e) => edit("phone", e.target.value)} placeholder="—" className="h-8" />
+          <Input value={draft.phone ?? ""} onChange={(e) => edit("phone", e.target.value)} placeholder="-" className="h-8" />
         </FormRow>
         <FormRow label="Address">
-          <Input value={draft.address ?? ""} onChange={(e) => edit("address", e.target.value)} placeholder="—" className="h-8" />
+          <Input value={draft.address ?? ""} onChange={(e) => edit("address", e.target.value)} placeholder="-" className="h-8" />
         </FormRow>
         <FormRow label="UPI ID (VPA)" helper="Adds a pay link to payment reminders, e.g. shop@okhdfcbank.">
           <Input
             value={draft.upi_vpa ?? ""}
             onChange={(e) => edit("upi_vpa", e.target.value)}
-            placeholder="—"
+            placeholder="-"
             className="h-8 font-mono text-xs"
           />
         </FormRow>

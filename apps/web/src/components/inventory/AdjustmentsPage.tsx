@@ -110,7 +110,7 @@ function AdjustDialog({
                   >
                     <span className="min-w-0">
                       <span className="truncate">{b.name}</span>
-                      <span className="ml-1.5 text-xs text-text-tertiary">{b.batch_no ?? "—"}</span>
+                      <span className="ml-1.5 text-xs text-text-tertiary">{b.batch_no ?? "-"}</span>
                     </span>
                     <span className="shrink-0 tabular-nums text-text-tertiary">{b.qty} on hand</span>
                   </button>
@@ -123,7 +123,7 @@ function AdjustDialog({
             <span className="min-w-0">
               <span className="truncate font-medium">{batch.name}</span>
               <span className="ml-1.5 text-xs text-text-tertiary">
-                {batch.batch_no ?? "—"} · {batch.qty} on hand
+                {batch.batch_no ?? "-"} · {batch.qty} on hand
               </span>
             </span>
             <Button size="xs" variant="ghost" onClick={() => setBatch(null)}>
@@ -161,7 +161,7 @@ function AdjustDialog({
                 </span>
               )}
             </div>
-            <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional) — e.g. broken in transit" />
+            <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional): e.g. broken in transit" />
             {kind.sign < 0 && Number.isInteger(n) && n > batch.qty && (
               <p className="text-xs text-danger">Cannot remove more than the {batch.qty} on hand.</p>
             )}
@@ -194,7 +194,7 @@ export function AdjustmentsPage() {
       <PageHeader
         icon={SlidersHorizontal}
         title="Stock adjustments"
-        subtitle="Breakage, theft, write-offs and count corrections — each leaves an audit trail"
+        subtitle="Breakage, theft, write-offs and count corrections. Each leaves an audit trail"
         actions={
           <Button onClick={() => setOpen(true)}>
             <Plus /> Record adjustment
@@ -237,7 +237,7 @@ export function AdjustmentsPage() {
             header: "Item",
             cell: (r) => (
               <>
-                {r.item?.name ?? "—"}
+                {r.item?.name ?? "-"}
                 <span className="ml-1.5 text-xs text-text-tertiary">{r.batch?.batch_no ?? ""}</span>
               </>
             ),

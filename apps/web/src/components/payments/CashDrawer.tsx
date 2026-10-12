@@ -157,7 +157,7 @@ export function CashDrawer({ orgId }: { orgId: string | null }) {
             <StatCard label="Expected in drawer" value={formatPaiseCompact(expected)} valueTitle={formatPaise(expected)} />
             <StatCard
               label="Variance"
-              value={counted ? formatSigned(variancePreview) : "—"}
+              value={counted ? formatSigned(variancePreview) : "-"}
               tone={counted && variancePreview !== 0 ? "danger" : "default"}
               hint={counted ? (variancePreview === 0 ? "tallies" : variancePreview > 0 ? "surplus" : "short") : "enter counted cash"}
             />
@@ -215,7 +215,7 @@ export function CashDrawer({ orgId }: { orgId: string | null }) {
                 header: "Closed",
                 cell: (d) => (
                   <span className="text-text-tertiary">
-                    {d.closed_at ? format(new Date(d.closed_at), "d MMM yyyy, h:mm a") : "—"}
+                    {d.closed_at ? format(new Date(d.closed_at), "d MMM yyyy, h:mm a") : "-"}
                   </span>
                 ),
               },

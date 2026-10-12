@@ -93,7 +93,7 @@ function CountSheet({ count, onBack, onFinalized }: { count: PhysicalCount; onBa
       <PageHeader
         icon={ClipboardCheck}
         title={`Count · ${format(new Date(count.count_date), "d MMM yyyy")}`}
-        subtitle={draft ? "Enter the counted quantity for each batch, then finalize to reconcile" : "Finalized — variances posted as adjustments"}
+        subtitle={draft ? "Enter the counted quantity for each batch, then finalize to reconcile" : "Finalized: variances posted as adjustments"}
         actions={
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={onBack}>
@@ -133,12 +133,12 @@ function CountSheet({ count, onBack, onFinalized }: { count: PhysicalCount; onBa
             header: "Item",
             cell: (l) => (
               <>
-                {l.item?.name ?? "—"}
+                {l.item?.name ?? "-"}
                 <span className="ml-1.5 text-xs text-text-tertiary">{l.batch?.batch_no ?? ""}</span>
               </>
             ),
           },
-          { key: "batch", header: "Batch", cell: (l) => <span className="text-text-tertiary">{l.batch?.batch_no ?? "—"}</span> },
+          { key: "batch", header: "Batch", cell: (l) => <span className="text-text-tertiary">{l.batch?.batch_no ?? "-"}</span> },
           { key: "system", header: "System", numeric: true, cell: (l) => <span className="text-text-tertiary">{l.system_qty}</span> },
           {
             key: "counted",

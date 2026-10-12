@@ -17,7 +17,7 @@ type Sort = "soonest" | "value";
 
 /** Days-to-expiry as a colored chip: red once expired, amber within 30 days. */
 function DaysLeft({ days }: { days: number | null }) {
-  if (days == null) return <span className="text-text-tertiary">—</span>;
+  if (days == null) return <span className="text-text-tertiary">-</span>;
   if (days < 0) return <span className="font-medium text-danger">expired</span>;
   return <span className={cn(days <= 30 ? "font-medium text-warning" : "text-text-secondary")}>{days}d</span>;
 }
@@ -48,7 +48,7 @@ export function NearExpiryPage() {
       <PageHeader
         icon={CalendarClock}
         title="Near expiry"
-        subtitle="Batches expiring soon — return to the distributor before they are a write-off"
+        subtitle="Batches expiring soon: return to the distributor before they are a write-off"
       />
       <InventoryNav />
 
@@ -98,16 +98,16 @@ export function NearExpiryPage() {
               <div className="min-w-0">
                 <div className="truncate">{b.name}</div>
                 <div className="truncate text-xs text-text-tertiary">
-                  {[b.pack, b.manufacturer].filter(Boolean).join(" · ") || "—"}
+                  {[b.pack, b.manufacturer].filter(Boolean).join(" · ") || "-"}
                 </div>
               </div>
             ),
           },
-          { key: "batch", header: "Batch", cell: (b) => <span className="text-text-secondary">{b.batch_no ?? "—"}</span> },
+          { key: "batch", header: "Batch", cell: (b) => <span className="text-text-secondary">{b.batch_no ?? "-"}</span> },
           {
             key: "expiry",
             header: "Expires",
-            cell: (b) => <span className="text-text-tertiary">{b.expiryAt ? format(b.expiryAt, "MMM yyyy") : (b.expiry ?? "—")}</span>,
+            cell: (b) => <span className="text-text-tertiary">{b.expiryAt ? format(b.expiryAt, "MMM yyyy") : (b.expiry ?? "-")}</span>,
           },
           { key: "days", header: "In", cell: (b) => <DaysLeft days={b.daysToExpiry} /> },
           { key: "qty", header: "Qty", numeric: true, cell: (b) => b.qty },

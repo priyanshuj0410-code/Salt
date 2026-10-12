@@ -82,7 +82,7 @@ export function parseGstin(input: string): GstinInfo {
       stateCode,
       stateName: stateName(stateCode),
       pan,
-      error: "Check digit does not match — re-type the GSTIN.",
+      error: "Check digit does not match, re-type the GSTIN.",
     };
   }
   return { raw, valid: true, stateCode, stateName: stateName(stateCode), pan, error: null };

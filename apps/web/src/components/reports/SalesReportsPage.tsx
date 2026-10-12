@@ -68,7 +68,7 @@ const VIEWS: ReportView<ViewKey>[] = [
 ];
 
 const gstOf = (i: SalesInvoiceRow) => i.cgst_paise + i.sgst_paise + i.igst_paise;
-const payLabel = (m: string | null) => (m ? m.charAt(0).toUpperCase() + m.slice(1) : "—");
+const payLabel = (m: string | null) => (m ? m.charAt(0).toUpperCase() + m.slice(1) : "-");
 
 export function SalesReportsPage() {
   const { membership, shop } = useAuth();
@@ -158,7 +158,7 @@ export function SalesReportsPage() {
   );
 
   const items = useMemo(
-    () => rollupLines(lines, (l) => l.item_id ?? `name:${l.name}`, (l) => l.name || "—"),
+    () => rollupLines(lines, (l) => l.item_id ?? `name:${l.name}`, (l) => l.name || "-"),
     [lines],
   );
   const byRate = useMemo(
@@ -364,7 +364,7 @@ export function SalesReportsPage() {
                 ]}
               />
               <p className="text-xs text-text-tertiary">
-                Sales returns (credit notes) re-stock and reduce the bill — they will show here once the Returns module lands.
+                Sales returns (credit notes) re-stock and reduce the bill. They will show here once the Returns module lands.
               </p>
             </div>
           )}

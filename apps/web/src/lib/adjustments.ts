@@ -28,7 +28,7 @@ export const ADJUST_KINDS: AdjustKind[] = [
 /** Compose the movement note so the audit trail shows the human reason + free text. */
 export function adjustmentNote(kind: AdjustKind, note: string): string {
   const extra = note.trim();
-  return extra ? `${kind.label} — ${extra}` : kind.label;
+  return extra ? `${kind.label}: ${extra}` : kind.label;
 }
 
 /** Apply a stock adjustment to one batch via the adjust_stock RPC. Returns the movement id. */

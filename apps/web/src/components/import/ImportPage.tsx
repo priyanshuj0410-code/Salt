@@ -83,7 +83,7 @@ export function ImportPage() {
           return;
         }
         // The transaction already rolled back server-side — catalogue unchanged.
-        setError(`${rpcErr.message} — nothing was imported (rolled back).`);
+        setError(`${rpcErr.message}: nothing was imported (rolled back).`);
         return;
       }
       const counts = (data ?? {}) as { items?: number; batches?: number };
@@ -149,7 +149,7 @@ export function ImportPage() {
           await supabase.from("batches").delete().in("item_id", insertedIds);
           await supabase.from("items").delete().in("id", insertedIds);
         }
-        setError(`${bErr.message} — import rolled back, nothing was saved.`);
+        setError(`${bErr.message}: import rolled back, nothing was saved.`);
         return;
       }
     }
@@ -172,7 +172,7 @@ export function ImportPage() {
           <div className="flex-1">
             <p className="text-sm font-medium">Smart import (recommended)</p>
             <p className="text-sm text-text-tertiary">
-              Drag in your raw Marg/Tally Excel or CSV — it auto-maps the columns and quarantines
+              Drag in your raw Marg/Tally Excel or CSV. It auto-maps the columns and quarantines
               only the rows that need a fix. Handles ledgers, items, and stock in order.
             </p>
           </div>
@@ -187,7 +187,7 @@ export function ImportPage() {
           <div className="flex-1">
             <p className="text-sm font-medium">Scan or import invoices (PDF · image · CSV)</p>
             <p className="text-sm text-text-tertiary">
-              Upload vendor bills — PDFs, photos, or CSVs — to post as GRNs (stock, payable, ITC). Several files
+              Upload vendor bills: PDFs, photos, or CSVs, to post as GRNs (stock, payable, ITC). Several files
               extract in the background; review and post from scan history. Missing vendors and items are created.
             </p>
           </div>
@@ -211,7 +211,7 @@ export function ImportPage() {
 
         <h2 className="mt-6 border-t pt-5 text-sm font-medium">Or start from a template</h2>
         <p className="mt-1 text-sm text-text-tertiary">
-          Already export from Marg or Tally? Download that shape — Salt reads those column names automatically.
+          Already export from Marg or Tally? Download that shape: Salt reads those column names automatically.
           Only <code className="rounded bg-surface-2 px-1">name</code>,{" "}
           <code className="rounded bg-surface-2 px-1">qty</code> and <code className="rounded bg-surface-2 px-1">mrp</code>{" "}
           are required. One row per batch.
@@ -248,7 +248,7 @@ export function ImportPage() {
         {result && (
           <div className="mt-6 rounded-lg border">
             <div className="flex items-center justify-between gap-2 border-b bg-surface-2/30 px-3 py-2">
-              <span className="text-xs font-medium">Dry run — preview only, nothing saved yet</span>
+              <span className="text-xs font-medium">Dry run: preview only, nothing saved yet</span>
               <span className="text-xs text-text-tertiary">
                 Will create {result.items.length} items · {result.batchCount} batches
               </span>
@@ -278,7 +278,7 @@ export function ImportPage() {
               <p className="text-xs text-text-tertiary">
                 {result.errorCount > 0
                   ? "Fix the errors in your CSV and re-upload."
-                  : "Imported as one transaction — if anything fails, nothing is saved. Re-importing the same file adds rows again (no dedupe yet)."}
+                  : "Imported as one transaction: if anything fails, nothing is saved. Re-importing the same file adds rows again (no dedupe yet)."}
               </p>
               <Button onClick={doImport} disabled={importing || result.items.length === 0 || result.errorCount > 0}>
                 <Upload />

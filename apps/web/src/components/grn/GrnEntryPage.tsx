@@ -295,7 +295,7 @@ export function GrnEntryPage() {
     } catch (e) {
       setError(
         e instanceof TimeoutError
-          ? "Saving is taking too long — it may have gone through. Check the GRN history before saving again."
+          ? "Saving is taking too long. It may have gone through. Check the GRN history before saving again."
           : "Could not record the GRN. Please try again.",
       );
     } finally {
@@ -342,7 +342,7 @@ export function GrnEntryPage() {
           </button>
         </Field>
         <Field label="Vendor invoice no.">
-          <Input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="—" className="h-9" />
+          <Input value={invoiceNo} onChange={(e) => setInvoiceNo(e.target.value)} placeholder="-" className="h-9" />
         </Field>
         <Field label="Invoice date">
           <Input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} className="h-9" />
@@ -367,12 +367,12 @@ export function GrnEntryPage() {
           <div>
             {match.matched ? (
               <>
-                Matches PO <span className="font-medium">{poRef}</span> — ordered {formatPaise(match.orderedTotalPaise)},
+                Matches PO <span className="font-medium">{poRef}</span>: ordered {formatPaise(match.orderedTotalPaise)},
                 received {formatPaise(match.receivedTotalPaise)}.
               </>
             ) : (
               <>
-                Receiving against PO <span className="font-medium">{poRef}</span> —{" "}
+                Receiving against PO <span className="font-medium">{poRef}</span>,{" "}
                 <span className="font-medium">
                   {match.discrepancies.length} discrepanc{match.discrepancies.length === 1 ? "y" : "ies"}
                 </span>{" "}
@@ -394,7 +394,7 @@ export function GrnEntryPage() {
 
       {usingSeed && (
         <p className="mt-3 rounded-md bg-warning-bg px-3 py-2 text-sm text-warning">
-          Demo catalogue — import or add your items before recording purchases.
+          Demo catalogue: import or add your items before recording purchases.
         </p>
       )}
 

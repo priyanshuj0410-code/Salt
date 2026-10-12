@@ -75,7 +75,7 @@ export function Dropzone({
       ) : (
         <>
           <p className="text-sm">
-            <span className="font-medium">Drop invoices here</span> — or <span className="text-primary">click to browse</span>
+            <span className="font-medium">Drop invoices here</span>, or <span className="text-primary">click to browse</span>
           </p>
           <p className="mt-1 text-xs text-text-tertiary">PDF · photo · CSV · many at once · or paste a screenshot</p>
         </>

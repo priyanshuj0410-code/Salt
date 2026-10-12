@@ -42,13 +42,13 @@ export function ShopSetupDialog({
           <SheetTitle>Set up your shop to save bills</SheetTitle>
           <SheetDescription>
             We need your shop&apos;s state (and GSTIN if you have one) before invoices can be
-            created — they decide CGST / SGST vs IGST and the tax-invoice header. You only do this
+            created: they decide CGST / SGST vs IGST and the tax-invoice header. You only do this
             once.
           </SheetDescription>
         </SheetHeader>
 
         {/* The form is keyed on shop.id so it re-mounts with fresh defaults whenever
-            a different shop loads — no sync effect, no cascading-render lint. */}
+            a different shop loads: no sync effect, no cascading-render lint. */}
         {shop ? (
           <RescueForm
             key={shop.id}
@@ -130,7 +130,7 @@ function RescueForm({
         </div>
         <FormRow label="State" required error={error ?? undefined}>
           <select value={stateCode} onChange={(e) => setStateCode(e.target.value)} className={selectCls}>
-            <option value="">— select —</option>
+            <option value="">Select</option>
             {INDIAN_STATE_CODES.map((s) => (
               <option key={s.code} value={s.code}>
                 {s.code} · {s.name}
@@ -138,11 +138,11 @@ function RescueForm({
             ))}
           </select>
         </FormRow>
-        <FormRow label="GSTIN" helper="Printed on invoices — recommended">
+        <FormRow label="GSTIN" helper="Printed on invoices: recommended">
           <Input
             value={gstin}
             onChange={(e) => setGstin(e.target.value)}
-            placeholder="—"
+            placeholder="-"
             className="h-9 font-mono text-xs uppercase"
           />
         </FormRow>

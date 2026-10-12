@@ -31,7 +31,7 @@ const SELECT = "id,name,type,phone,gstin";
 /** Friendlier message when the 0041 RPCs aren't installed in this DB yet. */
 function rpcError(msg: string): string {
   if (/function|does not exist|not find|schema cache/i.test(msg)) {
-    return "The party-privacy functions aren't installed yet — run supabase/migrations/0041_party_pii.sql, then retry.";
+    return "The party-privacy functions aren't installed yet: run supabase/migrations/0041_party_pii.sql, then retry.";
   }
   return msg;
 }
@@ -121,13 +121,13 @@ export function PartyPrivacyPage() {
       <PageHeader
         icon={ShieldCheck}
         title="Data privacy"
-        subtitle="Export or erase a party's personal data (DPDP — right to access & erasure)."
+        subtitle="Export or erase a party's personal data (DPDP, right to access & erasure)."
       />
 
       <p className="mb-4 text-sm text-text-secondary">
         Look up a customer or vendor, then download everything Salt holds about them, or erase their
         personal details. <span className="font-medium text-text-primary">Erase anonymises</span> the
-        party (name, phone, GSTIN, address) — financial postings are retained as the law requires.
+        party (name, phone, GSTIN, address), financial postings are retained as the law requires.
       </p>
 
       {/* Search */}
@@ -227,7 +227,7 @@ function EraseConfirm({
       <DialogHeader>
         <DialogTitle>Erase personal data?</DialogTitle>
         <DialogDescription>
-          This anonymises <span className="font-medium text-foreground">{party.name}</span> — name,
+          This anonymises <span className="font-medium text-foreground">{party.name}</span>: name,
           phone, GSTIN and address are cleared. It is <span className="font-medium">irreversible</span>.
           Invoices, payments and other financial postings are kept (GST retention).
         </DialogDescription>

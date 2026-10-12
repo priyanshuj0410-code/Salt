@@ -129,7 +129,7 @@ export function PurchaseReportsPage() {
   const grnDocs = useMemo(() => grns.map((g) => ({ ...g, date: g.received_date })), [grns]);
   const vendorName = useMemo(() => {
     const m = new Map<string, string>();
-    for (const g of grns) m.set(g.id, g.ledgers?.name ?? "—");
+    for (const g of grns) m.set(g.id, g.ledgers?.name ?? "-");
     return m;
   }, [grns]);
 
@@ -144,11 +144,11 @@ export function PurchaseReportsPage() {
   );
 
   const vendors = useMemo(
-    () => rollupParties(grnDocs, (g) => g.vendor_id, (g) => g.ledgers?.name ?? "—"),
+    () => rollupParties(grnDocs, (g) => g.vendor_id, (g) => g.ledgers?.name ?? "-"),
     [grnDocs],
   );
   const items = useMemo(
-    () => rollupLines(lines, (l) => l.item_id ?? `name:${l.name}`, (l) => l.name || "—"),
+    () => rollupLines(lines, (l) => l.item_id ?? `name:${l.name}`, (l) => l.name || "-"),
     [lines],
   );
   const schemeLines = useMemo(
@@ -166,7 +166,7 @@ export function PurchaseReportsPage() {
           g.received_date,
           g.grn_no ?? g.id.slice(0, 8),
           g.vendor_invoice_no ?? "",
-          g.ledgers?.name ?? "—",
+          g.ledgers?.name ?? "-",
           paiseToRupeeStr(g.taxable_paise),
           paiseToRupeeStr(gstOf(g)),
           paiseToRupeeStr(g.total_paise),
@@ -190,7 +190,7 @@ export function PurchaseReportsPage() {
         ["Item", "Vendor", "Qty", "Free", "Scheme", "Taxable"],
         schemeLines.map((l) => [
           l.name,
-          vendorName.get(l.purchase_id) ?? "—",
+          vendorName.get(l.purchase_id) ?? "-",
           l.qty,
           l.free_qty,
           l.scheme_text ?? "",
@@ -238,8 +238,8 @@ export function PurchaseReportsPage() {
               columns={[
                 { key: "date", header: "Date", cell: (r) => r.received_date },
                 { key: "grn", header: "GRN", cell: (r) => <span className="tabular-nums">{r.grn_no ?? `#${r.id.slice(0, 8)}`}</span> },
-                { key: "vinv", header: "Vendor inv.", cell: (r) => r.vendor_invoice_no || "—" },
-                { key: "vendor", header: "Vendor", cell: (r) => r.ledgers?.name ?? "—" },
+                { key: "vinv", header: "Vendor inv.", cell: (r) => r.vendor_invoice_no || "-" },
+                { key: "vendor", header: "Vendor", cell: (r) => r.ledgers?.name ?? "-" },
                 { key: "taxable", header: "Taxable", numeric: true, cell: (r) => formatPaise(r.taxable_paise) },
                 { key: "gst", header: "ITC", numeric: true, cell: (r) => formatPaise(gstOf(r)) },
                 { key: "total", header: "Total", numeric: true, cell: (r) => formatPaise(r.total_paise) },
@@ -299,10 +299,10 @@ export function PurchaseReportsPage() {
                 empty={<EmptyState title="No scheme goods in range" hint="Free goods (e.g. 10+1) and scheme notes captured at GRN appear here." />}
                 columns={[
                   { key: "item", header: "Item", cell: (r) => r.name },
-                  { key: "vendor", header: "Vendor", cell: (r) => vendorName.get(r.purchase_id) ?? "—" },
+                  { key: "vendor", header: "Vendor", cell: (r) => vendorName.get(r.purchase_id) ?? "-" },
                   { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty },
                   { key: "free", header: "Free", numeric: true, cell: (r) => <span className={r.free_qty > 0 ? "text-success" : undefined}>{r.free_qty}</span> },
-                  { key: "scheme", header: "Scheme", cell: (r) => r.scheme_text || "—" },
+                  { key: "scheme", header: "Scheme", cell: (r) => r.scheme_text || "-" },
                   { key: "taxable", header: "Taxable", numeric: true, cell: (r) => formatPaise(r.taxable_paise) },
                 ]}
               />

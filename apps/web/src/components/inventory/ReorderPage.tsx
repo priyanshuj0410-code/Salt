@@ -69,7 +69,7 @@ export function ReorderPage() {
               <div className="min-w-0">
                 <div className="truncate">{it.name}</div>
                 <div className="truncate text-xs text-text-tertiary">
-                  {[it.pack, it.manufacturer].filter(Boolean).join(" · ") || "—"}
+                  {[it.pack, it.manufacturer].filter(Boolean).join(" · ") || "-"}
                 </div>
               </div>
             ),

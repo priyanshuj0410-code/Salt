@@ -269,7 +269,7 @@ export function TaxReportsPage() {
                 />
               </div>
               <p className="text-xs text-text-tertiary">
-                A preview from posted sales + purchases. File from GST &amp; compliance — those screens build the GSTN JSON /
+                A preview from posted sales + purchases. File from GST &amp; compliance: those screens build the GSTN JSON /
                 CSV and carry the B2B / B2C / HSN detail. GSTR-2B matching lives there too (not yet built).
               </p>
             </div>
@@ -301,7 +301,7 @@ export function TaxReportsPage() {
           <p className="text-xs text-text-tertiary">
             Operational invoices for {period} (IST). Output tax from placed sales; ITC from received purchase lines.
             {shopFilter === ALL_SHOPS && shops.length > 1
-              ? " Consolidated across shops — this sums different GSTINs, so it is a management view, not a single return."
+              ? " Consolidated across shops: this sums different GSTINs, so it is a management view, not a single return."
               : ""}
           </p>
         </div>

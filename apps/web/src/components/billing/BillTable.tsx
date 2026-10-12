@@ -45,7 +45,7 @@ export function BillTable() {
         type="button"
         onClick={() => setLoose(l.key, !l.loose)}
         aria-pressed={l.loose}
-        title={l.loose ? `Selling loose units — ${uppOf(l)} per pack` : "Selling whole packs — tap to sell loose units"}
+        title={l.loose ? `Selling loose units: ${uppOf(l)} per pack` : "Selling whole packs: tap to sell loose units"}
         className={cn(
           "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
           l.loose
@@ -95,7 +95,7 @@ export function BillTable() {
   if (lines.length === 0) {
     return (
       <div className="flex min-h-44 flex-1 items-center justify-center rounded-lg border border-dashed border-border px-4 text-center text-sm text-text-tertiary">
-        No items yet — search above and press Enter to add.
+        No items yet: search above and press Enter to add.
       </div>
     );
   }

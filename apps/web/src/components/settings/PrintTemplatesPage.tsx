@@ -129,7 +129,7 @@ export function PrintTemplatesPage() {
       <PageHeader
         icon={Printer}
         title="Print templates"
-        subtitle="Customise the sales invoice / receipt — paper, header, footer and terms."
+        subtitle="Customise the sales invoice / receipt, paper, header, footer and terms."
         actions={
           <Button onClick={save} disabled={busy || !dirty}>
             <Save /> {busy ? "Saving…" : dirty ? "Save" : savedTick ? "Saved ✓" : "Saved"}
@@ -294,7 +294,7 @@ function ReceiptPreview({ format, tpl, shop }: { format: PrintFormat; tpl: Invoi
             {tpl.show_gstin ? (
               <>
                 <br />
-                GSTIN: {shop?.gstin ?? "—"}
+                GSTIN: {shop?.gstin ?? "-"}
               </>
             ) : null}
           </div>

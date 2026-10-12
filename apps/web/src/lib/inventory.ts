@@ -89,8 +89,8 @@ export type ExpiryBucket = "expired" | "d30" | "d60" | "d90" | "fresh";
 export const EXPIRY_BANDS: { key: Exclude<ExpiryBucket, "fresh">; label: string }[] = [
   { key: "expired", label: "Expired" },
   { key: "d30", label: "≤ 30 days" },
-  { key: "d60", label: "31–60 days" },
-  { key: "d90", label: "61–90 days" },
+  { key: "d60", label: "31-60 days" },
+  { key: "d90", label: "61-90 days" },
 ];
 
 /** Bucket a days-to-expiry value. null (unparseable expiry) → null. */
@@ -237,7 +237,7 @@ export function aggregateItems(
 
   for (const m of movements) {
     const agg = byItem.get(m.item_id);
-    if (!agg) continue; // a sold item with no remaining batch row — skip (no on-hand context)
+    if (!agg) continue; // a sold item with no remaining batch row, skip (no on-hand context)
     const soldUnits = -m.qty_delta; // sale (neg delta) → +units; return (pos) → −units
     agg.soldUnits += soldUnits;
     agg.cogsWindowPaise += soldUnits * m.unit_cost_paise;
@@ -345,7 +345,7 @@ export function turnoverBy(
   lookbackDays: number = LOOKBACK_DAYS,
 ): TurnoverGroup[] {
   const pick = (it: ItemAgg): string =>
-    dim === "item" ? it.name : (dim === "category" ? it.therapeutic_category : it.manufacturer) || "—";
+    dim === "item" ? it.name : (dim === "category" ? it.therapeutic_category : it.manufacturer) || "-";
   const by = new Map<string, TurnoverGroup>();
   for (const it of items) {
     const label = pick(it);
@@ -403,7 +403,7 @@ function toBatchRow(r: RawBatch): BatchRow {
   return {
     batch_id: r.id,
     item_id: r.item_id,
-    name: r.item?.name ?? "—",
+    name: r.item?.name ?? "-",
     salt: r.item?.salt ?? null,
     manufacturer: r.item?.manufacturer ?? null,
     pack: r.item?.pack ?? null,

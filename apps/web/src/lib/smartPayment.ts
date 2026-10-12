@@ -19,7 +19,7 @@ export interface PaymentConfig {
   table: string; // "payments"
   description: string;
   tip: string;
-  fields: FieldDef[]; // flat — must include a "voucher_no" field (the idempotency/dedup key)
+  fields: FieldDef[]; // flat: must include a "voucher_no" field (the idempotency/dedup key)
 }
 
 export const PAYMENT_CONFIG: PaymentConfig = {
@@ -27,7 +27,7 @@ export const PAYMENT_CONFIG: PaymentConfig = {
   label: "Receipts & payments",
   section: "History",
   table: "payments",
-  description: "Your receipt / payment history (cash & bank book) — one row per voucher.",
+  description: "Your receipt / payment history (cash & bank book), one row per voucher.",
   tip: "Export the cash/bank book or receipt/payment register. Imported as records (no double-entry re-posting); the party must already exist (import ledgers first). Direction comes from a Type column, separate received/paid amount columns, or the default toggle.",
   fields: [
     { key: "voucher_no", label: "Voucher no", required: true, aliases: ["voucher no", "vch no", "voucher", "vch", "receipt no", "payment no", "rcpt no", "doc no", "document no", "entry no", "voucher number", "vno", "ref no"] },
@@ -142,7 +142,7 @@ export function preparePayments(
       continue;
     }
     if (!docNo) {
-      quarantined.push({ docNo: "(blank)", reason: "No voucher no — needed for safe re-import" });
+      quarantined.push({ docNo: "(blank)", reason: "No voucher no: needed for safe re-import" });
       continue;
     }
     if (amount <= 0) {

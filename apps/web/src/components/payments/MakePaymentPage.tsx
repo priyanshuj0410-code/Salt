@@ -185,7 +185,7 @@ export function MakePaymentPage() {
       return;
     }
     if (allocated > amountPaise) {
-      setError("Allocated more than the payment amount — reduce a row or raise the amount.");
+      setError("Allocated more than the payment amount, reduce a row or raise the amount.");
       return;
     }
     setBusy(true);
@@ -210,7 +210,7 @@ export function MakePaymentPage() {
     } catch (e) {
       setError(
         e instanceof TimeoutError
-          ? "Taking too long — it may have gone through. Check before retrying."
+          ? "Taking too long: it may have gone through. Check before retrying."
           : e instanceof Error
             ? e.message
             : "Could not record the payment. Please try again.",
@@ -308,7 +308,7 @@ export function MakePaymentPage() {
               </div>
             </div>
             <Field label="Notes (optional)">
-              <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="—" className="h-9" />
+              <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="-" className="h-9" />
             </Field>
           </section>
 
@@ -361,7 +361,7 @@ export function MakePaymentPage() {
                         <div className="min-w-0">
                           <div className="truncate font-medium">{d.ref || "(no invoice no.)"}</div>
                           <div className="text-xs text-text-tertiary">
-                            {d.doc_date ? format(new Date(d.doc_date), "d MMM yyyy") : "—"}
+                            {d.doc_date ? format(new Date(d.doc_date), "d MMM yyyy") : "-"}
                           </div>
                         </div>
                         <div className="text-right tabular-nums sm:block">
@@ -390,7 +390,7 @@ export function MakePaymentPage() {
             )}
           </section>
 
-          {!shopId && <p className="mt-4 text-xs text-warning">No shop selected — pick a shop before recording.</p>}
+          {!shopId && <p className="mt-4 text-xs text-warning">No shop selected: pick a shop before recording.</p>}
           {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
           <div className="mt-5">
             <Button onClick={submit} disabled={busy || !shopId || amountPaise <= 0 || allocated > amountPaise}>

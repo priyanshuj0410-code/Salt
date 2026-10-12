@@ -30,7 +30,7 @@ export function OutOfStockPage() {
       <PageHeader
         icon={Ban}
         title="Out of stock"
-        subtitle={`Items with demand but zero on hand — sold within the last ${lookbackDays} days`}
+        subtitle={`Items with demand but zero on hand, sold within the last ${lookbackDays} days`}
       />
       <InventoryNav />
 
@@ -60,7 +60,7 @@ export function OutOfStockPage() {
               <div className="min-w-0">
                 <div className="truncate">{it.name}</div>
                 <div className="truncate text-xs text-text-tertiary">
-                  {[it.pack, it.manufacturer].filter(Boolean).join(" · ") || "—"}
+                  {[it.pack, it.manufacturer].filter(Boolean).join(" · ") || "-"}
                 </div>
               </div>
             ),
@@ -72,7 +72,7 @@ export function OutOfStockPage() {
               it.lastSoldAt ? (
                 <span className="text-text-secondary">{format(it.lastSoldAt, "d MMM yyyy")}</span>
               ) : (
-                <span className="text-text-tertiary">—</span>
+                <span className="text-text-tertiary">-</span>
               ),
           },
           {
@@ -81,7 +81,7 @@ export function OutOfStockPage() {
             numeric: true,
             cell: ({ it }) => {
               const d = daysSinceSold(it, now);
-              return <span className="text-text-tertiary">{d == null ? "—" : `${d}d`}</span>;
+              return <span className="text-text-tertiary">{d == null ? "-" : `${d}d`}</span>;
             },
           },
           {

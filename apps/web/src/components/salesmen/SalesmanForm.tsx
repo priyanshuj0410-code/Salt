@@ -84,7 +84,7 @@ export function SalesmanForm({
           <Input
             value={draft.phone}
             onChange={(e) => edit("phone", e.target.value)}
-            placeholder="—"
+            placeholder="-"
             className="font-mono text-xs"
             inputMode="tel"
           />

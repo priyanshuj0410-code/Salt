@@ -46,7 +46,7 @@ export function printInvoice(d: InvoicePrintData, opts: PrintOptions = {}): void
   // counter); the switchers keep it open for re-prints, so we reset its
   // document on each call rather than auto-closing after print.
   const w = window.open("", "salt-print", "width=520,height=760");
-  if (!w) return; // popup blocked — the sale is already saved; user can reprint later
+  if (!w) return; // popup blocked: the sale is already saved; user can reprint later
   const cached = cachedInvoiceConfig();
   if (cached) {
     fill(w, d, opts, cached);

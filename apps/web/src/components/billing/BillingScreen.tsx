@@ -221,7 +221,7 @@ export function BillingScreen() {
           {parkedWrites > 0 && (
             <span
               className="flex items-center gap-1 rounded-full bg-danger-bg px-2 py-0.5 text-xs font-medium text-danger"
-              title="Bills that failed to sync after retries — check Bills"
+              title="Bills that failed to sync after retries. Check Bills"
             >
               <CloudOff className="size-3.5" /> {parkedWrites} failed
             </span>

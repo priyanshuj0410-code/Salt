@@ -131,7 +131,7 @@ export function GstLiabilityPage() {
       {shop?.gstin ? (
         <span className="tabular-nums">{shop.gstin}</span>
       ) : (
-        <span className="text-warning">no GSTIN set — set it in Settings before filing</span>
+        <span className="text-warning">no GSTIN set: set it in Settings before filing</span>
       )}
     </span>
   );
@@ -170,7 +170,7 @@ export function GstLiabilityPage() {
           </section>
 
           <section>
-            <h2 className="mb-3 text-sm font-semibold text-text-secondary">Last 13 months — net payable</h2>
+            <h2 className="mb-3 text-sm font-semibold text-text-secondary">Last 13 months: net payable</h2>
             <div className="flex h-40 items-end gap-1.5">
               {view.series.map((m, i) => {
                 const isCurrent = i === view.series.length - 1;

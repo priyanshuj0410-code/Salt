@@ -9,6 +9,6 @@ export const COPY = {
   headlineDevanagari: "मार्ग और टैली का झंझट खत्म! अपने फार्मेसी को सुपर-फास्ट और क्लाउड-रेडी बनाइए।",
   subhead: "Sirf chemists ke liye bana. First 50 shops get a lifetime FREE pilot.",
   chatGreeting:
-    "Namaste! Main Priyanshu. Apne pharmacy ka koi bhi bill ya purchase receipt ki photo daalein — main usse aapka pura data bana dunga.",
+    "Namaste! Main Priyanshu. Apne pharmacy ka koi bhi bill ya purchase receipt ki photo daalein, main usse aapka pura data bana dunga.",
   trust: ["Aapka data India mein", "Made in Varanasi", "First 50 shops: lifetime FREE pilot"],
 } as const;

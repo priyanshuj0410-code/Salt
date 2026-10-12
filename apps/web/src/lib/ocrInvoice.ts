@@ -77,8 +77,8 @@ export function ocrInvoiceToRows(json: OcrInvoiceJson): OcrMapResult {
     vendor: str(json.vendor),
     vendor_gstin: str(json.vendor_gstin),
   };
-  if (!header.invoice_no) issues.push("No invoice number found — set one before posting.");
-  if (!header.vendor) issues.push("No vendor name found — set one before posting.");
+  if (!header.invoice_no) issues.push("No invoice number found: set one before posting.");
+  if (!header.vendor) issues.push("No vendor name found: set one before posting.");
 
   const lines = Array.isArray(json.lines) ? (json.lines as Record<string, unknown>[]) : [];
   if (lines.length === 0) issues.push("No line items were extracted from this document.");

@@ -73,7 +73,7 @@ export function BankReconcile({
     try {
       const parsed = parseStatementCsv(await file.text());
       if (!parsed.length) {
-        setError("No rows found — expected a CSV with date and amount (or debit & credit) columns.");
+        setError("No rows found: expected a CSV with date and amount (or debit & credit) columns.");
         return;
       }
       const { error: err } = await supabase.from("bank_statement_lines").insert(
@@ -147,11 +147,11 @@ export function BankReconcile({
                 header: "Date",
                 cell: (l) => (
                   <span className="text-text-tertiary">
-                    {l.txn_date ? format(new Date(l.txn_date), "d MMM yyyy") : "—"}
+                    {l.txn_date ? format(new Date(l.txn_date), "d MMM yyyy") : "-"}
                   </span>
                 ),
               },
-              { key: "desc", header: "Description", cell: (l) => <span>{l.description || l.reference || "—"}</span> },
+              { key: "desc", header: "Description", cell: (l) => <span>{l.description || l.reference || "-"}</span> },
               {
                 key: "amount",
                 header: "Amount",
@@ -190,7 +190,7 @@ export function BankReconcile({
                 header: "Date",
                 cell: (p) => <span className="text-text-tertiary">{format(new Date(p.payment_date), "d MMM yyyy")}</span>,
               },
-              { key: "party", header: "Party", cell: (p) => <span className="font-medium">{nameById.get(p.party_id) ?? "—"}</span> },
+              { key: "party", header: "Party", cell: (p) => <span className="font-medium">{nameById.get(p.party_id) ?? "-"}</span> },
               { key: "mode", header: "Mode", cell: (p) => <Badge variant="neutral" className="uppercase">{p.mode}</Badge> },
               {
                 key: "amount",

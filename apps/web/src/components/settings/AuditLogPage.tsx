@@ -121,7 +121,7 @@ export function AuditLogPage() {
       <div className="mb-4 flex items-start gap-2 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm text-text-secondary">
         <Lock className="mt-0.5 size-4 shrink-0 text-text-tertiary" />
         <span>
-          Audit entries are <span className="font-medium text-text-primary">append-only</span> — they
+          Audit entries are <span className="font-medium text-text-primary">append-only</span>: they
           cannot be edited or deleted from here. Showing the latest {PAGE_LIMIT} entries.
         </span>
       </div>
@@ -155,7 +155,7 @@ export function AuditLogPage() {
           {
             key: "table",
             header: "Table",
-            cell: (e) => e.table_name ?? <span className="text-text-tertiary">—</span>,
+            cell: (e) => e.table_name ?? <span className="text-text-tertiary">-</span>,
           },
           {
             key: "who",
@@ -167,7 +167,7 @@ export function AuditLogPage() {
             header: "Row",
             cell: (e) => (
               <span className="font-mono text-xs text-text-tertiary">
-                {e.row_id ? `${e.row_id.slice(0, 8)}…` : "—"}
+                {e.row_id ? `${e.row_id.slice(0, 8)}…` : "-"}
               </span>
             ),
           },
@@ -181,7 +181,7 @@ export function AuditLogPage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Badge variant={actionVariant(detail.action)}>{detail.action}</Badge>
-                  <span className="font-mono text-sm">{detail.table_name ?? "—"}</span>
+                  <span className="font-mono text-sm">{detail.table_name ?? "-"}</span>
                 </DialogTitle>
                 <DialogDescription>
                   {format(parseISO(detail.created_at), "d MMM yyyy, h:mm a")} · by {who(detail.user_id)}
@@ -205,7 +205,7 @@ function JsonBlock({ label, value }: { label: string; value: unknown }) {
     <div className="flex min-w-0 flex-col gap-1">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
       {value == null ? (
-        <p className="rounded-md border border-border bg-muted/40 px-2.5 py-2 text-sm text-text-tertiary">—</p>
+        <p className="rounded-md border border-border bg-muted/40 px-2.5 py-2 text-sm text-text-tertiary">-</p>
       ) : (
         <pre className="max-h-72 overflow-auto rounded-md border border-border bg-muted/40 px-2.5 py-2 text-xs">
           {JSON.stringify(value, null, 2)}

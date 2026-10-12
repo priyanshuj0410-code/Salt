@@ -92,7 +92,7 @@ export function CreditNotesPage() {
           subtitle={
             rows.length > 0
               ? `${rows.length} ${rows.length === 1 ? "note" : "notes"} · ${formatPaise(total)} returned`
-              : "Sales returns — stock back in, the sale reversed"
+              : "Sales returns: stock back in, the sale reversed"
           }
           actions={
             <Button variant="ghost" render={<Link to="/bills" />}>
@@ -127,7 +127,7 @@ export function CreditNotesPage() {
             {
               key: "reason",
               header: "Reason",
-              cell: (n) => <span className="text-text-tertiary">{n.reason ?? "—"}</span>,
+              cell: (n) => <span className="text-text-tertiary">{n.reason ?? "-"}</span>,
             },
             { key: "total", header: "Total", numeric: true, cell: (n) => formatPaise(n.total_paise) },
           ]}

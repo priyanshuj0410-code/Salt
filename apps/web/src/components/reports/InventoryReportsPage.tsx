@@ -265,13 +265,13 @@ export function InventoryReportsPage() {
       downloadCsv(
         `stock-movement-${periodTag}.csv`,
         ["Date", "Item", "Batch", "Reason", "Qty change", "Unit cost", "Source"],
-        moves.map((m) => [m.created_at.slice(0, 10), m.items?.name ?? "—", m.batches?.batch_no ?? "", REASON_LABEL[m.reason] ?? m.reason, m.qty_delta, paiseToRupeeStr(m.unit_cost_paise), m.ref_table ?? ""]),
+        moves.map((m) => [m.created_at.slice(0, 10), m.items?.name ?? "-", m.batches?.batch_no ?? "", REASON_LABEL[m.reason] ?? m.reason, m.qty_delta, paiseToRupeeStr(m.unit_cost_paise), m.ref_table ?? ""]),
       ),
     variance: () =>
       downloadCsv(
         `count-variance-${periodTag}.csv`,
         ["Count date", "Item", "System", "Counted", "Variance"],
-        counts.map((c) => [c.physical_counts?.count_date ?? "", c.items?.name ?? "—", c.system_qty, c.counted_qty, c.variance]),
+        counts.map((c) => [c.physical_counts?.count_date ?? "", c.items?.name ?? "-", c.system_qty, c.counted_qty, c.variance]),
       ),
   };
 
@@ -325,8 +325,8 @@ export function InventoryReportsPage() {
               empty={<EmptyState title="No stock on hand" hint="Receive stock (GRN) to build the ledger." />}
               columns={[
                 { key: "item", header: "Item", cell: (r) => r.item_name },
-                { key: "batch", header: "Batch", cell: (r) => r.batch_no || "—" },
-                { key: "exp", header: "Expiry", cell: (r) => r.expiry_date || "—" },
+                { key: "batch", header: "Batch", cell: (r) => r.batch_no || "-" },
+                { key: "exp", header: "Expiry", cell: (r) => r.expiry_date || "-" },
                 { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty },
                 { key: "mrp", header: "MRP", numeric: true, cell: (r) => formatPaise(r.mrp_paise) },
                 { key: "cost", header: "Cost", numeric: true, cell: (r) => formatPaise(r.ptr_paise) },
@@ -362,8 +362,8 @@ export function InventoryReportsPage() {
               empty={<EmptyState title="Nothing expiring within 90 days" hint="Near-expiry batches are surfaced here, most urgent first." />}
               columns={[
                 { key: "item", header: "Item", cell: (r) => r.item_name },
-                { key: "batch", header: "Batch", cell: (r) => r.batch_no || "—" },
-                { key: "exp", header: "Expiry", cell: (r) => <span className={bucketTone(r.bucket, r.days_to_expiry)}>{r.expiry_date || "—"}</span> },
+                { key: "batch", header: "Batch", cell: (r) => r.batch_no || "-" },
+                { key: "exp", header: "Expiry", cell: (r) => <span className={bucketTone(r.bucket, r.days_to_expiry)}>{r.expiry_date || "-"}</span> },
                 { key: "days", header: "Days", numeric: true, cell: (r) => <span className={bucketTone(r.bucket, r.days_to_expiry)}>{r.days_to_expiry}</span> },
                 { key: "qty", header: "Qty", numeric: true, cell: (r) => r.qty },
                 { key: "val", header: "Value", numeric: true, cell: (r) => formatPaise(r.stock_value_paise) },
@@ -418,8 +418,8 @@ export function InventoryReportsPage() {
               empty={<EmptyState title="No movements in range" hint="Sales, GRNs, transfers and adjustments post stock movements." />}
               columns={[
                 { key: "date", header: "Date", cell: (r) => r.created_at.slice(0, 10) },
-                { key: "item", header: "Item", cell: (r) => r.items?.name ?? "—" },
-                { key: "batch", header: "Batch", cell: (r) => r.batches?.batch_no || "—" },
+                { key: "item", header: "Item", cell: (r) => r.items?.name ?? "-" },
+                { key: "batch", header: "Batch", cell: (r) => r.batches?.batch_no || "-" },
                 { key: "reason", header: "Reason", cell: (r) => REASON_LABEL[r.reason] ?? r.reason },
                 {
                   key: "delta",
@@ -428,7 +428,7 @@ export function InventoryReportsPage() {
                   cell: (r) => <span className={r.qty_delta < 0 ? "text-danger" : "text-success"}>{r.qty_delta > 0 ? `+${r.qty_delta}` : r.qty_delta}</span>,
                 },
                 { key: "cost", header: "Unit cost", numeric: true, cell: (r) => formatPaise(r.unit_cost_paise) },
-                { key: "src", header: "Source", cell: (r) => r.ref_table ?? "—" },
+                { key: "src", header: "Source", cell: (r) => r.ref_table ?? "-" },
               ]}
             />
           )}
@@ -442,8 +442,8 @@ export function InventoryReportsPage() {
                 loading={rangeLoading}
                 empty={<EmptyState title="No finalized counts in range" hint="Physical-count variances appear here once counts are finalized." />}
                 columns={[
-                  { key: "date", header: "Count date", cell: (r) => r.physical_counts?.count_date ?? "—" },
-                  { key: "item", header: "Item", cell: (r) => r.items?.name ?? "—" },
+                  { key: "date", header: "Count date", cell: (r) => r.physical_counts?.count_date ?? "-" },
+                  { key: "item", header: "Item", cell: (r) => r.items?.name ?? "-" },
                   { key: "sys", header: "System", numeric: true, cell: (r) => r.system_qty },
                   { key: "cnt", header: "Counted", numeric: true, cell: (r) => r.counted_qty },
                   {

@@ -136,7 +136,7 @@ export function DashboardPage() {
                 onRowActivate={(r) => navigate(`/parties/${r.party_id}`)}
                 empty={<EmptyState title="Nothing overdue" hint="Customers more than 30 days late will surface here." />}
                 columns={[
-                  { key: "name", header: "Party", cell: (r) => r.name || "—" },
+                  { key: "name", header: "Party", cell: (r) => r.name || "-" },
                   { key: "out", header: "Outstanding", numeric: true, cell: (r) => formatPaise(r.outstanding_paise) },
                   {
                     key: "d90",

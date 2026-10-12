@@ -310,7 +310,7 @@ export const WHATSAPP_TEMPLATES: WaTemplate[] = [
     fields: [
       { key: "partyName", label: "Customer name", sample: "Ramesh Medical" },
       { key: "shopName", label: "Shop name", sample: "Santosh Medical" },
-      { key: "periodLabel", label: "Period", sample: "Apr–Jun 2026" },
+      { key: "periodLabel", label: "Period", sample: "Apr-Jun 2026" },
       { key: "opening", label: "Opening (₹)", sample: "12000.00", kind: "amount" },
       { key: "billed", label: "Billed (₹)", sample: "65000.00", kind: "amount" },
       { key: "paid", label: "Paid (₹)", sample: "38500.00", kind: "amount" },

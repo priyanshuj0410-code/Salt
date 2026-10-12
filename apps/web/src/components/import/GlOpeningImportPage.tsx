@@ -106,7 +106,7 @@ export function GlOpeningImportPage() {
           setError("GL import needs migration 0029 to be applied in Supabase. Ask your admin to run it, then retry.");
           return;
         }
-        setError(`${rpcErr.message} — nothing posted (rolled back).`);
+        setError(`${rpcErr.message}: nothing posted (rolled back).`);
         return;
       }
       const r = (data ?? {}) as Report;
@@ -126,7 +126,7 @@ export function GlOpeningImportPage() {
       </Link>
       <h1 className="mt-2 text-xl font-semibold">Import opening balances (GL)</h1>
       <p className="mt-1 text-sm text-text-tertiary">
-        Seed your ledger accounts — Cash, Bank, Stock, Capital, loans, fixed assets — with their opening balances
+        Seed your ledger accounts: Cash, Bank, Stock, Capital, loans, fixed assets, with their opening balances
         as one balanced opening entry. Customer and vendor balances come in through{" "}
         <Link to="/import/smart" className="font-medium text-primary hover:underline">Smart Import</Link> (the
         trial-balance step), not here.
@@ -159,7 +159,7 @@ export function GlOpeningImportPage() {
       {result && (
         <div className="mt-6 rounded-lg border">
           <div className="flex items-center justify-between gap-2 border-b bg-surface-2/30 px-3 py-2">
-            <span className="text-xs font-medium">Dry run — preview only, nothing posted yet</span>
+            <span className="text-xs font-medium">Dry run: preview only, nothing posted yet</span>
             <span className="text-xs text-text-tertiary">
               {result.accounts.length} accounts
               {result.errorCount > 0 ? ` · ${result.errorCount} errors` : ""}

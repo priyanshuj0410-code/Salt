@@ -283,7 +283,7 @@ export function PartyGstStep({
           <p className="mt-2 text-xs text-text-tertiary">
             Drop your <span className="font-medium text-foreground">Party GST master</span> export
             (the &ldquo;partygstmaster&rdquo; file from Marg/Saral). We match by name and fill in any
-            missing details — existing data is never overwritten.
+            missing details: existing data is never overwritten.
           </p>
         </div>
 
@@ -374,7 +374,7 @@ export function PartyGstStep({
             <p className="mt-1 text-xs text-text-tertiary">
               The trial balance only lists parties with an open balance; these are the rest of your
               customers and suppliers from the GST master. They&apos;re added with no opening balance
-              and auto-tagged customer/vendor — fix any tags later from the Parties screen.
+              and auto-tagged customer/vendor: fix any tags later from the Parties screen.
             </p>
           </details>
         )}

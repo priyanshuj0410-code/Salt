@@ -363,16 +363,16 @@ export function CatalogPage() {
             {i.ayush && <AyushBadge />}
           </div>
           <div className="truncate text-xs text-text-tertiary">
-            {i.salt || "—"}
+            {i.salt || "-"}
             {i.manufacturer ? ` · ${i.manufacturer}` : ""}
           </div>
         </div>
       ),
     },
-    { key: "pack", header: "Pack", cell: (i) => i.pack || "—" },
+    { key: "pack", header: "Pack", cell: (i) => i.pack || "-" },
     { key: "schedule", header: "Schedule", cell: (i) => <ScheduleBadge schedule={i.schedule} /> },
     { key: "gst", header: "GST", numeric: true, cell: (i) => `${i.gstRate}%` },
-    { key: "hsn", header: "HSN", cell: (i) => <span className="font-mono text-xs">{i.hsn || "—"}</span> },
+    { key: "hsn", header: "HSN", cell: (i) => <span className="font-mono text-xs">{i.hsn || "-"}</span> },
     {
       key: "stock",
       header: "Stock",
@@ -394,7 +394,7 @@ export function CatalogPage() {
       <PageHeader
         icon={Tag}
         title="Catalogue"
-        subtitle="Your drug master — search by name, salt, manufacturer, HSN or barcode. Open an item to view or edit it."
+        subtitle="Your drug master: search by name, salt, manufacturer, HSN or barcode. Open an item to view or edit it."
         actions={
           <>
             <Button
@@ -467,7 +467,7 @@ export function CatalogPage() {
                   <div className="mb-2 flex items-center gap-2 text-xs">
                     <Badge variant="warning">{g.items.length} duplicates</Badge>
                     <span className="text-text-secondary">
-                      look like <span className="font-medium">{g.label}</span> — pick the one to keep
+                      look like <span className="font-medium">{g.label}</span>: pick the one to keep
                     </span>
                   </div>
                   <div className="space-y-1.5">
@@ -484,7 +484,7 @@ export function CatalogPage() {
                           {i.name}
                         </Link>
                         <span className="hidden w-40 truncate text-right text-xs text-text-tertiary sm:block">
-                          {i.manufacturer || "—"}
+                          {i.manufacturer || "-"}
                         </span>
                         <span className="w-16 text-right text-xs tabular-nums text-text-tertiary">
                           {itemStock(i)} stk
@@ -620,7 +620,7 @@ export function CatalogPage() {
           ) : enrichPlan ? (
             enrichPlan.length === 0 ? (
               <p className="py-6 text-center text-sm text-text-tertiary">
-                Nothing to fill — matched items are already complete, or no master matches were found (have you loaded
+                Nothing to fill: matched items are already complete, or no master matches were found (have you loaded
                 the drug master?).
               </p>
             ) : (
@@ -670,7 +670,7 @@ export function CatalogPage() {
             <DialogTitle>Review salt vs master</DialogTitle>
             <DialogDescription>
               Where an item&rsquo;s name matches the drug master and the salt differs, replace it with the master salt.
-              Review each change and uncheck any to skip — this overwrites the existing salt.
+              Review each change and uncheck any to skip. This overwrites the existing salt.
             </DialogDescription>
           </DialogHeader>
 
@@ -685,7 +685,7 @@ export function CatalogPage() {
           ) : saltRows ? (
             saltRows.length === 0 ? (
               <p className="py-6 text-center text-sm text-text-tertiary">
-                No name-matched items have a differing salt — nothing to replace.
+                No name-matched items have a differing salt. Nothing to replace.
               </p>
             ) : (
               <>
@@ -721,7 +721,7 @@ export function CatalogPage() {
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-medium">{r.itemName}</span>
                         <span className="block truncate text-xs">
-                          <span className="text-danger line-through">{r.fromSalt || "—"}</span>
+                          <span className="text-danger line-through">{r.fromSalt || "-"}</span>
                           <span className="text-text-tertiary"> → </span>
                           <span className="text-success">{r.toSalt}</span>
                         </span>
@@ -756,7 +756,7 @@ export function CatalogPage() {
             <DialogTitle>Master updates</DialogTitle>
             <DialogDescription>
               Where the drug master&rsquo;s current GST, schedule or HSN differs from a matching item, push the
-              master value onto the item. Review each change and uncheck any to skip — this overwrites the item.
+              master value onto the item. Review each change and uncheck any to skip. This overwrites the item.
             </DialogDescription>
           </DialogHeader>
 
@@ -771,7 +771,7 @@ export function CatalogPage() {
           ) : updRows ? (
             updRows.length === 0 ? (
               <p className="py-6 text-center text-sm text-text-tertiary">
-                Every matching item already agrees with the master — nothing to push.
+                Every matching item already agrees with the master. Nothing to push.
               </p>
             ) : (
               <>
@@ -856,7 +856,7 @@ export function CatalogPage() {
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{r.name}</span>
                       <span className="block truncate text-xs text-text-tertiary">
-                        {r.salt || "—"}
+                        {r.salt || "-"}
                         {r.manufacturer ? ` · ${r.manufacturer}` : ""}
                       </span>
                     </span>

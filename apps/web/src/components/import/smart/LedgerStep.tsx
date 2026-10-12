@@ -120,12 +120,12 @@ export function LedgerStep({
       <div className="rounded-lg border p-5">
         <div className="mb-4">
           <p className="text-sm">
-            Your parties — customers and vendors/distributors. Import these first.
+            Your parties: customers and vendors/distributors. Import these first.
           </p>
           <p className="mt-2 text-xs text-text-tertiary">
             Drop your <span className="font-medium text-foreground">trial balance</span> export. We
             read each party&apos;s outstanding balance and open bills, and tag them as customer,
-            vendor or other automatically — you can fix any later.
+            vendor or other automatically: you can fix any later.
           </p>
         </div>
 

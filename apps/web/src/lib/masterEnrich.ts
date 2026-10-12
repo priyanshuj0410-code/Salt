@@ -274,7 +274,7 @@ export function planMasterUpdates(items: Item[], master: MasterRow[]): MasterUpd
     const mhsn = mhsnRaw.replace(/\D/g, "");
     if (mhsn && mhsn !== ihsn && !ihsn.startsWith(mhsn)) {
       patch.hsn = mhsnRaw;
-      changes.push(`HSN ${it.hsn?.trim() || "—"}→${mhsnRaw}`);
+      changes.push(`HSN ${it.hsn?.trim() || "-"}→${mhsnRaw}`);
     }
     if (changes.length) out.push({ itemId: it.id, itemName: it.name, patch, changes });
   }

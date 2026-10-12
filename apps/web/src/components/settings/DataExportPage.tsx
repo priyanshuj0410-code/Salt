@@ -91,7 +91,7 @@ export function DataExportPage() {
   const countLabel = (table: string) => {
     if (!countsLoaded) return "…";
     const n = counts[table];
-    return n == null ? "—" : n.toLocaleString("en-IN");
+    return n == null ? "-" : n.toLocaleString("en-IN");
   };
 
   return (
@@ -99,7 +99,7 @@ export function DataExportPage() {
       <PageHeader
         icon={Database}
         title="Data export"
-        subtitle="Take your data with you — a CSV per dataset, or one JSON backup of everything."
+        subtitle="Take your data with you. A CSV per dataset, or one JSON backup of everything."
         actions={
           <Button onClick={exportBackup} disabled={backupBusy || !!csvBusy || !orgId}>
             <Download /> {backupBusy ? "Preparing backup…" : "Full backup (JSON)"}
@@ -108,7 +108,7 @@ export function DataExportPage() {
       />
 
       <p className="mb-4 text-sm text-text-secondary">
-        Exports cover this organisation only. Each file is built in your browser from live data —
+        Exports cover this organisation only. Each file is built in your browser from live data,
         nothing is sent anywhere except the download you trigger. No lock-in.
       </p>
 

@@ -123,7 +123,7 @@ export function ScanQueue({ batchId, reloadSignal }: { batchId?: string; reloadS
         const parts = [`extracted ${res.extracted ?? 0}`];
         if (res.duplicate) parts.push(`${res.duplicate} duplicate`);
         if (res.failed) parts.push(`${res.failed} failed`);
-        setProcMsg(`Processed ${res.total} — ${parts.join(", ")}.`);
+        setProcMsg(`Processed ${res.total}: ${parts.join(", ")}.`);
       }
       setReloadKey((k) => k + 1);
     } finally {
@@ -158,7 +158,7 @@ export function ScanQueue({ batchId, reloadSignal }: { batchId?: string; reloadS
   if (unavailable) {
     return (
       <div className="rounded-lg border border-warning-border bg-warning-bg p-4 text-sm text-warning">
-        Scan history isn't set up yet — run migration <code>0049_invoice_scans.sql</code> (creates the
+        Scan history isn't set up yet: run migration <code>0049_invoice_scans.sql</code> (creates the
         <code> invoice-scans</code> bucket + <code>invoice_scans</code> table). Importing still works without it.
       </div>
     );
@@ -178,7 +178,7 @@ export function ScanQueue({ batchId, reloadSignal }: { batchId?: string; reloadS
           {extractingCount > 0 && <Loader2 className="size-3 animate-spin" />}
           {pending > 0 || extractingCount > 0
             ? extractingCount > 0
-              ? "Extracting in the background — this list refreshes automatically."
+              ? "Extracting in the background: this list refreshes automatically."
               : "Queued invoices are waiting for the worker. The list auto-refreshes; if they do not move, click Process queued."
             : dupCount > 0 || failedCount > 0
               ? [dupCount > 0 ? `${dupCount} duplicate` : null, failedCount > 0 ? `${failedCount} failed` : null].filter(Boolean).join(" · ")
@@ -236,7 +236,7 @@ export function ScanQueue({ batchId, reloadSignal }: { batchId?: string; reloadS
                 <span className="text-xs text-destructive" title={r.error}>{r.error}</span>
               ) : (
                 <span>
-                  {r.vendor_guess ?? <span className="text-text-tertiary">—</span>}
+                  {r.vendor_guess ?? <span className="text-text-tertiary">-</span>}
                   {r.invoice_no && <span className="ml-1.5 text-xs text-text-tertiary">{r.invoice_no}</span>}
                 </span>
               ),

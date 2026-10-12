@@ -8,10 +8,10 @@ import type { Schedule } from "@/lib/types";
  * warns (register entry required), X is the strictest (narcotic / licence).
  */
 const SCHEDULE_META: Record<Schedule, { variant: "neutral" | "info" | "warning" | "danger"; title: string }> = {
-  OTC: { variant: "neutral", title: "Over the counter — no prescription needed" },
-  H: { variant: "info", title: "Schedule H — prescription required" },
-  H1: { variant: "warning", title: "Schedule H1 — prescription + register entry" },
-  X: { variant: "danger", title: "Schedule X — narcotic; pharmacist + Form 20F licence" },
+  OTC: { variant: "neutral", title: "Over the counter: no prescription needed" },
+  H: { variant: "info", title: "Schedule H: prescription required" },
+  H1: { variant: "warning", title: "Schedule H1: prescription + register entry" },
+  X: { variant: "danger", title: "Schedule X: narcotic; pharmacist + Form 20F licence" },
 };
 
 export function ScheduleBadge({ schedule }: { schedule: Schedule }) {
@@ -26,7 +26,7 @@ export function ScheduleBadge({ schedule }: { schedule: Schedule }) {
 /** AYUSH / non-allopathic marker (ayurveda, siddha, unani, homeopathy). */
 export function AyushBadge() {
   return (
-    <Badge variant="success" title="AYUSH / non-allopathic — no Drugs-&-Cosmetics schedule">
+    <Badge variant="success" title="AYUSH / non-allopathic: no Drugs-&-Cosmetics schedule">
       AYUSH
     </Badge>
   );
@@ -35,7 +35,7 @@ export function AyushBadge() {
 /** Cold-chain marker — temperature-controlled storage (insulin, vaccines). */
 export function ColdChainBadge() {
   return (
-    <Badge variant="info" title="Cold chain — keep refrigerated (2–8°C)">
+    <Badge variant="info" title="Cold chain: keep refrigerated (2-8°C)">
       <Snowflake /> Cold chain
     </Badge>
   );

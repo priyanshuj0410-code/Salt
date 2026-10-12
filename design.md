@@ -1,9 +1,9 @@
-# Salt — Design System (`design.md`)
+# Salt: Design System (`design.md`)
 
 **Version:** 0.2
 **Companion to:** `salt-design-system.html` (visual reference)
 **Audience:** Engineers and LLM coding agents building Salt screens
-**Rule of thumb:** If you're about to write a hardcoded color, spacing value, or font size — stop. It's a token. Use the token.
+**Rule of thumb:** If you're about to write a hardcoded color, spacing value, or font size, stop. It's a token. Use the token.
 
 ---
 
@@ -14,7 +14,7 @@ This is the contract. Before building any screen or component:
 1. Read the relevant section here.
 2. Use tokens, never raw values.
 3. Compose from documented primitives and patterns; don't invent new ones.
-4. If you genuinely need something not in the system, propose it via PR with rationale — don't quietly add it.
+4. If you genuinely need something not in the system, propose it via PR with rationale; do not quietly add it.
 
 The visual reference (`salt-design-system.html`) shows what each thing looks like. This file tells you how to build it.
 
@@ -72,7 +72,7 @@ Drop this into your global stylesheet (`globals.css` or equivalent). Every value
   --color-danger: #b91c1c;           --color-danger-bg: #fef2f2;   --color-danger-border: #fecaca;
   --color-info: #1e40af;             --color-info-bg: #eff6ff;     --color-info-border: #bfdbfe;
 
-  /* ---- Semantic (on dark) — for fills/dots/borders on dark surfaces ---- */
+  /* ---- Semantic (on dark), for fills/dots/borders on dark surfaces ---- */
   --color-success-on-dark: #4ade80;  /* emerald-400 */
   --color-warning-on-dark: #fbbf24;  /* amber-400 */
   --color-danger-on-dark: #f87171;   /* red-400 */
@@ -87,7 +87,7 @@ Drop this into your global stylesheet (`globals.css` or equivalent). Every value
   /* ---- Type ---- */
   --font-sans: "Geist", "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
-  --font-display: "Fraunces", Georgia, serif;  /* wordmark/editorial only — never product UI */
+  --font-display: "Fraunces", Georgia, serif;  /* wordmark/editorial only: never product UI */
 
   --text-xs: 0.6875rem;   /* 11px */
   --text-sm: 0.8125rem;   /* 13px */
@@ -202,7 +202,7 @@ After this, write `bg-surface text-text-secondary border-border` instead of `bg-
 
 ## 3. Typography rules
 
-- **Geist** for all product UI. **Geist Mono** for codes, batch numbers, invoice IDs, anything tabular-by-meaning. **Fraunces** for the wordmark only — never inside the product.
+- **Geist** for all product UI. **Geist Mono** for codes, batch numbers, invoice IDs, anything tabular-by-meaning. **Fraunces** for the wordmark only. Never inside the product.
 - Six sizes (xs → 2xl). No improvised sizes (`text-[13px]` is banned; it's `text-sm`).
 - **Tabular numerals everywhere money/quantity/percent/count lives:** add `tabular-nums` (Tailwind) or `font-variant-numeric: tabular-nums`.
 - **Currency is always `en-IN`:**
@@ -236,7 +236,7 @@ Salt has two density modes. Set `data-density` on the screen container; componen
 | Card padding | `space-3` / `space-4` | `space-5` |
 | Items visible in viewport | ~22 | ~16 |
 
-Rule: same tokens, same primitives, both modes. If you find yourself building a separate component for compact mode, stop — parametrize the existing one.
+Rule: same tokens, same primitives, both modes. If you find yourself building a separate component for compact mode, stop and parametrize the existing one.
 
 ---
 
@@ -299,7 +299,7 @@ Rules:
 
 Rules:
 - 20px tall, monospace, `surface-2` background, bottom-border 2px (recessed look).
-- Every shortcut visible inline. **Tooltip-only shortcuts are banned** — staff never discover them.
+- Every shortcut visible inline. **Tooltip-only shortcuts are banned**: staff never discover them.
 - Inside a `primary` button (dark bg), use a translucent-white kbd treatment.
 
 ### 5.5 Status dot
@@ -313,7 +313,7 @@ Rules:
 ```
 
 Rules:
-- 6px circle. Always paired with text — never color alone (accessibility).
+- 6px circle. Always paired with text: never color alone (accessibility).
 - On dark surfaces, dots auto-switch to on-dark shades.
 
 ### 5.6 Card
@@ -382,7 +382,7 @@ Label above (`text-xs` uppercase tertiary) → input → helper text below (mute
 
 ### 6.6 Toast (corrected pattern)
 
-**All toasts share one dark surface.** Semantic meaning carried by status dot + 3px left accent border using on-dark shades. **Never flood the background with a semantic color** — that produces muddy, broken-looking panels.
+**All toasts share one dark surface.** Semantic meaning carried by status dot + 3px left accent border using on-dark shades. **Never flood the background with a semantic color**. That produces muddy, broken-looking panels.
 
 ```tsx
 <Toast variant="success">  {/* dark bg, emerald-400 accent + dot */}
@@ -406,7 +406,7 @@ Rules:
 - **Focus:** every interactive element shows the solid 2px ring on `:focus-visible` (16:1 or more on white in light, 14:1 or more on surface-2 in dark). Never remove it, never make it translucent. Control borders are 3:1 or more (`--color-control`).
 - **Keyboard:** tab order matches visual order. No traps. Esc closes any overlay.
 - **Semantic HTML:** tables are `<table>`, buttons are `<button>`, headings sequential.
-- **Color independence:** status never by color alone — pair with text or icon.
+- **Color independence:** status never by color alone: pair with text or icon.
 - **Reduced motion:** honor `prefers-reduced-motion` (handled globally in §2.1; kill pulse, replace transforms with opacity).
 - **Zoom:** test at 100/125/150% (counter PCs are often zoomed).
 
@@ -429,12 +429,12 @@ Rules:
 
 ## 9. Component build order (for engineering)
 
-When implementing the system in code, build in this order — each layer depends on the previous:
+When implementing the system in code, build in this order. Each layer depends on the previous:
 
-1. **Tokens** — `globals.css` + `tailwind.config.ts` (§2). Nothing else works without these.
-2. **Primitives** — Button, Input, Badge, Kbd, Dot, Card (§5). Pure token consumers.
-3. **Patterns** — DataTable, StatCard, PageHeader, EmptyState, FormRow, Toast (§6). Composed from primitives.
-4. **Screens** — Billing, Purchase, Inventory, Payments, Tax, Customers. ~90% pattern composition, ~10% screen-specific glue.
+1. **Tokens**: `globals.css` + `tailwind.config.ts` (§2). Nothing else works without these.
+2. **Primitives**: Button, Input, Badge, Kbd, Dot, Card (§5). Pure token consumers.
+3. **Patterns**: DataTable, StatCard, PageHeader, EmptyState, FormRow, Toast (§6). Composed from primitives.
+4. **Screens**: Billing, Purchase, Inventory, Payments, Tax, Customers. ~90% pattern composition, ~10% screen-specific glue.
 
 A screen that contains raw Tailwind color/spacing utilities instead of tokens, or that re-implements a primitive inline, fails review.
 
@@ -442,7 +442,7 @@ A screen that contains raw Tailwind color/spacing utilities instead of tokens, o
 
 ## 10. Changelog
 
-- **v0.1 (28 May 2026)** — Initial system. Tokens, primitives, patterns, accessibility, anti-patterns. Toast pattern corrected (dark-surface + accent, replacing the muddy semantic-fill bug found in the first prototype).
+- **v0.1 (28 May 2026)**: Initial system. Tokens, primitives, patterns, accessibility, anti-patterns. Toast pattern corrected (dark-surface + accent, replacing the muddy semantic-fill bug found in the first prototype).
 - **v0.2 (12 Oct 2026)**: P1 accessibility fixes from the design audit ([SALT-38](https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/29df4720-0e15-465f-a3e7-b20547d30e47)). Focus ring is now solid and global (2px outline, 2px offset, `--color-focus-ring` = `action-primary`) instead of a 15-30% alpha ring; added `--color-control` for input and outlined-control borders (the bridge `--input` points at it) while `--color-border` stays for cards and dividers.
 
 ---

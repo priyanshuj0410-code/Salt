@@ -8,7 +8,7 @@ import type { EnrichedBatch } from "@/lib/inventory";
  * or expiring within 60 days (warning). Beyond that, just the date.
  */
 export function ExpiryCell({ b }: { b: EnrichedBatch }) {
-  const label = b.expiryAt ? format(b.expiryAt, "MMM yyyy") : (b.expiry ?? "—");
+  const label = b.expiryAt ? format(b.expiryAt, "MMM yyyy") : (b.expiry ?? "-");
   if (b.bucket === "expired") {
     return (
       <span className="inline-flex items-center gap-1.5">

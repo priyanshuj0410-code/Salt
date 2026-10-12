@@ -31,8 +31,8 @@ export const EMPTY_UPCOMING: UpcomingBuckets = {
 export const UPCOMING_BANDS: { key: Exclude<keyof UpcomingBuckets, "total">; label: string }[] = [
   { key: "overdue", label: "Overdue" },
   { key: "d0_7", label: "≤ 7 days" },
-  { key: "d8_14", label: "8–14 days" },
-  { key: "d15_30", label: "15–30 days" },
+  { key: "d8_14", label: "8-14 days" },
+  { key: "d15_30", label: "15-30 days" },
   { key: "later", label: "30+ days" },
 ];
 

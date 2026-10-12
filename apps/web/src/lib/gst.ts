@@ -198,7 +198,7 @@ export function buildGstr1(
     addInto(totals, line);
 
     // HSN summary spans every line, B2B and B2C alike.
-    const hsn = line.hsn?.trim() || "—";
+    const hsn = line.hsn?.trim() || "-";
     const hKey = `${hsn}|${line.gst_rate}`;
     let hRow = hsnRows.get(hKey);
     if (!hRow) {
@@ -438,13 +438,13 @@ export interface Gstr3bSummary {
   outputTotalPaise: number;
   itcTotalPaise: number; // gross ITC from purchases
   reversalPaise: number; // ITC reversed on write-offs / expiry destruction (Table 4B)
-  netItcPaise: number; // itcTotal − reversal — the ITC actually available
+  netItcPaise: number; // itcTotal − reversal: the ITC actually available
   creditNote: HeadAmounts; // outward tax reversed by sales-return credit notes
-  netOutput: HeadAmounts; // output − credit notes per head — the net outward liability
+  netOutput: HeadAmounts; // output − credit notes per head. The net outward liability
   creditNoteTaxablePaise: number;
   creditNoteTotalPaise: number; // credit-note tax across all heads
-  netOutputTotalPaise: number; // gross output − credit notes — the actual outward liability
-  netPayablePaise: number; // max(0, netOutput − netItc) after full set-off — the cash figure
+  netOutputTotalPaise: number; // gross output − credit notes. The actual outward liability
+  netPayablePaise: number; // max(0, netOutput − netItc) after full set-off. The cash figure
   creditCarryPaise: number; // max(0, netItc − netOutput) carried forward
   invoiceCount: number;
   purchaseCount: number;
@@ -630,7 +630,7 @@ export interface MonthLiability {
   outputPaise: number; // tax on sales
   itcPaise: number; // tax credit on purchases
   netPaise: number; // output − itc (signed; negative = surplus credit)
-  netPayablePaise: number; // max(0, net) — the cash figure
+  netPayablePaise: number; // max(0, net): the cash figure
 }
 
 /** A MoM / YoY comparison of net payable. `prev` is null when that month had no documents. */
@@ -642,7 +642,7 @@ export interface LiabilityDelta {
 
 export interface GstLiabilityView {
   current: MonthLiability;
-  dueDate: string; // 'YYYY-MM-DD' — 20th of the month after `current`
+  dueDate: string; // 'YYYY-MM-DD': 20th of the month after `current`
   mom: LiabilityDelta;
   yoy: LiabilityDelta;
   series: MonthLiability[]; // chronological ascending, one per month in the window
@@ -968,7 +968,7 @@ export function buildHsnSummary(lines: HsnLineInput[]): HsnSummary {
   const totals = emptyTotals();
   let qty = 0;
   for (const line of lines) {
-    const hsn = line.hsn?.trim() || "—";
+    const hsn = line.hsn?.trim() || "-";
     const key = `${hsn}|${line.gst_rate}`;
     let row = map.get(key);
     if (!row) {
@@ -1156,7 +1156,7 @@ export function creditNotesToCsv(s: CreditNoteSections): string {
   const m = (p: number) => (Math.round(p) / 100).toFixed(2);
   const head = ["section", "gstin", "note", "date", "orig invoice", "orig date", "pos", "rate", "taxable", "cgst", "sgst", "igst", "total"];
   const rows: (string | number)[][] = [];
-  for (const x of s.cdnr) rows.push(["CDNR", x.gstin, x.noteNo, x.date, x.origInvoiceNo || "—", x.origInvoiceDate || "—", x.pos, x.rate, m(x.taxablePaise), m(x.cgstPaise), m(x.sgstPaise), m(x.igstPaise), m(x.totalPaise)]);
-  for (const x of s.cdnur) rows.push(["CDNUR", "", x.noteNo, x.date, x.origInvoiceNo || "—", x.origInvoiceDate || "—", x.pos, x.rate, m(x.taxablePaise), m(x.cgstPaise), m(x.sgstPaise), m(x.igstPaise), m(x.totalPaise)]);
+  for (const x of s.cdnr) rows.push(["CDNR", x.gstin, x.noteNo, x.date, x.origInvoiceNo || "-", x.origInvoiceDate || "-", x.pos, x.rate, m(x.taxablePaise), m(x.cgstPaise), m(x.sgstPaise), m(x.igstPaise), m(x.totalPaise)]);
+  for (const x of s.cdnur) rows.push(["CDNUR", "", x.noteNo, x.date, x.origInvoiceNo || "-", x.origInvoiceDate || "-", x.pos, x.rate, m(x.taxablePaise), m(x.cgstPaise), m(x.sgstPaise), m(x.igstPaise), m(x.totalPaise)]);
   return [head, ...rows].map((c) => c.map(csvCell).join(",")).join("\n");
 }

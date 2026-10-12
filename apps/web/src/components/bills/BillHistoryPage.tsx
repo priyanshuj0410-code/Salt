@@ -181,7 +181,7 @@ export function BillHistoryPage() {
     const byId = new Map<string, string>();
     let hasWalkin = false;
     for (const r of rows) {
-      if (r.party_id) byId.set(r.party_id, r.ledgers?.name ?? "—");
+      if (r.party_id) byId.set(r.party_id, r.ledgers?.name ?? "-");
       else hasWalkin = true;
     }
     const named = [...byId.entries()]
@@ -319,7 +319,7 @@ export function BillHistoryPage() {
               header: "Payment",
               cell: (b) => (
                 <Badge variant={b.payment_method === "credit" ? "neutral" : "secondary"}>
-                  {b.payment_method ?? "—"}
+                  {b.payment_method ?? "-"}
                 </Badge>
               ),
             },
@@ -407,7 +407,7 @@ export function BillHistoryPage() {
                 autoFocus
                 value={voidReason}
                 onChange={(e) => setVoidReason(e.target.value)}
-                placeholder="Reason (required) — e.g. wrong item, customer cancelled"
+                placeholder="Reason (required): e.g. wrong item, customer cancelled"
               />
               {voidErr && <p className="text-sm text-danger">{voidErr}</p>}
               <DialogFooter className="flex-wrap">

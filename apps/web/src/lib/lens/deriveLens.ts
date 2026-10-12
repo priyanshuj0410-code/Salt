@@ -52,7 +52,7 @@ function derivePrimarySurface(atoms: Set<AtomId>): ModuleKey {
   if (atoms.has("G") && atoms.size <= 2) return "salesmen"; // field-only → the beat
   if (counter) return "counter";
   if (atoms.has("E") || atoms.has("F") || atoms.has("N")) return "inventory"; // stock / godown
-  if (atoms.has("J") || atoms.has("K")) return "reports"; // desk — reconcile & file
+  if (atoms.has("J") || atoms.has("K")) return "reports"; // desk: reconcile & file
   if (atoms.has("L") || atoms.has("I")) return "reports"; // pulse / floor
   if (atoms.has("G")) return "salesmen";
   // Intentional V1 bridge: the prototype falls through to "Home"; there is no V1
@@ -67,16 +67,16 @@ function deriveVerb(atoms: Set<AtomId>): string {
   if (atoms.has("A") || atoms.has("C")) return "Find";
   if (atoms.has("G")) return "Sync + collect";
   if (atoms.has("B")) return "Bill";
-  return "—";
+  return "-";
 }
 
 /** Where the persistent action takes you — mirrors deriveVerb's branch order. */
 function deriveActionRoute(atoms: Set<AtomId>): string {
   if (atoms.has("I")) return "/approvals"; // Approve · Inbox
-  if (atoms.has("J") || atoms.has("K")) return "/reports"; // Export — the desk
-  if (atoms.has("A") || atoms.has("C")) return "/"; // Find — at the counter
-  if (atoms.has("G")) return "/salesmen"; // Sync + collect — the beat
-  return "/"; // Bill — the counter
+  if (atoms.has("J") || atoms.has("K")) return "/reports"; // Export: the desk
+  if (atoms.has("A") || atoms.has("C")) return "/"; // Find: at the counter
+  if (atoms.has("G")) return "/salesmen"; // Sync + collect: the beat
+  return "/"; // Bill: the counter
 }
 
 /** Altitude facets — DERIVED from atoms, not a stored knob (this resolves the

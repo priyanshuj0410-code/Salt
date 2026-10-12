@@ -93,7 +93,7 @@ export function AssembledHome() {
         actions={<ShopSelect shops={shops} value={shopFilter} onChange={setShopFilter} />}
       />
       {tiles.length === 0 ? (
-        <EmptyState title="Just the counter" hint="Your work lives on the counter — nothing to watch here." />
+        <EmptyState title="Just the counter" hint="Your work lives on the counter. Nothing to watch here." />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {tiles.map((t) => {

@@ -94,7 +94,7 @@ export function SmartImportPage() {
       <main className="mx-auto w-full max-w-3xl flex-1 p-6">
         <h1 className="text-xl font-semibold">Smart import</h1>
         <p className="mt-1 text-sm text-text-tertiary">
-          Drop your Marg/Tally export — we auto-map the columns and quarantine only the rows that
+          Drop your Marg/Tally export: we auto-map the columns and quarantine only the rows that
           need a fix. Import in order: parties, catalogue, stock, then history.
         </p>
 
@@ -115,7 +115,7 @@ export function SmartImportPage() {
               ))}
             </select>
             <span className="text-xs text-text-tertiary">
-              Stock, documents, payments &amp; compliance import under this branch — do one branch&apos;s
+              Stock, documents, payments &amp; compliance import under this branch. Do one branch&apos;s
               export set, then switch. Parties &amp; items are shared org-wide.
             </span>
           </div>

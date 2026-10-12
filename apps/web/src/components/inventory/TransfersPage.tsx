@@ -99,7 +99,7 @@ export function TransfersPage() {
       <PageHeader
         icon={ArrowLeftRight}
         title="Stock transfers"
-        subtitle="Move stock between your shops — decrements the source, adds it to the destination"
+        subtitle="Move stock between your shops, decrements the source, adds it to the destination"
       />
       <InventoryNav />
 
@@ -158,7 +158,7 @@ export function TransfersPage() {
                       >
                         <span className="min-w-0 truncate">
                           {b.name}
-                          <span className="ml-1.5 text-xs text-text-tertiary">{b.batch_no ?? "—"}</span>
+                          <span className="ml-1.5 text-xs text-text-tertiary">{b.batch_no ?? "-"}</span>
                         </span>
                         <span className="shrink-0 tabular-nums text-text-tertiary">{b.qty} avl</span>
                       </button>
@@ -176,7 +176,7 @@ export function TransfersPage() {
                     <span className="min-w-0 flex-1 truncate">
                       {l.batch.name}
                       <span className="ml-1.5 text-xs text-text-tertiary">
-                        {l.batch.batch_no ?? "—"} · {l.batch.qty} avl
+                        {l.batch.batch_no ?? "-"} · {l.batch.qty} avl
                       </span>
                     </span>
                     <Input
@@ -218,9 +218,9 @@ export function TransfersPage() {
                 header: "From → To",
                 cell: (t) => (
                   <span className="inline-flex items-center gap-1.5">
-                    {shopName.get(t.from_shop_id) ?? "—"}
+                    {shopName.get(t.from_shop_id) ?? "-"}
                     <ArrowLeftRight className="size-3 text-text-tertiary" />
-                    {shopName.get(t.to_shop_id) ?? "—"}
+                    {shopName.get(t.to_shop_id) ?? "-"}
                   </span>
                 ),
               },

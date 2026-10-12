@@ -241,7 +241,7 @@ export class Outbox {
           parked += 1;
           this.safeNotify(this.observer?.onParked, rec);
           this.onChange?.();
-          continue; // poison record parked — keep draining the rest
+          continue; // poison record parked: keep draining the rest
         }
         await this.store.update(rec);
         this.onChange?.();

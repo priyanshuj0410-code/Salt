@@ -140,7 +140,7 @@ export function ItemSearch() {
                     </div>
                   )}
                   {!inStock && subs.length === 0 && (
-                    <div className="text-xs text-destructive">Out of stock — no same-salt substitute available</div>
+                    <div className="text-xs text-destructive">Out of stock: no same-salt substitute available</div>
                   )}
                 </div>
                 <div className="shrink-0 text-right">

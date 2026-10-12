@@ -48,8 +48,8 @@ const esc = (s: string) =>
 function lineRow(l: DestructionLine): string {
   return `<tr>
     <td class="l">${esc(l.name)}</td>
-    <td class="l">${esc(l.batchNo || "—")}</td>
-    <td class="l">${esc(l.expiry || "—")}</td>
+    <td class="l">${esc(l.batchNo || "-")}</td>
+    <td class="l">${esc(l.expiry || "-")}</td>
     <td class="r">${l.qty}</td>
     <td class="r">${formatPaise(l.costPaise)}</td>
     <td class="r">${formatPaise(l.itcPaise)}</td>
@@ -117,7 +117,7 @@ export function destructionHtml(d: DestructionCertificate): string {
 /** Open the destruction certificate in a new window and trigger the print dialog. */
 export function printDestructionCertificate(d: DestructionCertificate): void {
   const w = window.open("", "_blank", "width=820,height=900");
-  if (!w) return; // popup blocked — destruction is already recorded; can reprint
+  if (!w) return; // popup blocked: destruction is already recorded; can reprint
   w.document.write(destructionHtml(d));
   w.document.close();
 }

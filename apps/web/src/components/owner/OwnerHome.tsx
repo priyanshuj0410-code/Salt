@@ -110,7 +110,7 @@ export function OwnerHome() {
             <div>
               <h2 className="text-sm font-medium">Cashiers</h2>
               <p className="text-xs text-text-tertiary">
-                Generate a code and share it with a cashier — they enter it when they sign up.
+                Generate a code and share it with a cashier. They enter it when they sign up.
               </p>
             </div>
             <Button onClick={generate} disabled={busy}>

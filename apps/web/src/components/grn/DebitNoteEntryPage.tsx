@@ -202,7 +202,7 @@ export function DebitNoteEntryPage() {
     } catch (e) {
       setError(
         e instanceof TimeoutError
-          ? "Saving is taking too long — it may have gone through. Check Debit notes before saving again."
+          ? "Saving is taking too long. It may have gone through. Check Debit notes before saving again."
           : "Could not record the debit note. Please try again.",
       );
     } finally {
@@ -223,7 +223,7 @@ export function DebitNoteEntryPage() {
         <p className="text-sm text-text-secondary">
           Open the GRN you're returning from in{" "}
           <Link to="/purchases" className="font-medium text-primary hover:underline">purchase history</Link> and use{" "}
-          <span className="font-medium">Return to vendor</span> there — the return is computed against that receipt's
+          <span className="font-medium">Return to vendor</span> there: the return is computed against that receipt's
           actual cost (after scheme free goods + trade discount).
         </p>
       </Page>
@@ -308,7 +308,7 @@ export function DebitNoteEntryPage() {
                       {l.basis.returnedQty ? ` · ${l.basis.returnedQty} returned earlier` : ""}
                     </div>
                   </div>
-                  <span className="truncate text-xs text-text-tertiary">{l.batchNo || "—"}</span>
+                  <span className="truncate text-xs text-text-tertiary">{l.batchNo || "-"}</span>
                   <span className="text-right tabular-nums text-text-tertiary">{l.basis.receivedQty}</span>
                   <span className="text-right tabular-nums">{max}</span>
                   <Input

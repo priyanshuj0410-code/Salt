@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Pharmacist IA — Simplified &amp; Natural</title>
+<title>Pharmacist IA: Simplified &amp; Natural</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
     --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
     --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
     --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
-    --focus-ring-strong:rgba(24,24,27,.30);
+    --focus-ring-strong:#18181b;
     --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
     --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
     --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -110,7 +110,7 @@
 
   .area{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px;scroll-margin-top:14px;}
   .area.flash{animation:flash 1.2s ease;}
-  @keyframes flash{0%{box-shadow:0 0 0 3px var(--focus-ring-strong);}100%{box-shadow:var(--shadow-sm);}}
+  @keyframes flash{0%{box-shadow:0 0 0 3px rgba(24,24,27,.30);}100%{box-shadow:var(--shadow-sm);}}
   .area .ah{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
   .area .ak{width:30px;height:30px;border-radius:var(--radius-md);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;font-size:14px;}
   .area .an{font-size:var(--text-lg);font-weight:600;} .area .ahi{color:var(--text-tertiary);font-size:var(--text-sm);}
@@ -151,38 +151,38 @@
   <header class="top">
     <div class="logo">S</div>
     <div>
-      <h1><span class="wordmark">Salt</span> — Pharmacist IA, simplified &amp; natural</h1>
-      <p>The same base — but her Home is the counter, and compliance stops being a place.</p>
+      <h1><span class="wordmark">Salt</span>: Pharmacist IA, simplified &amp; natural</h1>
+      <p>The same base: but her Home is the counter, and compliance stops being a place.</p>
     </div>
   </header>
 
   <div class="persona">
     <div class="av">A</div>
     <div>
-      <div class="nm">Anjali — Pharmacist (D.Pharm) <span>· the registered name on the licence; legally must be present</span></div>
-      <p>Thinks in <b>salts</b> — <em class="hi">iska salt kya hai</em> — molecule first, brand second. Substitutes on instinct when stock is out; checks the strip for expiry by habit. Her gold standard is <b>Tata 1mg’s</b> salt search; customers send the Rx as a <b>WhatsApp photo</b>. Her defining behaviour: under a long queue she <b>skips the H1 register</b> — the gap that hurts at inspection. Clinical, not commercial.</p>
+      <div class="nm">Anjali: Pharmacist (D.Pharm) <span>· the registered name on the licence; legally must be present</span></div>
+      <p>Thinks in <b>salts</b>-<em class="hi">iska salt kya hai</em>: molecule first, brand second. Substitutes on instinct when stock is out; checks the strip for expiry by habit. Her gold standard is <b>Tata 1mg’s</b> salt search; customers send the Rx as a <b>WhatsApp photo</b>. Her defining behaviour: under a long queue she <b>skips the H1 register</b>: the gap that hurts at inspection. Clinical, not commercial.</p>
     </div>
   </div>
 
   <div class="base-note">
-    <b>Base = Owner + Manager + Accountant.</b> She inherits the spine, type-to-find, offline + en-IN + Hinglish (owner), and the two cross-role patterns from the manager &amp; accountant: <b>Home answers the role’s first question</b>, and <b>each role gets one persistent action surface</b> (manager → Inbox, accountant → Export, pharmacist → <b>Salt search</b>). Two things change hard for her: her <b>Home is a working counter, not a dashboard</b>, and <b>compliance becomes an inline gate, not a destination</b> — while the entire <b>commercial half</b> of the app falls away.
+    <b>Base = Owner + Manager + Accountant.</b> She inherits the spine, type-to-find, offline + en-IN + Hinglish (owner), and the two cross-role patterns from the manager &amp; accountant: <b>Home answers the role’s first question</b>, and <b>each role gets one persistent action surface</b> (manager → Inbox, accountant → Export, pharmacist → <b>Salt search</b>). Two things change hard for her: her <b>Home is a working counter, not a dashboard</b>, and <b>compliance becomes an inline gate, not a destination</b>: while the entire <b>commercial half</b> of the app falls away.
   </div>
 
-  <div class="section-label">Principles — what carries over from the three bases, what changes</div>
+  <div class="section-label">Principles: what carries over from the three bases, what changes</div>
   <div class="grid g3" id="principles"></div>
 
-  <div class="section-label">The shape — Dispense (home) + Salt search + Shelf + Drug book (commerce is gone)</div>
+  <div class="section-label">The shape: Dispense (home) + Salt search + Shelf + Drug book (commerce is gone)</div>
   <div class="hero">
     <div class="rail" id="rail"></div>
     <div class="home">
-      <div class="hwh"><span class="lbl">Home · “Counter / Dispense”</span><span style="margin-left:auto;font-size:var(--text-xs);color:var(--text-tertiary);font-weight:500">her home is a working screen — the patient in front of her</span></div>
+      <div class="hwh"><span class="lbl">Home · “Counter / Dispense”</span><span style="margin-left:auto;font-size:var(--text-xs);color:var(--text-tertiary);font-weight:500">her home is a working screen. The patient in front of her</span></div>
       <div class="searchmock">⌕ &nbsp;Type a salt or brand<span class="cam">· 📷 scan a strip</span><span class="k">⌘K</span></div>
       <div class="dpanel">
         <div class="dph">Now dispensing</div>
         <div class="dline"><div><span class="dn">Pan-D</span> <span class="dsalt">· Pantoprazole + Domperidone</span></div><span class="dmeta">B:PD2410 · exp 08/26 · ×10</span></div>
         <div class="dline oos"><div><span class="dn">Augmentin 625</span> <span class="dsalt">· Amoxicillin + Clavulanate</span></div><span class="dmeta">out of stock</span></div>
         <div class="subcallout"><span class="sl">Same salt</span><div>→ <b>Moxikind-CV 625</b> · 42 in stock · exp 11/26</div><span class="use">use</span></div>
-        <div class="gate"><span class="gl">Schedule H1</span><div><b>Azithral 500</b> — record doctor + patient to continue</div><span class="gfields">Dr: R.K. Sharma (last) · Patient: ▢</span></div>
+        <div class="gate"><span class="gl">Schedule H1</span><div><b>Azithral 500</b>: record doctor + patient to continue</div><span class="gfields">Dr: R.K. Sharma (last) · Patient: ▢</span></div>
       </div>
       <div class="tiles" id="hometiles"></div>
       <div class="quick">
@@ -194,36 +194,36 @@
     </div>
   </div>
 
-  <div class="section-label">The areas in detail — pharmacist’s lens, and the delta from owner / manager / accountant</div>
+  <div class="section-label">The areas in detail: pharmacist’s lens, and the delta from owner / manager / accountant</div>
   <div id="areas"></div>
 
-  <div class="section-label">Coverage check — clinical only (5 of 13 modules; the commercial half isn’t hers)</div>
+  <div class="section-label">Coverage check: clinical only (5 of 13 modules; the commercial half isn’t hers)</div>
   <div class="matrix-wrap"><table class="mx" id="coverage"></table></div>
-  <p class="intro" style="margin-top:10px">Note: the H1/X <b>register</b> doesn’t get its own area — she <b>records it inline at dispense</b> (the gate), and the inspector-facing export stays with the owner/accountant. Making the gate fast is the whole point: a register she has to <em>navigate to</em> is a register that stays empty at 11 a.m.</p>
+  <p class="intro" style="margin-top:10px">Note: the H1/X <b>register</b> doesn’t get its own area. She <b>records it inline at dispense</b> (the gate), and the inspector-facing export stays with the owner/accountant. Making the gate fast is the whole point: a register she has to <em>navigate to</em> is a register that stays empty at 11 a.m.</p>
 
-  <div class="section-label">The big moves — how the base changed for this persona</div>
+  <div class="section-label">The big moves: how the base changed for this persona</div>
   <div id="moves"></div>
 
   <footer class="foot">
-    Built on the Owner + Manager + Accountant IA bases, reshaped from the pharmacist persona (salt-first · substitute-by-instinct · the skipped H1 register · physical-strip trust) and her place in the lifecycle (S8 — the dispensing gate; the clinical front line). A design proposal, not a spec.
+    Built on the Owner + Manager + Accountant IA bases, reshaped from the pharmacist persona (salt-first · substitute-by-instinct · the skipped H1 register · physical-strip trust) and her place in the lifecycle (S8, the dispensing gate; the clinical front line). A design proposal, not a spec.
   </footer>
 </div>
 
 <script>
 const PRINCIPLES = [
-  {h:"Home is the counter, not a dashboard", tag:["changed","Changed"], p:"Owner/Manager/Accountant each open to a dashboard answering a question. She dispenses all day — so her Home is the working dispense screen, the patient in front of her. (The cashier will take this to its limit.)"},
-  {h:"Compliance is a gate, not a place", tag:["new","New"], p:"The accountant has Tax as a destination he files at. The pharmacist records the H1/X register inline at the moment of dispensing — fast, pre-filled from history. A register she has to navigate to is a register that stays empty under a queue."},
-  {h:"Salt search is her constant surface", tag:["new","New"], p:"Her version of the manager’s Inbox / accountant’s Export. The 1mg-style “iska salt kya hai → ranked substitutes, in-stock first” lookup, one key away from anywhere — the action she takes all day."},
+  {h:"Home is the counter, not a dashboard", tag:["changed","Changed"], p:"Owner/Manager/Accountant each open to a dashboard answering a question. She dispenses all day: so her Home is the working dispense screen, the patient in front of her. (The cashier will take this to its limit.)"},
+  {h:"Compliance is a gate, not a place", tag:["new","New"], p:"The accountant has Tax as a destination he files at. The pharmacist records the H1/X register inline at the moment of dispensing, fast, pre-filled from history. A register she has to navigate to is a register that stays empty under a queue."},
+  {h:"Salt search is her constant surface", tag:["new","New"], p:"Her version of the manager’s Inbox / accountant’s Export. The 1mg-style “iska salt kya hai → ranked substitutes, in-stock first” lookup, one key away from anywhere. The action she takes all day."},
   {h:"Salt-first, not SKU-first", tag:["new","New"], p:"Search and the catalogue are organised by molecule; brand is the second field, not the first. Substitution is the default path, not a dead end, when something is out of stock."},
-  {h:"Physical-first trust", tag:["new","New"], p:"She checks the strip by habit, so the screen matches the strip — scan a barcode/strip to find it, expiry surfaced before the line is added, and the prescription accepted as a WhatsApp photo."},
-  {h:"The commercial half is gone", tag:["changed","Changed"], p:"No Money, no GST filing, no Reports, no Parties, no Setup — she is clinical, not commercial. The exact opposite slice of the app from the accountant, who had only the commercial half."},
-  {h:"The dispense flow never changes", tag:["kept","Inherited"], p:"Consistent keystrokes and field order so speed holds under the queue — the same stability the cashier needs, and offline billing that doesn’t stop when the internet drops."},
+  {h:"Physical-first trust", tag:["new","New"], p:"She checks the strip by habit, so the screen matches the strip, scan a barcode/strip to find it, expiry surfaced before the line is added, and the prescription accepted as a WhatsApp photo."},
+  {h:"The commercial half is gone", tag:["changed","Changed"], p:"No Money, no GST filing, no Reports, no Parties, no Setup. She is clinical, not commercial. The exact opposite slice of the app from the accountant, who had only the commercial half."},
+  {h:"The dispense flow never changes", tag:["kept","Inherited"], p:"Consistent keystrokes and field order so speed holds under the queue. The same stability the cashier needs, and offline billing that doesn’t stop when the internet drops."},
   {h:"Type-to-find · ⌘K · en-IN · Hinglish", tag:["kept","Inherited"], p:"Unchanged from the base: keyboard-first, Indian money format on price, Hinglish-friendly labels, numbers and names read at a glance."},
 ];
 
 const TILES = [
   {l:"Expiring on my shelf", v:"₹89k · 12 batches", s:"pull / prioritise", dot:"w"},
-  {l:"Recall flag", v:"1 batch", s:"Augmentin B:AUG2403 — segregate", dot:"d", attn:true},
+  {l:"Recall flag", v:"1 batch", s:"Augmentin B:AUG2403: segregate", dot:"d", attn:true},
   {l:"Today’s H1 / X", v:"7 logged", s:"my register, so far", dot:"i"},
 ];
 
@@ -239,33 +239,33 @@ const RAIL = [
 ];
 
 const AREAS = [
-  {id:"dispense", k:"D", n:"Dispense", hi:"“Counter” — her home", ntag:["changed","home = a working screen"],
-   tag:"The patient in front of her — found, substituted if needed, made safe & legal, given.",
-   inside:["Salt / brand search · scan a strip","FEFO batch + expiry surfaced before the line is added","Substitute on OOS (same salt, in-stock first)","H1 / X gate — inline, pre-filled doctor/patient","Attach the Rx (WhatsApp-style photo)","Today’s H1/X log (her register so far)","Complete & print (offline)"],
-   jtbd:"Her first question — <b>“what does this customer need, is it in stock or substitutable, and is it safe & legal to give?”</b> — answered without leaving the screen.",
+  {id:"dispense", k:"D", n:"Dispense", hi:"“Counter”: her home", ntag:["changed","home = a working screen"],
+   tag:"The patient in front of her, found, substituted if needed, made safe & legal, given.",
+   inside:["Salt / brand search · scan a strip","FEFO batch + expiry surfaced before the line is added","Substitute on OOS (same salt, in-stock first)","H1 / X gate: inline, pre-filled doctor/patient","Attach the Rx (WhatsApp-style photo)","Today’s H1/X log (her register so far)","Complete & print (offline)"],
+   jtbd:"Her first question: <b>“what does this customer need, is it in stock or substitutable, and is it safe & legal to give?”</b>: answered without leaving the screen.",
    life:["S7","S8","S11"], absorbs:["Counter","H1/X register (entry)","Approvals (request an override inline)","Activity"],
-   delta:"Owner’s Home is a money pulse, manager’s a live floor, accountant’s a reconcile-list — all <b>dashboards</b>. Hers is the <b>counter itself</b>: she lives in the doing-screen, and compliance happens here, not in a separate tab."},
+   delta:"Owner’s Home is a money pulse, manager’s a live floor, accountant’s a reconcile-list, all <b>dashboards</b>. Hers is the <b>counter itself</b>: she lives in the doing-screen, and compliance happens here, not in a separate tab."},
 
-  {id:"find", k:"F", n:"Salt search", hi:"“iska salt kya hai” — persistent", ntag:["new","her constant surface"],
-   tag:"Find the molecule and its substitutes — instantly, from anywhere.",
-   inside:["Search by salt / molecule (brand is secondary)","Ranked substitutes — in-stock first, then orderable","Schedule (H / H1 / X / OTC) shown on every result","Pack / strength match","Dose & interaction reference (CIMS / 1mg-style)"],
+  {id:"find", k:"F", n:"Salt search", hi:"“iska salt kya hai”: persistent", ntag:["new","her constant surface"],
+   tag:"Find the molecule and its substitutes, instantly, from anywhere.",
+   inside:["Search by salt / molecule (brand is secondary)","Ranked substitutes: in-stock first, then orderable","Schedule (H / H1 / X / OTC) shown on every result","Pack / strength match","Dose & interaction reference (CIMS / 1mg-style)"],
    jtbd:"The action she takes <b>all day</b>: a brand is out or a customer wants it cheaper → find the same salt that’s on the shelf, fast.",
    life:["S8"], absorbs:["Catalogue → substitutes / salt index","item_substitutes"],
-   delta:"The exact slot the manager fills with an <b>Inbox</b> and the accountant with <b>Export</b> — one persistent action per role. Hers is the 1mg lookup she already trusts, made first-class."},
+   delta:"The exact slot the manager fills with an <b>Inbox</b> and the accountant with <b>Export</b>: one persistent action per role. Hers is the 1mg lookup she already trusts, made first-class."},
 
-  {id:"shelf", k:"S", n:"Shelf", hi:"“Maal” — her stock", ntag:["changed","stock, for safety"],
+  {id:"shelf", k:"S", n:"Shelf", hi:"“Maal”: her stock", ntag:["changed","stock, for safety"],
    tag:"What’s on my shelf, and what must come off it.",
-   inside:["What’s here (qty, batch, expiry, location)","Expiring soon — pull & prioritise","Near-expiry / out of stock","Cold-chain items","Physical count","Segregate a recalled / expired batch"],
+   inside:["What’s here (qty, batch, expiry, location)","Expiring soon: pull & prioritise","Near-expiry / out of stock","Cold-chain items","Physical count","Segregate a recalled / expired batch"],
    jtbd:"Two safety jobs: <b>never dispense expired</b>, and <b>never run out</b> in front of a customer (or they go next door).",
    life:["S6","S14","S15"], absorbs:["Inventory (operational)"],
-   delta:"Owner <b>watches</b> the expiry risk and the manager <b>acts</b> on it commercially (returns, claims). The pharmacist’s lens is <b>clinical safety</b> — pull it off the shelf so it can’t reach a patient. No money attached."},
+   delta:"Owner <b>watches</b> the expiry risk and the manager <b>acts</b> on it commercially (returns, claims). The pharmacist’s lens is <b>clinical safety</b>: pull it off the shelf so it can’t reach a patient. No money attached."},
 
-  {id:"book", k:"B", n:"Drug book", hi:"“Dawai” — the knowledge", ntag:["changed","catalogue as a reference"],
-   tag:"The molecule knowledge — brand ↔ salt, schedule, dose.",
+  {id:"book", k:"B", n:"Drug book", hi:"“Dawai”: the knowledge", ntag:["changed","catalogue as a reference"],
+   tag:"The molecule knowledge: brand ↔ salt, schedule, dose.",
    inside:["Brand ↔ salt mapping","Schedule (H / H1 / X / OTC) & licence need","Pack / strength / form","Substitutes graph (same salt)","Dose & interaction reference","Flag a wrong attribute (GST/HSN are someone else’s concern)"],
-   jtbd:"Her reference and the source of truth behind every substitution and every schedule gate — the catalogue, seen as a <b>drug book</b>, not a price list.",
+   jtbd:"Her reference and the source of truth behind every substitution and every schedule gate. The catalogue, seen as a <b>drug book</b>, not a price list.",
    life:["S2","S8"], absorbs:["Catalogue (knowledge view)"],
-   delta:"Owner/manager see the catalogue as a <b>priced item master</b> (MRP, GST, margin); the accountant barely touches it. The pharmacist sees it as a <b>clinical reference</b> — molecules, schedules and doses, price stripped out."},
+   delta:"Owner/manager see the catalogue as a <b>priced item master</b> (MRP, GST, margin); the accountant barely touches it. The pharmacist sees it as a <b>clinical reference</b>: molecules, schedules and doses, price stripped out."},
 ];
 
 const COVERAGE = [
@@ -274,17 +274,17 @@ const COVERAGE = [
   ["Inventory","Shelf"],
   ["Activity","Dispense (safety strip)"],
   ["Approvals","inline at Dispense (request an override / controlled sign-off)"],
-  ["H1 / X register","inline gate at Dispense (entry) + today’s log — no separate area"],
-  ["Sales · Parties · Payments · GST filing · Reports · Salesmen · Settings","— not her view (commercial & admin)"],
+  ["H1 / X register","inline gate at Dispense (entry) + today’s log. No separate area"],
+  ["Sales · Parties · Payments · GST filing · Reports · Salesmen · Settings","Not her view (commercial & admin)"],
 ];
 
 const MOVES = [
-  {h:"Home becomes a working screen, not a dashboard", p:"The first three roles open to a dashboard that answers a question (pulse / floor / desk). The pharmacist opens to the dispense counter — because she dispenses all day. Her “first question” is answered by doing, not by reading tiles.", ba:"dashboard Home → the counter is Home"},
-  {h:"Compliance is a gate, not a destination", p:"The H1/X register doesn’t get an area. It’s recorded inline at the moment of dispensing — fast and pre-filled — because a register she must navigate to is the register that sits empty during the 11 a.m. rush. This is the direct fix for her defining behaviour.", ba:"Tax-as-area → H1/X-as-inline-gate"},
-  {h:"Her persistent surface is Salt search", p:"Same structural slot as the manager’s Inbox and the accountant’s Export — the one action a role does all day. Hers is the molecule → substitute lookup she already trusts from 1mg, one key away from anywhere.", ba:"Inbox / Export ⟷ Salt search"},
+  {h:"Home becomes a working screen, not a dashboard", p:"The first three roles open to a dashboard that answers a question (pulse / floor / desk). The pharmacist opens to the dispense counter, because she dispenses all day. Her “first question” is answered by doing, not by reading tiles.", ba:"dashboard Home → the counter is Home"},
+  {h:"Compliance is a gate, not a destination", p:"The H1/X register doesn’t get an area. It’s recorded inline at the moment of dispensing, fast and pre-filled, because a register she must navigate to is the register that sits empty during the 11 a.m. rush. This is the direct fix for her defining behaviour.", ba:"Tax-as-area → H1/X-as-inline-gate"},
+  {h:"Her persistent surface is Salt search", p:"Same structural slot as the manager’s Inbox and the accountant’s Export. The one action a role does all day. Hers is the molecule → substitute lookup she already trusts from 1mg, one key away from anywhere.", ba:"Inbox / Export ⟷ Salt search"},
   {h:"The commercial half disappears", p:"No Money, GST-filing, Reports, Parties or Setup. The pharmacist is the mirror image of the accountant: he had only the commercial/back-office half; she has only the clinical/front-line half. Between them they barely overlap.", ba:"13 modules → 4 clinical surfaces"},
-  {h:"Salt-first and physical-first", p:"Search defaults to the molecule, substitution is the default OOS path, the screen matches the physical strip (scan/barcode, expiry before add), and the Rx is accepted as a photo — every default re-pointed from “SKU/transaction” to “molecule/strip”.", ba:"SKU/txn defaults → salt/strip defaults"},
-  {h:"Same dispense flow, forever", p:"Inherited stability: consistent keystrokes and offline billing so her speed holds under the queue. The pattern she shares with the cashier — the next, and most extreme, case of “the counter is the whole app”.", ba:"+ stable, offline dispense flow"},
+  {h:"Salt-first and physical-first", p:"Search defaults to the molecule, substitution is the default OOS path, the screen matches the physical strip (scan/barcode, expiry before add), and the Rx is accepted as a photo. Every default re-pointed from “SKU/transaction” to “molecule/strip”.", ba:"SKU/txn defaults → salt/strip defaults"},
+  {h:"Same dispense flow, forever", p:"Inherited stability: consistent keystrokes and offline billing so her speed holds under the queue. The pattern she shares with the cashier. The next, and most extreme, case of “the counter is the whole app”.", ba:"+ stable, offline dispense flow"},
 ];
 
 /* render */
@@ -311,11 +311,11 @@ $("#areas").innerHTML = AREAS.map(a=>`
     <div class="arow"><span class="arl">Inside</span>${a.inside.map(i=>`<span class="chip">${i}</span>`).join("")}</div>
     <div class="jtbd">${a.jtbd}</div>
     <div class="arow" style="margin-top:10px"><span class="arl">Lifecycle</span>${a.life.map(l=>`<span class="chip lc">${l}</span>`).join("")}<span class="arl" style="margin-left:8px">Absorbs</span>${a.absorbs.map(x=>`<span class="chip ab">${x}</span>`).join("")}</div>
-    <div class="delta">↔ <b>vs the others</b> — ${a.delta}</div>
+    <div class="delta">↔ <b>vs the others</b>: ${a.delta}</div>
   </div>`).join("");
 
 $("#coverage").innerHTML = `<thead><tr><th>Today’s module</th><th></th><th>Pharmacist’s home for it</th></tr></thead><tbody>` +
-  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('—')?'lock':''}">${n}</span></td></tr>`).join("") +
+  COVERAGE.map(([o,n])=>`<tr><td class="old">${o}</td><td><span class="arrow">→</span></td><td><span class="newpill ${n.startsWith('-')?'lock':''}">${n}</span></td></tr>`).join("") +
   `</tbody>`;
 
 $("#moves").innerHTML = MOVES.map(m=>`<div class="move"><h4>${m.h}</h4><p>${m.p}</p><span class="ba">${m.ba}</span></div>`).join("");

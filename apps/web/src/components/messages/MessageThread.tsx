@@ -79,7 +79,7 @@ export function MessageThread({
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center gap-1 py-8 text-text-tertiary">
             <MessageSquare className="size-5" />
-            <p className="text-sm">No messages yet — start the thread.</p>
+            <p className="text-sm">No messages yet: start the thread.</p>
           </div>
         ) : (
           messages.map((m) => {
