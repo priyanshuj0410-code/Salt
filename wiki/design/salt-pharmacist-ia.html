@@ -16,7 +16,7 @@
     --warning:#b45309; --warning-bg:#fffbeb; --warning-border:#fde68a;
     --danger:#b91c1c;  --danger-bg:#fef2f2;  --danger-border:#fecaca;
     --info:#1e40af;    --info-bg:#eff6ff;    --info-border:#bfdbfe;
-    --focus-ring-strong:rgba(24,24,27,.30);
+    --focus-ring-strong:#18181b;
     --radius-sm:.25rem; --radius-md:.375rem; --radius-lg:.5rem; --radius-xl:.75rem;
     --font-sans:"Geist","Inter",system-ui,-apple-system,sans-serif;
     --font-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -110,7 +110,7 @@
 
   .area{background:var(--background);border:1px solid var(--border);border-radius:var(--radius-xl);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px;scroll-margin-top:14px;}
   .area.flash{animation:flash 1.2s ease;}
-  @keyframes flash{0%{box-shadow:0 0 0 3px var(--focus-ring-strong);}100%{box-shadow:var(--shadow-sm);}}
+  @keyframes flash{0%{box-shadow:0 0 0 3px rgba(24,24,27,.30);}100%{box-shadow:var(--shadow-sm);}}
   .area .ah{display:flex;align-items:center;gap:12px;margin-bottom:5px;}
   .area .ak{width:30px;height:30px;border-radius:var(--radius-md);flex:none;background:var(--action-primary);color:#fff;display:grid;place-items:center;font-family:var(--font-mono);font-weight:500;font-size:14px;}
   .area .an{font-size:var(--text-lg);font-weight:600;} .area .ahi{color:var(--text-tertiary);font-size:var(--text-sm);}

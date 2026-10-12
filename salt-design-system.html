@@ -50,9 +50,9 @@
     --color-warning-on-dark: #fbbf24;      /* amber-400 */
     --color-danger-on-dark: #f87171;       /* red-400 */
 
-    /* Focus ring — single source of truth */
-    --color-focus-ring: rgba(24, 24, 27, 0.15);
-    --color-focus-ring-strong: rgba(24, 24, 27, 0.3);
+    /* Focus ring: solid, = action-primary (dark: #fafafa). Drawn as a 2px outline with a 2px offset */
+    --color-focus-ring: #18181b;
+    --color-control: #898992;              /* border of inputs and outlined controls; 3:1+ on background, surface, surface-2 */
 
     /* ============ SPACING SCALE ============ */
     /* Based on 4px base unit. Counter UI uses 1-3; comfort UI uses 3-6 */
@@ -320,9 +320,9 @@
     white-space: nowrap;
     user-select: none;
   }
-  .btn:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px var(--color-focus-ring-strong);
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
   }
 
   /* Button sizes */
@@ -348,19 +348,13 @@
     font-size: var(--text-sm);
     color: var(--color-text-primary);
     background: var(--color-background);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-control);
     border-radius: var(--radius-md);
     width: 100%;
-    transition: border-color var(--duration-fast) var(--ease-out),
-                box-shadow var(--duration-fast) var(--ease-out);
+    transition: border-color var(--duration-fast) var(--ease-out);
   }
   .input::placeholder { color: var(--color-text-disabled); }
-  .input:hover { border-color: var(--color-border-strong); }
-  .input:focus {
-    outline: none;
-    border-color: var(--color-action-primary);
-    box-shadow: 0 0 0 3px var(--color-focus-ring);
-  }
+  .input:focus { border-color: var(--color-action-primary); }
   .input-compact { height: var(--input-height-compact); padding: 0 10px; font-size: var(--text-sm); }
 
   /* Badge */
@@ -1179,8 +1173,8 @@ formatINR(487.25)   // → ₹487.25</code></pre>
 
   <h3 class="doc-h3">Focus state</h3>
   <p class="doc-p">
-    Border darkens to <code>action-primary</code>; a 3px focus ring at 15% opacity surrounds.
-    No glow, no animation other than 120ms color crossfade. Visible on keyboard focus (<code>:focus-visible</code>) only.
+    The border is <code>control</code> (#898992, 3:1 or more) and darkens to <code>action-primary</code>; a solid 2px outline in <code>focus-ring</code> sits 2px outside it.
+    No glow, no animation other than 120ms color crossfade. The outline shows on keyboard focus (<code>:focus-visible</code>) only.
   </p>
   <div class="demo">
     <div class="demo-render" style="max-width: 320px;">
@@ -1197,9 +1191,9 @@ formatINR(487.25)   // → ₹487.25</code></pre>
     <div class="demo-render">
       <div style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm);">
         <span>Qty</span>
-        <input style="width: 50px; text-align: center; background: transparent; border: 0; border-bottom: 1px solid var(--color-border); padding: 4px 2px; font-size: var(--text-sm); outline: none;" value="3" onfocus="this.style.borderBottomColor='var(--color-action-primary)'" onblur="this.style.borderBottomColor='var(--color-border)'" />
+        <input style="width: 50px; text-align: center; background: transparent; border: 0; border-bottom: 1px solid var(--color-control); padding: 4px 2px; font-size: var(--text-sm);" value="3" onfocus="this.style.borderBottomColor='var(--color-action-primary)'" onblur="this.style.borderBottomColor='var(--color-control)'" />
         <span style="color: var(--color-text-tertiary); margin-left: var(--space-3);">Discount</span>
-        <input style="width: 50px; text-align: center; background: transparent; border: 0; border-bottom: 1px solid var(--color-border); padding: 4px 2px; font-size: var(--text-sm); outline: none;" value="8" onfocus="this.style.borderBottomColor='var(--color-action-primary)'" onblur="this.style.borderBottomColor='var(--color-border)'" />
+        <input style="width: 50px; text-align: center; background: transparent; border: 0; border-bottom: 1px solid var(--color-control); padding: 4px 2px; font-size: var(--text-sm);" value="8" onfocus="this.style.borderBottomColor='var(--color-action-primary)'" onblur="this.style.borderBottomColor='var(--color-control)'" />
         <span style="color: var(--color-text-tertiary);">%</span>
       </div>
     </div>
