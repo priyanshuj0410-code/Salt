@@ -9,29 +9,29 @@
 <style>
   :root {
     /* ============ COLOR TOKENS ============ */
-    /* Neutrals — the foundation. Zinc-based per shadcn defaults. */
+    /* Neutrals: the foundation. Zinc-based per shadcn defaults. */
     --color-background: #ffffff;
-    --color-surface: #fafafa;        /* zinc-50 — secondary surface */
-    --color-surface-2: #f4f4f5;      /* zinc-100 — tertiary surface */
-    --color-border: #e4e4e7;         /* zinc-200 — default borders */
-    --color-border-strong: #d4d4d8;  /* zinc-300 — emphasized borders */
-    --color-divider: #f4f4f5;        /* zinc-100 — within-card dividers */
+    --color-surface: #fafafa;        /* zinc-50: secondary surface */
+    --color-surface-2: #f4f4f5;      /* zinc-100: tertiary surface */
+    --color-border: #e4e4e7;         /* zinc-200: default borders */
+    --color-border-strong: #d4d4d8;  /* zinc-300: emphasized borders */
+    --color-divider: #f4f4f5;        /* zinc-100: within-card dividers */
 
-    --color-text-primary: #18181b;    /* zinc-900 — primary text */
-    --color-text-secondary: #52525b;  /* zinc-600 — secondary text */
-    --color-text-tertiary: #71717a;   /* zinc-500 — tertiary/captions */
-    --color-text-disabled: #a1a1aa;   /* zinc-400 — disabled, placeholders */
+    --color-text-primary: #18181b;    /* zinc-900: primary text */
+    --color-text-secondary: #52525b;  /* zinc-600: secondary text */
+    --color-text-tertiary: #71717a;   /* zinc-500: tertiary/captions */
+    --color-text-disabled: #a1a1aa;   /* zinc-400: disabled, placeholders */
     --color-text-inverse: #fafafa;    /* on dark backgrounds */
 
-    /* Action — primary, secondary, destructive */
-    --color-action-primary: #18181b;       /* zinc-900 — buttons, links */
+    /* Action: primary, secondary, destructive */
+    --color-action-primary: #18181b;       /* zinc-900: buttons, links */
     --color-action-primary-hover: #27272a; /* zinc-800 */
     --color-action-primary-text: #ffffff;
     --color-action-secondary: #f4f4f5;     /* zinc-100 */
     --color-action-secondary-hover: #e4e4e7;
     --color-action-secondary-text: #18181b;
 
-    /* Semantic — for STATE, not decoration */
+    /* Semantic: for STATE, not decoration */
     --color-success: #166534;              /* emerald-800 */
     --color-success-bg: #f0fdf4;           /* emerald-50 */
     --color-success-border: #bbf7d0;       /* emerald-200 */
@@ -41,11 +41,11 @@
     --color-danger: #b91c1c;               /* red-700 */
     --color-danger-bg: #fef2f2;            /* red-50 */
     --color-danger-border: #fecaca;        /* red-200 */
-    --color-info: #1e40af;                 /* blue-800 — used sparingly */
+    --color-info: #1e40af;                 /* blue-800: used sparingly */
     --color-info-bg: #eff6ff;
     --color-info-border: #bfdbfe;
 
-    /* On-dark semantic shades — for fills/dots/borders on dark surfaces */
+    /* On-dark semantic shades: for fills/dots/borders on dark surfaces */
     --color-success-on-dark: #4ade80;      /* emerald-400 */
     --color-warning-on-dark: #fbbf24;      /* amber-400 */
     --color-danger-on-dark: #f87171;       /* red-400 */
@@ -57,27 +57,27 @@
     /* ============ SPACING SCALE ============ */
     /* Based on 4px base unit. Counter UI uses 1-3; comfort UI uses 3-6 */
     --space-0: 0;
-    --space-1: 0.25rem;   /* 4px  — atomic, icons-to-text */
-    --space-2: 0.5rem;    /* 8px  — within compact components */
-    --space-3: 0.75rem;   /* 12px — between related elements */
-    --space-4: 1rem;      /* 16px — standard padding */
-    --space-5: 1.25rem;   /* 20px — card padding (comfort) */
-    --space-6: 1.5rem;    /* 24px — section spacing */
-    --space-8: 2rem;      /* 32px — between sections */
-    --space-12: 3rem;     /* 48px — page-level spacing */
+    --space-1: 0.25rem;   /* 4px: atomic, icons-to-text */
+    --space-2: 0.5rem;    /* 8px: within compact components */
+    --space-3: 0.75rem;   /* 12px: between related elements */
+    --space-4: 1rem;      /* 16px: standard padding */
+    --space-5: 1.25rem;   /* 20px: card padding (comfort) */
+    --space-6: 1.5rem;    /* 24px: section spacing */
+    --space-8: 2rem;      /* 32px: between sections */
+    --space-12: 3rem;     /* 48px: page-level spacing */
 
     /* ============ TYPE TOKENS ============ */
     --font-sans: "Geist", "Inter", system-ui, -apple-system, sans-serif;
     --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
     --font-display: "Fraunces", Georgia, serif;
 
-    /* Sizes — five steps, no improvisation */
-    --text-xs: 0.6875rem;    /* 11px — labels, captions, kbd */
-    --text-sm: 0.8125rem;    /* 13px — counter UI body, dense tables */
-    --text-base: 0.9375rem;  /* 15px — comfort UI body */
-    --text-lg: 1.0625rem;    /* 17px — section heads */
-    --text-xl: 1.375rem;     /* 22px — page titles */
-    --text-2xl: 1.75rem;     /* 28px — KPI numbers, hero stats */
+    /* Sizes: five steps, no improvisation */
+    --text-xs: 0.6875rem;    /* 11px: labels, captions, kbd */
+    --text-sm: 0.8125rem;    /* 13px: counter UI body, dense tables */
+    --text-base: 0.9375rem;  /* 15px: comfort UI body */
+    --text-lg: 1.0625rem;    /* 17px: section heads */
+    --text-xl: 1.375rem;     /* 22px: page titles */
+    --text-2xl: 1.75rem;     /* 28px: KPI numbers, hero stats */
 
     --leading-tight: 1.2;
     --leading-normal: 1.45;
@@ -94,10 +94,10 @@
 
     /* ============ RADII ============ */
     --radius-none: 0;
-    --radius-sm: 0.25rem;   /* 4px  — small chips, kbd */
-    --radius-md: 0.375rem;  /* 6px  — buttons, inputs, badges */
-    --radius-lg: 0.5rem;    /* 8px  — cards, modals */
-    --radius-xl: 0.75rem;   /* 12px — large cards */
+    --radius-sm: 0.25rem;   /* 4px: small chips, kbd */
+    --radius-md: 0.375rem;  /* 6px: buttons, inputs, badges */
+    --radius-lg: 0.5rem;    /* 8px: cards, modals */
+    --radius-xl: 0.75rem;   /* 12px: large cards */
     --radius-full: 9999px;  /* pills, avatars */
 
     /* ============ SHADOWS ============ */
@@ -246,7 +246,7 @@
   .doc-good { color: var(--color-success); font-weight: var(--font-semibold); }
   .doc-bad { color: var(--color-danger); font-weight: var(--font-semibold); }
 
-  /* Demo panel — a panel showing the rendered component */
+  /* Demo panel: a panel showing the rendered component */
   .demo {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -605,7 +605,7 @@
     <span class="badge badge-neutral">v0.1</span>
   </div>
   <p class="doc-p" style="max-width: 72ch; font-size: var(--text-base);">
-    The design foundation for Salt — a modern ERP for Indian medical retail.
+    The design foundation for Salt. A modern ERP for Indian medical retail.
     This document defines the tokens, primitives, and patterns that every screen in Salt is built from.
     If a screen breaks one of these rules, the screen is wrong, not the rule.
   </p>
@@ -632,7 +632,7 @@
   <h3 class="doc-h3">2. Keyboard is the primary input</h3>
   <p class="doc-p">
     Every action reachable by mouse must also be reachable by keyboard with a visible shortcut hint.
-    Focus states are not an afterthought — they are how power users see what they're doing.
+    Focus states are not an afterthought. They are how power users see what they're doing.
   </p>
 
   <h3 class="doc-h3">3. Trust through precision</h3>
@@ -651,13 +651,13 @@
   <p class="doc-p">
     Counter mode is compact (cashier needs to see 20 line items without scrolling). Owner mode is
     default density (reading reports without eyestrain). Both modes use the same tokens and the same
-    primitives — only spacing and row height change. <strong>Never two design languages.</strong>
+    primitives: only spacing and row height change. <strong>Never two design languages.</strong>
   </p>
 
   <h3 class="doc-h3">6. Indian-first, never Indian-only</h3>
   <p class="doc-p">
     Indian Rupees in <code>en-IN</code> formatting (₹1,00,000 not ₹100,000). Hindi/English bilingual
-    where it matters. But avoid heavy cultural ornamentation — the customer doesn't want a "desi"
+    where it matters. But avoid heavy cultural ornamentation. The customer doesn't want a "desi"
     product, they want a serious product that respects them.
   </p>
 </section>
@@ -666,7 +666,7 @@
 <section id="brand" class="doc-section">
   <h2 class="doc-h2">Brand</h2>
   <p class="doc-p">
-    Salt's brand expression is restrained on purpose. The product is the brand — what's on screen
+    Salt's brand expression is restrained on purpose. The product is the brand, what's on screen
     matters far more than what's on the marketing site.
   </p>
 
@@ -742,7 +742,7 @@
     </div>
   </div>
 
-  <h3 class="doc-h3">Semantic — for state, not decoration</h3>
+  <h3 class="doc-h3">Semantic: for state, not decoration</h3>
   <p class="doc-p">
     Each semantic color has a foreground (text on white), a background tint, and a border.
     Use only for the meaning, never to differentiate categories.
@@ -775,7 +775,7 @@
   <p class="doc-p">
     The semantic foreground tokens (e.g. <code>--color-warning</code> = #b45309) are tuned to be readable
     <em>as text on a white background</em>, so they are deliberately dark. They must <strong>not</strong> be
-    used as fills on dark surfaces or as whole-panel backgrounds — a dark amber fill reads as muddy rust,
+    used as fills on dark surfaces or as whole-panel backgrounds. A dark amber fill reads as muddy rust,
     not warning. On dark surfaces (toasts, the inverse stat card), use the lighter -400 shades:
   </p>
   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); margin: var(--space-3) 0;">
@@ -809,7 +809,7 @@
   <p class="doc-p">
     Three families with one job each. <strong>Geist</strong> for everything in the UI. <strong>Geist Mono</strong>
     for code, batch numbers, invoice IDs, anything tabular-by-meaning. <strong>Fraunces</strong> reserved
-    for the wordmark and editorial moments only — never in the product UI itself.
+    for the wordmark and editorial moments only. Never in the product UI itself.
   </p>
 
   <h3 class="doc-h3">Type scale</h3>
@@ -888,7 +888,7 @@
   <h3 class="doc-h3">Indian Rupee formatting</h3>
   <p class="doc-p">
     Always use <code>en-IN</code> locale: ₹1,00,000 (one lakh), ₹10,00,000 (ten lakh), ₹1,00,00,000 (one crore).
-    The Indian grouping (2-2-3) is non-negotiable — formatting Rs as 100,000 looks foreign and breaks trust.
+    The Indian grouping (2-2-3) is non-negotiable. Formatting Rs as 100,000 looks foreign and breaks trust.
   </p>
   <pre><code>const formatINR = (n) =&gt; new Intl.NumberFormat('en-IN', {
   style: 'currency',
@@ -904,7 +904,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
 <section id="spacing" class="doc-section">
   <h2 class="doc-h2">Spacing</h2>
   <p class="doc-p">
-    Eight steps, 4px base. Use the smaller steps (1–3) inside compact components; the larger steps (4–8)
+    Eight steps, 4px base. Use the smaller steps (1-3) inside compact components; the larger steps (4-8)
     for between sections. Never invent values.
   </p>
   <div class="card">
@@ -954,14 +954,14 @@ formatINR(487.25)   // → ₹487.25</code></pre>
 
   <h3 class="doc-h3">Where to use what</h3>
   <ul style="font-size: var(--text-sm); color: var(--color-text-secondary); padding-left: 20px; max-width: 65ch;">
-    <li><code>space-1</code> — icon to text inside a button, dot-to-label</li>
-    <li><code>space-2</code> — between adjacent badges, within a kbd cluster</li>
-    <li><code>space-3</code> — input internal padding (vertical), card divider padding</li>
-    <li><code>space-4</code> — between form rows, card body small padding</li>
-    <li><code>space-5</code> — card body default padding (owner mode)</li>
-    <li><code>space-6</code> — page section spacing, header padding</li>
-    <li><code>space-8</code> — between unrelated sections</li>
-    <li><code>space-12</code> — page-level top/bottom whitespace, empty-state padding</li>
+    <li><code>space-1</code>: icon to text inside a button, dot-to-label</li>
+    <li><code>space-2</code>: between adjacent badges, within a kbd cluster</li>
+    <li><code>space-3</code>: input internal padding (vertical), card divider padding</li>
+    <li><code>space-4</code>: between form rows, card body small padding</li>
+    <li><code>space-5</code>: card body default padding (owner mode)</li>
+    <li><code>space-6</code>: page section spacing, header padding</li>
+    <li><code>space-8</code>: between unrelated sections</li>
+    <li><code>space-12</code>: page-level top/bottom whitespace, empty-state padding</li>
   </ul>
 </section>
 
@@ -998,16 +998,16 @@ formatINR(487.25)   // → ₹487.25</code></pre>
     </div>
   </div>
   <ul style="font-size: var(--text-sm); color: var(--color-text-secondary); padding-left: 20px; max-width: 65ch;">
-    <li><code>sm</code> — badges, kbd, small chips</li>
-    <li><code>md</code> — buttons, inputs, dropdowns. The workhorse.</li>
-    <li><code>lg</code> — cards, modals, popovers</li>
-    <li><code>xl</code> — rarely. Hero cards only.</li>
-    <li><code>full</code> — avatars, dot indicators</li>
+    <li><code>sm</code>: badges, kbd, small chips</li>
+    <li><code>md</code>: buttons, inputs, dropdowns. The workhorse.</li>
+    <li><code>lg</code>: cards, modals, popovers</li>
+    <li><code>xl</code>: rarely. Hero cards only.</li>
+    <li><code>full</code>: avatars, dot indicators</li>
   </ul>
 
   <h3 class="doc-h3">Shadows</h3>
   <p class="doc-p">
-    Borders are the primary edge treatment. Shadows are reserved for elevation —
+    Borders are the primary edge treatment. Shadows are reserved for elevation,
     only modals, dropdowns, and toasts use them.
   </p>
   <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); margin: var(--space-3) 0;">
@@ -1072,7 +1072,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
 <section id="density" class="doc-section">
   <h2 class="doc-h2">Density</h2>
   <p class="doc-p">
-    Salt has two density modes. Same tokens, same primitives — only spacing and row height change.
+    Salt has two density modes. Same tokens, same primitives: only spacing and row height change.
     Toggle via <code>data-density="compact"</code> on the screen container.
   </p>
 
@@ -1112,7 +1112,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
 <section id="buttons" class="doc-section">
   <h2 class="doc-h2">Buttons</h2>
   <p class="doc-p">
-    Three variants × three sizes. Use sparingly — a screen with five primary buttons has no primary action.
+    Three variants × three sizes. Use sparingly: a screen with five primary buttons has no primary action.
     Only one <code>primary</code> per surface for the main action.
   </p>
 
@@ -1222,7 +1222,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
 
   <h3 class="doc-h3">Status dots</h3>
   <p class="doc-p">
-    Single-pixel indicator next to a label. Pulse animation reserved for "live" — connection
+    Single-pixel indicator next to a label. Pulse animation reserved for "live": connection
     active, presence broadcast.
   </p>
   <div class="demo">
@@ -1254,7 +1254,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
 
   <div class="doc-rule">
     <strong>Rule.</strong> Every interactive element with a shortcut shows the kbd hint inline at all times.
-    Hidden shortcuts are technical debt — staff never discover them and complain the app is "slow."
+    Hidden shortcuts are technical debt, staff never discover them and complain the app is "slow."
   </div>
 </section>
 
@@ -1263,7 +1263,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
   <h2 class="doc-h2">Cards</h2>
   <p class="doc-p">
     Three-part structure: <code>card-header</code>, <code>card-body</code>, <code>card-footer</code>.
-    Either part is optional. Card is 1px border + 8px radius — no shadow by default.
+    Either part is optional. Card is 1px border + 8px radius. No shadow by default.
   </p>
   <div class="demo">
     <div class="demo-render" style="max-width: 480px;">
@@ -1337,7 +1337,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
               <td><div style="font-weight: 500;">Calpol 500mg</div><div style="font-size: var(--text-xs); color: var(--color-text-tertiary);">Strip of 15 · GSK</div></td>
               <td>Paracetamol</td>
               <td class="num tabular" style="color: var(--color-danger); font-weight: 500;">0</td>
-              <td>—</td>
+              <td>-</td>
               <td class="num tabular">₹28.50</td>
               <td><span class="badge badge-danger">Out</span></td>
             </tr>
@@ -1390,7 +1390,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
     </div>
   </div>
   <div class="doc-rule">
-    <strong>Rule.</strong> Inverse (black bg) stat cards are reserved for headline numbers only —
+    <strong>Rule.</strong> Inverse (black bg) stat cards are reserved for headline numbers only,
     typically one per screen. Used to anchor the eye and signal the most important number.
   </div>
 </section>
@@ -1400,7 +1400,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
   <h2 class="doc-h2">Page headers</h2>
   <p class="doc-p">
     Fixed 56px height. Title + subtitle on the left, actions on the right. Never two rows.
-    The brand mark sits in the sidebar, not the header — counter staff don't need to see the logo to bill faster.
+    The brand mark sits in the sidebar, not the header, counter staff don't need to see the logo to bill faster.
   </p>
   <div class="demo">
     <div class="demo-render" style="padding: 0;">
@@ -1474,7 +1474,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
   </p>
   <p class="doc-p">
     <strong>All toasts share one dark surface.</strong> The semantic meaning is carried by the status
-    dot and a thin left accent border — never by flooding the whole background with a semantic color.
+    dot and a thin left accent border. Never by flooding the whole background with a semantic color.
     Flooding the background produces muddy, broken-looking panels (a dark amber fill reads as rust, not warning)
     and breaks visual consistency between toast types.
   </p>
@@ -1497,7 +1497,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
       <div class="toast toast-danger">
         <span class="dot dot-danger" style="margin-top: 5px;"></span>
         <div>
-          <div style="font-weight: 500;">Sync failed — working offline</div>
+          <div style="font-weight: 500;">Sync failed: working offline</div>
           <div style="font-size: var(--text-xs); color: rgba(255,255,255,0.55); margin-top: 2px;">Changes saved locally. Will sync when connection returns.</div>
         </div>
       </div>
@@ -1518,9 +1518,9 @@ formatINR(487.25)   // → ₹487.25</code></pre>
     <li><strong>Focus.</strong> Every interactive element shows the focus ring on <code>:focus-visible</code>. Never override browser focus without replacing.</li>
     <li><strong>Keyboard.</strong> Tab order matches visual order. No keyboard traps. Esc closes any overlay.</li>
     <li><strong>Semantic HTML.</strong> Tables are tables, buttons are buttons, headings are sequential.</li>
-    <li><strong>Color independence.</strong> Status is never communicated by color alone — always paired with text or icon.</li>
+    <li><strong>Color independence.</strong> Status is never communicated by color alone. Always paired with text or icon.</li>
     <li><strong>Reduced motion.</strong> Honor <code>prefers-reduced-motion</code>: replace transforms with opacity, kill the pulse.</li>
-    <li><strong>Zoom.</strong> All surfaces tested at 100/125/150% browser zoom — counter PCs are often zoomed.</li>
+    <li><strong>Zoom.</strong> All surfaces tested at 100/125/150% browser zoom, counter PCs are often zoomed.</li>
   </ul>
 </section>
 
@@ -1532,7 +1532,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
   <div style="display: grid; gap: var(--space-3); margin: var(--space-3) 0;">
     <div class="card" style="padding: var(--space-4);">
       <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Color-coded counter staff</div>
-      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">Avatars in red/blue/green to identify cashiers. Use initials and zinc shades instead — color is reserved for state.</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">Avatars in red/blue/green to identify cashiers. Use initials and zinc shades instead, color is reserved for state.</div>
     </div>
     <div class="card" style="padding: var(--space-4);">
       <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Decorative icons in stat cards</div>
@@ -1552,7 +1552,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
     </div>
     <div class="card" style="padding: var(--space-4);">
       <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Toast for primary action confirmation</div>
-      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">"Item added to bill" as a toast that disappears in 3s — the cashier already moved on. Use inline feedback next to the row.</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">"Item added to bill" as a toast that disappears in 3s. The cashier already moved on. Use inline feedback next to the row.</div>
     </div>
     <div class="card" style="padding: var(--space-4);">
       <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Decorative dividers</div>
@@ -1560,7 +1560,7 @@ formatINR(487.25)   // → ₹487.25</code></pre>
     </div>
     <div class="card" style="padding: var(--space-4);">
       <div class="doc-bad" style="font-size: var(--text-sm); margin-bottom: 4px;">✕ Inventing a new component</div>
-      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">If you need a "card with a chart inside" — that's <code>Card</code> with a chart inside. Don't make a <code>ChartCard</code> primitive.</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">If you need a "card with a chart inside": that's <code>Card</code> with a chart inside. Don't make a <code>ChartCard</code> primitive.</div>
     </div>
   </div>
 </section>

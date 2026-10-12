@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Medicine Lifecycle — Build &amp; Market Coverage</title>
+<title>Medicine Lifecycle: Build &amp; Market Coverage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
@@ -151,13 +151,13 @@
   <header class="top">
     <div class="logo">℞</div>
     <div>
-      <h1>Medicine Lifecycle — <span class="wordmark">Build &amp; Market Coverage</span></h1>
+      <h1>Medicine Lifecycle: <span class="wordmark">Build &amp; Market Coverage</span></h1>
       <p>The manufacture→consumption journey, now overlaid with <b>what Salt has built</b> and <b>how the incumbents compare</b>.</p>
     </div>
   </header>
 
   <p class="intro">
-    Same 15-stage lifecycle as before, with two layers added per stage: <b>Salt — built</b> (the as-built capability + status) and <b>Market — incumbents</b> (how Marg / GoFrugal / RetailGraph / eVitalRx / Tally handle it, and Salt's stance). Read the spine as the medicine's journey; read the coverage to see <b>where Salt leads, lags, or sits on an open gap</b>. Toggle the overlay off to return to the clean lifecycle.
+    Same 15-stage lifecycle as before, with two layers added per stage: <b>Salt: built</b> (the as-built capability + status) and <b>Market: incumbents</b> (how Marg / GoFrugal / RetailGraph / eVitalRx / Tally handle it, and Salt's stance). Read the spine as the medicine's journey; read the coverage to see <b>where Salt leads, lags, or sits on an open gap</b>. Toggle the overlay off to return to the clean lifecycle.
   </p>
 
   <div class="legend">
@@ -171,19 +171,19 @@
     </div>
   </div>
 
-  <div class="section-label">Cross-cutting — capabilities that span the whole lifecycle (where the war is actually won)</div>
+  <div class="section-label">Cross-cutting: capabilities that span the whole lifecycle (where the war is actually won)</div>
   <div class="xcard" id="xcutting"></div>
 
   <div id="lifecycle"></div>
 
-  <div class="section-label">Coverage at a glance — Salt status, market stance, and the gap per stage</div>
+  <div class="section-label">Coverage at a glance: Salt status, market stance, and the gap per stage</div>
   <div class="matrix-wrap"><table class="mx" id="mx"></table></div>
 
-  <div class="section-label">Persona involvement — each one's through-line (click to trace)</div>
+  <div class="section-label">Persona involvement: each one's through-line (click to trace)</div>
   <div class="sum" id="summary"></div>
 
   <footer class="foot">
-    Salt capability grounded in the live repo (modules, RPCs, migrations 0001–0057); market positioning from the competitive research (Marg · GoFrugal · RetailGraph/SwilERP · eVitalRx · Tally+TDL).<br/>
+    Salt capability grounded in the live repo (modules, RPCs, migrations 0001-0057); market positioning from the competitive research (Marg · GoFrugal · RetailGraph/SwilERP · eVitalRx · Tally+TDL).<br/>
     Styled with the Salt design system. Pairs with the IA systems map and the persona deck.
   </footer>
 </div>
@@ -191,13 +191,13 @@
 <script>
 /* ============================================================ DATA ============================================================ */
 const PERSONAS = [
-  {id:"owner", ini:"S", name:"Santosh", role:"Owner", line:"Capital, credit & risk owner — decides what to buy, underwrites every credit call, carries compliance liability and the expiry loss."},
-  {id:"manager", ini:"R", name:"Rohit", role:"Manager", line:"The operational spine — ordering, receiving, approvals, collection follow-up, returns. Touches the most stages."},
-  {id:"accountant", ini:"B", name:"Banwari", role:"Accountant", line:"The money truth — receivables, payables, GST and tax on every reversal."},
-  {id:"pharmacist", ini:"A", name:"Anjali", role:"Pharmacist", line:"The legal & clinical conscience — storage, the dispensing gate, counsel, the H1/X register, expiry/recall."},
-  {id:"cashier", ini:"V", name:"Vijay", role:"Cashier", line:"The billing moment — one stage, highest frequency: a correct, compliant invoice and payment capture."},
-  {id:"shopsales", ini:"D", name:"Deepak", role:"Shop salesman", line:"Product & relationship — shelving, order-taking, substitution/upsell, near-expiry push at the counter."},
-  {id:"fieldsales", ini:"K", name:"Karan", role:"Field salesman", line:"The road — books orders, delivers, collects cash, carries returns. The shop's reach beyond its walls."},
+  {id:"owner", ini:"S", name:"Santosh", role:"Owner", line:"Capital, credit & risk owner, decides what to buy, underwrites every credit call, carries compliance liability and the expiry loss."},
+  {id:"manager", ini:"R", name:"Rohit", role:"Manager", line:"The operational spine: ordering, receiving, approvals, collection follow-up, returns. Touches the most stages."},
+  {id:"accountant", ini:"B", name:"Banwari", role:"Accountant", line:"The money truth: receivables, payables, GST and tax on every reversal."},
+  {id:"pharmacist", ini:"A", name:"Anjali", role:"Pharmacist", line:"The legal & clinical conscience, storage, the dispensing gate, counsel, the H1/X register, expiry/recall."},
+  {id:"cashier", ini:"V", name:"Vijay", role:"Cashier", line:"The billing moment: one stage, highest frequency: a correct, compliant invoice and payment capture."},
+  {id:"shopsales", ini:"D", name:"Deepak", role:"Shop salesman", line:"Product & relationship: shelving, order-taking, substitution/upsell, near-expiry push at the counter."},
+  {id:"fieldsales", ini:"K", name:"Karan", role:"Field salesman", line:"The road: books orders, delivers, collects cash, carries returns. The shop's reach beyond its walls."},
 ];
 
 const XCUT = [
@@ -206,15 +206,15 @@ const XCUT = [
   {n:"Multi-counter real-time", status:["partial","Partial"], stance:["ahead","Ahead (in progress)"],
    note:"Marg is single-machine; LAN sync is fragile (dealers run two un-synced installs). Salt has live stock, an activity feed and presence built; full live sync / counter handoff is still to come. The moat incumbents can't easily copy."},
   {n:"Modern keyboard-first UI + density", status:["built","Built"], stance:["ahead","Ahead"],
-   note:"Marg's most-criticised weakness (Windows-XP-era UI, English-only). Salt's clearest present-day edge — a fast, keyboard-first, two-density design system that tier-2/3 staff can learn in days."},
+   note:"Marg's most-criticised weakness (Windows-XP-era UI, English-only). Salt's clearest present-day edge: a fast, keyboard-first, two-density design system that tier-2/3 staff can learn in days."},
   {n:"WhatsApp sharing", status:["built","Built"], stance:["atpar","At par"],
    note:"Invoice / statement / reminder over WhatsApp is table stakes now (eVitalRx, GoFrugal, newer Marg). Salt has the send seam built; parity, not edge."},
   {n:"Multi-store / chain", status:["partial","Partial"], stance:["atpar","At par"],
-   note:"shops + members + inter-shop transfers exist but are thinly surfaced (most screens are org-level). GoFrugal / RetailGraph are strong here and charge per store — Salt's flat price is the angle once it's surfaced."},
+   note:"shops + members + inter-shop transfers exist but are thinly surfaced (most screens are org-level). GoFrugal / RetailGraph are strong here and charge per store, Salt's flat price is the angle once it's surfaced."},
 ];
 
 const PHASES = [
-  {n:"1", name:"Manufacture & release", cap:"Upstream — before it reaches the trade.", tag:null},
+  {n:"1", name:"Manufacture & release", cap:"Upstream: before it reaches the trade.", tag:null},
   {n:"2", name:"Procurement into the shop", cap:"Our shop buys and takes stock in.", tag:null},
   {n:"3", name:"The sale", cap:"Wholesale to a chemist, or retail to a patient.", tag:null},
   {n:"4", name:"Consumption", cap:"The reason the chain exists.", tag:null},
@@ -224,15 +224,15 @@ const PHASES = [
 
 const STAGES = [
   { n:1, phase:0, ours:false, title:"Manufacturing & batch creation",
-    obj:"Produce a safe batch at scale and stamp the identity that follows it for life — batch number, mfg & expiry dates, MRP (GST-inclusive) on the pack.",
+    obj:"Produce a safe batch at scale and stamp the identity that follows it for life, batch number, mfg & expiry dates, MRP (GST-inclusive) on the pack.",
     ext:["Manufacturer","Production & QA"], roles:[],
-    salt:["partial", ["Catalogue + crowd-sourced master catalogue: master_items, brand_aliases, master_price_stats (the data moat)","No large pre-seeded drug DB — built up from real GRN data instead"]],
+    salt:["partial", ["Catalogue + crowd-sourced master catalogue: master_items, brand_aliases, master_price_stats (the data moat)","No large pre-seeded drug DB, built up from real GRN data instead"]],
     market:["behind","eVitalRx ships 4 lakh+ drugs (salt, generics, images); GoFrugal 50k+ (HSN/GST/pack); Marg proprietary. Salt's crowd-sourced approach is more defensible long-term but small today."] },
   { n:2, phase:0, ours:false, title:"Quality release & statutory labelling",
-    obj:"Certify the batch and apply the labelling the chain depends on — molecule/salt, schedule (H/H1/X/OTC), HSN, batch, mfg/exp, MRP, licence.",
+    obj:"Certify the batch and apply the labelling the chain depends on, molecule/salt, schedule (H/H1/X/OTC), HSN, batch, mfg/exp, MRP, licence.",
     ext:["Manufacturer QA","CDSCO / state FDA"], roles:[],
-    salt:["built", ["items.salt / hsn / gst_rate / schedule (OTC/H/H1/X) captured","gst_rate_schedule — GST rate by HSN, effective-dated"]],
-    market:["atpar","Every major tool captures schedule + HSN + GST rate. Table stakes — neither edge nor gap."] },
+    salt:["built", ["items.salt / hsn / gst_rate / schedule (OTC/H/H1/X) captured","gst_rate_schedule: GST rate by HSN, effective-dated"]],
+    market:["atpar","Every major tool captures schedule + HSN + GST rate. Table stakes: neither edge nor gap."] },
   { n:3, phase:0, ours:false, title:"Primary distribution (Company → C&F → stockist)",
     obj:"Position stock regionally and pass custody down the chain; raise the primary invoice; preserve the cold chain. This is who our shop buys from.",
     ext:["C&F agent","Distributor / stockist","Transporter"], roles:[],
@@ -240,41 +240,41 @@ const STAGES = [
     market:["behind","Marg ERP-to-ERP ordering; RetailGraph ↔ Pharmarack/iOrder; eVitalRx eVitalSupply + first on ONDC. Ordering is distributor-mediated; ONDC pharma is nascent."] },
 
   { n:4, phase:1, ours:true, title:"Demand planning & procurement",
-    obj:"Buy the right items in the right quantity on the right terms — avoid stockout and dead stock, capture schemes, plan cash against credit terms.",
+    obj:"Buy the right items in the right quantity on the right terms, avoid stockout and dead stock, capture schemes, plan cash against credit terms.",
     ext:["Distributor / stockist"], roles:[
       {id:"owner", cap:"Decides what and how much to buy, negotiates schemes & credit terms, commits the capital."},
       {id:"manager", cap:"Runs the ordering and vendor relationships; reorders on what is moving or short."}],
     salt:["built", ["Purchase orders, Reorder suggestions (auto-PO), Vendor schemes","No AI demand forecasting yet"]],
     market:["atpar","GoFrugal / RetailGraph are strong on PO. AI forecasting / auto-replenishment (GoFrugal, eVitalRx Sahaai) is ahead of Salt."] },
   { n:5, phase:1, ours:true, title:"Goods receipt & inward verification",
-    obj:"Confirm goods match the invoice — qty, batch, expiry, scheme free-goods, price — accept into stock, and flag short/damaged supply immediately.",
+    obj:"Confirm goods match the invoice, qty, batch, expiry, scheme free-goods, price, accept into stock, and flag short/damaged supply immediately.",
     ext:["Transporter","Warehouse hands"], roles:[
-      {id:"manager", cap:"Checks the challan against the boxes — batch, expiry, qty — records the inward."},
+      {id:"manager", cap:"Checks the challan against the boxes, batch, expiry, qty, records the inward."},
       {id:"owner", cap:"Spot-checks high-value lines and resolves discrepancies."}],
     salt:["built", ["receive_purchase: scheme free-goods, multi-rate GST, trade discount → effective cost + ITC","OCR invoice scan (purchase_ocr_jobs) + new-item review"]],
-    market:["ahead","Marg's AI purchase-invoice OCR is the benchmark and most others lack it — Salt matches it, and models scheme/effective-cost economics few get right."] },
+    market:["ahead","Marg's AI purchase-invoice OCR is the benchmark and most others lack it, Salt matches it, and models scheme/effective-cost economics few get right."] },
   { n:6, phase:1, ours:true, title:"Storage, shelving & cold chain",
-    obj:"Store so every item is findable and FEFO can be enforced — refrigerate cold-chain items and segregate controlled (Schedule X) stock under lock.",
+    obj:"Store so every item is findable and FEFO can be enforced, refrigerate cold-chain items and segregate controlled (Schedule X) stock under lock.",
     ext:["Warehouse hands"], roles:[
-      {id:"shopsales", cap:"Places and remembers stock on the rack — the physical index of the shop."},
+      {id:"shopsales", cap:"Places and remembers stock on the rack. The physical index of the shop."},
       {id:"pharmacist", cap:"Oversees cold-chain and controlled-drug storage."}],
     salt:["partial", ["batches + cold_chain flag (0033); stock_movements ledger","Rack/bin location only kept in source jsonb; no IoT temperature log"]],
-    market:["gap","Rack no. exists in Marg; IoT cold-chain temperature monitoring is missing from every mainstream Indian pharma ERP — an open gap."] },
+    market:["gap","Rack no. exists in Marg; IoT cold-chain temperature monitoring is missing from every mainstream Indian pharma ERP. An open gap."] },
 
   { n:7, phase:2, ours:true, title:"Order capture (demand taken)",
-    obj:"Capture demand accurately and commit only what's safe — check the customer's outstanding/credit before booking, apply the right price and scheme.",
+    obj:"Capture demand accurately and commit only what's safe: check the customer's outstanding/credit before booking, apply the right price and scheme.",
     ext:["Retail chemist","Doctor (Rx)","Patient"], roles:[
       {id:"fieldsales", cap:"Books orders on the beat, pitches schemes, checks the chemist is within credit limit."},
       {id:"shopsales", cap:"Takes counter / phone / WhatsApp orders, finds stock, offers a substitute to keep the sale."},
       {id:"manager", cap:"Approves large orders or credit beyond the set limit."}],
-    salt:["built", ["Counter: create_sales_invoice, salt search, ranked substitutes, parked bills, credit check (party_credit)","Field order capture (the field salesman) — not built; no mobile app"]],
+    salt:["built", ["Counter: create_sales_invoice, salt search, ranked substitutes, parked bills, credit check (party_credit)","Field order capture (the field salesman), not built; no mobile app"]],
     market:["ahead","Modern keyboard POS beats Marg; eVitalRx is modern but cloud-only. Field/B2B order capture for the wholesaler's salesman is an open gap everywhere."] },
   { n:8, phase:2, ours:true, title:"Clinical & regulatory dispensing gate",
-    obj:"Ensure the dispense is lawful and correct — validate the Rx for H/H1, record the H1/X register, confirm molecule & dose, substitute by salt when needed, never let expired/wrong stock out.",
+    obj:"Ensure the dispense is lawful and correct, validate the Rx for H/H1, record the H1/X register, confirm molecule & dose, substitute by salt when needed, never let expired/wrong stock out.",
     ext:["Doctor (Rx)"], roles:[
       {id:"pharmacist", cap:"The legal gatekeeper: Rx validation, schedule compliance, register entry, substitution, FEFO/expiry check. Her defining stage."}],
     salt:["built", ["enforce_h1_gate (hard block) + record_h1_entry + h1_register","Schedule flags, doctors/patients masters, inspector-ready PDF"]],
-    market:["ahead","GoFrugal is the only incumbent that blocks the sale on missing H1 fields; others rely on memory. Salt enforces at the flow level — matches the benchmark, beats the rest."] },
+    market:["ahead","GoFrugal is the only incumbent that blocks the sale on missing H1 fields; others rely on memory. Salt enforces at the flow level, matches the benchmark, beats the rest."] },
   { n:9, phase:2, ours:true, title:"Pricing, billing & payment",
     obj:"Produce a compliant tax invoice (batch, expiry, GST, GSTIN/licence), pick the right batch (FEFO), apply discount within authority, settle cash/credit/UPI, update the ledger.",
     ext:["Retail chemist","Patient"], roles:[
@@ -282,25 +282,25 @@ const STAGES = [
       {id:"shopsales", cap:"Quotes price & scheme; applies discount within his limit."},
       {id:"manager", cap:"Authorises over-limit discount or a credit sale."},
       {id:"accountant", cap:"Just after: records the receivable and reconciles takings."}],
-    salt:["built", ["Billing + FEFO + MRP-inclusive GST back-calc, sale_tenders (split), invoice_series, print templates, discount limits + approvals","Offline billing — designed, not shipped (see cross-cutting)"]],
+    salt:["built", ["Billing + FEFO + MRP-inclusive GST back-calc, sale_tenders (split), invoice_series, print templates, discount limits + approvals","Offline billing: designed, not shipped (see cross-cutting)"]],
     market:["ahead","All do batch+FEFO+MRP-inclusive billing. Salt's edge is UX + the discount-approval flow; the decisive axis here is offline (the wedge, above)."] },
   { n:10, phase:2, ours:true, title:"Fulfilment & delivery",
-    obj:"Get the right goods to the right customer and close the exchange — deliver, collect payment or record credit with a due date, get acknowledgement.",
+    obj:"Get the right goods to the right customer and close the exchange, deliver, collect payment or record credit with a due date, get acknowledgement.",
     ext:["Retail chemist","Delivery hands","Patient"], roles:[
-      {id:"fieldsales", cap:"Delivers on the beat and collects cash/cheque/UPI — the face of the receivable."},
+      {id:"fieldsales", cap:"Delivers on the beat and collects cash/cheque/UPI. The face of the receivable."},
       {id:"shopsales", cap:"Hands over counter pickups and packs the order."}],
     salt:["none", ["Invoice print + WhatsApp share only","No dispatch / delivery management or delivery app"]],
-    market:["gap","Delivery / dispatch management is light across pharma ERPs — an opening, not a deficit against a strong incumbent."] },
+    market:["gap","Delivery / dispatch management is light across pharma ERPs. An opening, not a deficit against a strong incumbent."] },
 
   { n:11, phase:3, ours:true, title:"Dispensed to the consumer & consumed",
-    obj:"The consumer gets the correct medicine with guidance and takes it as intended. For a wholesaler this happens at the retail chemist — itself a shop with these same seven roles.",
+    obj:"The consumer gets the correct medicine with guidance and takes it as intended. For a wholesaler this happens at the retail chemist, itself a shop with these same seven roles.",
     ext:["Patient / consumer","Retail chemist"], roles:[
       {id:"pharmacist", cap:"Counsels on dosage, usage and interactions at the retail tier."}], patient:true,
     salt:["partial", ["Print + WhatsApp invoice share","No sales-side Rx image capture; no ABHA / ABDM linkage"]],
-    market:["behind","eVitalRx is ABHA + NHA-approved; Marg supports ABHA. Linking dispensing to ABHA drives hospital-adjacent referral traffic — Salt has none yet."] },
+    market:["behind","eVitalRx is ABHA + NHA-approved; Marg supports ABHA. Linking dispensing to ABHA drives hospital-adjacent referral traffic, Salt has none yet."] },
 
   { n:12, phase:4, ours:true, title:"Collections & financial settlement",
-    obj:"Convert credit sales to cash within terms, pay vendors on time, keep the ledger the single truth — manage the cash cycle the business runs on.",
+    obj:"Convert credit sales to cash within terms, pay vendors on time, keep the ledger the single truth, manage the cash cycle the business runs on.",
     ext:["Retail chemist","Distributor / stockist"], roles:[
       {id:"fieldsales", cap:"Collects from chemists on the beat."},
       {id:"owner", cap:"Sets credit, chases big overdues, manages cash flow & vendor payments."},
@@ -309,33 +309,33 @@ const STAGES = [
     salt:["built", ["Payments: record_payment + allocations, receivables/payables aging, salesman attribution, cash_drawer","Razorpay links + WhatsApp reminders; bank reconciliation planned"]],
     market:["atpar","Payments + WhatsApp reminders are common. Salt's integrated aging + Razorpay link + salesman attribution is competitive, not unique."] },
   { n:13, phase:4, ours:true, title:"Statutory compliance & filing",
-    obj:"Stay legal and inspection-ready — file GST (outward, inward, ITC), keep the H1/X register and licences current, reconcile input credit against suppliers' filings.",
+    obj:"Stay legal and inspection-ready: file GST (outward, inward, ITC), keep the H1/X register and licences current, reconcile input credit against suppliers' filings.",
     ext:["Drug inspector","GST / tax dept"], roles:[
       {id:"accountant", cap:"GST returns, ITC reconciliation, books ready for audit."},
       {id:"pharmacist", cap:"H1/X register upkeep and drug-law compliance."},
-      {id:"owner", cap:"Licence currency and overall liability — the inspector's questions land on him."},
+      {id:"owner", cap:"Licence currency and overall liability. The inspector's questions land on him."},
       {id:"manager", cap:"Ensures the registers are actually kept during the rush."}],
-    salt:["built", ["GSTR-1/3B, liability, ITC register, Tally XML, HSN summary, H1/X register, invoice series, drug_licenses","GSTR-2B auto-reconciliation — tables exist, matching UI planned"]],
+    salt:["built", ["GSTR-1/3B, liability, ITC register, Tally XML, HSN summary, H1/X register, invoice series, drug_licenses","GSTR-2B auto-reconciliation: tables exist, matching UI planned"]],
     market:["gap","GSTR-1/3B is everywhere, but GSTR-2B reconciliation, ITC-reversal-on-expiry and drug-licence alerts are gaps across ALL competitors. Salt already has licence alerts + ITC reversal and is positioned to be first on GSTR-2B."] },
 
   { n:14, phase:5, ours:true, title:"Near-expiry & expiry handling",
-    obj:"Turn a looming loss into a recovery — surface near-expiry early to push or return it; for expired stock, segregate, destroy safely, reverse the input tax, keep it away from patients.",
+    obj:"Turn a looming loss into a recovery, surface near-expiry early to push or return it; for expired stock, segregate, destroy safely, reverse the input tax, keep it away from patients.",
     ext:["Distributor / stockist"], roles:[
-      {id:"owner", cap:"It is his money — pushes a scheme or a return to avoid the write-off."},
+      {id:"owner", cap:"It is his money: pushes a scheme or a return to avoid the write-off."},
       {id:"pharmacist", cap:"Pulls expired stock, segregates it, oversees safe destruction."},
       {id:"manager", cap:"Initiates supplier returns within the return window."},
       {id:"shopsales", cap:"Prioritises near-expiry batches at the point of sale."}],
     salt:["built", ["v_near_expiry, dead-stock, turnover views","Expiry destruction + ITC reversal (§17(5)); near-expiry → debit-note return"]],
-    market:["ahead","Near-expiry alerts exist (Marg/GoFrugal 6m/3m, eVitalRx). ITC-reversal automation on expired stock is a gap everywhere — Salt does it. (Proactive surfacing at billing is still partial.)"] },
+    market:["ahead","Near-expiry alerts exist (Marg/GoFrugal 6m/3m, eVitalRx). ITC-reversal automation on expired stock is a gap everywhere, Salt does it. (Proactive surfacing at billing is still partial.)"] },
   { n:15, phase:5, ours:true, title:"Returns & recalls (reverse logistics)",
-    obj:"Move goods back up the chain correctly — customer returns (credit notes), supplier returns (debit notes), re-stock or claim, batch recalls with full traceability, tax reversed correctly.",
+    obj:"Move goods back up the chain correctly, customer returns (credit notes), supplier returns (debit notes), re-stock or claim, batch recalls with full traceability, tax reversed correctly.",
     ext:["Manufacturer (recall)","Distributor / stockist","Retail chemist"], roles:[
       {id:"manager", cap:"Raises debit notes to vendors, processes credit notes to customers."},
       {id:"pharmacist", cap:"Identifies recalled batches and traces where they went."},
       {id:"accountant", cap:"Credit/debit-note accounting and the tax reversal."},
       {id:"fieldsales", cap:"Carries returns back from chemists on the beat."}],
     salt:["built", ["Returns engine: credit/debit notes, partial-return recomputation on effective-cost, cumulative rounding","No dedicated recall workflow (batch traceability via stock_movements)"]],
-    market:["ahead","Partial-return scheme recomputation is weak across the market — Salt is ahead. A first-class batch-recall workflow is an open gap everywhere."] },
+    market:["ahead","Partial-return scheme recomputation is weak across the market, Salt is ahead. A first-class batch-recall workflow is an open gap everywhere."] },
 ];
 
 /* ============================================================ RENDER ============================================================ */
@@ -368,15 +368,15 @@ function laneHTML(r){ const p=P[r.id];
 function stageHTML(s){
   const ext = s.ext.map(a=>`<span class="ext-chip">${a}</span>`).join("");
   const lanes = s.roles.map(laneHTML).join("");
-  const patient = s.patient ? `<div class="lane"><span class="patient-chip">🧍 <b>Patient / consumer</b> (external) — receives and consumes.</span></div>` : "";
+  const patient = s.patient ? `<div class="lane"><span class="patient-chip">🧍 <b>Patient / consumer</b> (external): receives and consumes.</span></div>` : "";
   const roleIds = s.roles.map(r=>r.id).join(" ");
   const actorsBlock = (s.roles.length || s.patient)
-    ? `<div class="actors">${ext?`<div class="albl">Also in the room</div><div class="ext-actors">${ext}</div>`:""}<div class="albl">Our personas — and in what capacity</div><div class="lanes">${lanes}${patient}</div></div>`
-    : `<div class="actors"><div class="albl">Actors (all external — no shop personas)</div><div class="ext-actors">${ext}</div></div>`;
+    ? `<div class="actors">${ext?`<div class="albl">Also in the room</div><div class="ext-actors">${ext}</div>`:""}<div class="albl">Our personas: and in what capacity</div><div class="lanes">${lanes}${patient}</div></div>`
+    : `<div class="actors"><div class="albl">Actors (all external, no shop personas)</div><div class="ext-actors">${ext}</div></div>`;
   const cov = `
     <div class="cov">
-      <div class="covbox"><div class="cvh"><span class="cvl">Salt — built</span><span class="badge ${SCLASS[s.salt[0]]}">${SLABEL[s.salt[0]]}</span></div><ul>${s.salt[1].map(i=>`<li>${i}</li>`).join("")}</ul></div>
-      <div class="covbox"><div class="cvh"><span class="cvl">Market — incumbents</span><span class="badge ${MCLASS[s.market[0]]}">${MLABEL[s.market[0]]}</span></div><p class="note">${s.market[1]}</p></div>
+      <div class="covbox"><div class="cvh"><span class="cvl">Salt: built</span><span class="badge ${SCLASS[s.salt[0]]}">${SLABEL[s.salt[0]]}</span></div><ul>${s.salt[1].map(i=>`<li>${i}</li>`).join("")}</ul></div>
+      <div class="covbox"><div class="cvh"><span class="cvl">Market: incumbents</span><span class="badge ${MCLASS[s.market[0]]}">${MLABEL[s.market[0]]}</span></div><p class="note">${s.market[1]}</p></div>
     </div>`;
   return `
     <div class="stage ${s.ours?'':'ext'}" data-roles="${roleIds}" data-stage="${s.n}">
@@ -408,19 +408,19 @@ function renderLifecycle(){
 function renderMatrix(){
   const head = `<thead><tr><th>Stage</th><th>Salt</th><th>Market</th><th>The gap / opportunity</th></tr></thead>`;
   const gaps = {
-    1:"Seed a real drug master (crowd-source from GRN — already the chosen path).",
-    2:"—",
-    3:"B2B / ONDC ordering — prototype when the network matures.",
+    1:"Seed a real drug master (crowd-source from GRN, already the chosen path).",
+    2:"-",
+    3:"B2B / ONDC ordering: prototype when the network matures.",
     4:"AI demand forecasting / auto-replenishment.",
-    5:"Already a strength — OCR + scheme economics.",
+    5:"Already a strength: OCR + scheme economics.",
     6:"Bin/location + IoT cold-chain temperature log (open across the market).",
     7:"A field-salesman mobile order app (open across the market).",
-    8:"Already at the benchmark — keep the gate fast so it isn't bypassed.",
-    9:"Offline-first billing — the decisive wedge (cross-cutting).",
+    8:"Already at the benchmark: keep the gate fast so it isn't bypassed.",
+    9:"Offline-first billing: the decisive wedge (cross-cutting).",
     10:"Delivery / dispatch management (light everywhere).",
     11:"ABHA / ABDM linkage for referral traffic.",
     12:"Bank reconciliation; otherwise competitive.",
-    13:"Ship GSTR-2B reconciliation — be first to automate it.",
+    13:"Ship GSTR-2B reconciliation: be first to automate it.",
     14:"Surface near-expiry proactively at billing (not just a report).",
     15:"A first-class batch-recall workflow (open everywhere).",
   };
@@ -428,7 +428,7 @@ function renderMatrix(){
     <td class="st"><span class="sn">S${s.n}</span>${s.title}</td>
     <td><span class="badge ${SCLASS[s.salt[0]]}">${SLABEL[s.salt[0]]}</span></td>
     <td><span class="badge ${MCLASS[s.market[0]]}">${MLABEL[s.market[0]]}</span></td>
-    <td class="gapcell">${gaps[s.n]||"—"}</td></tr>`).join("");
+    <td class="gapcell">${gaps[s.n]||"-"}</td></tr>`).join("");
   $("#mx").innerHTML = head + `<tbody>${rows}</tbody>`;
 }
 

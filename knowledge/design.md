@@ -3,8 +3,8 @@ type: design-system
 title: Salt design system
 description: The authoritative design tokens, principles, and component patterns for Salt's UI. Audited from apps/web/src/index.css (the source of truth) and wiki/architecture/design-system.md. Read before any UI change; update when a new pattern is introduced.
 plane_issues:
-  - SALT-2 (lens-spine spike — logic-only, introduced no new UI pattern)
-  - SALT-20 (DataTable real-design pass — sortable headers, skeleton, empty state)
+  - SALT-2 (lens-spine spike, logic-only, introduced no new UI pattern)
+  - SALT-20 (DataTable real-design pass, sortable headers, skeleton, empty state)
   - SALT-38 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/29df4720-0e15-465f-a3e7-b20547d30e47 (P1 accessibility: solid focus ring, 3:1 control border)
   - SALT-39 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/368eebfb-9363-4394-bb1c-f4d5201b061d (P2 design gaps: dark values, motion, spacing, density and voice carried in; broken links fixed; contrast.py)
 ---
@@ -15,7 +15,7 @@ plane_issues:
 
 ## First principle
 
-**Light, quiet, near-monochrome zinc. Colour is reserved for *state*, never decoration.** The primary action is near-black (`#18181b`), surfaces are zinc-50/100, and the only saturated colour in the UI is success/warning/danger feedback. A screen at rest should read as black text on white with grey chrome. If you reach for an accent colour to make something "pop", stop — that is not this system.
+**Light, quiet, near-monochrome zinc. Colour is reserved for *state*, never decoration.** The primary action is near-black (`#18181b`), surfaces are zinc-50/100, and the only saturated colour in the UI is success/warning/danger feedback. A screen at rest should read as black text on white with grey chrome. If you reach for an accent colour to make something "pop", stop: that is not this system.
 
 ## Tokens (light; dark mode mirrors via `.dark`)
 
@@ -29,14 +29,14 @@ plane_issues:
 - One rule in `index.css` draws it for every control: `:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px }`. Do not add `ring-ring/50`, `focus-visible:ring-*` or `outline-none` to a control. Where the edge would be clipped (table rows and cells, the palette input) use `focus-visible:-outline-offset-2`. `outline-none` is only for a container focused by script (`tabIndex={-1}`: `main`, the dialog popup).
 - On a dark surface inside the light theme, use a solid white ring (`focus-visible:ring-white`).
 
-**Text** (WCAG AA enforced — see SALT-157)
+**Text** (WCAG AA enforced, see SALT-157)
 - `--text-primary` #18181b · `--text-secondary` #52525b · `--text-tertiary` #676770 · `--text-disabled` #a1a1aa · `--text-inverse` #fafafa
 
 **Actions**
 - `--action-primary` #18181b, hover #27272a, text #ffffff
 - `--action-secondary` #f4f4f5, hover #e4e4e7, text #18181b
 
-**State (the only colour)** — each is a triad `{fg, -bg, -border}`, plus `-on-dark` variants:
+**State (the only colour)**: each is a triad `{fg, -bg, -border}`, plus `-on-dark` variants:
 - success #166534 / #f0fdf4 / #bbf7d0
 - warning #b45309 / #fffbeb / #fde68a
 - danger #b91c1c / #fef2f2 / #fecaca
@@ -71,9 +71,9 @@ Computed in `knowledge/contrast.py` (57 of 57 pass): text-tertiary is 5.09:1 on 
 
 ## Typography
 
-- `--font-sans` **Geist Variable** (Inter fallback) — all UI.
-- `--font-mono` **Geist Mono Variable** — numbers, money, codes, Kbd.
-- `--font-display` **Fraunces** (serif) — display headings only, sparingly.
+- `--font-sans` **Geist Variable** (Inter fallback): all UI.
+- `--font-mono` **Geist Mono Variable**: numbers, money, codes, Kbd.
+- `--font-display` **Fraunces** (serif): display headings only, sparingly.
 - Scale (six steps, no improvised sizes; `text-[13px]` is banned, it is `text-sm`), with the line height each step carries: xs .6875rem (11px, 1.4) · sm .8125rem (13px, 1.45) · base .9375rem (15px, 1.45) · lg 1.0625rem (17px, 1.3) · xl 1.375rem (22px, 1.2) · 2xl 1.75rem (28px, 1.1).
 - Tabular numerals (`tabular-nums`) wherever money, quantity, percent or a count lives. Uppercase labels: `text-xs uppercase tracking-wide font-semibold text-text-tertiary`.
 
@@ -126,6 +126,6 @@ Read these when this doc is not enough: [`design.md`](../design.md) §1 principl
 
 ## When you change UI
 
-1. Read this file + `apps/web/src/index.css`. Use existing tokens/primitives — introduce no colour, font, spacing, or component pattern not defined here.
+1. Read this file + `apps/web/src/index.css`. Use existing tokens/primitives: introduce no colour, font, spacing, or component pattern not defined here.
 2. If a genuinely new pattern is unavoidable, validate it against real-world UI (Lazyweb) before codifying, then update this file and add the Plane issue to `plane_issues`.
-3. Logic-only changes to UI files (gating, routing, state) introduce no design pattern — note that and proceed.
+3. Logic-only changes to UI files (gating, routing, state) introduce no design pattern, note that and proceed.
