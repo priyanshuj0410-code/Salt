@@ -40,6 +40,32 @@ plane_issues:
 - success #166534 / #f0fdf4 / #bbf7d0
 - warning #b45309 / #fffbeb / #fde68a
 - danger #b91c1c / #fef2f2 / #fecaca
+- info #1e40af / #eff6ff / #bfdbfe
+
+**Dark theme** (`.dark` on an ancestor; `index.css` is the source, the `-on-dark` shades are the dark values of the state colours). Anything not listed here is the same in both themes.
+
+| Token | Light | Dark |
+|---|---|---|
+| `--background` | #ffffff | #09090b (zinc-950) |
+| `--surface` | #fafafa | #18181b (zinc-900) |
+| `--surface-2` | #f4f4f5 | #27272a (zinc-800) |
+| `--border` / `--divider` | #e4e4e7 / #f4f4f5 | #27272a / #27272a |
+| `--border-strong` | #d4d4d8 | #3f3f46 |
+| `--control` | #898992 | #74747d |
+| `--text-primary` | #18181b | #fafafa |
+| `--text-secondary` | #52525b | #a1a1aa |
+| `--text-tertiary` | #676770 | #92929b |
+| `--text-disabled` | #a1a1aa | #52525b |
+| `--text-inverse` | #fafafa | #18181b |
+| `--action-primary` (hover, text) | #18181b (#27272a, #ffffff) | #fafafa (#e4e4e7, #18181b) |
+| `--action-secondary` (hover, text) | #f4f4f5 (#e4e4e7, #18181b) | #27272a (#3f3f46, #fafafa) |
+| `--focus-ring` | #18181b (follows action-primary) | #fafafa |
+| success fg / bg / border | #166534 / #f0fdf4 / #bbf7d0 | #4ade80 / #052e16 / #166534 |
+| warning fg / bg / border | #b45309 / #fffbeb / #fde68a | #fbbf24 / #422006 / #b45309 |
+| danger fg / bg / border | #b91c1c / #fef2f2 / #fecaca | #f87171 / #450a0a / #b91c1c |
+| info fg / bg / border | #1e40af / #eff6ff / #bfdbfe | #93c5fd / #172554 / #1e40af |
+
+Computed in `knowledge/contrast.py` (57 of 57 pass): text-tertiary is 5.09:1 on surface-2 in light and 4.83:1 in dark; the control border and focus ring figures above hold in both themes; every state fg holds 4.5:1 on its own bg and on the page background in both themes; the on-dark dots hold 3:1 on the dark surface. The root doc's rule "text-tertiary never on surface-2" predates SALT-157 and no longer applies. Run `python3 knowledge/contrast.py` after any token change.
 
 **shadcn/@base-ui bridge:** semantic aliases (`--primary`, `--muted`, `--destructive`, `--input`, `--ring`, `--sidebar-*`, …) map onto the tokens above; use the named utilities (`bg-surface`, `text-text-secondary`, `bg-primary`) not raw hexes.
 
