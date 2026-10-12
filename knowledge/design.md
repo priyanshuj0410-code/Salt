@@ -6,11 +6,12 @@ plane_issues:
   - SALT-2 (lens-spine spike — logic-only, introduced no new UI pattern)
   - SALT-20 (DataTable real-design pass — sortable headers, skeleton, empty state)
   - SALT-38 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/29df4720-0e15-465f-a3e7-b20547d30e47 (P1 accessibility: solid focus ring, 3:1 control border)
+  - SALT-39 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/368eebfb-9363-4394-bb1c-f4d5201b061d (P2 design gaps: dark values, motion, spacing, density and voice carried in; broken links fixed; contrast.py)
 ---
 
 # Salt design system
 
-**Source of truth:** [`apps/web/src/index.css`](../../apps/web/src/index.css) `@theme` / `:root` tokens. Deep rationale lives in [`wiki/architecture/design-system.md`](../../wiki/architecture/design-system.md) and the interactive reference `salt-design-system.html`. This OKF doc is the concise contract; the CSS wins on any conflict.
+**Source of truth:** [`apps/web/src/index.css`](../apps/web/src/index.css) `@theme` / `:root` / `.dark` tokens. Deep rationale lives in [`wiki/architecture/design-system.md`](../wiki/architecture/design-system.md), the written contract [`design.md`](../design.md) at the repo root and the interactive reference [`salt-design-system.html`](../salt-design-system.html). This OKF doc is the concise contract; the CSS wins on any conflict. Where the root doc lists a token that `index.css` does not define (spacing, motion, shadows, z-index), this doc says so and describes what the code does.
 
 ## First principle
 
@@ -62,6 +63,10 @@ plane_issues:
 - **Keyboard is the primary input** (`design.md` §2): every navigable action has a shortcut; the command palette (`Ctrl/Cmd+K`) and `?` help overlay are data-driven from `lib/shortcuts.ts` so they never drift. No tooltip-only shortcuts.
 - **Money is integer paise**, rendered mono with `Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" })`. Never floats. (V2 finding: also support K/L/Cr compaction + never overflow → truncate+hover.)
 - Status is communicated with the state triads above (a coloured Dot/Badge), not with coloured text blocks.
+
+## Sources
+
+Read these when this doc is not enough: [`design.md`](../design.md) §1 principles, §2.3 token usage rules, §4 density, §5 primitives, §6 patterns, §7 accessibility, §8 anti-patterns; [`salt-design-system.html`](../salt-design-system.html) for the visual reference (brand and voice, motion, spacing, density); [`wiki/architecture/design-system.md`](../wiki/architecture/design-system.md) for as-built status and gotchas.
 
 ## When you change UI
 
