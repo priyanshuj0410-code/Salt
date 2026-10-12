@@ -1,0 +1,25 @@
+# Design checks (CLAUD-24): every pull request and every push to main recomputes the colour contrast
+# of the light and dark tokens against knowledge/design.md. The script uses only the standard library.
+# Lint, typecheck and build stay in ci.yml.
+name: Design checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  design-checks:
+    name: design-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Contrast and token checks
+        run: python3 knowledge/contrast.py
