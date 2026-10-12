@@ -20,7 +20,7 @@ export function SeriesPicker({
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Invoice series"
-        className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+        className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
       >
         {series.map((s) => (
           <option key={s.id} value={s.id}>

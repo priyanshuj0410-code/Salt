@@ -105,7 +105,7 @@ export function SmartImportPage() {
             <select
               value={importShopId ?? ""}
               onChange={(e) => setOverrideShopId(e.target.value || null)}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
             >
               {shops.map((s) => (
                 <option key={s.id} value={s.id}>

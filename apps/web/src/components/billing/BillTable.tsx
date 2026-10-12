@@ -19,7 +19,7 @@ import { useBill } from "@/store/bill";
 import { useCatalog } from "@/store/catalog";
 
 const cellInput =
-  "h-7 w-16 shrink-0 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+  "h-7 w-16 shrink-0 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums focus-visible:border-ring [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
 
 export function BillTable() {
   const lines = useBill((s) => s.lines);
@@ -275,7 +275,7 @@ export function BillTable() {
                 tabIndex={0}
                 data-bill-row
                 onKeyDown={(e) => onRowKey(e, i, l)}
-                className="outline-none focus-within:bg-primary/5 focus:bg-primary/10"
+                className="focus-visible:-outline-offset-2 focus-within:bg-primary/5 focus:bg-primary/10"
               >
                 <TableCell className="align-top text-muted-foreground">{i + 1}</TableCell>
                 <TableCell className="align-top">

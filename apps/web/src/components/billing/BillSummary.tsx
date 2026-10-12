@@ -46,7 +46,7 @@ export function BillDiscountInput() {
             setBill({ type: bill.type, value: bill.type === "pct" ? v : Math.round(v * 100) });
           }}
           aria-label="Bill-level discount"
-          className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+          className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums focus-visible:border-ring [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
         />
         <Button
           variant="outline"
@@ -214,7 +214,7 @@ export function BillSummary({
                     value={payment.creditDays}
                     onChange={(e) => setCreditDays(Number(e.target.value) || 0)}
                     aria-label="Custom repayment days"
-                    className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
+                    className="h-7 w-16 rounded-md border border-input bg-background px-2 text-right text-sm tabular-nums focus-visible:border-ring"
                   />
                   <span className="text-sm text-text-tertiary">days</span>
                 </div>

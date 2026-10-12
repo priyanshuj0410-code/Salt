@@ -390,7 +390,7 @@ export function PartyProfilePage() {
             <select
               value={ledger.type}
               onChange={(e) => edit("type", e.target.value)}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
             >
               <option value="customer">customer</option>
               <option value="vendor">vendor</option>
@@ -409,7 +409,7 @@ export function PartyProfilePage() {
             <select
               value={ledger.state_code ?? ""}
               onChange={(e) => edit("state_code", e.target.value || null)}
-              className="h-8 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+              className="h-8 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
             >
               <option value="">—</option>
               {INDIAN_STATE_CODES.map((s) => (

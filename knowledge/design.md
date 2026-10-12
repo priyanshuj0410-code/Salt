@@ -5,6 +5,7 @@ description: The authoritative design tokens, principles, and component patterns
 plane_issues:
   - SALT-2 (lens-spine spike — logic-only, introduced no new UI pattern)
   - SALT-20 (DataTable real-design pass — sortable headers, skeleton, empty state)
+  - SALT-38 https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/29df4720-0e15-465f-a3e7-b20547d30e47 (P1 accessibility: solid focus ring, 3:1 control border)
 ---
 
 # Salt design system
@@ -19,7 +20,13 @@ plane_issues:
 
 **Surfaces / borders**
 - `--background` #ffffff · `--surface` #fafafa (zinc-50) · `--surface-2` #f4f4f5 (zinc-100)
-- `--border` #e4e4e7 (zinc-200) · `--border-strong` #d4d4d8 (zinc-300)
+- `--border` #e4e4e7 (zinc-200) · `--border-strong` #d4d4d8 (zinc-300): cards, dividers and decoration only. Never the edge of a control (1.27:1 on white).
+- `--control` #898992 (dark #74747d): the border of inputs, selects and outlined buttons, bridged as `--input` (`border-input`). 3.47:1 on background, 3.32:1 on surface, 3.15:1 on surface-2; dark 4.30:1, 3.83:1 and 3.22:1.
+
+**Focus**
+- `--focus-ring` follows `--action-primary` (#18181b light, #fafafa dark) and is bridged as `--ring`. It is solid, never translucent: 16.12:1 or more on background, surface and surface-2 in light, 14.27:1 or more in dark.
+- One rule in `index.css` draws it for every control: `:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px }`. Do not add `ring-ring/50`, `focus-visible:ring-*` or `outline-none` to a control. Where the edge would be clipped (table rows and cells, the palette input) use `focus-visible:-outline-offset-2`. `outline-none` is only for a container focused by script (`tabIndex={-1}`: `main`, the dialog popup).
+- On a dark surface inside the light theme, use a solid white ring (`focus-visible:ring-white`).
 
 **Text** (WCAG AA enforced — see SALT-157)
 - `--text-primary` #18181b · `--text-secondary` #52525b · `--text-tertiary` #676770 · `--text-disabled` #a1a1aa · `--text-inverse` #fafafa
@@ -33,7 +40,7 @@ plane_issues:
 - warning #b45309 / #fffbeb / #fde68a
 - danger #b91c1c / #fef2f2 / #fecaca
 
-**shadcn/@base-ui bridge:** semantic aliases (`--primary`, `--muted`, `--destructive`, `--ring`, `--sidebar-*`, …) map onto the tokens above — use the named utilities (`bg-surface`, `text-text-secondary`, `bg-primary`) not raw hexes.
+**shadcn/@base-ui bridge:** semantic aliases (`--primary`, `--muted`, `--destructive`, `--input`, `--ring`, `--sidebar-*`, …) map onto the tokens above; use the named utilities (`bg-surface`, `text-text-secondary`, `bg-primary`) not raw hexes.
 
 ## Typography
 

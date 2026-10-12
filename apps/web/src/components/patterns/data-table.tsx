@@ -138,7 +138,7 @@ export function DataTable<T>({
       className={cn(
         // Desktop rows read the density token (--row-height: 44px default / 36px compact).
         "flex w-full flex-col gap-1 border-b border-divider px-3 py-2 text-left text-sm last:border-b-0 md:grid md:min-h-[var(--row-height)] md:items-center md:gap-2 md:py-1.5",
-        onRowActivate && "hover:bg-surface focus-visible:bg-surface focus-visible:outline-none",
+        onRowActivate && "hover:bg-surface focus-visible:bg-surface focus-visible:-outline-offset-2",
       )}
     >
       {columns.map((c) => (

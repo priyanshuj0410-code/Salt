@@ -230,7 +230,7 @@ export function PrintTemplatesPage() {
                   onChange={(e) => editTpl("terms_text", e.target.value)}
                   rows={2}
                   placeholder="e.g. Goods once sold are not returnable. Subject to local jurisdiction."
-                  className="w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm focus-visible:border-ring"
                 />
               </label>
             </div>
@@ -369,7 +369,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 );
 
 const selectCls =
-  "h-8 w-full rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+  "h-8 w-full rounded-lg border border-input bg-background px-2 text-sm focus-visible:border-ring";
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (

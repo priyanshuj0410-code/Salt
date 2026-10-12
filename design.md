@@ -1,6 +1,6 @@
 # Salt — Design System (`design.md`)
 
-**Version:** 0.1
+**Version:** 0.2
 **Companion to:** `salt-design-system.html` (visual reference)
 **Audience:** Engineers and LLM coding agents building Salt screens
 **Rule of thumb:** If you're about to write a hardcoded color, spacing value, or font size — stop. It's a token. Use the token.
@@ -49,6 +49,7 @@ Drop this into your global stylesheet (`globals.css` or equivalent). Every value
   --color-surface-2: #f4f4f5;        /* zinc-100 */
   --color-border: #e4e4e7;           /* zinc-200 */
   --color-border-strong: #d4d4d8;    /* zinc-300 */
+  --color-control: #898992;          /* border of inputs and outlined controls; 3:1+ on background, surface, surface-2. Dark: #74747d */
   --color-divider: #f4f4f5;          /* zinc-100 */
 
   --color-text-primary: #18181b;     /* zinc-900 */
@@ -77,8 +78,7 @@ Drop this into your global stylesheet (`globals.css` or equivalent). Every value
   --color-danger-on-dark: #f87171;   /* red-400 */
 
   /* ---- Focus ---- */
-  --color-focus-ring: rgba(24, 24, 27, 0.15);
-  --color-focus-ring-strong: rgba(24, 24, 27, 0.3);
+  --color-focus-ring: #18181b;       /* = action-primary, solid; flips to #fafafa in dark. Drawn as a 2px outline, 2px offset */
 
   /* ---- Spacing (4px base) ---- */
   --space-1: 0.25rem;  --space-2: 0.5rem;   --space-3: 0.75rem;  --space-4: 1rem;
@@ -145,7 +145,7 @@ export default {
       colors: {
         background: "var(--color-background)",
         surface: { DEFAULT: "var(--color-surface)", 2: "var(--color-surface-2)" },
-        border: { DEFAULT: "var(--color-border)", strong: "var(--color-border-strong)" },
+        border: { DEFAULT: "var(--color-border)", strong: "var(--color-border-strong)", control: "var(--color-control)" },
         text: {
           primary: "var(--color-text-primary)",
           secondary: "var(--color-text-secondary)",
@@ -259,7 +259,7 @@ Each primitive lists its variants, sizes, and the rule that governs it. Build th
 Rules:
 - One `primary` per surface (the main action). Five primaries = no primary.
 - Icons ≤ 14px. Left of label for actions, right for navigation.
-- Focus: `box-shadow: 0 0 0 3px var(--color-focus-ring-strong)` on `:focus-visible`.
+- Focus: the global `:focus-visible` outline, 2px solid `--color-focus-ring` with a 2px offset. No per-component ring.
 
 ### 5.2 Input
 
@@ -271,8 +271,8 @@ Rules:
 ```
 
 Rules:
-- Focus: border → `action-primary`, plus 3px ring at `focus-ring` (15% opacity). 120ms color crossfade, no glow.
-- Inline-editable table cells (qty, discount): transparent background, bottom-border only, darkens on focus. No box.
+- Border: `--color-control` (3:1+), never `--color-border`. Focus: border → `action-primary`, plus the global 2px solid outline. 120ms color crossfade, no glow.
+- Inline-editable table cells (qty, discount): transparent background, bottom-border only (`--color-control`), darkens on focus. No box.
 - Placeholders use `text-disabled`.
 
 ### 5.3 Badge
@@ -403,7 +403,7 @@ Rules:
 ## 7. Accessibility (must pass before ship)
 
 - **Contrast:** body on white ≥ 4.5:1 (AA). `text-tertiary` only on white, never on `surface-2`.
-- **Focus:** every interactive element shows focus ring on `:focus-visible`. Never remove focus without replacing.
+- **Focus:** every interactive element shows the solid 2px ring on `:focus-visible` (16:1 or more on white in light, 14:1 or more on surface-2 in dark). Never remove it, never make it translucent. Control borders are 3:1 or more (`--color-control`).
 - **Keyboard:** tab order matches visual order. No traps. Esc closes any overlay.
 - **Semantic HTML:** tables are `<table>`, buttons are `<button>`, headings sequential.
 - **Color independence:** status never by color alone — pair with text or icon.
@@ -443,6 +443,7 @@ A screen that contains raw Tailwind color/spacing utilities instead of tokens, o
 ## 10. Changelog
 
 - **v0.1 (28 May 2026)** — Initial system. Tokens, primitives, patterns, accessibility, anti-patterns. Toast pattern corrected (dark-surface + accent, replacing the muddy semantic-fill bug found in the first prototype).
+- **v0.2 (12 Oct 2026)**: P1 accessibility fixes from the design audit ([SALT-38](https://app.plane.so/claude-pri/projects/1454eb99-703c-4a36-9d03-f311d11d6e97/issues/29df4720-0e15-465f-a3e7-b20547d30e47)). Focus ring is now solid and global (2px outline, 2px offset, `--color-focus-ring` = `action-primary`) instead of a 15-30% alpha ring; added `--color-control` for input and outlined-control borders (the bridge `--input` points at it) while `--color-border` stays for cards and dividers.
 
 ---
 

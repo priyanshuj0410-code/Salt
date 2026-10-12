@@ -269,7 +269,7 @@ export function RecordPaymentDialog({
               <select
                 value={salesmanId}
                 onChange={(e) => setSalesmanId(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-2 text-sm outline-none focus-visible:border-ring"
+                className="h-9 rounded-md border border-input bg-background px-2 text-sm focus-visible:border-ring"
               >
                 <option value="">—</option>
                 {salesmen.map((s) => (

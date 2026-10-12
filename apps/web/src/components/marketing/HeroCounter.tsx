@@ -53,7 +53,7 @@ export function HeroCounter({
         <button
           type="button"
           onClick={onLogin}
-          className="rounded-md px-1 text-xs text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+          className="rounded-md px-1 text-xs text-white/70 underline-offset-4 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
           Already a customer? Login
         </button>
